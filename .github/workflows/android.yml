@@ -52,7 +52,7 @@ jobs:
       - name: Summarize failures
         if: failure()
         run: |
-          errors=$(grep -E '^e: |error:|FAILED|What went wrong|Exception|expected:|^> ' build-output.log | grep -v 'BUILD FAILED' | head -120 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          errors=$(grep -E '^e: |error:|What went wrong|FAILED|Exception|expected:' build-output.log | grep -v 'BUILD FAILED' | sed "s|file://$GITHUB_WORKSPACE/app/src/||" | head -150 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
           echo "::error title=Build failures::${errors}"
 
       - name: Upload test reports
