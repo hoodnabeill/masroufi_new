@@ -38,7 +38,7 @@ jobs:
           echo "MASROUFI_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
       - name: Unit tests
-        run: gradle --no-daemon --stacktrace testDebugUnitTest
+        run: gradle --no-daemon --stacktrace testDebugUnitTest 2>&1 | tee build-output.log; exit ${PIPESTATUS[0]}
 
       - name: Build APKs
         env:
@@ -46,7 +46,14 @@ jobs:
           MASROUFI_KEYSTORE_PASSWORD: ${{ secrets.MASROUFI_KEYSTORE_PASSWORD }}
           MASROUFI_KEY_ALIAS: ${{ secrets.MASROUFI_KEY_ALIAS }}
           MASROUFI_KEY_PASSWORD: ${{ secrets.MASROUFI_KEY_PASSWORD }}
-        run: gradle --no-daemon --stacktrace assembleDebug assembleRelease
+        run: gradle --no-daemon --stacktrace assembleDebug assembleRelease 2>&1 | tee -a build-output.log; exit ${PIPESTATUS[0]}
+
+      # Surfaces compiler and test failures as one annotation so they are readable without opening the raw log.
+      - name: Summarize failures
+        if: failure()
+        run: |
+          errors=$(grep -E '^e: |error:|FAILED|What went wrong|Exception|expected:|^> ' build-output.log | grep -v 'BUILD FAILED' | head -120 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=Build failures::${errors}"
 
       - name: Upload test reports
         if: always()
