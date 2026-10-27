@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Masroufi</string>
+
+    <!-- Tabs -->
+    <string name="tab_home">Home</string>
+    <string name="tab_transactions">Transactions</string>
+    <string name="tab_budgets">Budgets</string>
+    <string name="tab_goals">Goals</string>
+    <string name="tab_more">More</string>
+
+    <!-- Actions -->
+    <string name="action_add_expense">Add expense</string>
+    <string name="action_archive">Archive</string>
+    <string name="action_unarchive">Unarchive</string>
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_disable">Turn off</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_move_down">Move down</string>
+    <string name="action_move_up">Move up</string>
+    <string name="action_ok">OK</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_resume">Resume</string>
+    <string name="action_save">Save</string>
+    <string name="action_see_all">See all</string>
+
+    <!-- Types -->
+    <string name="type_income">Income</string>
+    <string name="type_expense">Expense</string>
+    <string name="type_transfer">Transfer</string>
+
+    <!-- Fields -->
+    <string name="field_amount">Amount</string>
+    <string name="field_category">Category</string>
+    <string name="field_color">Colour</string>
+    <string name="field_currency">Currency</string>
+    <string name="field_date">Date</string>
+    <string name="field_description">Description</string>
+    <string name="field_due_date">Due date (optional)</string>
+    <string name="field_ends_optional">End date (optional)</string>
+    <string name="field_frequency">Repeats</string>
+    <string name="field_from_wallet">From wallet</string>
+    <string name="field_to_wallet">To wallet</string>
+    <string name="field_icon">Icon</string>
+    <string name="field_interval">Repeat every</string>
+    <string name="field_limit">Spending limit</string>
+    <string name="field_name">Name</string>
+    <string name="field_name_optional">Name (optional)</string>
+    <string name="field_note">Note</string>
+    <string name="field_opening_balance">Current balance</string>
+    <string name="field_person">Person</string>
+    <string name="field_planned_monthly">Planned monthly saving (optional)</string>
+    <string name="field_received_amount">Amount received</string>
+    <string name="field_starts">Starts</string>
+    <string name="field_tags">Tags</string>
+    <string name="field_tags_hint">Separate tags with commas</string>
+    <string name="field_target_amount">Target amount</string>
+    <string name="field_target_date">Target date (optional)</string>
+    <string name="field_type">Type</string>
+    <string name="field_wallet">Wallet</string>
+
+    <!-- Errors -->
+    <string name="error_amount_required">Enter an amount greater than zero.</string>
+    <string name="error_name_required">Enter a name.</string>
+    <string name="error_wallet_required">Choose a wallet.</string>
+    <string name="error_same_wallet">Choose two different wallets for a transfer.</string>
+    <string name="error_target_amount">These wallets use different currencies. Enter the amount received.</string>
+    <string name="error_withdraw_exceeds">You can\'t withdraw more than has been saved.</string>
+    <string name="error_payment_exceeds">This is more than the remaining amount.</string>
+    <string name="error_wallet_has_transactions">This wallet has transactions. Archive it instead to keep your history correct.</string>
+    <string name="error_members_required">Add at least two members with names.</string>
+    <string name="error_not_found">This item no longer exists.</string>
+    <string name="error_unexpected">Something went wrong. Your data was not changed.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Welcome to Masroufi</string>
+    <string name="onboarding_body">Your private money companion. Track spending, plan budgets and goals, and manage your gameya — all on your phone.</string>
+    <string name="onboarding_cash_label">Cash you have now (optional)</string>
+    <string name="onboarding_privacy">No account needed. Your data stays on this device unless you choose to back it up or sync it.</string>
+    <string name="onboarding_start">Get started</string>
+    <string name="wallet_default_cash">Cash</string>
+
+    <!-- Lock -->
+    <string name="lock_title">Enter your PIN</string>
+    <string name="lock_biometric_title">Unlock Masroufi</string>
+    <string name="lock_use_pin">Use PIN</string>
+    <string name="lock_wrong_pin">Wrong PIN. %1$d attempts left.</string>
+    <string name="lock_throttled">Too many attempts. Try again at %1$s.</string>
+
+    <!-- Home -->
+    <string name="home_customize">Customize home</string>
+    <string name="home_no_wallet_title">Add your first wallet</string>
+    <string name="home_no_wallet_body">Start with the cash in your pocket or your bank account.</string>
+    <string name="home_recent">Recent</string>
+    <string name="home_this_month">This month</string>
+    <string name="home_total_balance">Total balance</string>
+    <string name="section_balance">Balance</string>
+    <string name="section_quick_actions">Quick actions</string>
+    <string name="section_spending">Spending by category</string>
+    <string name="section_upcoming">Upcoming</string>
+    <string name="section_insights">Insights</string>
+
+    <!-- Insights -->
+    <string name="insight_pace_first">You have spent %1$s so far this month.</string>
+    <string name="insight_pace_more">You\'ve spent %1$s more than by this day last month.</string>
+    <string name="insight_pace_less">You\'ve spent %1$s less than by this day last month.</string>
+    <string name="insight_category_rising">%1$s spending is up %2$d%% compared with the same days last month.</string>
+    <string name="insight_upcoming">%1$s of %2$s is due on %3$s.</string>
+    <string name="insight_budget_over">Budget \"%1$s\" is over its limit.</string>
+    <string name="insight_budget_warning">Budget \"%1$s\" has %2$s left.</string>
+    <string name="insight_projection">Estimate: at this pace you would spend about %1$s this month.</string>
+
+    <!-- Transactions -->
+    <string name="transaction_new">New transaction</string>
+    <string name="transaction_edit">Edit transaction</string>
+    <string name="transaction_details">Transaction</string>
+    <string name="transaction_more_options">Note, tags and receipt</string>
+    <string name="transaction_from_recurring">Created by a recurring rule</string>
+    <string name="transaction_delete_title">Delete transaction?</string>
+    <string name="transaction_delete_body">Balances and reports will update. This can\'t be undone.</string>
+    <string name="transactions_empty_title">No transactions yet</string>
+    <string name="transactions_empty_body">Add your first income or expense to see it here.</string>
+    <string name="search_hint">Search notes, tags, categories</string>
+    <string name="search_no_results">No matches</string>
+    <string name="search_no_results_body">Try another word or clear the filters.</string>
+    <string name="filter_title">Filters</string>
+    <string name="filter_type">Type</string>
+    <string name="filter_any">Any</string>
+    <string name="filter_dates">Dates</string>
+    <string name="filter_from">From</string>
+    <string name="filter_to">To</string>
+    <string name="filter_min">Min amount</string>
+    <string name="filter_max">Max amount</string>
+    <string name="filter_sort">Sort by</string>
+    <string name="filter_apply">Apply</string>
+    <string name="filter_clear">Clear filters</string>
+    <string name="sort_newest">Newest</string>
+    <string name="sort_oldest">Oldest</string>
+    <string name="sort_amount_desc">Largest</string>
+    <string name="sort_amount_asc">Smallest</string>
+    <string name="receipt_title">Receipt</string>
+    <string name="receipt_attach">Attach receipt</string>
+    <string name="receipt_remove">Remove receipt</string>
+    <string name="receipt_missing">The receipt image isn\'t on this device (receipts are not included in backups).</string>
+
+    <!-- Categories -->
+    <string name="categories_title">Categories</string>
+    <string name="category_add">New category</string>
+    <string name="category_edit">Edit category</string>
+    <string name="category_parent">Parent category</string>
+    <string name="category_no_parent">None (top level)</string>
+    <string name="category_uncategorized">Uncategorized</string>
+    <string name="category_other_group">Other</string>
+    <string name="cat_food">Food &amp; dining</string>
+    <string name="cat_groceries">Groceries</string>
+    <string name="cat_transport">Transport</string>
+    <string name="cat_bills">Bills &amp; utilities</string>
+    <string name="cat_rent">Rent</string>
+    <string name="cat_mobile">Mobile &amp; internet</string>
+    <string name="cat_health">Health</string>
+    <string name="cat_education">Education</string>
+    <string name="cat_shopping">Shopping</string>
+    <string name="cat_entertainment">Entertainment</string>
+    <string name="cat_family">Family</string>
+    <string name="cat_gifts">Gifts</string>
+    <string name="cat_charity">Charity &amp; zakat</string>
+    <string name="cat_other_expense">Other expense</string>
+    <string name="cat_salary">Salary</string>
+    <string name="cat_freelance">Freelance</string>
+    <string name="cat_business">Business</string>
+    <string name="cat_gift_income">Gift received</string>
+    <string name="cat_other_income">Other income</string>
+
+    <!-- Wallets -->
+    <string name="wallets_title">Wallets</string>
+    <string name="wallets_archived">Archived</string>
+    <string name="wallets_empty_title">No wallets yet</string>
+    <string name="wallets_empty_body">Add cash, a bank account or a digital wallet.</string>
+    <string name="wallet_add">Add wallet</string>
+    <string name="wallet_edit">Edit wallet</string>
+    <string name="wallet_balance">Balance</string>
+    <string name="wallet_no_transactions">Transactions in this wallet will appear here.</string>
+    <string name="wallet_delete_title">Delete wallet?</string>
+    <string name="wallet_delete_body">Only wallets without transactions can be deleted.</string>
+    <string name="wallet_type_cash">Cash</string>
+    <string name="wallet_type_bank">Bank account</string>
+    <string name="wallet_type_digital">Digital wallet</string>
+    <string name="wallet_type_custom">Other</string>
+
+    <!-- Budgets -->
+    <string name="budget_add">New budget</string>
+    <string name="budget_edit">Edit budget</string>
+    <string name="budget_all_spending">All spending</string>
+    <string name="budget_monthly">Monthly</string>
+    <string name="budget_custom">Custom period</string>
+    <string name="budget_rollover">Roll over</string>
+    <string name="budget_rollover_hint">Carry last month\'s unspent or overspent amount into this month.</string>
+    <string name="budget_rollover_amount">Carried over: %1$s</string>
+    <string name="budget_spent_of">%1$s spent of %2$s</string>
+    <string name="budget_last_month">Last month: %1$s</string>
+    <string name="budget_over">Over budget</string>
+    <string name="budget_warning">Almost at the limit</string>
+    <string name="budget_delete_title">Delete budget?</string>
+    <string name="budget_delete_body">Your transactions are not affected.</string>
+    <string name="budgets_empty_title">No budgets yet</string>
+    <string name="budgets_empty_body">Set a monthly limit for a category and Masroufi will warn you before you overspend.</string>
+
+    <!-- Goals -->
+    <string name="goal_add">New goal</string>
+    <string name="goal_edit">Edit goal</string>
+    <string name="goal_contribute">Add money</string>
+    <string name="goal_withdraw">Withdraw</string>
+    <string name="goal_contribution">Contribution</string>
+    <string name="goal_withdrawal">Withdrawal</string>
+    <string name="goal_saved_of">%1$s of %2$s</string>
+    <string name="goal_target">Target: %1$s</string>
+    <string name="goal_remaining">Remaining: %1$s</string>
+    <string name="goal_target_date">Target date: %1$s</string>
+    <string name="goal_planned_monthly">Planned: %1$s per month</string>
+    <string name="goal_estimate">Estimate: around %1$s at your current pace of about %2$s per month.</string>
+    <string name="goal_estimate_unavailable">An estimated completion date appears after a month of saving history.</string>
+    <string name="goal_reached">Goal reached!</string>
+    <string name="goal_history">History</string>
+    <string name="goal_history_empty">No contributions yet.</string>
+    <string name="goal_delete_title">Delete goal?</string>
+    <string name="goal_delete_body">Its contribution history will be removed. Wallet balances are not affected.</string>
+    <string name="goals_earmark_note">Goal savings are earmarks: they track money you set aside without changing wallet balances, so nothing is counted twice.</string>
+    <string name="goals_empty_title">No goals yet</string>
+    <string name="goals_empty_body">Save for an emergency fund, a trip, a phone or anything that matters to you.</string>
+
+    <!-- Recurring -->
+    <string name="recurring_title">Recurring</string>
+    <string name="recurring_add">New recurring</string>
+    <string name="recurring_edit">Edit recurring</string>
+    <string name="recurring_next">Next: %1$s</string>
+    <string name="recurring_paused">Paused</string>
+    <string name="recurring_finished">Finished</string>
+    <string name="recurring_remind">Remind me the day before</string>
+    <string name="recurring_explainer">Due occurrences are recorded automatically once per day. Each date is recorded only once, even if the app restarts.</string>
+    <string name="recurring_delete_title">Delete recurring rule?</string>
+    <string name="recurring_delete_body">Transactions already recorded stay in your history.</string>
+    <string name="recurring_empty_title">No recurring transactions</string>
+    <string name="recurring_empty_body">Add your salary, rent, subscriptions or bills once and Masroufi records them on schedule.</string>
+    <plurals name="every_days">
+        <item quantity="one">Every day</item>
+        <item quantity="other">Every %d days</item>
+    </plurals>
+    <plurals name="every_weeks">
+        <item quantity="one">Every week</item>
+        <item quantity="other">Every %d weeks</item>
+    </plurals>
+    <plurals name="every_months">
+        <item quantity="one">Every month</item>
+        <item quantity="other">Every %d months</item>
+    </plurals>
+    <plurals name="every_years">
+        <item quantity="one">Every year</item>
+        <item quantity="other">Every %d years</item>
+    </plurals>
+
+    <!-- Debts -->
+    <string name="debts_title">Debts &amp; lending</string>
+    <string name="debt_add">New debt</string>
+    <string name="debt_edit">Edit debt</string>
+    <string name="debt_i_owe">I owe</string>
+    <string name="debt_owed_to_me">Owed to me</string>
+    <string name="debt_due">Due %1$s</string>
+    <string name="debt_original">Original amount: %1$s</string>
+    <string name="debt_paid">Repaid: %1$s</string>
+    <string name="debt_payments">Repayments</string>
+    <string name="debt_payments_empty">No repayments yet.</string>
+    <string name="debt_record_payment">Record repayment</string>
+    <string name="debt_remind">Remind me when due</string>
+    <string name="debt_status_open">Open</string>
+    <string name="debt_status_overdue">Overdue</string>
+    <string name="debt_status_settled">Settled</string>
+    <string name="debt_delete_title">Delete debt?</string>
+    <string name="debt_delete_body">The debt and its repayment history will be removed.</string>
+    <string name="debts_empty_title">Nothing here</string>
+    <string name="debts_empty_body">Keep track of money you borrowed or lent, with partial repayments.</string>
+
+    <!-- Gameya -->
+    <string name="gameya_title">Gameya</string>
+    <string name="gameya_add">New gameya</string>
+    <string name="gameya_edit">Edit gameya</string>
+    <string name="gameya_empty_title">No gameya yet</string>
+    <string name="gameya_empty_body">Track your rotating savings group: who paid each round and when it is your turn.</string>
+    <string name="gameya_summary_line">%1$s × %2$d members · pot %3$s</string>
+    <string name="gameya_rounds_done">%1$d of %2$d rounds paid out</string>
+    <string name="gameya_missed">%1$d late contributions</string>
+    <string name="gameya_pot">Each round\'s pot</string>
+    <string name="gameya_contribution">Contribution per round</string>
+    <string name="gameya_frequency">Frequency</string>
+    <string name="gameya_monthly">Monthly</string>
+    <string name="gameya_custom_interval">Every few days</string>
+    <string name="gameya_every_days">Every %1$d days</string>
+    <string name="gameya_interval_days">Days between rounds</string>
+    <string name="gameya_first_round">First round</string>
+    <string name="gameya_organizer">Organizer</string>
+    <string name="gameya_organizer_optional">Organizer (optional)</string>
+    <string name="gameya_my_total">My total contributions</string>
+    <string name="gameya_my_paid">I have paid</string>
+    <string name="gameya_my_remaining">I still owe</string>
+    <string name="gameya_my_payout">Your turn: round %1$d on %2$s</string>
+    <string name="gameya_my_payout_received">You received your payout (round %1$d)</string>
+    <string name="gameya_rounds">Rounds</string>
+    <string name="gameya_round_n">Round %1$d</string>
+    <string name="gameya_paid_count">%1$d/%2$d paid</string>
+    <string name="gameya_recipient">Receives: %1$s</string>
+    <string name="gameya_payout_received">Paid out</string>
+    <string name="gameya_my_status">Your contribution: %1$s</string>
+    <string name="gameya_status_paid">paid</string>
+    <string name="gameya_status_overdue">overdue</string>
+    <string name="gameya_status_due_today">due today</string>
+    <string name="gameya_status_scheduled">scheduled</string>
+    <string name="gameya_me_suffix">%1$s (me)</string>
+    <string name="gameya_each_pays">Each member pays %1$s this round.</string>
+    <string name="gameya_members_order">Members in payout order</string>
+    <string name="gameya_members_hint">The first member receives the first round. Use the arrows to change the order.</string>
+    <string name="gameya_member_n">Member %1$d</string>
+    <string name="gameya_add_member">Add member</string>
+    <string name="gameya_me_hint">Select the circle next to your own name so Masroufi can track your payments and payout.</string>
+    <string name="gameya_delete_title">Delete gameya?</string>
+    <string name="gameya_delete_body">All rounds and payment records for this gameya will be removed.</string>
+
+    <!-- Auto-split -->
+    <string name="split_title">Auto-split</string>
+    <string name="split_add">New split rule</string>
+    <string name="split_edit">Edit split rule</string>
+    <string name="split_apply">Split an income</string>
+    <string name="split_applied">Income split recorded.</string>
+    <string name="split_history">Recent splits</string>
+    <string name="split_empty_title">No split rules</string>
+    <string name="split_empty_body">Divide each salary into essentials, savings, emergencies and more.</string>
+    <string name="split_income_title">Split with \"%1$s\"</string>
+    <string name="split_income_amount">Income amount</string>
+    <string name="split_preview">Preview</string>
+    <string name="split_preview_note">Nothing is moved until you confirm. Lines linked to a goal are added to that goal; others are recorded as a plan.</string>
+    <string name="split_confirm">Confirm split</string>
+    <string name="split_unallocated">Unallocated (rounding included)</string>
+    <string name="split_to_goal">to goal</string>
+    <string name="split_error_fixed">Fixed amounts (%1$s) are more than the income (%2$s).</string>
+    <string name="split_error_percent">Percentages add up to %1$s%%, which is more than 100%%.</string>
+    <string name="split_error_empty">This rule has no valid lines.</string>
+    <string name="split_rules_hint">Fixed amounts are taken first; percentages are applied to what remains.</string>
+    <string name="split_item_label">Label</string>
+    <string name="split_percent">Percent</string>
+    <string name="split_fixed">Fixed</string>
+    <string name="split_percent_value">Percent of remaining income</string>
+    <string name="split_link_goal">Add to goal</string>
+    <string name="split_no_goal">Don\'t link</string>
+    <string name="split_add_item">Add line</string>
+    <string name="split_delete_title">Delete split rule?</string>
+    <string name="split_delete_body">Past splits stay in the history.</string>
+
+    <!-- Analytics -->
+    <string name="analytics_title">Insights &amp; reports</string>
+    <string name="analytics_months">%1$d mo</string>
+    <string name="analytics_empty_title">Not enough data yet</string>
+    <string name="analytics_empty_body">Reports appear once you record some income and expenses.</string>
+    <string name="analytics_income_vs_expense">Income vs expenses</string>
+    <string name="analytics_net_cash_flow">Net cash flow</string>
+    <string name="analytics_avg_monthly_expense">Average monthly expenses</string>
+    <string name="analytics_budget_adherence">Budget adherence this month</string>
+    <string name="analytics_budgets_within">%1$d of %2$d budgets within their limit</string>
+    <string name="analytics_obligations">Savings &amp; obligations</string>
+    <string name="analytics_savings_progress">Saved toward goals</string>
+    <string name="analytics_recurring_expense">Recurring expenses (about per month)</string>
+    <string name="analytics_recurring_income">Recurring income (about per month)</string>
+    <string name="analytics_estimate_note">\"About per month\" figures are estimates converted from each schedule. Everything else is calculated from your recorded data.</string>
+
+    <!-- More -->
+    <string name="more_money">Money</string>
+    <string name="more_app">App</string>
+    <string name="more_wallets_sub">Cash, bank and digital wallets</string>
+    <string name="more_recurring_sub">Salary, rent, subscriptions</string>
+    <string name="more_gameya_sub">Rotating savings groups</string>
+    <string name="more_debts_sub">Money you owe and are owed</string>
+    <string name="more_split_sub">Divide income automatically</string>
+    <string name="more_analytics_sub">Trends and reports</string>
+    <string name="more_categories_sub">Organize your spending</string>
+    <string name="more_backup_sub">Encrypted backup and WebDAV sync</string>
+    <string name="more_security_sub">App lock and privacy</string>
+    <string name="more_settings_sub">Language, theme, currency</string>
+    <string name="more_premium_sub">Plans and features</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Dynamic colour</string>
+    <string name="settings_dynamic_color_sub">Match your wallpaper colours</string>
+    <string name="settings_currency_note">Totals on the home screen use this currency. Other currencies are shown separately and are never added together.</string>
+    <string name="settings_notifications">Reminders</string>
+    <string name="settings_notifications_sub">Upcoming recurring payments, due debts and budget alerts</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_body">Masroufi has no account, no analytics and no ads. Financial data never leaves your device unless you export a backup or turn on WebDAV sync.</string>
+
+    <!-- Security -->
+    <string name="security_title">Security</string>
+    <string name="security_app_lock">App lock</string>
+    <string name="security_app_lock_sub">Require a PIN when opening Masroufi</string>
+    <string name="security_biometric">Unlock with fingerprint or face</string>
+    <string name="security_biometric_sub">Your PIN still works as a fallback</string>
+    <string name="security_biometric_unavailable">No strong biometric is set up on this device</string>
+    <string name="security_timeout">Lock after leaving the app</string>
+    <string name="security_timeout_immediate">Immediately</string>
+    <string name="security_timeout_seconds">%1$d s</string>
+    <string name="security_change_pin">Change PIN</string>
+    <string name="security_enter_pin">Choose a 4-digit PIN</string>
+    <string name="security_confirm_pin">Enter the PIN again</string>
+    <string name="security_pin_mismatch">The PINs didn\'t match. Try again.</string>
+    <string name="security_hide_recents">Hide app content in recents</string>
+    <string name="security_hide_recents_sub">Blocks screenshots and the recent-apps preview</string>
+    <string name="security_disable_title">Turn off app lock?</string>
+    <string name="security_disable_body">Anyone with your unlocked phone will be able to open Masroufi.</string>
+    <string name="security_model_title">What is protected</string>
+    <string name="security_model_body">Your data is stored in Masroufi\'s private app storage, which Android isolates from other apps. The database itself is not encrypted by Masroufi; device encryption protects it when the phone is locked. Backups and WebDAV sync files are encrypted with your password (AES-256-GCM). The PIN is stored only as a salted hash, and the WebDAV password is encrypted with a key kept in Android Keystore.</string>
+
+    <!-- Backup & sync -->
+    <string name="backup_title">Backup &amp; sync</string>
+    <string name="backup_file_section">Backup file</string>
+    <string name="backup_explainer">Export an encrypted file you can keep anywhere. Restoring checks the password before changing anything. Receipt images are not included.</string>
+    <string name="backup_last">Last backup: %1$s</string>
+    <string name="backup_password">Backup password</string>
+    <string name="backup_password_hint">At least 8 characters. Without it the backup cannot be opened — not even by us.</string>
+    <string name="backup_export">Export</string>
+    <string name="backup_import">Restore</string>
+    <string name="backup_exported">Backup saved.</string>
+    <string name="backup_restored">Backup restored.</string>
+    <string name="backup_failed">The backup could not be read or written. Nothing was changed.</string>
+    <string name="backup_wrong_password">Wrong password, or the file is damaged.</string>
+    <string name="backup_not_a_backup">This file is not a Masroufi backup.</string>
+    <string name="backup_newer_version">This backup was made by a newer version of Masroufi. Update the app first.</string>
+    <string name="restore_title">Restore backup?</string>
+    <string name="restore_summary">Backup from %1$s with %2$d transactions and %3$d wallets.</string>
+    <string name="restore_choice">Merge keeps your current data and adds anything missing (newer edits win). Replace deletes current data first.</string>
+    <string name="restore_merge">Merge</string>
+    <string name="restore_replace">Replace</string>
+    <string name="sync_title">WebDAV sync</string>
+    <string name="sync_explainer">Sync with your own WebDAV server (e.g. Nextcloud). Data is encrypted on this phone with your sync passphrase before upload. Use the same passphrase on every device.</string>
+    <string name="sync_url">Folder URL (https://…)</string>
+    <string name="sync_username">Username</string>
+    <string name="sync_password">Password</string>
+    <string name="sync_passphrase">Sync passphrase</string>
+    <string name="sync_passphrase_hint">At least 8 characters. Different from your server password.</string>
+    <string name="sync_connect">Connect and sync</string>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_disconnect">Disconnect</string>
+    <string name="sync_disconnected">Sync turned off. Your local data is unchanged.</string>
+    <string name="sync_server">Server</string>
+    <string name="sync_last">Last sync</string>
+    <string name="sync_never">Never</string>
+    <string name="sync_status">Status</string>
+    <string name="sync_conflicts">%1$d items were edited on more than one device; the newest edit was kept.</string>
+    <string name="sync_ok">Sync complete.</string>
+    <string name="sync_not_configured">Sync is not set up.</string>
+    <string name="sync_auth_failed">The server rejected the username or password.</string>
+    <string name="sync_wrong_passphrase">The sync passphrase doesn\'t match the data on the server.</string>
+    <string name="sync_network">Couldn\'t reach the server. Your data is safe; it will sync later.</string>
+    <string name="sync_invalid_url">Enter a valid https:// address.</string>
+    <string name="sync_remote_changed">Another device was syncing at the same time. Try again.</string>
+    <string name="sync_server_error">The server returned an error. Your data is safe.</string>
+
+    <!-- Premium -->
+    <string name="premium_title">Masroufi Premium</string>
+    <string name="premium_early_access">Premium is not on sale yet. During early access every feature is free.</string>
+    <string name="premium_active">Your subscription is active.</string>
+    <string name="premium_unlocked">Included</string>
+    <string name="premium_locked">Premium</string>
+    <string name="premium_required">This feature needs Premium</string>
+    <string name="premium_promise">Your data always belongs to you: wallets, transactions, budgets, goals and backups stay free and exportable.</string>
+    <string name="premium_feature_analytics">Advanced reports</string>
+    <string name="premium_feature_sync">WebDAV sync</string>
+    <string name="premium_feature_customization">Extra customization</string>
+
+    <!-- Notifications -->
+    <string name="channel_reminders">Reminders</string>
+    <string name="notification_private">You have a new reminder</string>
+    <string name="notify_recurring_title">Upcoming payment</string>
+    <string name="notify_recurring_body">%1$s (%2$s) is due tomorrow.</string>
+    <string name="notify_debt_title">Debt due</string>
+    <string name="notify_debt_body">%1$s — %2$s remaining is due.</string>
+    <string name="notify_budget_title">Budget exceeded</string>
+    <string name="notify_budget_body">\"%1$s\" is over budget this month.</string>
+</resources>
