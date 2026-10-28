@@ -2,7 +2,6 @@ package com.masroufi.app.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -104,7 +103,7 @@ private fun roll(rising: Boolean): ContentTransform {
     val fade = Motion.snappy<Float>(false)
     val dir = if (rising) 1 else -1
     return (slideInVertically(spatial) { h -> h * dir } + fadeIn(fade)) togetherWith
-        (slideOutVertically(spatial) { h -> -h * dir } + fadeOut(fade)) using SizeTransform(clip = true)
+        (slideOutVertically(spatial) { h -> -h * dir } + fadeOut(fade))
 }
 
 @Composable
