@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -92,7 +90,7 @@ fun TransactionItem(row: TransactionRow, onClick: () -> Unit, modifier: Modifier
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconBadge(
-            icon = if (isTransfer) Icons.Outlined.SwapHoriz else CategoryIcons.of(row.categoryIcon),
+            icon = if (isTransfer) MIcons.Transfer else CategoryIcons.of(row.categoryIcon),
             tint = if (isTransfer) LocalFinanceColors.current.transfer else categoryColor(row.categoryColor),
         )
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {

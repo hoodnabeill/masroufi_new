@@ -13,7 +13,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +33,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassFab
 import com.masroufi.app.core.newId
 import com.masroufi.app.data.model.Category
 import com.masroufi.app.data.model.CategoryKind
@@ -86,7 +86,7 @@ fun CategoriesScreen(onBack: () -> Unit, viewModel: CategoriesViewModel = hiltVi
     var creating by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.categories_title), onBack = onBack) },
-        floatingActionButton = { FloatingActionButton(onClick = { creating = true }) { Icon(Icons.Outlined.Add, stringResource(R.string.category_add)) } },
+        floatingActionButton = { GlassFab(onClick = { creating = true }) { Icon(Icons.Outlined.Add, stringResource(R.string.category_add)) } },
     ) { padding ->
         val roots = categories.filter { it.parentId == null }.sortedBy { it.kind }
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 96.dp)) {

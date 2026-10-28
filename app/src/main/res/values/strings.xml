@@ -496,4 +496,8 @@
     <string name="onboarding_page2_title">Private by design</string>
     <string name="onboarding_setup_title">Make it yours</string>
     <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_plan_title">Every pound has a place.</string>
+    <string name="onboarding_plan_body">Budgets, goals, gameya and debts move together, so you always know what is really yours to spend.</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_demo_wallet">Main wallet</string>
 </resources>

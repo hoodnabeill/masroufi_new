@@ -34,9 +34,9 @@ The app is a single `:app` module with feature packages:
 | `work` | Daily worker (recurring items and reminders) and sync worker |
 | `ui` / `feature.*` | Compose UI, one ViewModel per screen, `StateFlow` state plus a `Channel` for effects |
 
-Stack: Kotlin 2.1, Compose (BOM 2024.12.01, Material 3), Room 2.6, Hilt 2.54, Navigation Compose 2.8 (type-safe routes), DataStore, WorkManager, BiometricPrompt, OkHttp, Coil and Haze 1.5 (real-time glass blur for the floating dock).
+Stack: Kotlin 2.2, Compose (BOM 2025.10.01, Material 3), Room 2.7, Hilt 2.57, Navigation Compose 2.8 (type-safe routes), DataStore, WorkManager, BiometricPrompt, OkHttp, Coil and Kyant Backdrop 1.0 (refractive liquid-glass rendering).
 
-**Design system.** Ambient aurora light behind every screen, glass cards with light-catching edges, a floating liquid-glass dock, odometer amounts and Apple-style critically damped springs (stiffness = (2π/response)²). Fonts: Inter (Latin) and IBM Plex Sans Arabic (Arabic), both under the SIL Open Font License (see `licenses/`). All motion respects the system "remove animations" setting.
+**Design system.** Liquid glass throughout: on Android 12+ every glass surface samples what is behind it, boosts its saturation, bends it at the rim with a lens shader (Android 13+) and catches a specular highlight; the floating dock refracts the live screen, cards refract the ambient aurora. Older phones get a translucent fill with a light-catching edge. A custom duotone icon set (`MIcons`), tab glyphs that animate their meaning, a draggable liquid tab bar with velocity projection, odometer amounts, kinetic onboarding and Apple-style springs. Fonts: Inter (Latin) and IBM Plex Sans Arabic (Arabic), both under the SIL Open Font License (see `licenses/`). All motion respects the system "remove animations" setting.
 
 ## Building
 

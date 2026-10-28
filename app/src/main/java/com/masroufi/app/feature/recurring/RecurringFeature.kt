@@ -18,8 +18,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Repeat
-import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -47,6 +45,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
 import com.masroufi.app.data.model.Category
@@ -120,7 +120,7 @@ fun RecurringScreen(onBack: () -> Unit, onAdd: () -> Unit, onEdit: (String) -> U
     val dates = rememberDateFormatter()
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.recurring_title), onBack = onBack) },
-        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.recurring_add)) } },
+        floatingActionButton = { GlassFab(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.recurring_add)) } },
     ) { padding ->
         if (state.loading) return@Scaffold
         if (state.rules.isEmpty()) {
@@ -314,7 +314,7 @@ fun RecurringEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Rec
                 trailingContent = { Switch(form.remind, { v -> viewModel.update { it.copy(remind = v) } }) },
             )
             Text(stringResource(R.string.recurring_explainer), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
         }
     }
     if (confirmDelete) {

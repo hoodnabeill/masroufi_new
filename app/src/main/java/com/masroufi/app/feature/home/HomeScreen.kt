@@ -27,12 +27,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowDownward
-import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -70,6 +67,7 @@ import com.masroufi.app.data.prefs.DashboardSection
 import com.masroufi.app.domain.BudgetStatus
 import com.masroufi.app.domain.GoalMath
 import com.masroufi.app.domain.Insight
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.AnimatedAmount
 import com.masroufi.app.ui.components.AnimatedProgressBar
 import com.masroufi.app.ui.components.CategoryIcons
@@ -298,8 +296,8 @@ private fun BalanceHero(state: HomeUiState, onOpenWallets: () -> Unit, modifier:
             Text(stringResource(R.string.home_this_month), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                FlowPill(Icons.Outlined.ArrowDownward, stringResource(R.string.type_income), state.incomeMinor, state.currency, finance.income, Modifier.weight(1f))
-                FlowPill(Icons.Outlined.ArrowUpward, stringResource(R.string.type_expense), state.expenseMinor, state.currency, finance.expense, Modifier.weight(1f))
+                FlowPill(MIcons.Income, stringResource(R.string.type_income), state.incomeMinor, state.currency, finance.income, Modifier.weight(1f))
+                FlowPill(MIcons.Expense, stringResource(R.string.type_expense), state.expenseMinor, state.currency, finance.expense, Modifier.weight(1f))
             }
         }
         Box(Modifier.matchParentSize().border(1.dp, Brush.linearGradient(listOf(primary.copy(alpha = 0.5f), Color.Transparent, primary.copy(alpha = 0.25f))), shape))
@@ -321,9 +319,9 @@ private fun FlowPill(icon: ImageVector, label: String, minor: Long, currency: St
 private fun QuickActions(onAdd: (String) -> Unit, modifier: Modifier) {
     val finance = LocalFinanceColors.current
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        QuickAction(Icons.Outlined.ArrowUpward, stringResource(R.string.type_expense), finance.expense, Modifier.weight(1f)) { onAdd("EXPENSE") }
-        QuickAction(Icons.Outlined.ArrowDownward, stringResource(R.string.type_income), finance.income, Modifier.weight(1f)) { onAdd("INCOME") }
-        QuickAction(Icons.Outlined.SwapHoriz, stringResource(R.string.type_transfer), finance.transfer, Modifier.weight(1f)) { onAdd("TRANSFER") }
+        QuickAction(MIcons.Expense, stringResource(R.string.type_expense), finance.expense, Modifier.weight(1f)) { onAdd("EXPENSE") }
+        QuickAction(MIcons.Income, stringResource(R.string.type_income), finance.income, Modifier.weight(1f)) { onAdd("INCOME") }
+        QuickAction(MIcons.Transfer, stringResource(R.string.type_transfer), finance.transfer, Modifier.weight(1f)) { onAdd("TRANSFER") }
     }
 }
 

@@ -28,9 +28,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -59,6 +57,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
 import com.masroufi.app.data.model.Gameya
@@ -131,7 +131,7 @@ fun GameyaListScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> 
     val money = LocalMoneyFormatter.current
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.gameya_title), onBack = onBack) },
-        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.gameya_add)) } },
+        floatingActionButton = { GlassFab(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.gameya_add)) } },
     ) { padding ->
         val list = items ?: return@Scaffold
         if (list.isEmpty()) {
@@ -468,7 +468,7 @@ fun GameyaEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Gameya
                 Text(stringResource(R.string.gameya_add_member), modifier = Modifier.padding(start = 8.dp))
             }
             Text(stringResource(R.string.gameya_me_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
         }
     }
 }

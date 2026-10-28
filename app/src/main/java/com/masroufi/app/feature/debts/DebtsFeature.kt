@@ -19,8 +19,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -48,6 +46,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
 import com.masroufi.app.core.toLocalDate
@@ -123,7 +123,7 @@ fun DebtsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Unit,
     var direction by rememberSaveable { mutableStateOf(DebtDirection.I_OWE) }
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.debts_title), onBack = onBack) },
-        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.debt_add)) } },
+        floatingActionButton = { GlassFab(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.debt_add)) } },
     ) { padding ->
         val list = debts ?: return@Scaffold
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -234,7 +234,7 @@ fun DebtDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: De
                         StatusChip(DebtMath.status(debt.originalMinor, item.paidMinor, debt.dueEpochDay, viewModel.today))
                     }
                     Spacer(Modifier.height(8.dp))
-                    Button(onClick = { paying = true }, enabled = remaining > 0, modifier = Modifier.fillMaxWidth()) {
+                    GlassButton(onClick = { paying = true }, enabled = remaining > 0, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.debt_record_payment))
                     }
                 }
@@ -353,7 +353,7 @@ fun DebtEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: DebtEdit
                 trailingContent = { Switch(form.remind, { v -> viewModel.update { it.copy(remind = v) } }) },
                 colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = Color.Transparent),
             )
-            Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
         }
     }
 }

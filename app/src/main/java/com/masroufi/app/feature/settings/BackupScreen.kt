@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -42,6 +41,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.backup.BackupPayload
 import com.masroufi.app.backup.BackupRepository
 import com.masroufi.app.backup.SyncRepository
@@ -225,7 +225,7 @@ fun BackupScreen(onBack: () -> Unit, onPremium: () -> Unit, viewModel: BackupVie
             PasswordField(password, { password = it }, stringResource(R.string.backup_password))
             Text(stringResource(R.string.backup_password_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = { exporter.launch("masroufi-backup.msrf") }, enabled = !busy && password.length >= MIN_PASSWORD, modifier = Modifier.weight(1f)) {
+                GlassButton(onClick = { exporter.launch("masroufi-backup.msrf") }, enabled = !busy && password.length >= MIN_PASSWORD, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.backup_export))
                 }
                 OutlinedButton(onClick = { importer.launch(arrayOf("*/*")) }, enabled = !busy && password.isNotEmpty(), modifier = Modifier.weight(1f)) {
@@ -252,7 +252,7 @@ fun BackupScreen(onBack: () -> Unit, onPremium: () -> Unit, viewModel: BackupVie
                     if (sync.lastConflicts > 0) Text(stringResource(R.string.sync_conflicts, sync.lastConflicts), style = MaterialTheme.typography.bodySmall)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = viewModel::syncNow, enabled = !busy, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.sync_now)) }
+                    GlassButton(onClick = viewModel::syncNow, enabled = !busy, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.sync_now)) }
                     OutlinedButton(onClick = viewModel::disconnect, enabled = !busy, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.sync_disconnect)) }
                 }
             } else if (syncUnlocked) {
@@ -261,7 +261,7 @@ fun BackupScreen(onBack: () -> Unit, onPremium: () -> Unit, viewModel: BackupVie
                 PasswordField(davPassword, { davPassword = it }, stringResource(R.string.sync_password))
                 PasswordField(passphrase, { passphrase = it }, stringResource(R.string.sync_passphrase))
                 Text(stringResource(R.string.sync_passphrase_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Button(
+                GlassButton(
                     onClick = { viewModel.configure(url, user, davPassword, passphrase) },
                     enabled = !busy && url.isNotBlank() && passphrase.length >= MIN_PASSWORD,
                     modifier = Modifier.fillMaxWidth(),

@@ -49,7 +49,14 @@ import androidx.lifecycle.ViewModel
 import com.masroufi.app.R
 import com.masroufi.app.security.AppLockManager
 import com.masroufi.app.security.PinResult
-import com.masroufi.app.ui.components.AuroraBackground
+import com.masroufi.app.ui.components.GlassStage
+import com.masroufi.app.ui.components.liquidPress
+import com.masroufi.app.ui.theme.Motion
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import com.masroufi.app.ui.components.IconBadge
 import com.masroufi.app.ui.components.glass
 import com.masroufi.app.ui.theme.LocalGlass
@@ -128,7 +135,7 @@ fun LockScreen(biometricEnabled: Boolean, viewModel: LockViewModel = hiltViewMod
     }
 
     Surface(Modifier.fillMaxSize(), color = LocalGlass.current.base) {
-        AuroraBackground(layout = 2)
+        GlassStage(layout = 2) {
         Column(
             Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -144,14 +151,7 @@ fun LockScreen(biometricEnabled: Boolean, viewModel: LockViewModel = hiltViewMod
                     .semantics { contentDescription = "${pin.length} / $PIN_LENGTH" },
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                repeat(PIN_LENGTH) { index ->
-                    Box(
-                        Modifier
-                            .size(16.dp)
-                            .clip(CircleShape)
-                            .background(if (index < pin.length) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest),
-                    )
-                }
+                repeat(PIN_LENGTH) { index -> PinDot(filled = index < pin.length) }
             }
             Spacer(Modifier.height(12.dp))
             Text(message.orEmpty(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
@@ -175,6 +175,7 @@ fun LockScreen(biometricEnabled: Boolean, viewModel: LockViewModel = hiltViewMod
                     null
                 },
             )
+        }
         }
     }
 }
@@ -201,10 +202,37 @@ fun PinPad(onDigit: (Char) -> Unit, onBackspace: () -> Unit, extra: (@Composable
 
 @Composable
 private fun PinKey(label: String, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
     Box(
-        Modifier.size(74.dp).glass(CircleShape).clickable(onClick = onClick),
+        Modifier
+            .size(74.dp)
+            .liquidPress(interaction, CircleShape, scaleTo = 1.1f)
+            .glass(CircleShape)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(label, style = MaterialTheme.typography.headlineMedium)
     }
+}
+
+/** A PIN dot fills like a drop landing: it pops past full size on a bouncy spring and settles. */
+@Composable
+private fun PinDot(filled: Boolean) {
+    val reduce = LocalReduceMotion.current
+    val fill by animateFloatAsState(if (filled) 1f else 0f, if (reduce) Motion.snappy<Float>(true) else spring(dampingRatio = 0.45f, stiffness = 600f), label = "pinDot")
+    val primary = MaterialTheme.colorScheme.primary
+    val empty = MaterialTheme.colorScheme.surfaceContainerHighest
+    Box(
+        Modifier
+            .size(16.dp)
+            .graphicsLayer {
+                val s = 1f + 0.25f * fill
+                scaleX = s
+                scaleY = s
+            }
+            .drawBehind {
+                drawCircle(empty)
+                drawCircle(primary, radius = size.minDimension / 2f * fill.coerceIn(0f, 1.2f))
+            },
+    )
 }

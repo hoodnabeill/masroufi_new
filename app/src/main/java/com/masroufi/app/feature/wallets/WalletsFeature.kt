@@ -18,8 +18,6 @@ import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Unarchive
-import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +42,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
 import com.masroufi.app.data.model.TransactionRow
@@ -112,7 +112,7 @@ fun WalletsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Uni
     val wallets by viewModel.wallets.collectAsStateWithLifecycle()
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.wallets_title), onBack = onBack) },
-        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.wallet_add)) } },
+        floatingActionButton = { GlassFab(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.wallet_add)) } },
     ) { padding ->
         val list = wallets ?: return@Scaffold
         if (list.isEmpty()) {
@@ -203,7 +203,7 @@ fun WalletDetailScreen(
         },
         floatingActionButton = {
             if (item != null && !item.wallet.archived) {
-                FloatingActionButton(onClick = { onAddTransaction(item.wallet.id) }) { Icon(Icons.Outlined.Add, stringResource(R.string.transaction_new)) }
+                GlassFab(onClick = { onAddTransaction(item.wallet.id) }) { Icon(Icons.Outlined.Add, stringResource(R.string.transaction_new)) }
             }
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -323,7 +323,7 @@ fun WalletEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Wallet
             AmountField(form.opening, { v -> viewModel.update { it.copy(opening = v) } }, form.currency, label = stringResource(R.string.field_opening_balance))
             Text(stringResource(R.string.field_color), style = MaterialTheme.typography.titleSmall)
             ColorPicker(form.colorIndex) { i -> viewModel.update { it.copy(colorIndex = i) } }
-            Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
         }
     }
 }

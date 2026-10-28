@@ -487,4 +487,8 @@
     <string name="onboarding_page2_title">الخصوصية أولًا</string>
     <string name="onboarding_setup_title">اجعله على ذوقك</string>
     <string name="onboarding_continue">التالي</string>
+    <string name="onboarding_plan_title">لكل جنيه مكانه.</string>
+    <string name="onboarding_plan_body">الميزانيات والأهداف والجمعيات والديون ماشيين مع بعض، فتعرف دايمًا الفلوس اللي تقدر تصرفها فعلًا.</string>
+    <string name="onboarding_skip">تخطي</string>
+    <string name="onboarding_demo_wallet">المحفظة الرئيسية</string>
 </resources>

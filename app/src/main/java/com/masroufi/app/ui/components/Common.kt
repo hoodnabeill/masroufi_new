@@ -4,6 +4,14 @@ import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -100,17 +108,54 @@ fun MasroufiTopBar(
 @Composable
 fun GlassIconButton(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val reduce = LocalReduceMotion.current
-    val scale by animateFloatAsState(if (pressed && !reduce) 0.88f else 1f, Motion.snappy(reduce), label = "iconPress")
     Box(
         modifier
             .size(44.dp)
-            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .liquidPress(interaction, CircleShape, scaleTo = 1.12f)
             .glass(CircleShape)
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { content() }
+}
+
+/** The primary action: a tinted drop of liquid glass that swells under the finger. */
+@Composable
+fun GlassButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val reduce = LocalReduceMotion.current
+    val fade by animateFloatAsState(if (enabled) 1f else 0.42f, Motion.effects(reduce), label = "buttonEnabled")
+    Row(
+        modifier
+            .defaultMinSize(minHeight = 52.dp)
+            .graphicsLayer { alpha = fade }
+            .liquidPress(interaction, CircleShape, scaleTo = 1.04f)
+            .glass(CircleShape, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f), strong = true)
+            .clickable(interactionSource = interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CompositionLocalProvider(
+            LocalContentColor provides MaterialTheme.colorScheme.onPrimary,
+            LocalTextStyle provides MaterialTheme.typography.titleSmall,
+        ) { content() }
+    }
+}
+
+/** Floating add button for pushed screens, the same liquid drop as [GlassButton]. */
+@Composable
+fun GlassFab(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    Box(
+        modifier
+            .size(62.dp)
+            .liquidPress(interaction, CircleShape, scaleTo = 1.1f)
+            .glass(CircleShape, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f), strong = true)
+            .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) { content() }
+    }
 }
 
 /**
@@ -125,13 +170,10 @@ fun PressableCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val reduce = LocalReduceMotion.current
-    val scale by animateFloatAsState(if (pressed && !reduce) 0.965f else 1f, Motion.snappy(reduce), label = "press")
     val shape = MaterialTheme.shapes.large
     Column(
         modifier
-            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .then(if (onClick != null) Modifier.liquidPress(interaction, shape, scaleTo = 0.975f) else Modifier)
             .glass(shape, tint = color)
             .then(
                 if (onClick != null) Modifier.clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick) else Modifier,
@@ -154,11 +196,17 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
 
 @Composable
 fun IconBadge(icon: ImageVector, tint: Color, modifier: Modifier = Modifier, size: Dp = 44.dp) {
+    // A small tinted gem: deeper colour at the bottom, a lit rim on top, so badges read as objects, not dots.
+    val shape = RoundedCornerShape(percent = 34)
     Box(
-        modifier = modifier.size(size).clip(CircleShape).background(tint.copy(alpha = 0.16f)),
+        modifier = modifier
+            .size(size)
+            .clip(shape)
+            .background(Brush.verticalGradient(listOf(tint.copy(alpha = 0.14f), tint.copy(alpha = 0.30f))))
+            .border(1.dp, Brush.verticalGradient(listOf(tint.copy(alpha = 0.55f), tint.copy(alpha = 0.06f))), shape),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.5f))
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.54f))
     }
 }
 

@@ -38,7 +38,6 @@ import androidx.compose.material.icons.outlined.Backspace
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -71,6 +70,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.data.model.TransactionType
 import com.masroufi.app.data.model.WalletWithBalance
@@ -154,7 +154,7 @@ fun TransactionEditorScreen(
                     )
                 }
                 Spacer(Modifier.height(12.dp))
-                Button(onClick = viewModel::save, enabled = state.canSave, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                GlassButton(onClick = viewModel::save, enabled = state.canSave, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                     Text(stringResource(R.string.action_save), style = MaterialTheme.typography.titleMedium)
                 }
             }

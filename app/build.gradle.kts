@@ -50,22 +50,25 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs += listOf(
-            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
-            "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
-            "-opt-in=androidx.compose.animation.ExperimentalSharedTransitionApi",
-            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-        )
-    }
     buildFeatures {
         compose = true
         buildConfig = true
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        optIn.addAll(
+            "androidx.compose.material3.ExperimentalMaterial3Api",
+            "androidx.compose.foundation.ExperimentalFoundationApi",
+            "androidx.compose.foundation.layout.ExperimentalLayoutApi",
+            "androidx.compose.animation.ExperimentalSharedTransitionApi",
+            "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        )
     }
 }
 
@@ -107,7 +110,7 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.coil.compose)
-    implementation(libs.haze)
+    implementation(libs.backdrop)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

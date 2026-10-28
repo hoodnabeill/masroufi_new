@@ -1,25 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A coin with a rising stroke, centred in the 66dp adaptive-icon safe zone. -->
+<!-- Two glass cards fanned behind a glowing coin, inside the 66dp adaptive-icon safe zone (21..87). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFF3C969"
-        android:pathData="M54,30a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FF0B6E4F"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M41,62L50,53L57,59L67,47" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FF0B6E4F"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M60,47L67,47L67,54" />
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="-13"
+        android:translateX="-3"
+        android:translateY="-7">
+        <path
+            android:fillColor="#38FFFFFF"
+            android:strokeColor="#80FFFFFF"
+            android:strokeWidth="1.2"
+            android:pathData="M36,38h36a7,7 0 0 1 7,7v16a7,7 0 0 1 -7,7h-36a7,7 0 0 1 -7,-7v-16a7,7 0 0 1 7,-7z" />
+    </group>
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="5"
+        android:translateY="5">
+        <path
+            android:strokeColor="#CCFFFFFF"
+            android:strokeWidth="1.2"
+            android:pathData="M34,42h40a8,8 0 0 1 8,8v18a8,8 0 0 1 -8,8h-40a8,8 0 0 1 -8,-8v-18a8,8 0 0 1 8,-8z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="26"
+                    android:startY="42"
+                    android:endX="82"
+                    android:endY="76">
+                    <item android:offset="0" android:color="#F2FFFFFF" />
+                    <item android:offset="1" android:color="#B3DDF7EC" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#660B2A36"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M34,53h14M34,61h9" />
+        <path
+            android:fillColor="#FF0FCF8B"
+            android:pathData="M64,64m-9,0a9,9 0 1 1 18,0a9,9 0 1 1 -18,0" />
+        <path
+            android:fillColor="#66FFFFFF"
+            android:pathData="M61,60.5m-3,0a3,3 0 1 1 6,0a3,3 0 1 1 -6,0" />
+    </group>
 </vector>

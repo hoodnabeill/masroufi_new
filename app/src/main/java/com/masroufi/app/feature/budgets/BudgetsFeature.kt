@@ -17,8 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.PieChart
-import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -44,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
 import com.masroufi.app.core.toLocalDate
@@ -311,7 +310,7 @@ fun BudgetEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Budget
                     trailingContent = { Switch(form.rollover, { v -> viewModel.update { it.copy(rollover = v) } }) },
                 )
             }
-            Button(onClick = { viewModel.save(defaultName) }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            GlassButton(onClick = { viewModel.save(defaultName) }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
         }
     }
     if (confirmDelete) {

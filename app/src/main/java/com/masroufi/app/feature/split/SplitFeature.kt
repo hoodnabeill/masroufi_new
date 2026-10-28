@@ -19,10 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CallSplit
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +49,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
 import com.masroufi.app.core.toLocalDate
@@ -143,7 +143,7 @@ fun SplitRulesScreen(onBack: () -> Unit, onAdd: () -> Unit, onEdit: (String) -> 
     HandleEditorEffects(viewModel.effects.flow, snackbar, onDone = { scope.launch { snackbar.showSnackbar(appliedText) } })
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.split_title), onBack = onBack) },
-        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.split_add)) } },
+        floatingActionButton = { GlassFab(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.split_add)) } },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         if (state.loading) return@Scaffold
@@ -196,7 +196,7 @@ private fun IncomeSheet(rule: SplitRule, onDismiss: () -> Unit, onPreview: (Long
             Text(stringResource(R.string.split_income_title, rule.name), style = MaterialTheme.typography.titleLarge)
             AmountField(amount, { amount = it }, rule.currency, label = stringResource(R.string.split_income_amount))
             val parsed = Money.parse(amount, rule.currency) ?: 0
-            Button(onClick = { onPreview(parsed) }, enabled = parsed > 0, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text(stringResource(R.string.split_preview)) }
+            GlassButton(onClick = { onPreview(parsed) }, enabled = parsed > 0, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text(stringResource(R.string.split_preview)) }
         }
     }
 }
@@ -217,7 +217,7 @@ private fun PreviewSheet(preview: SplitPreview, onDismiss: () -> Unit, onConfirm
                     }
                     LabeledRow(stringResource(R.string.split_unallocated)) { MoneyText(r.unallocatedMinor, currency) }
                     Text(stringResource(R.string.split_preview_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(onClick = onConfirm, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text(stringResource(R.string.split_confirm)) }
+                    GlassButton(onClick = onConfirm, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text(stringResource(R.string.split_confirm)) }
                 }
                 is SplitResult.FixedExceedsIncome -> Text(
                     stringResource(R.string.split_error_fixed, money.format(r.fixedTotalMinor, currency), money.format(preview.incomeMinor, currency)),
@@ -371,7 +371,7 @@ fun SplitEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: SplitEd
                 Icon(Icons.Outlined.Add, contentDescription = null)
                 Text(stringResource(R.string.split_add_item), modifier = Modifier.padding(start = 8.dp))
             }
-            Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
         }
     }
     if (confirmDelete) {

@@ -24,9 +24,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.startMillis
 import com.masroufi.app.core.toLocalDate
@@ -218,7 +217,7 @@ private fun FilterSheet(state: TransactionsUiState, onApply: (TransactionFilter)
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(onClick = { onApply(TransactionFilter()) }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.filter_clear)) }
-                Button(
+                GlassButton(
                     onClick = {
                         onApply(draft.copy(minMinor = Money.parse(min, Money.DEFAULT_CURRENCY), maxMinor = Money.parse(max, Money.DEFAULT_CURRENCY)))
                     },

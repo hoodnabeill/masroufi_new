@@ -22,10 +22,8 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Flag
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
 import com.masroufi.app.core.toLocalDate
@@ -259,7 +258,7 @@ fun GoalDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: Go
                     )
                     Spacer(Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Button(onClick = { entrySheet = true }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.goal_contribute)) }
+                        GlassButton(onClick = { entrySheet = true }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.goal_contribute)) }
                         OutlinedButton(onClick = { entrySheet = false }, enabled = item.savedMinor > 0, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.goal_withdraw)) }
                     }
                 }
@@ -401,7 +400,7 @@ fun GoalEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: GoalEdit
             ChipChoice(goalIcons, form.iconKey, { k -> viewModel.update { it.copy(iconKey = k) } }, { "" }, leading = { Icon(CategoryIcons.of(it), contentDescription = it) })
             Text(stringResource(R.string.field_color), style = MaterialTheme.typography.titleSmall)
             ColorPicker(form.colorIndex, { i -> viewModel.update { it.copy(colorIndex = i) } })
-            Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
         }
     }
 }

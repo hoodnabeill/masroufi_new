@@ -22,26 +22,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import com.masroufi.app.ui.components.AuroraBackground
-import com.masroufi.app.ui.components.LocalHazeState
+import com.masroufi.app.ui.components.GlassStage
+import com.masroufi.app.ui.components.LocalBackdropView
+import com.masroufi.app.ui.components.LocalGlassBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.animation.core.CubicBezierEasing
 import com.masroufi.app.ui.theme.LocalReduceMotion
 import com.masroufi.app.ui.theme.Motion
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.PieChart
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.outlined.Flag
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.MoreHoriz
-import androidx.compose.material.icons.outlined.PieChart
-import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -51,7 +43,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -98,23 +89,26 @@ import kotlin.reflect.KClass
 /** Tab screens draw no bottom inset themselves: the shell's navigation bar already accounts for it. */
 val TabInsets = WindowInsets(0, 0, 0, 0)
 
-private data class Tab(val route: Any, val routeClass: KClass<*>, val label: Int, val icon: ImageVector, val selectedIcon: ImageVector)
+private data class Tab(val route: Any, val routeClass: KClass<*>, val label: Int)
 
 private val tabs = listOf(
-    Tab(HomeRoute, HomeRoute::class, R.string.tab_home, Icons.Outlined.Home, Icons.Filled.Home),
-    Tab(TransactionsRoute, TransactionsRoute::class, R.string.tab_transactions, Icons.Outlined.Receipt, Icons.Filled.Receipt),
-    Tab(BudgetsRoute, BudgetsRoute::class, R.string.tab_budgets, Icons.Outlined.PieChart, Icons.Filled.PieChart),
-    Tab(GoalsRoute, GoalsRoute::class, R.string.tab_goals, Icons.Outlined.Flag, Icons.Filled.Flag),
-    Tab(MoreRoute, MoreRoute::class, R.string.tab_more, Icons.Outlined.MoreHoriz, Icons.Filled.MoreHoriz),
+    Tab(HomeRoute, HomeRoute::class, R.string.tab_home),
+    Tab(TransactionsRoute, TransactionsRoute::class, R.string.tab_transactions),
+    Tab(BudgetsRoute, BudgetsRoute::class, R.string.tab_budgets),
+    Tab(GoalsRoute, GoalsRoute::class, R.string.tab_goals),
+    Tab(MoreRoute, MoreRoute::class, R.string.tab_more),
 )
 
-// Fade-through: the old screen leaves quickly before the new one arrives, so translucent screens never overlap.
+val ScreenGlide = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+
+// Zoom-through: the old screen recedes and fades quickly while the new one rises out of depth, so translucent
+// screens barely overlap. Going back plays the same path in reverse (and follows the predictive-back gesture).
 inline fun <reified T : Any> NavGraphBuilder.screen(noinline content: @Composable (NavBackStackEntry) -> Unit) {
     composable<T>(
-        enterTransition = { fadeIn(tween(240, delayMillis = 70)) + scaleIn(initialScale = 0.965f, animationSpec = tween(320, delayMillis = 70)) },
-        exitTransition = { fadeOut(tween(110)) },
-        popEnterTransition = { fadeIn(tween(240, delayMillis = 70)) + scaleIn(initialScale = 1.02f, animationSpec = tween(320, delayMillis = 70)) },
-        popExitTransition = { fadeOut(tween(110)) + scaleOut(targetScale = 0.965f, animationSpec = tween(200)) },
+        enterTransition = { fadeIn(tween(260, delayMillis = 60)) + scaleIn(tween(420, delayMillis = 40, easing = ScreenGlide), initialScale = 0.92f) },
+        exitTransition = { fadeOut(tween(120)) + scaleOut(tween(420, easing = ScreenGlide), targetScale = 1.06f) },
+        popEnterTransition = { fadeIn(tween(260, delayMillis = 60)) + scaleIn(tween(420, delayMillis = 40, easing = ScreenGlide), initialScale = 1.06f) },
+        popExitTransition = { fadeOut(tween(140)) + scaleOut(tween(420, easing = ScreenGlide), targetScale = 0.92f) },
     ) { entry ->
         CompositionLocalProvider(LocalNavAnimatedScope provides this) { content(entry) }
     }
@@ -129,24 +123,24 @@ fun MasroufiNavHost() {
     var lastTab by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(tabIndex) { if (tabIndex >= 0) lastTab = tabIndex }
     var menuOpen by rememberSaveable { mutableStateOf(false) }
-    val haze = remember { HazeState() }
+    val scene = rememberLayerBackdrop()
     val reduce = LocalReduceMotion.current
-    val dockTabs = remember { tabs.map { DockTab(it.label, it.icon, it.selectedIcon) } }
+    val dockTabs = remember { tabs.map { DockTab(it.label) } }
     BackHandler(enabled = menuOpen) { menuOpen = false }
 
-    CompositionLocalProvider(LocalHazeState provides haze) {
-        Box(Modifier.fillMaxSize()) {
-            // Everything inside this box is the haze source the floating dock blurs.
-            Box(Modifier.fillMaxSize().hazeSource(haze)) {
-                AuroraBackground(layout = lastTab)
-                SharedTransitionLayout {
-                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                        NavHost(navController = nav, startDestination = HomeRoute, modifier = Modifier.fillMaxSize()) {
-                            graph(nav)
-                        }
+    Box(Modifier.fillMaxSize()) {
+        // The whole scene (light + screens) is recorded once so the floating chrome above can refract it; glass
+        // inside screens refracts only the ambient light, which keeps the two layers free of feedback loops.
+        GlassStage(layout = lastTab, modifier = Modifier.layerBackdrop(scene)) {
+            SharedTransitionLayout {
+                CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                    NavHost(navController = nav, startDestination = HomeRoute, modifier = Modifier.fillMaxSize()) {
+                        graph(nav)
                     }
                 }
             }
+        }
+        CompositionLocalProvider(LocalGlassBackdrop provides scene, LocalBackdropView provides LocalView.current) {
             QuickAddMenu(
                 open = menuOpen && tabIndex >= 0,
                 onDismiss = { menuOpen = false },
