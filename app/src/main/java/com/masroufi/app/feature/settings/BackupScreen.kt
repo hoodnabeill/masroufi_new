@@ -41,6 +41,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassSnackbarHost
+import com.masroufi.app.ui.components.GlassDialog
+import com.masroufi.app.ui.components.GlassSecondaryButton
+import com.masroufi.app.ui.components.glassFieldColors
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.backup.BackupPayload
 import com.masroufi.app.backup.BackupRepository
@@ -175,7 +180,7 @@ fun syncStatusLabel(status: SyncStatus): Int = when (status) {
 
 @Composable
 private fun PasswordField(value: String, onValueChange: (String) -> Unit, label: String) {
-    OutlinedTextField(
+    OutlinedTextField(colors = glassFieldColors(), shape = MaterialTheme.shapes.medium,
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
@@ -212,10 +217,10 @@ fun BackupScreen(onBack: () -> Unit, onPremium: () -> Unit, viewModel: BackupVie
 
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.backup_title), onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -228,7 +233,7 @@ fun BackupScreen(onBack: () -> Unit, onPremium: () -> Unit, viewModel: BackupVie
                 GlassButton(onClick = { exporter.launch("masroufi-backup.msrf") }, enabled = !busy && password.length >= MIN_PASSWORD, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.backup_export))
                 }
-                OutlinedButton(onClick = { importer.launch(arrayOf("*/*")) }, enabled = !busy && password.isNotEmpty(), modifier = Modifier.weight(1f)) {
+                GlassSecondaryButton(onClick = { importer.launch(arrayOf("*/*")) }, enabled = !busy && password.isNotEmpty(), modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.backup_import))
                 }
             }
@@ -253,11 +258,11 @@ fun BackupScreen(onBack: () -> Unit, onPremium: () -> Unit, viewModel: BackupVie
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     GlassButton(onClick = viewModel::syncNow, enabled = !busy, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.sync_now)) }
-                    OutlinedButton(onClick = viewModel::disconnect, enabled = !busy, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.sync_disconnect)) }
+                    GlassSecondaryButton(onClick = viewModel::disconnect, enabled = !busy, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.sync_disconnect)) }
                 }
             } else if (syncUnlocked) {
-                OutlinedTextField(url, { url = it }, label = { Text(stringResource(R.string.sync_url)) }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
-                OutlinedTextField(user, { user = it }, label = { Text(stringResource(R.string.sync_username)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(url, { url = it }, colors = glassFieldColors(), shape = MaterialTheme.shapes.medium, label = { Text(stringResource(R.string.sync_url)) }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
+                OutlinedTextField(user, { user = it }, colors = glassFieldColors(), shape = MaterialTheme.shapes.medium, label = { Text(stringResource(R.string.sync_username)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 PasswordField(davPassword, { davPassword = it }, stringResource(R.string.sync_password))
                 PasswordField(passphrase, { passphrase = it }, stringResource(R.string.sync_passphrase))
                 Text(stringResource(R.string.sync_passphrase_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -271,7 +276,7 @@ fun BackupScreen(onBack: () -> Unit, onPremium: () -> Unit, viewModel: BackupVie
     }
 
     pending?.let { p ->
-        AlertDialog(
+        GlassDialog(
             onDismissRequest = viewModel::cancelRestore,
             title = { Text(stringResource(R.string.restore_title)) },
             text = {

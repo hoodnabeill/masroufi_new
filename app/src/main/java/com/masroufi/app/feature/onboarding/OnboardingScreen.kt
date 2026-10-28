@@ -19,6 +19,15 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import com.masroufi.app.ui.components.FitAmount
+import com.masroufi.app.ui.components.glassInset
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
@@ -218,34 +227,53 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
 
 @Composable
 private fun StoryPage(offset: () -> Float, active: Boolean, firstDelay: Long, title: String, body: String, art: @Composable () -> Unit) {
-    Column(
-        Modifier.fillMaxSize().padding(horizontal = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Box(
-            Modifier.size(300.dp).graphicsLayer {
-                val o = offset()
-                translationX = o * size.width * 0.55f
-                alpha = 1f - o.absoluteValue.coerceAtMost(1f)
-                val s = 1f - 0.18f * o.absoluteValue.coerceAtMost(1f)
-                scaleX = s
-                scaleY = s
-            },
-            contentAlignment = Alignment.Center,
-        ) { art() }
-        Spacer(Modifier.height(28.dp))
+    // The art is designed at 300dp and scaled down to fit short screens (landscape, large fonts); the page scrolls
+    // if the text still does not fit.
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val artSize = minOf(300.dp, maxHeight * 0.46f, maxWidth * 0.86f)
+        val artScale = artSize / 300.dp
         Column(
-            Modifier.graphicsLayer {
-                val o = offset()
-                translationX = o * size.width * 0.22f
-                alpha = 1f - o.absoluteValue.coerceAtMost(1f)
-            },
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = maxHeight)
+                .padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            KineticText(title, active, firstDelay, MaterialTheme.typography.displaySmall)
-            Spacer(Modifier.height(14.dp))
-            KineticText(body, active, firstDelay + 260, MaterialTheme.typography.bodyLarge, MaterialTheme.colorScheme.onSurfaceVariant, stagger = 14)
+            Box(
+                Modifier.size(artSize).graphicsLayer {
+                    val o = offset()
+                    translationX = o * size.width * 0.55f
+                    alpha = 1f - o.absoluteValue.coerceAtMost(1f)
+                    val s = 1f - 0.18f * o.absoluteValue.coerceAtMost(1f)
+                    scaleX = s
+                    scaleY = s
+                },
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    Modifier.requiredSize(300.dp).graphicsLayer {
+                        scaleX = artScale
+                        scaleY = artScale
+                    },
+                    contentAlignment = Alignment.Center,
+                ) { art() }
+            }
+            Spacer(Modifier.height(28.dp))
+            Column(
+                Modifier.graphicsLayer {
+                    val o = offset()
+                    translationX = o * size.width * 0.22f
+                    alpha = 1f - o.absoluteValue.coerceAtMost(1f)
+                },
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                KineticText(title, active, firstDelay, MaterialTheme.typography.displaySmall, heading = true)
+                Spacer(Modifier.height(14.dp))
+                KineticText(body, active, firstDelay + 260, MaterialTheme.typography.bodyLarge, MaterialTheme.colorScheme.onSurfaceVariant, stagger = 14)
+            }
+            Spacer(Modifier.height(12.dp))
         }
     }
 }
@@ -263,6 +291,7 @@ private fun KineticText(
     style: androidx.compose.ui.text.TextStyle,
     color: Color = Color.Unspecified,
     stagger: Long = 55,
+    heading: Boolean = false,
 ) {
     val reduce = LocalReduceMotion.current
     val words = remember(text) { text.split(' ').filter { it.isNotEmpty() } }
@@ -280,7 +309,14 @@ private fun KineticText(
             }
         }
     }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally)) {
+    // Screen readers get the sentence once, whole, not word by word.
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
+        modifier = Modifier.clearAndSetSemantics {
+            this.text = AnnotatedString(text)
+            if (heading) heading()
+        },
+    ) {
         words.forEachIndexed { i, word ->
             Text(
                 if (i < words.lastIndex) "$word " else word,
@@ -327,8 +363,11 @@ private fun WalletStack(offset: () -> Float) {
         Triple(Offset(26f, -20f), 8f, finance.transfer) to MIcons.Cash,
         Triple(Offset(0f, 34f), -3f, primary) to MIcons.Wallet,
     )
-    val shape = RoundedCornerShape(26.dp)
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    val shape = MaterialTheme.shapes.large
+    // Dark glass carries white text; light glass is pale, so it carries the normal ink colour instead.
+    val ink = if (LocalGlass.current.dark) Color.White else MaterialTheme.colorScheme.onSurface
+    // Decorative example only: hidden from screen readers so the demo balance is never announced as real money.
+    Box(Modifier.fillMaxSize().clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
         cards.forEachIndexed { i, (pose, icon) ->
             val (rest, tilt, tint) = pose
             val depth = i + 1
@@ -351,11 +390,17 @@ private fun WalletStack(offset: () -> Float) {
                     .glass(shape, tint = tint.copy(alpha = 0.34f), strong = i == 2)
                     .padding(18.dp),
             ) {
-                Icon(icon, contentDescription = null, tint = Color.White.copy(alpha = 0.92f), modifier = Modifier.size(26.dp))
+                Icon(icon, contentDescription = null, tint = ink.copy(alpha = 0.92f), modifier = Modifier.size(26.dp))
                 if (i == 2) {
+                    Text(
+                        stringResource(R.string.onboarding_example),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = ink.copy(alpha = 0.85f),
+                        modifier = Modifier.align(Alignment.TopEnd).glassInset(CircleShape).padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
                     Column(Modifier.align(Alignment.BottomStart)) {
-                        Text(stringResource(R.string.onboarding_demo_wallet), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.78f))
-                        AnimatedAmount(balance, Money.DEFAULT_CURRENCY, style = MaterialTheme.typography.headlineSmall, color = Color.White)
+                        Text(stringResource(R.string.onboarding_demo_wallet), style = MaterialTheme.typography.labelLarge, color = ink.copy(alpha = 0.78f))
+                        FitAmount(balance, Money.DEFAULT_CURRENCY, style = MaterialTheme.typography.headlineSmall, color = ink)
                     }
                 }
             }
@@ -488,7 +533,7 @@ private fun SetupPage(
         verticalArrangement = Arrangement.Center,
     ) {
         Spacer(Modifier.height(32.dp))
-        KineticText(stringResource(R.string.onboarding_setup_title), active, 0, MaterialTheme.typography.displaySmall)
+        KineticText(stringResource(R.string.onboarding_setup_title), active, 0, MaterialTheme.typography.displaySmall, heading = true)
         Spacer(Modifier.height(24.dp))
         PressableCard(onClick = null) {
             Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleSmall)

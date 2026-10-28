@@ -11,10 +11,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +37,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassIconButton
+import com.masroufi.app.ui.components.GlassSnackbarHost
+import com.masroufi.app.ui.components.FitAmount
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.core.toLocalDate
 import com.masroufi.app.data.model.TransactionType
 import com.masroufi.app.ui.components.AnimatedAmount
@@ -73,18 +74,18 @@ fun TransactionDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewMo
         topBar = {
             MasroufiTopBar(stringResource(R.string.transaction_details), onBack = onBack) {
                 row?.let { current ->
-                    IconButton(onClick = { viewModel.duplicateNow() }) { Icon(Icons.Outlined.ContentCopy, stringResource(R.string.action_duplicate)) }
-                    IconButton(onClick = { onEdit(current.transaction.id) }) { Icon(Icons.Outlined.Edit, stringResource(R.string.action_edit)) }
-                    IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                    GlassIconButton(onClick = { viewModel.duplicateNow() }) { Icon(MIcons.Copy, stringResource(R.string.action_duplicate)) }
+                    GlassIconButton(onClick = { onEdit(current.transaction.id) }) { Icon(MIcons.Pencil, stringResource(R.string.action_edit)) }
+                    GlassIconButton(onClick = { confirmDelete = true }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
                 }
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         val current = row ?: return@Scaffold
         val tx = current.transaction
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -93,7 +94,7 @@ fun TransactionDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewMo
                     if (tx.type == TransactionType.TRANSFER) typeColor(tx.type) else categoryColor(current.categoryColor),
                     size = 64.dp,
                 )
-                AnimatedAmount(tx.amountMinor, tx.currency, style = AmountStyle, color = typeColor(tx.type), modifier = Modifier.padding(top = 8.dp))
+                FitAmount(tx.amountMinor, tx.currency, style = AmountStyle, color = typeColor(tx.type), modifier = Modifier.padding(top = 8.dp))
                 Text(typeLabel(tx.type), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             PressableCard(onClick = null) {

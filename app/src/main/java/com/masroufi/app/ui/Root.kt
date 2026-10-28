@@ -56,7 +56,7 @@ fun MasroufiRoot(viewModel: RootViewModel = hiltViewModel()) {
     val locale = LocalConfiguration.current.locales[0]
     val formatter = remember(locale) { MoneyFormatter(locale) }
 
-    MasroufiTheme(mode = current.themeMode, dynamicColor = current.dynamicColor) {
+    MasroufiTheme(mode = current.themeMode, dynamicColor = current.dynamicColor, solidGlass = current.solidGlass) {
         CompositionLocalProvider(LocalMoneyFormatter provides formatter) {
             Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                 val content = when {

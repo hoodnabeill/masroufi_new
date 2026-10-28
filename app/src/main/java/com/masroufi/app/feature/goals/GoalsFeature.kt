@@ -17,11 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -50,6 +45,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassSnackbarHost
+import com.masroufi.app.ui.components.GlassSheet
+import com.masroufi.app.ui.components.GlassSecondaryButton
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
@@ -119,16 +119,16 @@ fun GoalsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: GoalsVie
     val goals by viewModel.goals.collectAsStateWithLifecycle()
     Scaffold(
         contentWindowInsets = TabInsets,
-        topBar = { MasroufiTopBar(stringResource(R.string.tab_goals)) { GlassIconButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.goal_add)) } } },
+        topBar = { MasroufiTopBar(stringResource(R.string.tab_goals)) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.goal_add)) } } },
     ) { padding ->
         val list = goals ?: return@Scaffold
         if (list.isEmpty()) {
-            EmptyState(Icons.Outlined.Flag, stringResource(R.string.goals_empty_title), stringResource(R.string.goals_empty_body), Modifier.padding(padding), stringResource(R.string.goal_add), onAdd)
+            EmptyState(MIcons.Goals, stringResource(R.string.goals_empty_title), stringResource(R.string.goals_empty_body), Modifier.padding(padding), stringResource(R.string.goal_add), onAdd)
             return@Scaffold
         }
         LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, DockClearance),
+            Modifier.fillMaxSize().padding(padding).edgeFade(),
+            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, DockClearance),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
@@ -214,18 +214,18 @@ fun GoalDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: Go
         topBar = {
             MasroufiTopBar(item?.goal?.name.orEmpty(), onBack = onBack) {
                 if (item != null) {
-                    IconButton(onClick = { onEdit(item.goal.id) }) { Icon(Icons.Outlined.Edit, stringResource(R.string.action_edit)) }
-                    IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                    GlassIconButton(onClick = { onEdit(item.goal.id) }) { Icon(MIcons.Pencil, stringResource(R.string.action_edit)) }
+                    GlassIconButton(onClick = { confirmDelete = true }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
                 }
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (item == null) return@Scaffold
         val goal = item.goal
         val fraction = GoalMath.fraction(item.savedMinor, goal.targetMinor)
         val color = categoryColor(goal.colorIndex)
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
                 PressableCard(onClick = null, modifier = Modifier.sharedContainer("goal-${goal.id}")) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -259,7 +259,7 @@ fun GoalDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: Go
                     Spacer(Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         GlassButton(onClick = { entrySheet = true }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.goal_contribute)) }
-                        OutlinedButton(onClick = { entrySheet = false }, enabled = item.savedMinor > 0, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.goal_withdraw)) }
+                        GlassSecondaryButton(onClick = { entrySheet = false }, enabled = item.savedMinor > 0, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.goal_withdraw)) }
                     }
                 }
             }
@@ -272,7 +272,7 @@ fun GoalDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: Go
                         Text(entry.occurredAt.toLocalDate().format(dates), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     MoneyText(entry.amountMinor, goal.currency, color = if (entry.amountMinor > 0) finance.income else finance.expense, signed = true)
-                    IconButton(onClick = { viewModel.deleteEntry(entry) }) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                    IconButton(onClick = { viewModel.deleteEntry(entry) }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
                 }
             }
         }
@@ -296,13 +296,13 @@ fun GoalDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: Go
 fun AmountSheet(title: String, currency: String, onDismiss: () -> Unit, onConfirm: (Long, String) -> Unit, initial: String = "") {
     var amount by rememberSaveable { mutableStateOf(initial) }
     var note by rememberSaveable { mutableStateOf("") }
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    GlassSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(title, style = MaterialTheme.typography.titleLarge)
             AmountField(amount, { amount = it }, currency)
             TextInput(note, { note = it }, stringResource(R.string.field_note))
             val parsed = Money.parse(amount, currency) ?: 0
-            FilledTonalButton(onClick = { onConfirm(parsed, note) }, enabled = parsed > 0, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+            GlassSecondaryButton(onClick = { onConfirm(parsed, note) }, enabled = parsed > 0, modifier = Modifier.fillMaxWidth().height(52.dp)) {
                 Text(stringResource(R.string.action_save))
             }
         }
@@ -384,11 +384,11 @@ fun GoalEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: GoalEdit
     HandleEditorEffects(viewModel.effects.flow, snackbar, onDone)
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(if (form.isNew) R.string.goal_add else R.string.goal_edit), onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (!form.loaded) return@Scaffold
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name))

@@ -30,6 +30,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
@@ -80,6 +85,7 @@ import com.masroufi.app.ui.components.rememberHaptics
 import com.masroufi.app.ui.theme.LocalFinanceColors
 import com.masroufi.app.ui.theme.LocalGlass
 import com.masroufi.app.ui.theme.LocalReduceMotion
+import com.masroufi.app.ui.theme.LocalSolidGlass
 import com.masroufi.app.ui.theme.Motion
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -88,6 +94,9 @@ import kotlin.math.roundToInt
 
 /** Space tab screens leave at the bottom so their last item can scroll clear of the floating dock. */
 val DockClearance = 132.dp
+
+/** On tablets and landscape the dock stays phone-sized and centred instead of stretching edge to edge. */
+val DockMaxWidth = 560.dp
 
 data class DockTab(val label: Int)
 
@@ -99,9 +108,9 @@ data class DockTab(val label: Int)
 private fun Modifier.dockGlass(): Modifier {
     val glass = LocalGlass.current
     val backdrop = LocalGlassBackdrop.current
-    val live = backdrop != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val live = backdrop != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !LocalSolidGlass.current
     val tint = when {
-        glass.dark -> Color(0xFF0B0F14).copy(alpha = if (live) 0.38f else 0.92f)
+        glass.dark -> glass.base.copy(alpha = if (live) 0.4f else 0.94f)
         else -> Color.White.copy(alpha = if (live) 0.46f else 0.94f)
     }
     if (!live || backdrop == null) {
@@ -164,7 +173,7 @@ fun Dock(
     val last = tabs.lastIndex
 
     Row(
-        modifier.fillMaxWidth().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 10.dp),
+        modifier.widthIn(max = DockMaxWidth).fillMaxWidth().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -289,7 +298,15 @@ private fun DockItem(tab: DockTab, index: Int, selected: Boolean, modifier: Modi
                 translationY = -2.dp.toPx() * p
             },
         )
-        Text(stringResource(tab.label), style = MaterialTheme.typography.labelSmall, color = color, maxLines = 1)
+        // Labels shrink (down to 8sp) rather than clip when a translation or font scale makes them longer than the slot.
+        BasicText(
+            stringResource(tab.label),
+            style = MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Center),
+            color = { color },
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.labelSmall.fontSize),
+            modifier = Modifier.padding(horizontal = 2.dp),
+        )
     }
 }
 
@@ -333,9 +350,10 @@ fun QuickAddMenu(open: Boolean, onDismiss: () -> Unit, onPick: (String) -> Unit)
         Triple("INCOME", R.string.type_income, MIcons.Income) to finance.income,
         Triple("TRANSFER", R.string.type_transfer, MIcons.Transfer) to finance.transfer,
     )
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+    // Anchored to the + button: the column lives in the same centred, width-capped frame as the dock.
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
         Column(
-            Modifier.navigationBarsPadding().padding(end = 16.dp, bottom = 92.dp),
+            Modifier.widthIn(max = DockMaxWidth).fillMaxWidth().navigationBarsPadding().padding(end = 16.dp, bottom = 92.dp),
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {

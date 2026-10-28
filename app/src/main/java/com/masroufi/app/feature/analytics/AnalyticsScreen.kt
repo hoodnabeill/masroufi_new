@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -28,6 +26,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.core.DateWindow
 import com.masroufi.app.data.model.Category
 import com.masroufi.app.data.model.DebtDirection
@@ -167,13 +167,13 @@ fun AnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltView
 
     Scaffold(topBar = { MasroufiTopBar(stringResource(R.string.analytics_title), onBack = onBack) }) { padding ->
         if (state.loading) return@Scaffold
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
                 SegmentedChoice(listOf(1, 3, 6, 12), state.months, viewModel::setMonths, { stringResource(R.string.analytics_months, it) })
             }
             val months = state.monthly.map { it.month }.distinct().sorted()
             if (months.isEmpty()) {
-                item { EmptyState(Icons.Outlined.Insights, stringResource(R.string.analytics_empty_title), stringResource(R.string.analytics_empty_body)) }
+                item { EmptyState(MIcons.Insights, stringResource(R.string.analytics_empty_title), stringResource(R.string.analytics_empty_body)) }
                 return@LazyColumn
             }
             item {

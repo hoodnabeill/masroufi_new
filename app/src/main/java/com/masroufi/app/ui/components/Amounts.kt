@@ -7,7 +7,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -129,4 +133,40 @@ fun typeColor(type: TransactionType): Color = when (type) {
     TransactionType.INCOME -> LocalFinanceColors.current.income
     TransactionType.EXPENSE -> LocalFinanceColors.current.expense
     TransactionType.TRANSFER -> LocalFinanceColors.current.transfer
+}
+
+/**
+ * [AnimatedAmount] that shrinks its type until the whole amount fits the available width, so large balances (common
+ * in EGP) and large font-scale settings never clip. Measures the formatted text once per value/width change.
+ */
+@Composable
+fun FitAmount(
+    minor: Long,
+    currency: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
+    color: Color = Color.Unspecified,
+    signed: Boolean = false,
+) {
+    val text = LocalMoneyFormatter.current.format(minor, currency, signed)
+    val measurer = rememberTextMeasurer()
+    BoxWithConstraints(modifier) {
+        val maxWidth = constraints.maxWidth
+        val fitted = remember(text, style, maxWidth) {
+            val tabular = style.copy(fontFeatureSettings = "tnum")
+            val width = measurer.measure(text, tabular, maxLines = 1, softWrap = false).size.width
+            // Each digit is its own text cell, which adds a hair of width over one run of text; leave headroom.
+            val limit = maxWidth * 0.94f
+            if (maxWidth == Constraints.Infinity || width <= limit || !tabular.fontSize.isSpecified) {
+                tabular
+            } else {
+                val factor = limit / width
+                tabular.copy(
+                    fontSize = tabular.fontSize * factor,
+                    lineHeight = if (tabular.lineHeight.isSpecified) tabular.lineHeight * factor else tabular.lineHeight,
+                )
+            }
+        }
+        AnimatedAmount(minor, currency, style = fitted, color = color, signed = signed)
+    }
 }

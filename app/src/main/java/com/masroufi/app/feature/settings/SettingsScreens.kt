@@ -13,9 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +39,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassDialog
+import com.masroufi.app.ui.components.GlassSecondaryButton
+import com.masroufi.app.ui.components.GlassSwitch
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.data.prefs.AppSettings
 import com.masroufi.app.data.prefs.SettingsRepository
 import com.masroufi.app.data.prefs.ThemeMode
@@ -99,7 +101,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
     }
     Scaffold(topBar = { MasroufiTopBar(stringResource(R.string.settings_title), onBack = onBack) }) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleSmall)
@@ -126,16 +128,21 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_dynamic_color)) },
                     supportingContent = { Text(stringResource(R.string.settings_dynamic_color_sub)) },
-                    trailingContent = { Switch(s.dynamicColor, { v -> viewModel.launch { setDynamicColor(v) } }) },
+                    trailingContent = { GlassSwitch(s.dynamicColor, { v -> viewModel.launch { setDynamicColor(v) } }) },
                 )
             }
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.settings_solid_glass)) },
+                supportingContent = { Text(stringResource(R.string.settings_solid_glass_sub)) },
+                trailingContent = { GlassSwitch(s.solidGlass, { v -> viewModel.launch { setSolidGlass(v) } }) },
+            )
             CurrencyField(s.primaryCurrency, { c -> viewModel.launch { setPrimaryCurrency(c) } })
             Text(stringResource(R.string.settings_currency_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             ListItem(
                 headlineContent = { Text(stringResource(R.string.settings_notifications)) },
                 supportingContent = { Text(stringResource(R.string.settings_notifications_sub)) },
                 trailingContent = {
-                    Switch(s.notificationsEnabled, { v ->
+                    GlassSwitch(s.notificationsEnabled, { v ->
                         if (v && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                         } else {
@@ -161,13 +168,13 @@ fun SecurityScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
     val cancel = stringResource(R.string.action_cancel)
     Scaffold(topBar = { MasroufiTopBar(stringResource(R.string.security_title), onBack = onBack) }) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.security_app_lock)) },
                 supportingContent = { Text(stringResource(R.string.security_app_lock_sub)) },
-                trailingContent = { Switch(s.lockEnabled, { v -> if (v) settingPin = true else confirmDisable = true }) },
+                trailingContent = { GlassSwitch(s.lockEnabled, { v -> if (v) settingPin = true else confirmDisable = true }) },
             )
             if (s.lockEnabled) {
                 val available = canUseBiometric(activity)
@@ -175,7 +182,7 @@ fun SecurityScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                     headlineContent = { Text(stringResource(R.string.security_biometric)) },
                     supportingContent = { Text(stringResource(if (available) R.string.security_biometric_sub else R.string.security_biometric_unavailable)) },
                     trailingContent = {
-                        Switch(s.biometricEnabled, { v ->
+                        GlassSwitch(s.biometricEnabled, { v ->
                             // Confirm the sensor works before relying on it, so the user can't lock themselves into a broken path.
                             if (v) showBiometricPrompt(activity, biometricTitle, cancel) { viewModel.launch { setBiometric(true) } } else viewModel.launch { setBiometric(false) }
                         }, enabled = available)
@@ -186,12 +193,12 @@ fun SecurityScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                     listOf(0, 30, 60, 300), s.lockTimeoutSeconds, { t -> viewModel.launch { setLockTimeout(t) } },
                     { if (it == 0) stringResource(R.string.security_timeout_immediate) else stringResource(R.string.security_timeout_seconds, it) },
                 )
-                OutlinedButton(onClick = { settingPin = true }) { Text(stringResource(R.string.security_change_pin)) }
+                GlassSecondaryButton(onClick = { settingPin = true }) { Text(stringResource(R.string.security_change_pin)) }
             }
             ListItem(
                 headlineContent = { Text(stringResource(R.string.security_hide_recents)) },
                 supportingContent = { Text(stringResource(R.string.security_hide_recents_sub)) },
-                trailingContent = { Switch(s.hideInRecents, { v -> viewModel.launch { setHideInRecents(v) } }) },
+                trailingContent = { GlassSwitch(s.hideInRecents, { v -> viewModel.launch { setHideInRecents(v) } }) },
             )
             PressableCard(onClick = null) {
                 Text(stringResource(R.string.security_model_title), style = MaterialTheme.typography.titleSmall)
@@ -203,7 +210,7 @@ fun SecurityScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
         SetPinDialog(onDismiss = { settingPin = false }, onSet = { viewModel.enableLock(it); settingPin = false })
     }
     if (confirmDisable) {
-        AlertDialog(
+        GlassDialog(
             onDismissRequest = { confirmDisable = false },
             title = { Text(stringResource(R.string.security_disable_title)) },
             text = { Text(stringResource(R.string.security_disable_body)) },
@@ -219,9 +226,9 @@ private fun SetPinDialog(onDismiss: () -> Unit, onSet: (String) -> Unit) {
     var pin by remember { mutableStateOf("") }
     var mismatch by remember { mutableStateOf(false) }
     val haptics = rememberHaptics()
-    AlertDialog(
+    GlassDialog(
         onDismissRequest = onDismiss,
-        icon = { androidx.compose.material3.Icon(Icons.Outlined.Lock, contentDescription = null) },
+        icon = { androidx.compose.material3.Icon(MIcons.Lock, contentDescription = null) },
         title = { Text(stringResource(if (first == null) R.string.security_enter_pin else R.string.security_confirm_pin)) },
         text = {
             Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -260,9 +267,9 @@ class PremiumViewModel @Inject constructor(entitlements: Entitlements) : ViewMod
 fun PremiumScreen(onBack: () -> Unit, viewModel: PremiumViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { MasroufiTopBar(stringResource(R.string.premium_title), onBack = onBack) }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             EmptyState(
-                Icons.Outlined.WorkspacePremium,
+                MIcons.Crown,
                 stringResource(R.string.premium_title),
                 stringResource(if (state.source == EntitlementSource.EARLY_ACCESS) R.string.premium_early_access else R.string.premium_active),
             )

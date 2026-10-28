@@ -13,11 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +41,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
-import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassIconButton
+import com.masroufi.app.ui.components.GlassSnackbarHost
+import com.masroufi.app.ui.components.GlassSwitch
+import com.masroufi.app.ui.components.FitAmount
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
@@ -122,8 +122,7 @@ fun DebtsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Unit,
     val debts by viewModel.debts.collectAsStateWithLifecycle()
     var direction by rememberSaveable { mutableStateOf(DebtDirection.I_OWE) }
     Scaffold(
-        topBar = { MasroufiTopBar(stringResource(R.string.debts_title), onBack = onBack) },
-        floatingActionButton = { GlassFab(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.debt_add)) } },
+        topBar = { MasroufiTopBar(stringResource(R.string.debts_title), onBack = onBack) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.debt_add)) } } },
     ) { padding ->
         val list = debts ?: return@Scaffold
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -133,10 +132,10 @@ fun DebtsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Unit,
             )
             val visible = list.filter { it.debt.direction == direction }
             if (visible.isEmpty()) {
-                EmptyState(Icons.Outlined.Handshake, stringResource(R.string.debts_empty_title), stringResource(R.string.debts_empty_body), actionLabel = stringResource(R.string.debt_add), onAction = onAdd)
+                EmptyState(MIcons.Handshake, stringResource(R.string.debts_empty_title), stringResource(R.string.debts_empty_body), actionLabel = stringResource(R.string.debt_add), onAction = onAdd)
             } else {
                 val (settled, open) = visible.partition { it.paidMinor >= it.debt.originalMinor }
-                LazyColumn(contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                LazyColumn(contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(open, key = { it.debt.id }) { DebtCard(it, viewModel.today, onOpen, Modifier.animateItem()) }
                     if (settled.isNotEmpty()) {
                         item { SectionHeader(stringResource(R.string.debt_status_settled)) }
@@ -211,21 +210,21 @@ fun DebtDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: De
         topBar = {
             MasroufiTopBar(item?.debt?.personName.orEmpty(), onBack = onBack) {
                 if (item != null) {
-                    IconButton(onClick = { onEdit(item.debt.id) }) { Icon(Icons.Outlined.Edit, stringResource(R.string.action_edit)) }
-                    IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                    GlassIconButton(onClick = { onEdit(item.debt.id) }) { Icon(MIcons.Pencil, stringResource(R.string.action_edit)) }
+                    GlassIconButton(onClick = { confirmDelete = true }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
                 }
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (item == null) return@Scaffold
         val debt = item.debt
         val remaining = DebtMath.remaining(debt.originalMinor, item.paidMinor)
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
                 PressableCard(onClick = null, color = MaterialTheme.colorScheme.primaryContainer) {
                     Text(stringResource(debtLabel(debt.direction)), style = MaterialTheme.typography.labelLarge)
-                    AnimatedAmount(remaining, debt.currency, style = AmountStyle)
+                    FitAmount(remaining, debt.currency, style = AmountStyle)
                     Text(stringResource(R.string.debt_original, money.format(debt.originalMinor, debt.currency)), style = MaterialTheme.typography.bodyMedium)
                     Text(stringResource(R.string.debt_paid, money.format(item.paidMinor, debt.currency)), style = MaterialTheme.typography.bodyMedium)
                     debt.dueEpochDay?.let { Text(stringResource(R.string.debt_due, LocalDate.ofEpochDay(it).format(dates)), style = MaterialTheme.typography.bodyMedium) }
@@ -248,7 +247,7 @@ fun DebtDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: De
                         if (payment.note.isNotBlank()) Text(payment.note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     MoneyText(payment.amountMinor, debt.currency)
-                    IconButton(onClick = { viewModel.deletePayment(payment) }) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                    IconButton(onClick = { viewModel.deletePayment(payment) }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
                 }
             }
         }
@@ -335,11 +334,11 @@ fun DebtEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: DebtEdit
     HandleEditorEffects(viewModel.effects.flow, snackbar, onDone)
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(if (form.isNew) R.string.debt_add else R.string.debt_edit), onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (!form.loaded) return@Scaffold
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             SegmentedChoice(DebtDirection.entries.toList(), form.direction, { d -> viewModel.update { it.copy(direction = d) } }, { stringResource(debtLabel(it)) })
@@ -350,7 +349,7 @@ fun DebtEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: DebtEdit
             TextInput(form.note, { v -> viewModel.update { it.copy(note = v) } }, stringResource(R.string.field_note), singleLine = false)
             ListItem(
                 headlineContent = { Text(stringResource(R.string.debt_remind)) },
-                trailingContent = { Switch(form.remind, { v -> viewModel.update { it.copy(remind = v) } }) },
+                trailingContent = { GlassSwitch(form.remind, { v -> viewModel.update { it.copy(remind = v) } }) },
                 colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = Color.Transparent),
             )
             GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }

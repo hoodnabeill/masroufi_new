@@ -81,7 +81,7 @@ val LocalGlass = staticCompositionLocalOf { DarkGlass }
 /** Background and plain surfaces are transparent: the ambient aurora behind every screen is the canvas. */
 private fun scheme(dark: Boolean, glass: GlassTokens): ColorScheme {
     val onBase = if (dark) Color(0xFFF4F6FA) else Color(0xFF0B0F14)
-    val primary = if (dark) Color(0xFF4BE3A5) else Color(0xFF0A9F67)
+    val primary = if (dark) Color(0xFF4BE3A5) else Color(0xFF087A50)
     val sheet = if (dark) Color(0xF2111519) else Color(0xF5FBFCFE)
     val common = if (dark) darkColorScheme() else lightColorScheme()
     return common.copy(
@@ -93,7 +93,7 @@ private fun scheme(dark: Boolean, glass: GlassTokens): ColorScheme {
         onSecondary = Color.White,
         secondaryContainer = primary.copy(alpha = if (dark) 0.22f else 0.16f),
         onSecondaryContainer = onBase,
-        tertiary = if (dark) Color(0xFFFFC56B) else Color(0xFFB57400),
+        tertiary = if (dark) Color(0xFFFFC56B) else Color(0xFF8F5B00),
         onTertiary = Color(0xFF2A1800),
         tertiaryContainer = Color(0xFFFFC56B).copy(alpha = 0.18f),
         onTertiaryContainer = onBase,
@@ -135,10 +135,10 @@ private val DarkFinance = FinanceColors(
 )
 
 private val LightFinance = FinanceColors(
-    income = Color(0xFF0A9F67),
-    expense = Color(0xFFE0394B),
+    income = Color(0xFF087A50),
+    expense = Color(0xFFD12C3F),
     transfer = Color(0xFF2F6FE0),
-    warning = Color(0xFFC07A00),
+    warning = Color(0xFF9A6200),
     categories = listOf(
         Color(0xFFE8613C), Color(0xFF14A897), Color(0xFF2F6FE0), Color(0xFFD9A400), Color(0xFF8E4FE0), Color(0xFF0A9F67),
         Color(0xFFE07A10), Color(0xFF168ED6), Color(0xFFE0394B), Color(0xFF9C7550), Color(0xFF0E9C80), Color(0xFFD9468F),
@@ -149,6 +149,17 @@ val LocalFinanceColors = staticCompositionLocalOf { DarkFinance }
 
 /** True when the user turned animations off in system settings; motion then snaps instead of springing. */
 val LocalReduceMotion = staticCompositionLocalOf { false }
+
+/** The user asked for solid surfaces (Settings): glass draws an opaque frosted fill, no refraction. */
+val LocalSolidGlass = staticCompositionLocalOf { false }
+
+/**
+ * Navigation transitions are built outside composition, so they cannot read [LocalReduceMotion]; the theme mirrors
+ * the setting here. shortcut: read once per theme composition, so a change applies on the next recomposition.
+ */
+object MotionFlags {
+    @Volatile var reduce: Boolean = false
+}
 
 /**
  * Springs follow Apple's damping/response model: stiffness = (2π / response)². Critically damped by default;
@@ -231,7 +242,7 @@ private val AppShapes = Shapes(
 )
 
 @Composable
-fun MasroufiTheme(mode: ThemeMode, dynamicColor: Boolean, content: @Composable () -> Unit) {
+fun MasroufiTheme(mode: ThemeMode, dynamicColor: Boolean, solidGlass: Boolean = false, content: @Composable () -> Unit) {
     val dark = when (mode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
@@ -250,6 +261,7 @@ fun MasroufiTheme(mode: ThemeMode, dynamicColor: Boolean, content: @Composable (
     val reduceMotion = remember(context) {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
     }
+    SideEffect { MotionFlags.reduce = reduceMotion }
     val arabic = LocalConfiguration.current.locales[0].language == "ar"
     val typography = remember(arabic) { typography(arabic) }
 
@@ -267,6 +279,7 @@ fun MasroufiTheme(mode: ThemeMode, dynamicColor: Boolean, content: @Composable (
     CompositionLocalProvider(
         LocalFinanceColors provides if (dark) DarkFinance else LightFinance,
         LocalReduceMotion provides reduceMotion,
+        LocalSolidGlass provides solidGlass,
         LocalGlass provides glass,
     ) {
         MaterialTheme(colorScheme = colors, typography = typography, shapes = AppShapes, content = content)

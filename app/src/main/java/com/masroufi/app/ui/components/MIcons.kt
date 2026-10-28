@@ -251,6 +251,205 @@ object MIcons {
             line { circle(7.5f, 7.5f, 3.6f); rect(13f, 4f, 20f, 11f, 2f); moveTo(7.5f, 13f); lineTo(11f, 20f); lineTo(4f, 20f); close(); rect(13f, 13f, 20f, 20f, 3.5f) }
         }
     }
+    // Actions and system glyphs, drawn in the same duotone language as everything above.
+    val Back by lazy { duo("back", autoMirror = true) { line { moveTo(14.5f, 5.5f); lineTo(8f, 12f); lineTo(14.5f, 18.5f) } } }
+    val ChevronForward by lazy { duo("forward", autoMirror = true) { line { moveTo(9.5f, 5.5f); lineTo(16f, 12f); lineTo(9.5f, 18.5f) } } }
+    val ChevronDown by lazy { duo("chevronDown") { line { moveTo(6.5f, 9.5f); lineTo(12f, 15f); lineTo(17.5f, 9.5f) } } }
+    val ChevronUp by lazy { duo("chevronUp") { line { moveTo(6.5f, 14.5f); lineTo(12f, 9f); lineTo(17.5f, 14.5f) } } }
+    val ArrowUp by lazy { duo("arrowUp") { line { moveTo(12f, 19f); lineTo(12f, 5f); moveTo(6.5f, 10.5f); lineTo(12f, 5f); lineTo(17.5f, 10.5f) } } }
+    val ArrowDown by lazy { duo("arrowDown") { line { moveTo(12f, 5f); lineTo(12f, 19f); moveTo(6.5f, 13.5f); lineTo(12f, 19f); lineTo(17.5f, 13.5f) } } }
+    val Check by lazy { duo("check") { line { moveTo(5f, 12.5f); lineTo(10f, 17.5f); lineTo(19f, 7f) } } }
+    val Close by lazy { duo("close") { line { moveTo(6.5f, 6.5f); lineTo(17.5f, 17.5f); moveTo(17.5f, 6.5f); lineTo(6.5f, 17.5f) } } }
+    val Filter by lazy { duo("filter") { line { moveTo(4f, 7f); lineTo(20f, 7f); moveTo(7f, 12f); lineTo(17f, 12f); moveTo(10f, 17f); lineTo(14f, 17f) } } }
+    val Trash by lazy {
+        duo("trash") {
+            soft { trashBody() }
+            line {
+                trashBody()
+                moveTo(4.5f, 7.5f); lineTo(19.5f, 7.5f)
+                moveTo(9.5f, 7.5f); lineTo(9.5f, 5.5f); curveTo(9.5f, 4.7f, 10.2f, 4f, 11f, 4f); lineTo(13f, 4f); curveTo(13.8f, 4f, 14.5f, 4.7f, 14.5f, 5.5f); lineTo(14.5f, 7.5f)
+                moveTo(10.5f, 11f); lineTo(10.5f, 17f); moveTo(13.5f, 11f); lineTo(13.5f, 17f)
+            }
+        }
+    }
+    val Pencil by lazy {
+        duo("pencil") {
+            soft { pencilBody() }
+            line { pencilBody(); moveTo(13.5f, 6.5f); lineTo(17.5f, 10.5f) }
+        }
+    }
+    val Copy by lazy {
+        duo("copy") {
+            soft { rect(8.5f, 8.5f, 20f, 20f, 2.5f) }
+            line {
+                rect(8.5f, 8.5f, 20f, 20f, 2.5f)
+                moveTo(15.5f, 8.5f); lineTo(15.5f, 6f); curveTo(15.5f, 4.6f, 14.4f, 3.5f, 13f, 3.5f); lineTo(6f, 3.5f)
+                curveTo(4.6f, 3.5f, 3.5f, 4.6f, 3.5f, 6f); lineTo(3.5f, 13f); curveTo(3.5f, 14.4f, 4.6f, 15.5f, 6f, 15.5f); lineTo(8.5f, 15.5f)
+            }
+        }
+    }
+    val Lock by lazy {
+        duo("lock") {
+            soft { rect(5f, 10.5f, 19f, 20.5f, 3f) }
+            line { rect(5f, 10.5f, 19f, 20.5f, 3f); moveTo(8f, 10.5f); lineTo(8f, 8f); curveTo(8f, 5.8f, 9.8f, 4f, 12f, 4f); curveTo(14.2f, 4f, 16f, 5.8f, 16f, 8f); lineTo(16f, 10.5f) }
+            solid { circle(12f, 15.5f, 1.5f) }
+        }
+    }
+    val Insights by lazy {
+        duo("insights") {
+            soft { rect(5.5f, 13f, 8.5f, 20f, 1.2f); rect(10.5f, 9f, 13.5f, 20f, 1.2f); rect(15.5f, 11.5f, 18.5f, 20f, 1.2f) }
+            line { rect(5.5f, 13f, 8.5f, 20f, 1.2f); rect(10.5f, 9f, 13.5f, 20f, 1.2f); rect(15.5f, 11.5f, 18.5f, 20f, 1.2f) }
+            solid { sparkle(18f, 5f, 2.5f) }
+        }
+    }
+    val Crown by lazy {
+        duo("crown") {
+            soft { crown() }
+            line { crown(); moveTo(6f, 20.5f); lineTo(18f, 20.5f) }
+        }
+    }
+    val Repeat by lazy {
+        duo("repeat") {
+            soft { circle(12f, 12f, 2.4f) }
+            line {
+                moveTo(17f, 3.5f); lineTo(20f, 6.5f); lineTo(17f, 9.5f)
+                moveTo(4f, 11.5f); lineTo(4f, 10f); curveTo(4f, 8.1f, 5.6f, 6.5f, 7.5f, 6.5f); lineTo(20f, 6.5f)
+                moveTo(7f, 20.5f); lineTo(4f, 17.5f); lineTo(7f, 14.5f)
+                moveTo(20f, 12.5f); lineTo(20f, 14f); curveTo(20f, 15.9f, 18.4f, 17.5f, 16.5f, 17.5f); lineTo(4f, 17.5f)
+            }
+        }
+    }
+    val Handshake by lazy {
+        duo("handshake") {
+            soft {
+                moveTo(3f, 10f); lineTo(7f, 6.5f); lineTo(12.5f, 8.5f); lineTo(17f, 6.5f); lineTo(21f, 10f); lineTo(17.5f, 15.5f)
+                curveTo(16.7f, 16.6f, 15.2f, 16.8f, 14.2f, 16f); lineTo(11.5f, 16.3f); curveTo(10.6f, 17f, 9.3f, 16.9f, 8.5f, 16f); close()
+            }
+            line {
+                moveTo(3f, 10f); lineTo(7f, 6.5f); lineTo(11f, 8f)
+                moveTo(21f, 10f); lineTo(17f, 6.5f); lineTo(12.5f, 8.5f); lineTo(9.2f, 11.2f); curveTo(8.6f, 11.8f, 8.7f, 12.8f, 9.4f, 13.2f)
+                curveTo(10f, 13.6f, 10.8f, 13.5f, 11.3f, 13f); lineTo(13f, 11.5f); lineTo(17.5f, 15.5f)
+                moveTo(3f, 10f); lineTo(8.5f, 16f); curveTo(9.3f, 16.9f, 10.6f, 17f, 11.5f, 16.3f)
+                moveTo(17.5f, 15.5f); curveTo(16.7f, 16.6f, 15.2f, 16.8f, 14.2f, 16f); lineTo(13f, 15f)
+                moveTo(21f, 10f); lineTo(17.5f, 15.5f)
+            }
+        }
+    }
+    val Gameya by lazy {
+        duo("gameya") {
+            soft { circle(12f, 12f, 7f) }
+            line { circle(12f, 12f, 7f) }
+            solid { circle(12f, 5f, 2.3f); circle(18.1f, 15.5f, 2.3f); circle(5.9f, 15.5f, 2.3f) }
+        }
+    }
+    val Split by lazy {
+        duo("split") {
+            soft { circle(12f, 19.5f, 1.8f) }
+            line {
+                moveTo(12f, 19.5f); lineTo(12f, 13f); curveTo(12f, 11.5f, 11.4f, 10.1f, 10.3f, 9f); lineTo(5f, 3.8f)
+                moveTo(5f, 9f); lineTo(5f, 3.8f); lineTo(10.2f, 3.8f)
+                moveTo(13.7f, 9.3f); lineTo(19f, 4f)
+                moveTo(13.8f, 4f); lineTo(19f, 4f); lineTo(19f, 9.2f)
+            }
+        }
+    }
+    val Calendar by lazy {
+        duo("calendar") {
+            soft { rect(3.5f, 5.5f, 20.5f, 20.5f, 3f) }
+            line { rect(3.5f, 5.5f, 20.5f, 20.5f, 3f); moveTo(3.5f, 10f); lineTo(20.5f, 10f); moveTo(8f, 3.5f); lineTo(8f, 7f); moveTo(16f, 3.5f); lineTo(16f, 7f) }
+            solid { circle(8f, 14f, 1f); circle(12f, 14f, 1f); circle(16f, 14f, 1f); circle(8f, 17.5f, 1f); circle(12f, 17.5f, 1f) }
+        }
+    }
+    val Backspace by lazy {
+        duo("backspace") {
+            soft { backspaceBody() }
+            line { backspaceBody(); moveTo(11.5f, 9.5f); lineTo(16.5f, 14.5f); moveTo(16.5f, 9.5f); lineTo(11.5f, 14.5f) }
+        }
+    }
+    val Archive by lazy {
+        duo("archive") {
+            soft { rect(4f, 9f, 20f, 20f, 2f) }
+            line { rect(3f, 4.5f, 21f, 9f, 1.5f); rect(4f, 9f, 20f, 20f, 2f); moveTo(10f, 13f); lineTo(14f, 13f) }
+        }
+    }
+    val Unarchive by lazy {
+        duo("unarchive") {
+            soft { rect(4f, 9f, 20f, 20f, 2f) }
+            line { rect(3f, 4.5f, 21f, 9f, 1.5f); rect(4f, 9f, 20f, 20f, 2f); moveTo(12f, 17.5f); lineTo(12f, 12f); moveTo(9.5f, 14.5f); lineTo(12f, 12f); lineTo(14.5f, 14.5f) }
+        }
+    }
+    val Tune by lazy {
+        duo("tune") {
+            soft { circle(15f, 7f, 2.2f); circle(9f, 17f, 2.2f) }
+            line {
+                moveTo(4f, 7f); lineTo(12.8f, 7f); moveTo(17.2f, 7f); lineTo(20f, 7f); circle(15f, 7f, 2.2f)
+                moveTo(4f, 17f); lineTo(6.8f, 17f); moveTo(11.2f, 17f); lineTo(20f, 17f); circle(9f, 17f, 2.2f)
+            }
+        }
+    }
+    val Gear by lazy {
+        duo("gear") {
+            soft { circle(12f, 12f, 6.3f) }
+            line {
+                circle(12f, 12f, 6.3f); circle(12f, 12f, 2.6f)
+                moveTo(18.6f, 12f); lineTo(21f, 12f); moveTo(16.7f, 7.3f); lineTo(18.4f, 5.6f); moveTo(12f, 5.4f); lineTo(12f, 3f)
+                moveTo(7.3f, 7.3f); lineTo(5.6f, 5.6f); moveTo(5.4f, 12f); lineTo(3f, 12f); moveTo(7.3f, 16.7f); lineTo(5.6f, 18.4f)
+                moveTo(12f, 18.6f); lineTo(12f, 21f); moveTo(16.7f, 16.7f); lineTo(18.4f, 18.4f)
+            }
+        }
+    }
+    val Search by lazy { duo("search") { soft { circle(10.5f, 10.5f, 6.5f) }; line { circle(10.5f, 10.5f, 6.5f); moveTo(15.5f, 15.5f); lineTo(20.5f, 20.5f) } } }
+    val SearchOff by lazy {
+        duo("searchOff") {
+            soft { circle(10.5f, 10.5f, 6.5f) }
+            line { circle(10.5f, 10.5f, 6.5f); moveTo(15.5f, 15.5f); lineTo(20.5f, 20.5f); moveTo(8.3f, 8.3f); lineTo(12.7f, 12.7f); moveTo(12.7f, 8.3f); lineTo(8.3f, 12.7f) }
+        }
+    }
+    val Play by lazy { duo("play") { soft { play() }; line { play() } } }
+    val Pause by lazy {
+        duo("pause") {
+            soft { rect(6.5f, 5f, 10.5f, 19f, 1.5f); rect(13.5f, 5f, 17.5f, 19f, 1.5f) }
+            line { rect(6.5f, 5f, 10.5f, 19f, 1.5f); rect(13.5f, 5f, 17.5f, 19f, 1.5f) }
+        }
+    }
+    val Person by lazy {
+        duo("person") {
+            soft { circle(12f, 8f, 4f) }
+            line { circle(12f, 8f, 4f); moveTo(4.5f, 20f); curveTo(4.5f, 16.4f, 7.9f, 13.5f, 12f, 13.5f); curveTo(16.1f, 13.5f, 19.5f, 16.4f, 19.5f, 20f) }
+        }
+    }
+    val Bulb by lazy {
+        duo("bulb") {
+            soft { bulb() }
+            line { bulb(); moveTo(9.5f, 20.5f); lineTo(14.5f, 20.5f) }
+        }
+    }
+    val Fingerprint by lazy {
+        duo("fingerprint") {
+            line {
+                moveTo(4.5f, 8f); curveTo(5.8f, 5f, 8.6f, 3f, 12f, 3f); curveTo(15.4f, 3f, 18.2f, 5f, 19.5f, 8f)
+                moveTo(6.5f, 17f); curveTo(6.2f, 15.6f, 6f, 14.2f, 6f, 12.5f); curveTo(6f, 9.2f, 8.7f, 6.5f, 12f, 6.5f); curveTo(15.3f, 6.5f, 18f, 9.2f, 18f, 12.5f)
+                moveTo(9.5f, 20f); curveTo(9.1f, 18.2f, 9f, 16.3f, 9f, 13f); curveTo(9f, 11.3f, 10.3f, 10f, 12f, 10f); curveTo(13.7f, 10f, 15f, 11.3f, 15f, 13f)
+                curveTo(15f, 15.5f, 15.4f, 17.5f, 16.5f, 19.5f)
+                moveTo(12f, 13f); lineTo(12f, 14.5f); curveTo(12f, 17f, 12.6f, 19f, 13.5f, 21f)
+            }
+        }
+    }
+    val Cloud by lazy {
+        duo("cloud") {
+            soft { cloud() }
+            line { cloud(); moveTo(12f, 16f); lineTo(12f, 10.5f); moveTo(9.5f, 13f); lineTo(12f, 10.5f); lineTo(14.5f, 13f) }
+        }
+    }
+    val Clip by lazy {
+        duo("clip") {
+            line {
+                moveTo(20f, 11.5f); lineTo(12.3f, 19.2f); curveTo(10.4f, 21.1f, 7.3f, 21.1f, 5.4f, 19.2f); curveTo(3.5f, 17.3f, 3.5f, 14.2f, 5.4f, 12.3f)
+                lineTo(13.1f, 4.6f); curveTo(14.4f, 3.3f, 16.5f, 3.3f, 17.8f, 4.6f); curveTo(19.1f, 5.9f, 19.1f, 8f, 17.8f, 9.3f)
+                lineTo(10.4f, 16.7f); curveTo(9.7f, 17.4f, 8.6f, 17.4f, 7.9f, 16.7f); curveTo(7.2f, 16f, 7.2f, 14.9f, 7.9f, 14.2f); lineTo(14.8f, 7.3f)
+            }
+        }
+    }
 }
 
 private val Ink = SolidColor(Color.Black)
@@ -270,8 +469,8 @@ private class Duo(private val builder: ImageVector.Builder) {
     }
 }
 
-private fun duo(name: String, block: Duo.() -> Unit): ImageVector =
-    ImageVector.Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
+private fun duo(name: String, autoMirror: Boolean = false, block: Duo.() -> Unit): ImageVector =
+    ImageVector.Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f, autoMirror = autoMirror)
         .also { Duo(it).block() }
         .build()
 
@@ -293,6 +492,45 @@ private fun PathBuilder.rect(l: Float, t: Float, r: Float, b: Float, radius: Flo
     lineTo(l, t + radius)
     arcTo(radius, radius, 0f, isMoreThanHalf = false, isPositiveArc = true, x1 = l + radius, y1 = t)
     close()
+}
+
+private fun PathBuilder.trashBody() {
+    moveTo(6.5f, 7.5f); lineTo(17.5f, 7.5f); lineTo(16.6f, 19f); curveTo(16.5f, 20.1f, 15.6f, 21f, 14.5f, 21f); lineTo(9.5f, 21f)
+    curveTo(8.4f, 21f, 7.5f, 20.1f, 7.4f, 19f); close()
+}
+
+private fun PathBuilder.pencilBody() {
+    moveTo(15.5f, 4.5f); lineTo(19.5f, 8.5f); lineTo(9f, 19f); lineTo(4.5f, 19.5f); lineTo(5f, 15f); close()
+}
+
+private fun PathBuilder.sparkle(cx: Float, cy: Float, r: Float) {
+    moveTo(cx, cy - r); curveTo(cx + r * 0.12f, cy - r * 0.28f, cx + r * 0.28f, cy - r * 0.12f, cx + r, cy)
+    curveTo(cx + r * 0.28f, cy + r * 0.12f, cx + r * 0.12f, cy + r * 0.28f, cx, cy + r)
+    curveTo(cx - r * 0.12f, cy + r * 0.28f, cx - r * 0.28f, cy + r * 0.12f, cx - r, cy)
+    curveTo(cx - r * 0.28f, cy - r * 0.12f, cx - r * 0.12f, cy - r * 0.28f, cx, cy - r); close()
+}
+
+private fun PathBuilder.crown() {
+    moveTo(4f, 8f); lineTo(8f, 11.5f); lineTo(12f, 5f); lineTo(16f, 11.5f); lineTo(20f, 8f); lineTo(18.5f, 17.5f); lineTo(5.5f, 17.5f); close()
+}
+
+private fun PathBuilder.backspaceBody() {
+    moveTo(8.5f, 5.5f); lineTo(19f, 5.5f); curveTo(20.1f, 5.5f, 21f, 6.4f, 21f, 7.5f); lineTo(21f, 16.5f); curveTo(21f, 17.6f, 20.1f, 18.5f, 19f, 18.5f)
+    lineTo(8.5f, 18.5f); lineTo(2.5f, 12f); close()
+}
+
+private fun PathBuilder.play() {
+    moveTo(8f, 5.5f); lineTo(8f, 18.5f); lineTo(18.5f, 12f); close()
+}
+
+private fun PathBuilder.bulb() {
+    moveTo(12f, 3f); curveTo(8.4f, 3f, 5.5f, 5.9f, 5.5f, 9.5f); curveTo(5.5f, 11.8f, 6.7f, 13.8f, 8.5f, 15f); lineTo(8.5f, 17f); lineTo(15.5f, 17f)
+    lineTo(15.5f, 15f); curveTo(17.3f, 13.8f, 18.5f, 11.8f, 18.5f, 9.5f); curveTo(18.5f, 5.9f, 15.6f, 3f, 12f, 3f); close()
+}
+
+private fun PathBuilder.cloud() {
+    moveTo(7f, 18.5f); curveTo(4.5f, 18.5f, 2.5f, 16.5f, 2.5f, 14f); curveTo(2.5f, 11.7f, 4.2f, 9.8f, 6.4f, 9.5f); curveTo(7.2f, 6.9f, 9.4f, 5f, 12f, 5f)
+    curveTo(15.1f, 5f, 17.6f, 7.4f, 17.9f, 10.5f); curveTo(20f, 10.7f, 21.5f, 12.4f, 21.5f, 14.5f); curveTo(21.5f, 16.7f, 19.7f, 18.5f, 17.5f, 18.5f); close()
 }
 
 private fun PathBuilder.houseBody() = rect(5f, 10.5f, 19f, 20.5f, 2.5f)

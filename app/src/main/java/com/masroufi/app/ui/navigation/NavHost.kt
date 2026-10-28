@@ -14,6 +14,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.unit.dp
+import com.masroufi.app.ui.theme.MotionFlags
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
@@ -89,11 +92,14 @@ import kotlin.reflect.KClass
 /** Tab screens draw no bottom inset themselves: the shell's navigation bar already accounts for it. */
 val TabInsets = WindowInsets(0, 0, 0, 0)
 
+/** Widest the screen content grows; beyond it, content centres over the full-bleed light. */
+val ContentMaxWidth = 680.dp
+
 private data class Tab(val route: Any, val routeClass: KClass<*>, val label: Int)
 
 private val tabs = listOf(
     Tab(HomeRoute, HomeRoute::class, R.string.tab_home),
-    Tab(TransactionsRoute, TransactionsRoute::class, R.string.tab_transactions),
+    Tab(TransactionsRoute, TransactionsRoute::class, R.string.dock_transactions),
     Tab(BudgetsRoute, BudgetsRoute::class, R.string.tab_budgets),
     Tab(GoalsRoute, GoalsRoute::class, R.string.tab_goals),
     Tab(MoreRoute, MoreRoute::class, R.string.tab_more),
@@ -101,18 +107,48 @@ private val tabs = listOf(
 
 val ScreenGlide = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
-// Zoom-through: the old screen recedes and fades quickly while the new one rises out of depth, so translucent
-// screens barely overlap. Going back plays the same path in reverse (and follows the predictive-back gesture).
+// Zoom-through for depth (push/pop): the old screen recedes and fades quickly while the new one rises out of depth,
+// and back plays the same path in reverse (following the predictive-back gesture). Tabs are peers, so switching
+// between them only cross-fades. With "remove animations" on, everything is a short fade.
 inline fun <reified T : Any> NavGraphBuilder.screen(noinline content: @Composable (NavBackStackEntry) -> Unit) {
     composable<T>(
-        enterTransition = { fadeIn(tween(260, delayMillis = 60)) + scaleIn(tween(420, delayMillis = 40, easing = ScreenGlide), initialScale = 0.92f) },
-        exitTransition = { fadeOut(tween(120)) + scaleOut(tween(420, easing = ScreenGlide), targetScale = 1.06f) },
-        popEnterTransition = { fadeIn(tween(260, delayMillis = 60)) + scaleIn(tween(420, delayMillis = 40, easing = ScreenGlide), initialScale = 1.06f) },
-        popExitTransition = { fadeOut(tween(140)) + scaleOut(tween(420, easing = ScreenGlide), targetScale = 0.92f) },
+        enterTransition = {
+            when {
+                MotionFlags.reduce -> fadeIn(tween(120))
+                isTabSwitch(initialState, targetState) -> fadeIn(tween(220, delayMillis = 80))
+                else -> fadeIn(tween(260, delayMillis = 60)) + scaleIn(tween(420, delayMillis = 40, easing = ScreenGlide), initialScale = 0.92f)
+            }
+        },
+        exitTransition = {
+            when {
+                MotionFlags.reduce -> fadeOut(tween(120))
+                isTabSwitch(initialState, targetState) -> fadeOut(tween(90))
+                else -> fadeOut(tween(120)) + scaleOut(tween(420, easing = ScreenGlide), targetScale = 1.06f)
+            }
+        },
+        popEnterTransition = {
+            when {
+                MotionFlags.reduce -> fadeIn(tween(120))
+                isTabSwitch(initialState, targetState) -> fadeIn(tween(220, delayMillis = 80))
+                else -> fadeIn(tween(260, delayMillis = 60)) + scaleIn(tween(420, delayMillis = 40, easing = ScreenGlide), initialScale = 1.06f)
+            }
+        },
+        popExitTransition = {
+            when {
+                MotionFlags.reduce -> fadeOut(tween(120))
+                isTabSwitch(initialState, targetState) -> fadeOut(tween(90))
+                else -> fadeOut(tween(140)) + scaleOut(tween(420, easing = ScreenGlide), targetScale = 0.92f)
+            }
+        },
     ) { entry ->
         CompositionLocalProvider(LocalNavAnimatedScope provides this) { content(entry) }
     }
 }
+
+@PublishedApi
+internal fun isTabSwitch(from: NavBackStackEntry, to: NavBackStackEntry): Boolean = from.isTab() && to.isTab()
+
+private fun NavBackStackEntry.isTab(): Boolean = tabs.any { tab -> destination.hierarchy.any { it.hasRoute(tab.routeClass) } }
 
 @Composable
 fun MasroufiNavHost() {
@@ -132,10 +168,13 @@ fun MasroufiNavHost() {
         // The whole scene (light + screens) is recorded once so the floating chrome above can refract it; glass
         // inside screens refracts only the ambient light, which keeps the two layers free of feedback loops.
         GlassStage(layout = lastTab, modifier = Modifier.layerBackdrop(scene)) {
-            SharedTransitionLayout {
-                CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                    NavHost(navController = nav, startDestination = HomeRoute, modifier = Modifier.fillMaxSize()) {
-                        graph(nav)
+            // Content is capped at a comfortable reading width on tablets and landscape; the light stays full-bleed.
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                SharedTransitionLayout(Modifier.widthIn(max = ContentMaxWidth).fillMaxSize()) {
+                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                        NavHost(navController = nav, startDestination = HomeRoute, modifier = Modifier.fillMaxSize()) {
+                            graph(nav)
+                        }
                     }
                 }
             }

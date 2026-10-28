@@ -4,6 +4,16 @@ import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import kotlin.math.PI
+import kotlin.math.sin
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
@@ -28,9 +38,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -95,10 +102,10 @@ fun MasroufiTopBar(
         title = { Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = {
             GlassIconButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                Icon(MIcons.Back, contentDescription = stringResource(R.string.action_back))
             }
         },
-        actions = { Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) { actions() } },
+        actions = { Row(Modifier.padding(end = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { actions() } },
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
     )
@@ -110,52 +117,12 @@ fun GlassIconButton(onClick: () -> Unit, modifier: Modifier = Modifier, content:
     val interaction = remember { MutableInteractionSource() }
     Box(
         modifier
-            .size(44.dp)
+            .size(48.dp)
             .liquidPress(interaction, CircleShape, scaleTo = 1.12f)
             .glass(CircleShape)
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { content() }
-}
-
-/** The primary action: a tinted drop of liquid glass that swells under the finger. */
-@Composable
-fun GlassButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
-    val interaction = remember { MutableInteractionSource() }
-    val reduce = LocalReduceMotion.current
-    val fade by animateFloatAsState(if (enabled) 1f else 0.42f, Motion.effects(reduce), label = "buttonEnabled")
-    Row(
-        modifier
-            .defaultMinSize(minHeight = 52.dp)
-            .graphicsLayer { alpha = fade }
-            .liquidPress(interaction, CircleShape, scaleTo = 1.04f)
-            .glass(CircleShape, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f), strong = true)
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CompositionLocalProvider(
-            LocalContentColor provides MaterialTheme.colorScheme.onPrimary,
-            LocalTextStyle provides MaterialTheme.typography.titleSmall,
-        ) { content() }
-    }
-}
-
-/** Floating add button for pushed screens, the same liquid drop as [GlassButton]. */
-@Composable
-fun GlassFab(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    val interaction = remember { MutableInteractionSource() }
-    Box(
-        modifier
-            .size(62.dp)
-            .liquidPress(interaction, CircleShape, scaleTo = 1.1f)
-            .glass(CircleShape, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f), strong = true)
-            .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) { content() }
-    }
 }
 
 /**
@@ -167,6 +134,7 @@ fun PressableCard(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
+    decoration: (DrawScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
@@ -174,7 +142,8 @@ fun PressableCard(
     Column(
         modifier
             .then(if (onClick != null) Modifier.liquidPress(interaction, shape, scaleTo = 0.975f) else Modifier)
-            .glass(shape, tint = color)
+            // Decorations draw inside the glass, so they are clipped and scale with the press like the card itself.
+            .glass(shape, tint = color, onDrawFront = decoration)
             .then(
                 if (onClick != null) Modifier.clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick) else Modifier,
             )
@@ -189,7 +158,7 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
         modifier = modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).semantics { heading() })
         if (action != null && onAction != null) TextButton(onClick = onAction) { Text(action) }
     }
 }
@@ -225,17 +194,35 @@ fun EmptyState(
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
 ) {
+    val reduce = LocalReduceMotion.current
+    val primary = MaterialTheme.colorScheme.primary
+    val float = if (reduce) null else rememberInfiniteTransition(label = "emptyFloat").animateFloat(
+        0f, (2 * PI).toFloat(), infiniteRepeatable(tween(6_000, easing = LinearEasing), RepeatMode.Restart), label = "t",
+    )
     Column(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 48.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        IconBadge(icon, MaterialTheme.colorScheme.primary, size = 72.dp)
-        Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+        // The empty state's icon floats in a glass orb with a soft halo, so an empty screen still feels designed.
+        Box(
+            Modifier
+                .size(132.dp)
+                .graphicsLayer { translationY = sin(float?.value ?: 0f) * 6.dp.toPx() }
+                .drawBehind {
+                    drawCircle(Brush.radialGradient(listOf(primary.copy(alpha = 0.28f), Color.Transparent)), size.minDimension / 2)
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.size(92.dp).glass(CircleShape, tint = primary.copy(alpha = 0.18f), strong = true), contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = primary, modifier = Modifier.size(40.dp))
+            }
+        }
+        Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.semantics { heading() })
         Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         if (actionLabel != null && onAction != null) {
-            Spacer(Modifier.height(4.dp))
-            FilledTonalButton(onClick = onAction) { Text(actionLabel) }
+            Spacer(Modifier.height(6.dp))
+            GlassButton(onClick = onAction) { Text(actionLabel) }
         }
     }
 }
@@ -249,7 +236,7 @@ fun ConfirmDialog(
     onDismiss: () -> Unit,
     destructive: Boolean = true,
 ) {
-    AlertDialog(
+    GlassDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(body) },
@@ -306,7 +293,7 @@ fun ColorPicker(selected: Int, onSelect: (Int) -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 if (index == selected) {
-                    Icon(androidx.compose.material.icons.Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    Icon(androidx.compose.material.icons.MIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             }
         }

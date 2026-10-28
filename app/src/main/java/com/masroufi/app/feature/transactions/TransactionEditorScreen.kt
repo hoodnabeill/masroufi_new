@@ -32,12 +32,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AttachFile
-import androidx.compose.material.icons.outlined.Backspace
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -70,6 +64,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassSnackbarHost
+import com.masroufi.app.ui.components.GlassSecondaryButton
+import com.masroufi.app.ui.components.glassChipColors
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.data.model.TransactionType
@@ -139,7 +138,7 @@ fun TransactionEditorScreen(
                 onBack = onBack,
             )
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
         bottomBar = {
             Column(Modifier.fillMaxWidth().navigationBarsPadding().imePadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
                 // The pad steps aside while note/tags use the system keyboard.
@@ -164,8 +163,9 @@ fun TransactionEditorScreen(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .edgeFade()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 16.dp)
                 .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -193,7 +193,7 @@ fun TransactionEditorScreen(
             } else {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     state.visibleCategories.forEach { category ->
-                        FilterChip(
+                        FilterChip(colors = glassChipColors(),
                             selected = category.id == state.categoryId,
                             onClick = { haptics.tick(); viewModel.setCategory(category.id) },
                             label = { Text(categoryLabel(category), maxLines = 1) },
@@ -210,7 +210,7 @@ fun TransactionEditorScreen(
             DateChip(state.date, viewModel::setDate)
 
             TextButton(onClick = { showMore = !showMore }) {
-                Icon(if (showMore) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, contentDescription = null)
+                Icon(if (showMore) MIcons.ChevronUp else MIcons.ChevronDown, contentDescription = null)
                 Text(stringResource(R.string.transaction_more_options))
             }
             AnimatedVisibility(showMore || state.note.isNotEmpty() || state.receipt != null) {
@@ -219,8 +219,8 @@ fun TransactionEditorScreen(
                     TextInput(state.tags, viewModel::setTags, stringResource(R.string.field_tags), supportingText = stringResource(R.string.field_tags_hint))
                     val receipt = state.receipt
                     if (receipt == null) {
-                        OutlinedButton(onClick = { pickReceipt.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
-                            Icon(Icons.Outlined.AttachFile, contentDescription = null)
+                        GlassSecondaryButton(onClick = { pickReceipt.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
+                            Icon(MIcons.Clip, contentDescription = null)
                             Text(stringResource(R.string.receipt_attach), modifier = Modifier.padding(start = 8.dp))
                         }
                     } else {
@@ -232,7 +232,7 @@ fun TransactionEditorScreen(
                                 modifier = Modifier.size(72.dp).clip(MaterialTheme.shapes.small),
                             )
                             TextButton(onClick = viewModel::removeReceipt) {
-                                Icon(Icons.Outlined.Close, contentDescription = null)
+                                Icon(MIcons.Close, contentDescription = null)
                                 Text(stringResource(R.string.receipt_remove))
                             }
                         }
@@ -298,7 +298,7 @@ private fun Keypad(onKey: (Char) -> Unit, onClear: () -> Unit, allowDecimal: Boo
                 Key(Modifier.weight(1f), enabled = allowDecimal, onClick = { onKey('.') }) { KeyText(".") }
                 Key(Modifier.weight(1f), onClick = { onKey('0') }) { KeyText("0") }
                 Key(Modifier.weight(1f), onClick = { onKey('<') }, onLongClick = onClear, description = stringResource(R.string.action_delete)) {
-                    Icon(Icons.Outlined.Backspace, contentDescription = null)
+                    Icon(MIcons.Backspace, contentDescription = null)
                 }
             }
         }
@@ -340,7 +340,7 @@ private fun Key(
 private fun WalletChips(wallets: List<WalletWithBalance>, selected: String?, onSelect: (String) -> Unit) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         wallets.forEach { item ->
-            FilterChip(
+            FilterChip(colors = glassChipColors(),
                 selected = item.wallet.id == selected,
                 onClick = { onSelect(item.wallet.id) },
                 label = { Text("${item.wallet.name} · ${item.wallet.currency}", maxLines = 1) },

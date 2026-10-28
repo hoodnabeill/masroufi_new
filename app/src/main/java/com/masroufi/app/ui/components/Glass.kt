@@ -35,6 +35,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.window.DialogWindowProvider
+import android.view.WindowManager
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.derivedStateOf
+import com.masroufi.app.ui.theme.LocalSolidGlass
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.BlendMode
@@ -108,10 +119,13 @@ fun AuroraBackground(layout: Int, modifier: Modifier = Modifier) {
             label = "drift",
         )
     }
+    // The drift is slow enough that ~10 updates a second look continuous; stepping it means every live glass surface
+    // re-renders 10 times a second while idle instead of on every display frame.
+    val tick by remember(drift) { derivedStateOf { drift?.let { (it.value * DRIFT_STEPS_PER_RADIAN).toInt() } ?: 0 } }
     val alpha = if (glass.dark) 0.42f else 0.66f
     Canvas(modifier.fillMaxSize()) {
         drawRect(glass.base)
-        val phase = drift?.value ?: 0f
+        val phase = tick / DRIFT_STEPS_PER_RADIAN
         val radius = size.maxDimension * 0.6f
         blobs.forEachIndexed { i, blob ->
             val wobble = Offset(cos(phase + i * 1.7f) * 0.04f, sin(phase * 1.3f + i) * 0.035f)
@@ -139,6 +153,8 @@ fun AuroraBackground(layout: Int, modifier: Modifier = Modifier) {
     }
 }
 
+private const val DRIFT_STEPS_PER_RADIAN = 48f
+
 /**
  * The ambient light plus the backdrop that glass inside [content] refracts. Every full-screen surface that shows the
  * aurora (app shell, onboarding, lock) goes through here so its glass is live.
@@ -158,19 +174,36 @@ fun GlassStage(layout: Int, modifier: Modifier = Modifier, content: @Composable 
  * like a thick lens (Android 13+) and catches a specular rim light. Elsewhere (older phones, dialogs) it is a
  * translucent fill with a light-catching hairline. [strong] adds frost for surfaces that carry text over busy content.
  */
-fun Modifier.glass(shape: Shape, tint: Color = Color.Unspecified, strong: Boolean = false): Modifier = composed {
+fun Modifier.glass(
+    shape: Shape,
+    tint: Color = Color.Unspecified,
+    strong: Boolean = false,
+    onDrawFront: (DrawScope.() -> Unit)? = null,
+): Modifier = composed {
     val glass = LocalGlass.current
     val fill = if (strong) glass.fillStrong else glass.fill
     val top = if (tint.isSpecified()) tint.compositeOverGlass(fill, 1.6f) else fill.copy(alpha = (fill.alpha * 1.5f).coerceAtMost(1f))
     val bottom = if (tint.isSpecified()) tint.compositeOverGlass(fill, 0.8f) else fill
     val surface = Brush.verticalGradient(listOf(top, bottom))
+    val rim = Brush.verticalGradient(listOf(glass.strokeTop, glass.strokeBottom))
+    if (LocalSolidGlass.current) {
+        // Solid mode: an opaque panel so text never sits on moving light; the tint is kept as a wash on top.
+        val panel = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 1f)
+        return@composed this
+            .clip(shape)
+            .background(panel)
+            .background(if (tint.isSpecified()) tint.copy(alpha = tint.alpha * 0.5f) else Color.Transparent)
+            .border(1.dp, rim, shape)
+            .then(if (onDrawFront != null) Modifier.drawWithContent { drawContent(); onDrawFront() } else Modifier)
+    }
     val backdrop = LocalGlassBackdrop.current
     val live = backdrop != null && LocalBackdropView.current === LocalView.current && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     if (!live || backdrop == null) {
         return@composed this
             .clip(shape)
             .background(surface)
-            .border(1.dp, Brush.verticalGradient(listOf(glass.strokeTop, glass.strokeBottom)), shape)
+            .border(1.dp, rim, shape)
+            .then(if (onDrawFront != null) Modifier.drawWithContent { drawContent(); onDrawFront() } else Modifier)
     }
     val dark = glass.dark
     val shade = glass.shadow.copy(alpha = glass.shadow.alpha * 0.7f)
@@ -184,9 +217,62 @@ fun Modifier.glass(shape: Shape, tint: Color = Color.Unspecified, strong: Boolea
             if (shape is CornerBasedShape) lens(refractionHeight = 14.dp.toPx(), refractionAmount = 22.dp.toPx(), chromaticAberration = true)
         },
         highlight = { Highlight(width = 1.dp, style = HighlightStyle.Default(intensity = if (dark) 0.45f else 0.7f)) },
-        shadow = { Shadow(radius = 22.dp, color = shade) },
+        // A shadow on a near-black canvas is invisible but still costs a blur pass, so only light mode casts one.
+        shadow = if (dark) null else ({ Shadow(radius = 22.dp, color = shade) }),
         onDrawSurface = { drawRect(surface) },
+        onDrawFront = onDrawFront,
     )
+}
+
+/**
+ * A flat recessed well for controls that sit on top of glass (segmented tracks, pills inside cards). Glass on
+ * glass would sample the light behind the card and punch a hole through it, so nested surfaces use this instead.
+ */
+fun Modifier.glassInset(shape: Shape, tint: Color = Color.Unspecified): Modifier = composed {
+    val glass = LocalGlass.current
+    val base = if (tint.isSpecified()) tint.copy(alpha = 0.12f) else MaterialTheme.colorScheme.onSurface.copy(alpha = if (glass.dark) 0.06f else 0.05f)
+    this
+        .clip(shape)
+        .background(base)
+        .border(1.dp, Brush.verticalGradient(listOf(Color.Black.copy(alpha = if (glass.dark) 0.18f else 0.06f), glass.strokeTop.copy(alpha = 0.5f))), shape)
+}
+
+/**
+ * Scroll-edge effect: content dissolves into the light where it meets floating chrome instead of being cut by a hard
+ * line. Lists keep at least [top] of content padding, so nothing is faded while scrolled to the top.
+ */
+fun Modifier.edgeFade(top: Dp = 16.dp, bottom: Dp = 0.dp): Modifier = this
+    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val t = top.toPx()
+        val b = bottom.toPx()
+        if (t > 0f) {
+            drawRect(Brush.verticalGradient(0f to Color.Transparent, 1f to Color.Black, startY = 0f, endY = t), size = Size(size.width, t), blendMode = BlendMode.DstIn)
+        }
+        if (b > 0f) {
+            drawRect(
+                Brush.verticalGradient(0f to Color.Black, 1f to Color.Transparent, startY = size.height - b, endY = size.height),
+                topLeft = Offset(0f, size.height - b),
+                size = Size(size.width, b),
+                blendMode = BlendMode.DstIn,
+            )
+        }
+    }
+
+/**
+ * Frosts the app behind a dialog or sheet window (Android 12+, when the device allows cross-window blur). Dialogs are
+ * separate windows, so in-app glass cannot reach them; the system compositor can.
+ */
+@Composable
+fun BlurBehindWindow(radius: Dp = 28.dp) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+    val window = (LocalView.current.parent as? DialogWindowProvider)?.window ?: return
+    val px = with(LocalDensity.current) { radius.roundToPx() }
+    SideEffect {
+        window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+        window.attributes = window.attributes.apply { blurBehindRadius = px }
+    }
 }
 
 private fun Color.isSpecified(): Boolean = this != Color.Unspecified

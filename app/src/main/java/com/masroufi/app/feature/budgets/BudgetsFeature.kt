@@ -13,10 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.PieChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -42,6 +38,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassSnackbarHost
+import com.masroufi.app.ui.components.GlassSwitch
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
@@ -107,16 +107,16 @@ fun BudgetsScreen(onAdd: () -> Unit, onEdit: (String) -> Unit, viewModel: Budget
     val state by viewModel.state.collectAsStateWithLifecycle()
     Scaffold(
         contentWindowInsets = TabInsets,
-        topBar = { MasroufiTopBar(stringResource(R.string.tab_budgets)) { GlassIconButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.budget_add)) } } },
+        topBar = { MasroufiTopBar(stringResource(R.string.tab_budgets)) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.budget_add)) } } },
     ) { padding ->
         if (state.loading) return@Scaffold
         if (state.items.isEmpty()) {
-            EmptyState(Icons.Outlined.PieChart, stringResource(R.string.budgets_empty_title), stringResource(R.string.budgets_empty_body), Modifier.padding(padding), stringResource(R.string.budget_add), onAdd)
+            EmptyState(MIcons.Budgets, stringResource(R.string.budgets_empty_title), stringResource(R.string.budgets_empty_body), Modifier.padding(padding), stringResource(R.string.budget_add), onAdd)
             return@Scaffold
         }
         LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, DockClearance),
+            Modifier.fillMaxSize().padding(padding).edgeFade(),
+            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, DockClearance),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(state.items, key = { it.budget.id }) { item -> BudgetCard(item, state.categories, onEdit, Modifier.animateItem()) }
@@ -271,14 +271,14 @@ fun BudgetEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Budget
     Scaffold(
         topBar = {
             MasroufiTopBar(stringResource(if (form.isNew) R.string.budget_add else R.string.budget_edit), onBack = onBack) {
-                if (!form.isNew) IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                if (!form.isNew) GlassIconButton(onClick = { confirmDelete = true }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (!form.loaded) return@Scaffold
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             DropdownField(
@@ -307,7 +307,7 @@ fun BudgetEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Budget
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.budget_rollover)) },
                     supportingContent = { Text(stringResource(R.string.budget_rollover_hint)) },
-                    trailingContent = { Switch(form.rollover, { v -> viewModel.update { it.copy(rollover = v) } }) },
+                    trailingContent = { GlassSwitch(form.rollover, { v -> viewModel.update { it.copy(rollover = v) } }) },
                 )
             }
             GlassButton(onClick = { viewModel.save(defaultName) }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }

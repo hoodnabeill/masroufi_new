@@ -10,8 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -33,7 +31,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
-import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassIconButton
+import com.masroufi.app.ui.components.GlassDialog
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.core.newId
 import com.masroufi.app.data.model.Category
 import com.masroufi.app.data.model.CategoryKind
@@ -85,11 +86,10 @@ fun CategoriesScreen(onBack: () -> Unit, viewModel: CategoriesViewModel = hiltVi
     var editing by remember { mutableStateOf<Category?>(null) }
     var creating by rememberSaveable { mutableStateOf(false) }
     Scaffold(
-        topBar = { MasroufiTopBar(stringResource(R.string.categories_title), onBack = onBack) },
-        floatingActionButton = { GlassFab(onClick = { creating = true }) { Icon(Icons.Outlined.Add, stringResource(R.string.category_add)) } },
+        topBar = { MasroufiTopBar(stringResource(R.string.categories_title), onBack = onBack) { GlassIconButton(onClick = { creating = true }) { Icon(MIcons.Plus, stringResource(R.string.category_add)) } } },
     ) { padding ->
         val roots = categories.filter { it.parentId == null }.sortedBy { it.kind }
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 96.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)) {
             items(roots, key = { it.id }) { root ->
                 Column {
                     CategoryRow(root, indent = false) { editing = root }
@@ -134,7 +134,7 @@ private fun CategoryDialog(
     var icon by rememberSaveable { mutableStateOf(existing?.iconKey ?: "category") }
     var color by rememberSaveable { mutableStateOf(existing?.colorIndex ?: 0) }
     val none = stringResource(R.string.category_no_parent)
-    AlertDialog(
+    GlassDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(if (existing == null) R.string.category_add else R.string.category_edit)) },
         text = {

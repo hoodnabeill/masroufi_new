@@ -15,10 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.CallSplit
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -49,7 +45,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
-import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassIconButton
+import com.masroufi.app.ui.components.GlassSnackbarHost
+import com.masroufi.app.ui.components.GlassSheet
+import com.masroufi.app.ui.components.GlassSecondaryButton
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
@@ -142,23 +143,22 @@ fun SplitRulesScreen(onBack: () -> Unit, onAdd: () -> Unit, onEdit: (String) -> 
     val scope = rememberCoroutineScope()
     HandleEditorEffects(viewModel.effects.flow, snackbar, onDone = { scope.launch { snackbar.showSnackbar(appliedText) } })
     Scaffold(
-        topBar = { MasroufiTopBar(stringResource(R.string.split_title), onBack = onBack) },
-        floatingActionButton = { GlassFab(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.split_add)) } },
-        snackbarHost = { SnackbarHost(snackbar) },
+        topBar = { MasroufiTopBar(stringResource(R.string.split_title), onBack = onBack) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.split_add)) } } },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (state.loading) return@Scaffold
         if (state.rules.isEmpty()) {
-            EmptyState(Icons.Outlined.CallSplit, stringResource(R.string.split_empty_title), stringResource(R.string.split_empty_body), Modifier.padding(padding), stringResource(R.string.split_add), onAdd)
+            EmptyState(MIcons.Split, stringResource(R.string.split_empty_title), stringResource(R.string.split_empty_body), Modifier.padding(padding), stringResource(R.string.split_add), onAdd)
             return@Scaffold
         }
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(state.rules, key = { it.id }) { rule ->
                 val items = viewModel.items(rule)
                 PressableCard(onClick = { onEdit(rule.id) }) {
                     Text(rule.name, style = MaterialTheme.typography.titleMedium)
                     items.forEach { item -> Text("• ${item.label}: ${itemValueText(item, rule.currency)}", style = MaterialTheme.typography.bodySmall) }
                     Spacer(Modifier.height(8.dp))
-                    FilledTonalButton(onClick = { applying = rule }) { Text(stringResource(R.string.split_apply)) }
+                    GlassSecondaryButton(onClick = { applying = rule }) { Text(stringResource(R.string.split_apply)) }
                 }
             }
             if (state.allocations.isNotEmpty()) {
@@ -191,7 +191,7 @@ private fun itemValueText(item: SplitItem, currency: String): String = when (ite
 @Composable
 private fun IncomeSheet(rule: SplitRule, onDismiss: () -> Unit, onPreview: (Long) -> Unit) {
     var amount by rememberSaveable { mutableStateOf("") }
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    GlassSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.split_income_title, rule.name), style = MaterialTheme.typography.titleLarge)
             AmountField(amount, { amount = it }, rule.currency, label = stringResource(R.string.split_income_amount))
@@ -205,7 +205,7 @@ private fun IncomeSheet(rule: SplitRule, onDismiss: () -> Unit, onPreview: (Long
 private fun PreviewSheet(preview: SplitPreview, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     val money = LocalMoneyFormatter.current
     val currency = preview.rule.currency
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    GlassSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.split_preview), style = MaterialTheme.typography.titleLarge)
             when (val r = preview.result) {
@@ -229,7 +229,7 @@ private fun PreviewSheet(preview: SplitPreview, onDismiss: () -> Unit, onConfirm
                 )
                 SplitResult.Empty -> Text(stringResource(R.string.split_error_empty))
             }
-            OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_cancel)) }
+            GlassSecondaryButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_cancel)) }
         }
     }
 }
@@ -319,14 +319,14 @@ fun SplitEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: SplitEd
     Scaffold(
         topBar = {
             MasroufiTopBar(stringResource(if (form.isNew) R.string.split_add else R.string.split_edit), onBack = onBack) {
-                if (!form.isNew) IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                if (!form.isNew) GlassIconButton(onClick = { confirmDelete = true }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (!form.loaded) return@Scaffold
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name))
@@ -337,7 +337,7 @@ fun SplitEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: SplitEd
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextInput(item.label, { v -> viewModel.updateItem(index) { it.copy(label = v) } }, stringResource(R.string.split_item_label), modifier = Modifier.weight(1f))
                         IconButton(onClick = { viewModel.update { f -> f.copy(items = f.items.filterIndexed { i, _ -> i != index }) } }, enabled = form.items.size > 1) {
-                            Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete))
+                            Icon(MIcons.Trash, stringResource(R.string.action_delete))
                         }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -367,8 +367,8 @@ fun SplitEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: SplitEd
                     )
                 }
             }
-            OutlinedButton(onClick = { viewModel.update { it.copy(items = it.items + SplitItemDraft()) } }) {
-                Icon(Icons.Outlined.Add, contentDescription = null)
+            GlassSecondaryButton(onClick = { viewModel.update { it.copy(items = it.items + SplitItemDraft()) } }) {
+                Icon(MIcons.Plus, contentDescription = null)
                 Text(stringResource(R.string.split_add_item), modifier = Modifier.padding(start = 8.dp))
             }
             GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }

@@ -21,17 +21,27 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.glassInset
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Insights
-import androidx.compose.material.icons.outlined.Lightbulb
-import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -49,8 +59,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -63,6 +71,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassSheet
+import com.masroufi.app.ui.components.GlassSwitch
+import com.masroufi.app.ui.components.FitAmount
 import com.masroufi.app.data.model.DebtDirection
 import com.masroufi.app.data.prefs.DashboardSection
 import com.masroufi.app.domain.BudgetStatus
@@ -118,12 +129,15 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var customizing by rememberSaveable { mutableStateOf(false) }
-    if (state.loading) return
+    if (state.loading) {
+        HomeSkeleton()
+        return
+    }
 
     if (state.wallets.isEmpty()) {
         Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) {
             EmptyState(
-                icon = Icons.Outlined.Receipt,
+                icon = MIcons.Activity,
                 title = stringResource(R.string.home_no_wallet_title),
                 body = stringResource(R.string.home_no_wallet_body),
                 actionLabel = stringResource(R.string.wallet_add),
@@ -135,8 +149,10 @@ fun HomeScreen(
 
     var order = 0
     val list = rememberLazyListState()
+    val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     LazyColumn(
-        Modifier.fillMaxSize(),
+        // Cards dissolve under the status bar instead of sliding beneath the clock and icons.
+        Modifier.fillMaxSize().edgeFade(top = statusTop + 10.dp),
         state = list,
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = DockClearance),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -181,13 +197,13 @@ fun HomeScreen(
     }
 
     if (customizing) {
-        ModalBottomSheet(onDismissRequest = { customizing = false }) {
+        GlassSheet(onDismissRequest = { customizing = false }) {
             Text(stringResource(R.string.home_customize), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp))
             Spacer(Modifier.height(8.dp))
             DashboardSection.entries.forEach { section ->
                 ListItem(
                     headlineContent = { Text(stringResource(sectionLabel(section))) },
-                    trailingContent = { Switch(checked = state.visible(section), onCheckedChange = { viewModel.setSectionVisible(section, it) }) },
+                    trailingContent = { GlassSwitch(checked = state.visible(section), onCheckedChange = { viewModel.setSectionVisible(section, it) }) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -212,9 +228,9 @@ private fun Header(onOpenAnalytics: () -> Unit, onCustomize: () -> Unit) {
             Text(date, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
             Text(greeting, style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        GlassIconButton(onClick = onOpenAnalytics) { Icon(Icons.Outlined.Insights, contentDescription = stringResource(R.string.analytics_title)) }
+        GlassIconButton(onClick = onOpenAnalytics) { Icon(MIcons.Insights, contentDescription = stringResource(R.string.analytics_title)) }
         Spacer(Modifier.width(8.dp))
-        GlassIconButton(onClick = onCustomize) { Icon(Icons.Outlined.Tune, contentDescription = stringResource(R.string.home_customize)) }
+        GlassIconButton(onClick = onCustomize) { Icon(MIcons.Tune, contentDescription = stringResource(R.string.home_customize)) }
     }
 }
 
@@ -275,9 +291,9 @@ private fun BalanceHero(state: HomeUiState, onOpenWallets: () -> Unit, modifier:
                 cameraDistance = 14f * density
             },
     ) {
-        PressableCard(onClick = onOpenWallets, color = primary.copy(alpha = if (glass.dark) 0.16f else 0.12f), modifier = Modifier.clip(shape).drawWithContent {
-            drawContent()
-            // Sheen: a soft diagonal band whose position follows the tilt.
+        val rim = Brush.linearGradient(listOf(primary.copy(alpha = 0.5f), Color.Transparent, primary.copy(alpha = 0.25f)))
+        PressableCard(onClick = onOpenWallets, color = primary.copy(alpha = if (glass.dark) 0.16f else 0.12f), decoration = {
+            // Sheen: a soft diagonal band whose position follows the tilt. Drawn inside the glass, so it scales with presses.
             val shift = (tiltY.value / 14f + tiltX.value / 12f) * size.width * 0.6f
             drawRect(
                 Brush.linearGradient(
@@ -288,10 +304,11 @@ private fun BalanceHero(state: HomeUiState, onOpenWallets: () -> Unit, modifier:
                     end = Offset(size.width * 0.7f + shift, size.height),
                 ),
             )
+            drawOutline(shape.createOutline(size, layoutDirection, this), rim, style = Stroke(1.dp.toPx()))
         }) {
             Text(stringResource(R.string.home_total_balance), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(4.dp))
-            AnimatedAmount(state.primaryBalance, state.currency, style = AmountStyle.copy(fontSize = MaterialTheme.typography.displayMedium.fontSize))
+            FitAmount(state.primaryBalance, state.currency, style = AmountStyle.copy(fontSize = MaterialTheme.typography.displayMedium.fontSize))
             state.otherBalances.forEach { other ->
                 MoneyText(other.minor, other.currency, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -303,13 +320,12 @@ private fun BalanceHero(state: HomeUiState, onOpenWallets: () -> Unit, modifier:
                 FlowPill(MIcons.Expense, stringResource(R.string.type_expense), state.expenseMinor, state.currency, finance.expense, Modifier.weight(1f))
             }
         }
-        Box(Modifier.matchParentSize().border(1.dp, Brush.linearGradient(listOf(primary.copy(alpha = 0.5f), Color.Transparent, primary.copy(alpha = 0.25f))), shape))
     }
 }
 
 @Composable
 private fun FlowPill(icon: ImageVector, label: String, minor: Long, currency: String, tint: Color, modifier: Modifier) {
-    Row(modifier.glass(MaterialTheme.shapes.medium).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.glassInset(MaterialTheme.shapes.medium).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
         IconBadge(icon, tint, size = 34.dp)
         Column(Modifier.padding(horizontal = 8.dp)) {
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -358,7 +374,7 @@ private fun InsightsCarousel(state: HomeUiState, modifier: Modifier) {
                     else -> MaterialTheme.colorScheme.tertiary
                 }
                 PressableCard(onClick = null, color = tint.copy(alpha = 0.10f), modifier = Modifier.width(260.dp).height(132.dp).staggerIn(index)) {
-                    IconBadge(Icons.Outlined.Lightbulb, tint, size = 34.dp)
+                    IconBadge(MIcons.Bulb, tint, size = 34.dp)
                     Spacer(Modifier.height(10.dp))
                     Text(insightText(insight, state), style = MaterialTheme.typography.bodyMedium, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 }
@@ -524,7 +540,7 @@ private fun RecentCard(state: HomeUiState, onOpenTransaction: (String) -> Unit, 
     Column(modifier) {
         SectionHeader(stringResource(R.string.home_recent), action = stringResource(R.string.action_see_all), onAction = onOpenTransactions)
         if (state.recent.isEmpty()) {
-            EmptyState(Icons.Outlined.Receipt, stringResource(R.string.transactions_empty_title), stringResource(R.string.transactions_empty_body))
+            EmptyState(MIcons.Activity, stringResource(R.string.transactions_empty_title), stringResource(R.string.transactions_empty_body))
         } else {
             Column(Modifier.fillMaxWidth().glass(MaterialTheme.shapes.large).padding(vertical = 6.dp)) {
                 state.recent.forEachIndexed { index, row ->
@@ -554,4 +570,39 @@ private fun Modifier.heroParallax(list: LazyListState): Modifier = graphicsLayer
     scaleX = s
     scaleY = s
     alpha = 1f - 0.6f * progress
+}
+
+/** Loading placeholder in the shape of the dashboard, with a soft light sweep across it (still when motion is off). */
+@Composable
+private fun HomeSkeleton() {
+    val reduce = LocalReduceMotion.current
+    val sweep = if (reduce) null else rememberInfiniteTransition(label = "skeleton").animateFloat(
+        -1f, 2f, infiniteRepeatable(tween(1_400, easing = LinearEasing)), label = "sweep",
+    )
+    val bar = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    val card = MaterialTheme.shapes.large
+    val shimmer = Modifier.drawWithContent {
+        drawContent()
+        val x = (sweep?.value ?: -1f) * size.width
+        drawRect(
+            Brush.linearGradient(
+                listOf(Color.Transparent, Color.White.copy(alpha = 0.10f), Color.Transparent),
+                start = Offset(x - size.width * 0.4f, 0f),
+                end = Offset(x + size.width * 0.4f, size.height),
+            ),
+        )
+    }
+    Column(
+        Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 16.dp).clearAndSetSemantics { },
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Spacer(Modifier.height(14.dp))
+        Box(Modifier.size(120.dp, 14.dp).clip(CircleShape).background(bar))
+        Box(Modifier.size(220.dp, 32.dp).clip(CircleShape).background(bar))
+        Box(Modifier.fillMaxWidth().height(210.dp).glass(card).then(shimmer))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            repeat(3) { Box(Modifier.weight(1f).height(92.dp).glass(card).then(shimmer)) }
+        }
+        Box(Modifier.fillMaxWidth().height(160.dp).glass(card).then(shimmer))
+    }
 }

@@ -16,12 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.FilterList
-import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,6 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassIconButton
+import com.masroufi.app.ui.components.GlassSheet
+import com.masroufi.app.ui.components.GlassSecondaryButton
+import com.masroufi.app.ui.components.glassFieldColors
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.startMillis
@@ -96,41 +96,41 @@ fun TransactionsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: T
         contentWindowInsets = TabInsets,
         topBar = {
             MasroufiTopBar(stringResource(R.string.tab_transactions)) {
-                IconButton(onClick = { filtering = true }) {
+                GlassIconButton(onClick = { filtering = true }) {
                     BadgedBox(badge = { if (state.filter.isActive) Badge() }) {
-                        Icon(Icons.Outlined.FilterList, contentDescription = stringResource(R.string.filter_title))
+                        Icon(MIcons.Filter, contentDescription = stringResource(R.string.filter_title))
                     }
                 }
             }
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            OutlinedTextField(
+            OutlinedTextField(colors = glassFieldColors(),
                 value = state.query,
                 onValueChange = viewModel::setQuery,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 placeholder = { Text(stringResource(R.string.search_hint)) },
-                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                leadingIcon = { Icon(MIcons.Search, contentDescription = null) },
                 singleLine = true,
                 shape = MaterialTheme.shapes.extraLarge,
             )
             when {
                 state.loading -> Unit
                 state.rows.isEmpty() && !state.filter.isActive -> EmptyState(
-                    Icons.Outlined.Receipt,
+                    MIcons.Activity,
                     stringResource(R.string.transactions_empty_title),
                     stringResource(R.string.transactions_empty_body),
                     actionLabel = if (state.wallets.isNotEmpty()) stringResource(R.string.transaction_new) else null,
                     onAction = onAdd,
                 )
                 visible.isEmpty() -> EmptyState(
-                    Icons.Outlined.SearchOff,
+                    MIcons.SearchOff,
                     stringResource(R.string.search_no_results),
                     stringResource(R.string.search_no_results_body),
                     actionLabel = stringResource(R.string.filter_clear),
                     onAction = { viewModel.setQuery(""); viewModel.setFilter(TransactionFilter()) },
                 )
-                else -> LazyColumn(contentPadding = PaddingValues(bottom = DockClearance)) {
+                else -> LazyColumn(Modifier.edgeFade(), contentPadding = PaddingValues(top = 16.dp, bottom = DockClearance)) {
                     grouped.forEach { (date, rows) ->
                         stickyHeader(key = "h-$date") {
                             Text(
@@ -161,7 +161,7 @@ private fun FilterSheet(state: TransactionsUiState, onApply: (TransactionFilter)
     var min by remember { mutableStateOf(draft.minMinor?.let { Money.toPlainString(it, Money.DEFAULT_CURRENCY) }.orEmpty()) }
     var max by remember { mutableStateOf(draft.maxMinor?.let { Money.toPlainString(it, Money.DEFAULT_CURRENCY) }.orEmpty()) }
     val anyLabel = stringResource(R.string.filter_any)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
+    GlassSheet(onDismissRequest = onDismiss, sheetState = sheet) {
         Column(
             Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -216,7 +216,7 @@ private fun FilterSheet(state: TransactionsUiState, onApply: (TransactionFilter)
                 },
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = { onApply(TransactionFilter()) }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.filter_clear)) }
+                GlassSecondaryButton(onClick = { onApply(TransactionFilter()) }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.filter_clear)) }
                 GlassButton(
                     onClick = {
                         onApply(draft.copy(minMinor = Money.parse(min, Money.DEFAULT_CURRENCY), maxMinor = Money.parse(max, Money.DEFAULT_CURRENCY)))

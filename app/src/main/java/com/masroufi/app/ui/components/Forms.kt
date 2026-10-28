@@ -27,8 +27,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -76,7 +74,7 @@ fun AmountField(
     textStyle: TextStyle = MaterialTheme.typography.headlineSmall,
     imeAction: ImeAction = ImeAction.Next,
 ) {
-    OutlinedTextField(
+    OutlinedTextField(colors = glassFieldColors(), shape = MaterialTheme.shapes.medium,
         value = value,
         onValueChange = { input ->
             val cleaned = Money.normalizeDigits(input).filter { it.isDigit() || it == '.' }
@@ -106,7 +104,7 @@ fun TextInput(
     supportingText: String? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
 ) {
-    OutlinedTextField(
+    OutlinedTextField(colors = glassFieldColors(), shape = MaterialTheme.shapes.medium,
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
@@ -128,10 +126,10 @@ fun DateChip(
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
     val formatter = rememberDateFormatter()
-    AssistChip(
+    AssistChip(colors = glassAssistChipColors(),
         onClick = { open = true },
         label = { Text(label?.let { "$it: ${date.format(formatter)}" } ?: date.format(formatter)) },
-        leadingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = null) },
+        leadingIcon = { Icon(MIcons.Calendar, contentDescription = null) },
         modifier = modifier,
     )
     if (open) {
@@ -160,10 +158,10 @@ fun OptionalDateChip(
 ) {
     if (date == null) {
         var open by rememberSaveable { mutableStateOf(false) }
-        AssistChip(
+        AssistChip(colors = glassAssistChipColors(),
             onClick = { open = true },
             label = { Text(emptyLabel) },
-            leadingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = null) },
+            leadingIcon = { Icon(MIcons.Calendar, contentDescription = null) },
             modifier = modifier,
         )
         if (open) {
@@ -204,7 +202,7 @@ fun <T> SegmentedChoice(
         modifier
             .fillMaxWidth()
             .height(46.dp)
-            .glass(CircleShape)
+            .glassInset(CircleShape)
             .selectableGroup()
             .padding(4.dp),
     ) {
@@ -254,7 +252,7 @@ fun <T> ChipChoice(
 ) {
     FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { option ->
-            FilterChip(
+            FilterChip(colors = glassChipColors(),
                 selected = option == selected,
                 onClick = { onSelect(option) },
                 label = { Text(label(option), maxLines = 1) },
@@ -276,7 +274,7 @@ fun <T> DropdownField(
 ) {
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }, modifier = modifier) {
-        OutlinedTextField(
+        OutlinedTextField(colors = glassFieldColors(), shape = MaterialTheme.shapes.medium,
             value = selected?.let { optionLabel(it) } ?: placeholder,
             onValueChange = {},
             readOnly = true,
@@ -295,7 +293,7 @@ fun <T> DropdownField(
 @Composable
 fun CurrencyField(selected: String, onSelect: (String) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     if (!enabled) {
-        OutlinedTextField(value = selected, onValueChange = {}, readOnly = true, enabled = false, label = { Text(stringResource(R.string.field_currency)) }, modifier = modifier.fillMaxWidth())
+        OutlinedTextField(colors = glassFieldColors(), shape = MaterialTheme.shapes.medium, value = selected, onValueChange = {}, readOnly = true, enabled = false, label = { Text(stringResource(R.string.field_currency)) }, modifier = modifier.fillMaxWidth())
         return
     }
     DropdownField(

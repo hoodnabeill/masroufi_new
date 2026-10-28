@@ -12,12 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Archive
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,7 +36,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
-import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassIconButton
+import com.masroufi.app.ui.components.GlassSnackbarHost
+import com.masroufi.app.ui.components.FitAmount
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
@@ -111,8 +109,7 @@ class WalletsViewModel @Inject constructor(wallets: WalletRepository) : ViewMode
 fun WalletsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: WalletsViewModel = hiltViewModel()) {
     val wallets by viewModel.wallets.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = { MasroufiTopBar(stringResource(R.string.wallets_title), onBack = onBack) },
-        floatingActionButton = { GlassFab(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.wallet_add)) } },
+        topBar = { MasroufiTopBar(stringResource(R.string.wallets_title), onBack = onBack) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.wallet_add)) } } },
     ) { padding ->
         val list = wallets ?: return@Scaffold
         if (list.isEmpty()) {
@@ -121,8 +118,8 @@ fun WalletsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Uni
         }
         val (archived, active) = list.partition { it.wallet.archived }
         LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 96.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade(),
+            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 32.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             items(active, key = { it.wallet.id }) { WalletCard(it, onOpen) }
@@ -190,26 +187,24 @@ fun WalletDetailScreen(
         topBar = {
             MasroufiTopBar(item?.wallet?.name.orEmpty(), onBack = onBack) {
                 if (item != null) {
-                    IconButton(onClick = { onEdit(item.wallet.id) }) { Icon(Icons.Outlined.Edit, stringResource(R.string.action_edit)) }
-                    IconButton(onClick = { viewModel.setArchived(!item.wallet.archived) }) {
+                    if (!item.wallet.archived) {
+                        GlassIconButton(onClick = { onAddTransaction(item.wallet.id) }) { Icon(MIcons.Plus, stringResource(R.string.transaction_new)) }
+                    }
+                    GlassIconButton(onClick = { onEdit(item.wallet.id) }) { Icon(MIcons.Pencil, stringResource(R.string.action_edit)) }
+                    GlassIconButton(onClick = { viewModel.setArchived(!item.wallet.archived) }) {
                         Icon(
-                            if (item.wallet.archived) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
+                            if (item.wallet.archived) MIcons.Unarchive else MIcons.Archive,
                             stringResource(if (item.wallet.archived) R.string.action_unarchive else R.string.action_archive),
                         )
                     }
-                    IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                    GlassIconButton(onClick = { confirmDelete = true }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
                 }
             }
         },
-        floatingActionButton = {
-            if (item != null && !item.wallet.archived) {
-                GlassFab(onClick = { onAddTransaction(item.wallet.id) }) { Icon(Icons.Outlined.Add, stringResource(R.string.transaction_new)) }
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (item == null) return@Scaffold
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 96.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)) {
             item {
                 PressableCard(
                     onClick = null,
@@ -217,7 +212,7 @@ fun WalletDetailScreen(
                     modifier = Modifier.padding(16.dp).fillMaxWidth().sharedContainer("wallet-${item.wallet.id}"),
                 ) {
                     Text(stringResource(R.string.wallet_balance), style = MaterialTheme.typography.labelLarge)
-                    AnimatedAmount(item.balanceMinor, item.wallet.currency, style = AmountStyle)
+                    FitAmount(item.balanceMinor, item.wallet.currency, style = AmountStyle)
                     Text(walletTypeLabel(item.wallet.type) + " · " + item.wallet.currency, style = MaterialTheme.typography.bodyMedium)
                 }
             }
@@ -308,11 +303,11 @@ fun WalletEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Wallet
     HandleEditorEffects(viewModel.effects.flow, snackbar, onDone)
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(if (form.isNew) R.string.wallet_add else R.string.wallet_edit), onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (!form.loaded) return@Scaffold
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name))

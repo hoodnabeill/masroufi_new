@@ -17,10 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Backspace
-import androidx.compose.material.icons.outlined.Fingerprint
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +43,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.security.AppLockManager
 import com.masroufi.app.security.PinResult
 import com.masroufi.app.ui.components.GlassStage
@@ -141,7 +138,7 @@ fun LockScreen(biometricEnabled: Boolean, viewModel: LockViewModel = hiltViewMod
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            IconBadge(Icons.Outlined.Lock, MaterialTheme.colorScheme.primary, size = 72.dp)
+            IconBadge(MIcons.Lock, MaterialTheme.colorScheme.primary, size = 72.dp)
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.lock_title), style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(24.dp))
@@ -168,7 +165,7 @@ fun LockScreen(biometricEnabled: Boolean, viewModel: LockViewModel = hiltViewMod
                 extra = if (biometricAvailable) {
                     {
                         IconButton(onClick = { biometric() }, modifier = Modifier.size(72.dp)) {
-                            Icon(Icons.Outlined.Fingerprint, contentDescription = stringResource(R.string.lock_biometric_title), modifier = Modifier.size(32.dp))
+                            Icon(MIcons.Fingerprint, contentDescription = stringResource(R.string.lock_biometric_title), modifier = Modifier.size(32.dp))
                         }
                     }
                 } else {
@@ -193,7 +190,7 @@ fun PinPad(onDigit: (Char) -> Unit, onBackspace: () -> Unit, extra: (@Composable
                 Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) { extra?.invoke() }
                 PinKey("0") { onDigit('0') }
                 IconButton(onClick = onBackspace, modifier = Modifier.size(72.dp)) {
-                    Icon(Icons.Outlined.Backspace, contentDescription = stringResource(R.string.action_delete))
+                    Icon(MIcons.Backspace, contentDescription = stringResource(R.string.action_delete))
                 }
             }
         }

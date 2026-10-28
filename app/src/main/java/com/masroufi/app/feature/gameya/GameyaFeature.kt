@@ -18,16 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.ArrowDownward
-import androidx.compose.material.icons.outlined.ArrowUpward
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,7 +47,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
-import com.masroufi.app.ui.components.GlassFab
+import com.masroufi.app.ui.components.edgeFade
+import com.masroufi.app.ui.components.GlassIconButton
+import com.masroufi.app.ui.components.GlassSnackbarHost
+import com.masroufi.app.ui.components.GlassSecondaryButton
+import com.masroufi.app.ui.components.GlassSwitch
+import com.masroufi.app.ui.components.FitAmount
+import com.masroufi.app.ui.components.glassChipColors
+import com.masroufi.app.ui.components.glassFieldColors
+import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
@@ -130,15 +128,14 @@ fun GameyaListScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> 
     val items by viewModel.items.collectAsStateWithLifecycle()
     val money = LocalMoneyFormatter.current
     Scaffold(
-        topBar = { MasroufiTopBar(stringResource(R.string.gameya_title), onBack = onBack) },
-        floatingActionButton = { GlassFab(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.gameya_add)) } },
+        topBar = { MasroufiTopBar(stringResource(R.string.gameya_title), onBack = onBack) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.gameya_add)) } } },
     ) { padding ->
         val list = items ?: return@Scaffold
         if (list.isEmpty()) {
-            EmptyState(Icons.Outlined.Groups, stringResource(R.string.gameya_empty_title), stringResource(R.string.gameya_empty_body), Modifier.padding(padding), stringResource(R.string.gameya_add), onAdd)
+            EmptyState(MIcons.Gameya, stringResource(R.string.gameya_empty_title), stringResource(R.string.gameya_empty_body), Modifier.padding(padding), stringResource(R.string.gameya_add), onAdd)
             return@Scaffold
         }
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(list, key = { it.gameya.id }) { item ->
                 val s = item.summary
                 PressableCard(onClick = { onOpen(item.gameya.id) }, modifier = Modifier.animateItem()) {
@@ -205,19 +202,19 @@ fun GameyaDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: 
         topBar = {
             MasroufiTopBar(gameya?.name.orEmpty(), onBack = onBack) {
                 if (gameya != null) {
-                    IconButton(onClick = { onEdit(gameya.id) }) { Icon(Icons.Outlined.Edit, stringResource(R.string.action_edit)) }
-                    IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                    GlassIconButton(onClick = { onEdit(gameya.id) }) { Icon(MIcons.Pencil, stringResource(R.string.action_edit)) }
+                    GlassIconButton(onClick = { confirmDelete = true }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
                 }
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (gameya == null || summary == null) return@Scaffold
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
                 PressableCard(onClick = null, color = MaterialTheme.colorScheme.tertiaryContainer) {
                     Text(stringResource(R.string.gameya_pot), style = MaterialTheme.typography.labelLarge)
-                    AnimatedAmount(summary.potMinor, gameya.currency, style = AmountStyle)
+                    FitAmount(summary.potMinor, gameya.currency, style = AmountStyle)
                     LabeledRow(stringResource(R.string.gameya_contribution)) { MoneyText(gameya.contributionMinor, gameya.currency) }
                     LabeledRow(stringResource(R.string.gameya_frequency)) {
                         Text(if (gameya.monthly) stringResource(R.string.gameya_monthly) else stringResource(R.string.gameya_every_days, gameya.intervalDays))
@@ -276,14 +273,14 @@ private fun RoundCard(
         }
         round.recipient?.let { recipient ->
             Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.Person, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(MIcons.Person, contentDescription = null, modifier = Modifier.size(18.dp))
                 Text(
                     stringResource(R.string.gameya_recipient, recipient.name),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 6.dp).weight(1f),
                 )
                 Text(stringResource(R.string.gameya_payout_received), style = MaterialTheme.typography.labelMedium)
-                Switch(
+                GlassSwitch(
                     checked = round.payout != null,
                     onCheckedChange = { haptics.confirm(); onTogglePayout(round, it) },
                     modifier = Modifier.padding(start = 6.dp),
@@ -303,11 +300,11 @@ private fun RoundCard(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             members.forEach { member ->
                 val paid = member.id in round.paidMemberIds
-                FilterChip(
+                FilterChip(colors = glassChipColors(),
                     selected = paid,
                     onClick = { haptics.tick(); onTogglePaid(member.id, round.round, !paid) },
                     label = { Text(if (member.isMe) stringResource(R.string.gameya_me_suffix, member.name) else member.name, maxLines = 1) },
-                    leadingIcon = { Icon(if (paid) Icons.Outlined.Check else Icons.Outlined.Close, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                    leadingIcon = { Icon(if (paid) MIcons.Check else MIcons.Close, contentDescription = null, modifier = Modifier.size(16.dp)) },
                 )
             }
         }
@@ -421,11 +418,11 @@ fun GameyaEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Gameya
     HandleEditorEffects(viewModel.effects.flow, snackbar, onDone)
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(if (form.isNew) R.string.gameya_add else R.string.gameya_edit), onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (!form.loaded) return@Scaffold
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name))
@@ -451,20 +448,20 @@ fun GameyaEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Gameya
             form.members.forEachIndexed { index, draft ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = form.meIndex == index, onClick = { viewModel.update { it.copy(meIndex = index) } })
-                    OutlinedTextField(
+                    OutlinedTextField(colors = glassFieldColors(), shape = MaterialTheme.shapes.medium,
                         value = draft.name,
                         onValueChange = { v -> viewModel.update { f -> f.copy(members = f.members.mapIndexed { i, old -> if (i == index) old.copy(name = v) else old }) } },
                         label = { Text(stringResource(R.string.gameya_member_n, index + 1)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
-                    IconButton(onClick = { viewModel.move(index, -1) }, enabled = index > 0) { Icon(Icons.Outlined.ArrowUpward, stringResource(R.string.action_move_up)) }
-                    IconButton(onClick = { viewModel.move(index, 1) }, enabled = index < form.members.lastIndex) { Icon(Icons.Outlined.ArrowDownward, stringResource(R.string.action_move_down)) }
-                    IconButton(onClick = { viewModel.remove(index) }, enabled = form.members.size > 2) { Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete)) }
+                    IconButton(onClick = { viewModel.move(index, -1) }, enabled = index > 0) { Icon(MIcons.ArrowUp, stringResource(R.string.action_move_up)) }
+                    IconButton(onClick = { viewModel.move(index, 1) }, enabled = index < form.members.lastIndex) { Icon(MIcons.ArrowDown, stringResource(R.string.action_move_down)) }
+                    IconButton(onClick = { viewModel.remove(index) }, enabled = form.members.size > 2) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
                 }
             }
-            OutlinedButton(onClick = { viewModel.update { it.copy(members = it.members + MemberDraft()) } }) {
-                Icon(Icons.Outlined.Add, contentDescription = null)
+            GlassSecondaryButton(onClick = { viewModel.update { it.copy(members = it.members + MemberDraft()) } }) {
+                Icon(MIcons.Plus, contentDescription = null)
                 Text(stringResource(R.string.gameya_add_member), modifier = Modifier.padding(start = 8.dp))
             }
             Text(stringResource(R.string.gameya_me_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
