@@ -34,7 +34,9 @@ The app is a single `:app` module with feature packages:
 | `work` | Daily worker (recurring items and reminders) and sync worker |
 | `ui` / `feature.*` | Compose UI, one ViewModel per screen, `StateFlow` state plus a `Channel` for effects |
 
-Stack: Kotlin 2.1, Compose (BOM 2024.12.01, Material 3), Room 2.6, Hilt 2.54, Navigation Compose 2.8 (type-safe routes), DataStore, WorkManager, BiometricPrompt, OkHttp and Coil.
+Stack: Kotlin 2.1, Compose (BOM 2024.12.01, Material 3), Room 2.6, Hilt 2.54, Navigation Compose 2.8 (type-safe routes), DataStore, WorkManager, BiometricPrompt, OkHttp, Coil and Haze 1.5 (real-time glass blur for the floating dock).
+
+**Design system.** Ambient aurora light behind every screen, glass cards with light-catching edges, a floating liquid-glass dock, odometer amounts and Apple-style critically damped springs (stiffness = (2π/response)²). Fonts: Inter (Latin) and IBM Plex Sans Arabic (Arabic), both under the SIL Open Font License (see `licenses/`). All motion respects the system "remove animations" setting.
 
 ## Building
 

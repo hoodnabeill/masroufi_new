@@ -77,8 +77,8 @@
     <string name="error_unexpected">Something went wrong. Your data was not changed.</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_title">Welcome to Masroufi</string>
-    <string name="onboarding_body">Your private money companion. Track spending, plan budgets and goals, and manage your gameya — all on your phone.</string>
+    <string name="onboarding_title">Your money, beautifully clear.</string>
+    <string name="onboarding_body">Every pound, every goal, every gameya — in one calm place that lives only on your phone.</string>
     <string name="onboarding_cash_label">Cash you have now (optional)</string>
     <string name="onboarding_privacy">No account needed. Your data stays on this device unless you choose to back it up or sync it.</string>
     <string name="onboarding_start">Get started</string>
@@ -490,4 +490,10 @@
     <string name="notify_debt_body">%1$s — %2$s remaining is due.</string>
     <string name="notify_budget_title">Budget exceeded</string>
     <string name="notify_budget_body">\"%1$s\" is over budget this month.</string>
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="onboarding_page2_title">Private by design</string>
+    <string name="onboarding_setup_title">Make it yours</string>
+    <string name="onboarding_continue">Continue</string>
 </resources>

@@ -71,8 +71,8 @@
     <string name="error_not_found">هذا العنصر لم يعد موجودًا.</string>
     <string name="error_unexpected">حدث خطأ ما. لم يتم تغيير بياناتك.</string>
 
-    <string name="onboarding_title">أهلًا بك في مصروفي</string>
-    <string name="onboarding_body">رفيقك المالي الخاص. تابع مصروفاتك، وخطط ميزانياتك وأهدافك، وأدر جمعيتك — كل ذلك على هاتفك.</string>
+    <string name="onboarding_title">فلوسك، أوضح من أي وقت.</string>
+    <string name="onboarding_body">كل جنيه، وكل هدف، وكل جمعية — في مكان واحد هادئ يعيش على موبايلك فقط.</string>
     <string name="onboarding_cash_label">الكاش اللي معاك دلوقتي (اختياري)</string>
     <string name="onboarding_privacy">لا تحتاج إلى حساب. تبقى بياناتك على هذا الجهاز إلا إذا اخترت نسخها احتياطيًا أو مزامنتها.</string>
     <string name="onboarding_start">ابدأ</string>
@@ -481,4 +481,10 @@
     <string name="notify_debt_body">%1$s — متبقٍ %2$s مستحق.</string>
     <string name="notify_budget_title">تم تجاوز الميزانية</string>
     <string name="notify_budget_body">«%1$s» تجاوزت الميزانية هذا الشهر.</string>
+    <string name="home_greeting_morning">صباح الخير</string>
+    <string name="home_greeting_afternoon">مساء الخير</string>
+    <string name="home_greeting_evening">مساء الخير</string>
+    <string name="onboarding_page2_title">الخصوصية أولًا</string>
+    <string name="onboarding_setup_title">اجعله على ذوقك</string>
+    <string name="onboarding_continue">التالي</string>
 </resources>

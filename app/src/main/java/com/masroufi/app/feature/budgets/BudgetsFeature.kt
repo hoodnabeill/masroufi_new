@@ -76,7 +76,9 @@ import com.masroufi.app.ui.components.attempt
 import com.masroufi.app.ui.components.categoryLabel
 import com.masroufi.app.ui.components.rememberDateFormatter
 import com.masroufi.app.ui.navigation.BudgetEditorRoute
+import com.masroufi.app.ui.navigation.DockClearance
 import com.masroufi.app.ui.navigation.TabInsets
+import com.masroufi.app.ui.components.GlassIconButton
 import com.masroufi.app.ui.theme.LocalFinanceColors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -106,8 +108,7 @@ fun BudgetsScreen(onAdd: () -> Unit, onEdit: (String) -> Unit, viewModel: Budget
     val state by viewModel.state.collectAsStateWithLifecycle()
     Scaffold(
         contentWindowInsets = TabInsets,
-        topBar = { MasroufiTopBar(stringResource(R.string.tab_budgets)) },
-        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.budget_add)) } },
+        topBar = { MasroufiTopBar(stringResource(R.string.tab_budgets)) { GlassIconButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.budget_add)) } } },
     ) { padding ->
         if (state.loading) return@Scaffold
         if (state.items.isEmpty()) {
@@ -116,7 +117,7 @@ fun BudgetsScreen(onAdd: () -> Unit, onEdit: (String) -> Unit, viewModel: Budget
         }
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 96.dp),
+            contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, DockClearance),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(state.items, key = { it.budget.id }) { item -> BudgetCard(item, state.categories, onEdit, Modifier.animateItem()) }

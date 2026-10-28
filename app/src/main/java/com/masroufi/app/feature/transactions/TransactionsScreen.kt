@@ -67,6 +67,7 @@ import com.masroufi.app.ui.components.TransactionItem
 import com.masroufi.app.ui.components.categoryLabel
 import com.masroufi.app.ui.components.rememberDateFormatter
 import com.masroufi.app.ui.components.systemCategoryLabel
+import com.masroufi.app.ui.navigation.DockClearance
 import com.masroufi.app.ui.navigation.TabInsets
 import java.time.format.FormatStyle
 
@@ -103,11 +104,6 @@ fun TransactionsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: T
                 }
             }
         },
-        floatingActionButton = {
-            if (state.wallets.isNotEmpty()) {
-                FloatingActionButton(onClick = onAdd) { Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.transaction_new)) }
-            }
-        },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             OutlinedTextField(
@@ -135,7 +131,7 @@ fun TransactionsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: T
                     actionLabel = stringResource(R.string.filter_clear),
                     onAction = { viewModel.setQuery(""); viewModel.setFilter(TransactionFilter()) },
                 )
-                else -> LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
+                else -> LazyColumn(contentPadding = PaddingValues(bottom = DockClearance)) {
                     grouped.forEach { (date, rows) ->
                         stickyHeader(key = "h-$date") {
                             Text(

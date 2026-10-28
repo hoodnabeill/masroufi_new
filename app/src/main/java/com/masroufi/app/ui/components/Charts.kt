@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -63,9 +64,15 @@ fun DonutChart(
             drawArc(track, 0f, 360f, false, topLeft, arcSize, style = Stroke(stroke))
             var start = -90f
             val gap = if (slices.size > 1) 2f else 0f
+            val single = slices.count { it.value > 0 && it.color != Color.Transparent } == 1
+            val cap = if (single) StrokeCap.Round else StrokeCap.Butt
             slices.forEach { slice ->
                 val sweep = 360f * slice.value / total * reveal.value
-                if (sweep > gap) drawArc(slice.color, start + gap / 2, sweep - gap, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Butt))
+                if (sweep > gap) {
+                    // A wide, faint arc underneath reads as the ring glowing.
+                    drawArc(slice.color.copy(alpha = slice.color.alpha * 0.18f), start + gap / 2, sweep - gap, false, topLeft, arcSize, style = Stroke(stroke * 1.9f, cap = cap))
+                    drawArc(slice.color, start + gap / 2, sweep - gap, false, topLeft, arcSize, style = Stroke(stroke, cap = cap))
+                }
                 start += sweep
             }
         }
@@ -108,7 +115,7 @@ fun AnimatedProgressBar(fraction: Float, color: Color, modifier: Modifier = Modi
                 .fillMaxWidth(animated)
                 .fillMaxHeight()
                 .clip(RoundedCornerShape(height))
-                .background(color),
+                .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.6f), color))),
         )
     }
 }
@@ -142,7 +149,7 @@ fun GroupedBarChart(
                                 .width(10.dp)
                                 .fillMaxHeight(animated.coerceAtLeast(0.01f))
                                 .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp))
-                                .background(colors[index % colors.size]),
+                                .background(colors[index % colors.size].let { c -> Brush.verticalGradient(listOf(c, c.copy(alpha = 0.45f))) }),
                         )
                     }
                 }

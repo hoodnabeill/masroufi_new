@@ -89,7 +89,9 @@ import com.masroufi.app.ui.components.categoryColor
 import com.masroufi.app.ui.components.rememberDateFormatter
 import com.masroufi.app.ui.navigation.GoalDetailRoute
 import com.masroufi.app.ui.navigation.GoalEditorRoute
+import com.masroufi.app.ui.navigation.DockClearance
 import com.masroufi.app.ui.navigation.TabInsets
+import com.masroufi.app.ui.components.GlassIconButton
 import com.masroufi.app.ui.navigation.sharedContainer
 import com.masroufi.app.ui.theme.LocalFinanceColors
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -118,8 +120,7 @@ fun GoalsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: GoalsVie
     val goals by viewModel.goals.collectAsStateWithLifecycle()
     Scaffold(
         contentWindowInsets = TabInsets,
-        topBar = { MasroufiTopBar(stringResource(R.string.tab_goals)) },
-        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.goal_add)) } },
+        topBar = { MasroufiTopBar(stringResource(R.string.tab_goals)) { GlassIconButton(onClick = onAdd) { Icon(Icons.Outlined.Add, stringResource(R.string.goal_add)) } } },
     ) { padding ->
         val list = goals ?: return@Scaffold
         if (list.isEmpty()) {
@@ -128,7 +129,7 @@ fun GoalsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: GoalsVie
         }
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 96.dp),
+            contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, DockClearance),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {

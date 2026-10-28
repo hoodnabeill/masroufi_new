@@ -32,6 +32,11 @@ import com.masroufi.app.R
 import com.masroufi.app.ui.components.IconBadge
 import com.masroufi.app.ui.components.MasroufiTopBar
 import com.masroufi.app.ui.components.SectionHeader
+import com.masroufi.app.ui.components.glass
+import com.masroufi.app.ui.components.staggerIn
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.HorizontalDivider
+import com.masroufi.app.ui.navigation.DockClearance
 import com.masroufi.app.ui.navigation.TabInsets
 
 private data class Entry(val icon: ImageVector, val title: Int, val subtitle: Int, val onClick: () -> Unit)
@@ -66,11 +71,11 @@ fun MoreScreen(
         Entry(Icons.Outlined.WorkspacePremium, R.string.premium_title, R.string.more_premium_sub, onPremium),
     )
     Scaffold(contentWindowInsets = TabInsets, topBar = { MasroufiTopBar(stringResource(R.string.tab_more)) }) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 24.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = DockClearance)) {
             item { SectionHeader(stringResource(R.string.more_money), Modifier.padding(horizontal = 16.dp)) }
-            money.forEach { entry -> item { Row(entry) } }
+            item { Group(money, Modifier.staggerIn(0)) }
             item { SectionHeader(stringResource(R.string.more_app), Modifier.padding(horizontal = 16.dp)) }
-            app.forEach { entry -> item { Row(entry) } }
+            item { Group(app, Modifier.staggerIn(1)) }
         }
     }
 }
@@ -84,4 +89,15 @@ private fun Row(entry: Entry) {
         supportingContent = { Text(stringResource(entry.subtitle)) },
         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
     )
+}
+
+/** iOS-style grouped list: one glass slab per section with inset hairlines between rows. */
+@Composable
+private fun Group(entries: List<Entry>, modifier: Modifier) {
+    Column(modifier.padding(horizontal = 16.dp).glass(MaterialTheme.shapes.large).padding(vertical = 4.dp)) {
+        entries.forEachIndexed { index, entry ->
+            if (index > 0) HorizontalDivider(Modifier.padding(start = 72.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            Row(entry)
+        }
+    }
 }

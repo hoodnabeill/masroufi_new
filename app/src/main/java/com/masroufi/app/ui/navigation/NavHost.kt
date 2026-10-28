@@ -12,7 +12,22 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import com.masroufi.app.ui.components.AuroraBackground
+import com.masroufi.app.ui.components.LocalHazeState
+import com.masroufi.app.ui.theme.LocalReduceMotion
+import com.masroufi.app.ui.theme.Motion
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -93,12 +108,13 @@ private val tabs = listOf(
     Tab(MoreRoute, MoreRoute::class, R.string.tab_more, Icons.Outlined.MoreHoriz, Icons.Filled.MoreHoriz),
 )
 
+// Fade-through: the old screen leaves quickly before the new one arrives, so translucent screens never overlap.
 inline fun <reified T : Any> NavGraphBuilder.screen(noinline content: @Composable (NavBackStackEntry) -> Unit) {
     composable<T>(
-        enterTransition = { fadeIn(tween(220)) + scaleIn(initialScale = 0.96f, animationSpec = tween(260)) },
-        exitTransition = { fadeOut(tween(160)) },
-        popEnterTransition = { fadeIn(tween(220)) },
-        popExitTransition = { fadeOut(tween(160)) + scaleOut(targetScale = 0.96f, animationSpec = tween(220)) },
+        enterTransition = { fadeIn(tween(240, delayMillis = 70)) + scaleIn(initialScale = 0.965f, animationSpec = tween(320, delayMillis = 70)) },
+        exitTransition = { fadeOut(tween(110)) },
+        popEnterTransition = { fadeIn(tween(240, delayMillis = 70)) + scaleIn(initialScale = 1.02f, animationSpec = tween(320, delayMillis = 70)) },
+        popExitTransition = { fadeOut(tween(110)) + scaleOut(targetScale = 0.965f, animationSpec = tween(200)) },
     ) { entry ->
         CompositionLocalProvider(LocalNavAnimatedScope provides this) { content(entry) }
     }
@@ -109,39 +125,49 @@ fun MasroufiNavHost() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val destination = backStack?.destination
-    val showBar = tabs.any { tab -> destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true }
+    val tabIndex = tabs.indexOfFirst { tab -> destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true }
+    var lastTab by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(tabIndex) { if (tabIndex >= 0) lastTab = tabIndex }
+    var menuOpen by rememberSaveable { mutableStateOf(false) }
+    val haze = remember { HazeState() }
+    val reduce = LocalReduceMotion.current
+    val dockTabs = remember { tabs.map { DockTab(it.label, it.icon, it.selectedIcon) } }
+    BackHandler(enabled = menuOpen) { menuOpen = false }
 
-    Scaffold(
-        bottomBar = {
-            AnimatedVisibility(
-                visible = showBar,
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut(),
-            ) {
-                NavigationBar {
-                    tabs.forEach { tab ->
-                        val selected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = { nav.navigateToTab(tab.route) },
-                            icon = { Icon(if (selected) tab.selectedIcon else tab.icon, contentDescription = null) },
-                            label = { Text(stringResource(tab.label), maxLines = 1) },
-                        )
+    CompositionLocalProvider(LocalHazeState provides haze) {
+        Box(Modifier.fillMaxSize()) {
+            // Everything inside this box is the haze source the floating dock blurs.
+            Box(Modifier.fillMaxSize().hazeSource(haze)) {
+                AuroraBackground(layout = lastTab)
+                SharedTransitionLayout {
+                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                        NavHost(navController = nav, startDestination = HomeRoute, modifier = Modifier.fillMaxSize()) {
+                            graph(nav)
+                        }
                     }
                 }
             }
-        },
-        contentWindowInsets = TabInsets,
-    ) { padding ->
-        SharedTransitionLayout {
-            CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                NavHost(
-                    navController = nav,
-                    startDestination = HomeRoute,
-                    modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding),
-                ) {
-                    graph(nav)
-                }
+            QuickAddMenu(
+                open = menuOpen && tabIndex >= 0,
+                onDismiss = { menuOpen = false },
+                onPick = { type ->
+                    menuOpen = false
+                    nav.navigate(TransactionEditorRoute(type = type))
+                },
+            )
+            AnimatedVisibility(
+                visible = tabIndex >= 0,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = slideInVertically(Motion.spatial(reduce)) { it } + fadeIn(Motion.effects(reduce)),
+                exit = slideOutVertically(Motion.spatial(reduce)) { it } + fadeOut(Motion.snappy(reduce)),
+            ) {
+                Dock(
+                    tabs = dockTabs,
+                    selected = lastTab,
+                    onSelect = { nav.navigateToTab(tabs[it].route) },
+                    menuOpen = menuOpen,
+                    onToggleMenu = { menuOpen = !menuOpen },
+                )
             }
         }
     }

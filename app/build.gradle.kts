@@ -107,6 +107,7 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.coil.compose)
+    implementation(libs.haze)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

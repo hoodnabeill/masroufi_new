@@ -49,7 +49,10 @@ import androidx.lifecycle.ViewModel
 import com.masroufi.app.R
 import com.masroufi.app.security.AppLockManager
 import com.masroufi.app.security.PinResult
+import com.masroufi.app.ui.components.AuroraBackground
 import com.masroufi.app.ui.components.IconBadge
+import com.masroufi.app.ui.components.glass
+import com.masroufi.app.ui.theme.LocalGlass
 import com.masroufi.app.ui.components.rememberHaptics
 import com.masroufi.app.ui.theme.LocalReduceMotion
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -124,7 +127,8 @@ fun LockScreen(biometricEnabled: Boolean, viewModel: LockViewModel = hiltViewMod
         }
     }
 
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+    Surface(Modifier.fillMaxSize(), color = LocalGlass.current.base) {
+        AuroraBackground(layout = 2)
         Column(
             Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -198,9 +202,9 @@ fun PinPad(onDigit: (Char) -> Unit, onBackspace: () -> Unit, extra: (@Composable
 @Composable
 private fun PinKey(label: String, onClick: () -> Unit) {
     Box(
-        Modifier.size(72.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh).clickable(onClick = onClick),
+        Modifier.size(74.dp).glass(CircleShape).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, style = MaterialTheme.typography.headlineSmall)
+        Text(label, style = MaterialTheme.typography.headlineMedium)
     }
 }

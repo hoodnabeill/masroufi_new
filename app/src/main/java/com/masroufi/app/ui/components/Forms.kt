@@ -2,7 +2,27 @@
 
 package com.masroufi.app.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.IntOffset
+import com.masroufi.app.ui.theme.LocalReduceMotion
+import com.masroufi.app.ui.theme.Motion
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -175,13 +195,50 @@ fun <T> SegmentedChoice(
     label: @Composable (T) -> String,
     modifier: Modifier = Modifier,
 ) {
-    SingleChoiceSegmentedButtonRow(modifier.fillMaxWidth()) {
-        options.forEachIndexed { index, option ->
-            SegmentedButton(
-                selected = option == selected,
-                onClick = { onSelect(option) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size),
-            ) { Text(label(option), maxLines = 1) }
+    // A glass track with a thumb that glides (critically damped) to the chosen segment; offset mirrors in RTL.
+    val reduce = LocalReduceMotion.current
+    val haptics = rememberHaptics()
+    val index = options.indexOf(selected).coerceAtLeast(0)
+    val position by animateFloatAsState(index.toFloat(), Motion.spatial(reduce), label = "segment")
+    BoxWithConstraints(
+        modifier
+            .fillMaxWidth()
+            .height(46.dp)
+            .glass(CircleShape)
+            .selectableGroup()
+            .padding(4.dp),
+    ) {
+        val segment = maxWidth / options.size
+        Box(
+            Modifier
+                .offset { IntOffset((segment * position).roundToPx(), 0) }
+                .width(segment)
+                .fillMaxHeight()
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.92f)),
+        )
+        Row(Modifier.fillMaxSize()) {
+            options.forEachIndexed { i, option ->
+                val isSelected = i == index
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(CircleShape)
+                        .selectable(selected = isSelected, role = Role.Tab, onClick = {
+                            if (!isSelected) haptics.tick()
+                            onSelect(option)
+                        }),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        label(option),
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
         }
     }
 }

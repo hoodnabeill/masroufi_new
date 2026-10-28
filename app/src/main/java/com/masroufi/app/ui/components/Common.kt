@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -31,7 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -46,6 +47,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -63,48 +66,79 @@ fun MasroufiTopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
     actions: @Composable () -> Unit = {},
 ) {
-    TopAppBar(
-        title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+    if (onBack == null) {
+        // Tab roots get an Apple-style large title; actions sit in glass circles beside it.
+        Row(
+            Modifier.fillMaxWidth().statusBarsPadding().padding(start = 20.dp, end = 12.dp, top = 14.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.displaySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).semantics { heading() },
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { actions() }
+        }
+        return
+    }
+    CenterAlignedTopAppBar(
+        title = { Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                }
+            GlassIconButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp)) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
             }
         },
-        actions = { actions() },
+        actions = { Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) { actions() } },
         scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
     )
 }
 
-/** A surface that dips slightly under the finger with a spring, giving tactile feedback without extra noise. */
+/** A 44dp glass circle: the minimum comfortable touch target, with the press response starting on touch-down. */
+@Composable
+fun GlassIconButton(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val reduce = LocalReduceMotion.current
+    val scale by animateFloatAsState(if (pressed && !reduce) 0.88f else 1f, Motion.snappy(reduce), label = "iconPress")
+    Box(
+        modifier
+            .size(44.dp)
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .glass(CircleShape)
+            .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { content() }
+}
+
+/**
+ * The house card: glass material that dips under the finger with a critically-damped spring the instant it is
+ * pressed. [color] tints the glass rather than replacing it.
+ */
 @Composable
 fun PressableCard(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    color: Color = Color.Unspecified,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val reduce = LocalReduceMotion.current
-    val scale by animateFloatAsState(if (pressed && !reduce) 0.97f else 1f, Motion.bouncy(reduce), label = "press")
-    Surface(
-        modifier = modifier
+    val scale by animateFloatAsState(if (pressed && !reduce) 0.965f else 1f, Motion.snappy(reduce), label = "press")
+    val shape = MaterialTheme.shapes.large
+    Column(
+        modifier
             .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(MaterialTheme.shapes.large)
+            .glass(shape, tint = color)
             .then(
-                if (onClick != null) Modifier.clickable(interactionSource = interaction, indication = androidx.compose.material3.ripple(), role = Role.Button, onClick = onClick) else Modifier,
-            ),
-        color = color,
-        shape = MaterialTheme.shapes.large,
-    ) {
-        Column(Modifier.padding(16.dp), content = content)
-    }
+                if (onClick != null) Modifier.clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick) else Modifier,
+            )
+            .padding(18.dp),
+        content = content,
+    )
 }
 
 @Composable
