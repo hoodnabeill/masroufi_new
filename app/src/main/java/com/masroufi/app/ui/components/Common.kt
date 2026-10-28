@@ -293,7 +293,7 @@ fun ColorPicker(selected: Int, onSelect: (Int) -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 if (index == selected) {
-                    Icon(androidx.compose.material.icons.MIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    Icon(MIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             }
         }
