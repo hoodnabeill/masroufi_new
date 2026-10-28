@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -133,15 +134,17 @@ fun HomeScreen(
     }
 
     var order = 0
+    val list = rememberLazyListState()
     LazyColumn(
         Modifier.fillMaxSize(),
+        state = list,
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = DockClearance),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item(key = "header") { Header(onOpenAnalytics, onCustomize = { customizing = true }) }
         if (state.visible(DashboardSection.BALANCE)) {
             val i = order++
-            item(key = "balance") { BalanceHero(state, onOpenWallets, Modifier.staggerIn(i)) }
+            item(key = "balance") { BalanceHero(state, onOpenWallets, Modifier.staggerIn(i).heroParallax(list)) }
         }
         if (state.visible(DashboardSection.QUICK_ACTIONS)) {
             val i = order++
@@ -536,4 +539,19 @@ private fun RecentCard(state: HomeUiState, onOpenTransaction: (String) -> Unit, 
 fun debtLabel(direction: DebtDirection): Int = when (direction) {
     DebtDirection.I_OWE -> R.string.debt_i_owe
     DebtDirection.OWED_TO_ME -> R.string.debt_owed_to_me
+}
+
+/**
+ * As the list scrolls the hero card lags behind (parallax), recedes and dims, so the content below slides over it
+ * like a sheet. Read from the list layout while drawing only.
+ */
+private fun Modifier.heroParallax(list: LazyListState): Modifier = graphicsLayer {
+    val offset = list.layoutInfo.visibleItemsInfo.firstOrNull { it.key == "balance" }?.offset ?: return@graphicsLayer
+    val scrolled = (-offset).coerceAtLeast(0).toFloat()
+    val progress = (scrolled / size.height.coerceAtLeast(1f)).coerceIn(0f, 1f)
+    translationY = scrolled * 0.4f
+    val s = 1f - 0.08f * progress
+    scaleX = s
+    scaleY = s
+    alpha = 1f - 0.6f * progress
 }
