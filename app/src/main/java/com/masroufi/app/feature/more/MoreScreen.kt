@@ -34,6 +34,7 @@ private data class Entry(val icon: ImageVector, val title: Int, val subtitle: In
 @Composable
 fun MoreScreen(
     onWallets: () -> Unit,
+    onSubscriptions: () -> Unit,
     onRecurring: () -> Unit,
     onGameya: () -> Unit,
     onDebts: () -> Unit,
@@ -47,6 +48,7 @@ fun MoreScreen(
 ) {
     val money = listOf(
         Entry(MIcons.Wallet, R.string.wallets_title, R.string.more_wallets_sub, onWallets),
+        Entry(MIcons.Repeat, R.string.subs_title, R.string.subs_more_sub, onSubscriptions),
         Entry(MIcons.Insights, R.string.analytics_title, R.string.more_analytics_sub, onAnalytics),
         Entry(MIcons.Repeat, R.string.recurring_title, R.string.more_recurring_sub, onRecurring),
         Entry(MIcons.Gameya, R.string.gameya_title, R.string.more_gameya_sub, onGameya),
@@ -65,7 +67,7 @@ fun MoreScreen(
             item { SectionHeader(stringResource(R.string.more_money), Modifier.padding(horizontal = 16.dp)) }
             item { Group(money, Modifier.staggerIn(0)) }
             item { SectionHeader(stringResource(R.string.more_app), Modifier.padding(horizontal = 16.dp)) }
-            item { Group(app, Modifier.staggerIn(1), colorOffset = 7) }
+            item { Group(app, Modifier.staggerIn(1), colorOffset = 8) }
         }
     }
 }

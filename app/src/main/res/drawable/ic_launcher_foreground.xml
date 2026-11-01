@@ -35,18 +35,18 @@
                     android:endX="82"
                     android:endY="76">
                     <item android:offset="0" android:color="#F2FFFFFF" />
-                    <item android:offset="1" android:color="#B3DDF7EC" />
+                    <item android:offset="1" android:color="#B3E9E0FF" />
                 </gradient>
             </aapt:attr>
         </path>
         <path
             android:fillColor="#00000000"
-            android:strokeColor="#660B2A36"
+            android:strokeColor="#662A1260"
             android:strokeWidth="3"
             android:strokeLineCap="round"
             android:pathData="M34,53h14M34,61h9" />
         <path
-            android:fillColor="#FF0FCF8B"
+            android:fillColor="#FFB79CFF"
             android:pathData="M64,64m-9,0a9,9 0 1 1 18,0a9,9 0 1 1 -18,0" />
         <path
             android:fillColor="#66FFFFFF"

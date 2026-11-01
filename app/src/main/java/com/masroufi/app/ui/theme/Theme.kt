@@ -53,26 +53,26 @@ data class GlassTokens(
 )
 
 private val DarkGlass = GlassTokens(
-    base = Color(0xFF05070A),
+    base = Color(0xFF07050E),
     fill = Color.White.copy(alpha = 0.06f),
     fillStrong = Color.White.copy(alpha = 0.11f),
     strokeTop = Color.White.copy(alpha = 0.24f),
     strokeBottom = Color.White.copy(alpha = 0.04f),
     shadow = Color.Black.copy(alpha = 0.45f),
-    textSecondary = Color(0xFF98A2B3),
-    aurora = listOf(Color(0xFF0FCF8B), Color(0xFF1BA8E6), Color(0xFF7B5CFF), Color(0xFFF2A93B)),
+    textSecondary = Color(0xFFA9A2BF),
+    aurora = listOf(Color(0xFF7B4DFF), Color(0xFFC04BFF), Color(0xFF3D5AFE), Color(0xFFFF5CA8)),
     dark = true,
 )
 
 private val LightGlass = GlassTokens(
-    base = Color(0xFFF1F3F7),
+    base = Color(0xFFF4F1FA),
     fill = Color.White.copy(alpha = 0.55f),
     fillStrong = Color.White.copy(alpha = 0.78f),
     strokeTop = Color.White.copy(alpha = 0.95f),
     strokeBottom = Color.White.copy(alpha = 0.35f),
     shadow = Color(0xFF1B2A4A).copy(alpha = 0.10f),
-    textSecondary = Color(0xFF5B6576),
-    aurora = listOf(Color(0xFF7FE8C1), Color(0xFF9AD4FF), Color(0xFFC8B8FF), Color(0xFFFFD9A0)),
+    textSecondary = Color(0xFF5C5670),
+    aurora = listOf(Color(0xFFC6B3FF), Color(0xFFE6B8FF), Color(0xFFB3C1FF), Color(0xFFFFC4E1)),
     dark = false,
 )
 
@@ -81,15 +81,15 @@ val LocalGlass = staticCompositionLocalOf { DarkGlass }
 /** Background and plain surfaces are transparent: the ambient aurora behind every screen is the canvas. */
 private fun scheme(dark: Boolean, glass: GlassTokens): ColorScheme {
     val onBase = if (dark) Color(0xFFF4F6FA) else Color(0xFF0B0F14)
-    val primary = if (dark) Color(0xFF4BE3A5) else Color(0xFF087A50)
+    val primary = if (dark) Color(0xFFB79CFF) else Color(0xFF6A3DE8)
     val sheet = if (dark) Color(0xF2111519) else Color(0xF5FBFCFE)
     val common = if (dark) darkColorScheme() else lightColorScheme()
     return common.copy(
         primary = primary,
-        onPrimary = if (dark) Color(0xFF00281A) else Color.White,
+        onPrimary = if (dark) Color(0xFF1C0B47) else Color.White,
         primaryContainer = primary.copy(alpha = 0.18f),
         onPrimaryContainer = onBase,
-        secondary = if (dark) Color(0xFF7DB3FF) else Color(0xFF2F6FE0),
+        secondary = if (dark) Color(0xFFF59BD0) else Color(0xFFB0307A),
         onSecondary = Color.White,
         secondaryContainer = primary.copy(alpha = if (dark) 0.22f else 0.16f),
         onSecondaryContainer = onBase,
@@ -181,12 +181,12 @@ object Motion {
         if (reduce) snap() else spring(dampingRatio = 0.72f, stiffness = stiffness(0.34f))
 }
 
-private val Inter = FontFamily(
-    Font(R.font.inter, FontWeight.Normal),
-    Font(R.font.inter, FontWeight.Medium),
-    Font(R.font.inter, FontWeight.SemiBold),
-    Font(R.font.inter, FontWeight.Bold),
-    Font(R.font.inter, FontWeight.ExtraBold),
+private val Jakarta = FontFamily(
+    Font(R.font.jakarta, FontWeight.Normal),
+    Font(R.font.jakarta, FontWeight.Medium),
+    Font(R.font.jakarta, FontWeight.SemiBold),
+    Font(R.font.jakarta, FontWeight.Bold),
+    Font(R.font.jakarta, FontWeight.ExtraBold),
 )
 
 private val PlexArabic = FontFamily(
@@ -202,7 +202,7 @@ private val PlexArabic = FontFamily(
  * the connections: it keeps zero tracking and slightly taller leading for its ascenders and descenders.
  */
 private fun typography(arabic: Boolean): Typography {
-    val family = if (arabic) PlexArabic else Inter
+    val family = if (arabic) PlexArabic else Jakarta
     fun style(size: Int, line: Int, weight: FontWeight, tracking: Float): TextStyle = TextStyle(
         fontFamily = family,
         fontWeight = weight,

@@ -490,6 +490,24 @@
     <string name="onboarding_plan_title">لكل جنيه مكانه.</string>
     <string name="onboarding_plan_body">الميزانيات والأهداف والجمعيات والديون ماشيين مع بعض، فتعرف دايمًا الفلوس اللي تقدر تصرفها فعلًا.</string>
     <string name="onboarding_skip">تخطي</string>
+    <string name="subs_title">اشتراكاتك</string>
+    <string name="subs_more_sub">سبوتيفاي ونتفليكس والنت وكل حاجة بتدفعها كل شهر</string>
+    <string name="subs_monthly">بتدفع كل شهر</string>
+    <string name="subs_yearly">يعني %1$s في السنة</string>
+    <string name="subs_add">ضيف اشتراك</string>
+    <string name="subs_other">حاجة تانية</string>
+    <string name="subs_renews_today">بيتجدد النهارده</string>
+    <plurals name="subs_renews_in">
+        <item quantity="zero">بيتجدد النهارده</item>
+        <item quantity="one">بيتجدد بكرة</item>
+        <item quantity="two">بيتجدد بعد يومين</item>
+        <item quantity="few">بيتجدد بعد %d أيام</item>
+        <item quantity="many">بيتجدد بعد %d يوم</item>
+        <item quantity="other">بيتجدد بعد %d يوم</item>
+    </plurals>
+    <string name="subs_paused">متوقف</string>
+    <string name="subs_empty_title">لسه مفيش اشتراكات</string>
+    <string name="subs_empty_body">ضيف نتفليكس أو سبوتيفاي أو النت أو الجيم، وشوف بيكلفوك كام فعلًا.</string>
     <string name="home_this_cycle">من المرتب للمرتب</string>
     <plurals name="home_days_to_payday">
         <item quantity="zero">المرتب النهارده</item>

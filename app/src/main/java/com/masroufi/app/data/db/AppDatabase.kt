@@ -17,6 +17,8 @@ import com.masroufi.app.data.model.RecurringRule
 import com.masroufi.app.data.model.SplitRule
 import com.masroufi.app.data.model.Transaction
 import com.masroufi.app.data.model.Wallet
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
@@ -24,7 +26,7 @@ import com.masroufi.app.data.model.Wallet
         RecurringRule::class, Debt::class, DebtPayment::class, Gameya::class, GameyaMember::class,
         GameyaPayment::class, GameyaPayout::class, SplitRule::class, Allocation::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -40,5 +42,12 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "masroufi.db"
+
+        /** v2: recurring rules can name the subscription service they pay for. */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE recurring ADD COLUMN serviceKey TEXT")
+            }
+        }
     }
 }

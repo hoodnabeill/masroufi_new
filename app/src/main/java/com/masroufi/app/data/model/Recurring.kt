@@ -27,4 +27,6 @@ data class RecurringRule(
     val remind: Boolean = true,
     val updatedAt: Long,
     val deleted: Boolean = false,
+    /** Subscription service this rule pays for (see Services), shown with its logo. Null for ordinary rules. */
+    val serviceKey: String? = null,
 )

@@ -39,6 +39,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.ServiceHero
+import com.masroufi.app.ui.components.Services
 import com.masroufi.app.ui.components.edgeFade
 import com.masroufi.app.ui.components.GlassIconButton
 import com.masroufi.app.ui.components.GlassSnackbarHost
@@ -176,6 +178,7 @@ data class RecurringForm(
     val start: LocalDate = LocalDate.now(),
     val end: LocalDate? = null,
     val remind: Boolean = true,
+    val serviceKey: String? = null,
     val wallets: List<WalletWithBalance> = emptyList(),
     val categories: List<Category> = emptyList(),
 ) {
@@ -190,7 +193,8 @@ class RecurringEditorViewModel @Inject constructor(
     categories: CategoryRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val id = savedState.toRoute<RecurringEditorRoute>().id
+    private val route = savedState.toRoute<RecurringEditorRoute>()
+    private val id = route.id
     private var original: RecurringRule? = null
     private val _form = MutableStateFlow(RecurringForm())
     val form: StateFlow<RecurringForm> = _form.asStateFlow()
@@ -207,9 +211,17 @@ class RecurringEditorViewModel @Inject constructor(
                     loaded = true, isNew = false, type = it.type, amount = Money.toPlainString(it.amountMinor, it.currency),
                     walletId = it.walletId, toWalletId = it.toWalletId, categoryId = it.categoryId, note = it.note,
                     frequency = it.frequency, interval = it.interval.toString(), start = LocalDate.ofEpochDay(it.startEpochDay),
-                    end = it.endEpochDay?.let(LocalDate::ofEpochDay), remind = it.remind, wallets = w, categories = c,
+                    end = it.endEpochDay?.let(LocalDate::ofEpochDay), remind = it.remind, serviceKey = it.serviceKey, wallets = w, categories = c,
                 )
-            } ?: RecurringForm(loaded = true, walletId = w.firstOrNull()?.wallet?.id, start = LocalDate.now(clock), wallets = w, categories = c)
+            } ?: run {
+                // Starting from a catalogue service pre-fills its name and category; the user only types the price.
+                val service = Services.of(route.serviceKey)
+                RecurringForm(
+                    loaded = true, walletId = w.firstOrNull()?.wallet?.id, start = LocalDate.now(clock), wallets = w, categories = c,
+                    note = service?.title.orEmpty(), serviceKey = service?.key,
+                    categoryId = service?.category?.categoryId?.takeIf { cid -> c.any { it.id == cid } },
+                )
+            }
         }
     }
 
@@ -238,6 +250,7 @@ class RecurringEditorViewModel @Inject constructor(
                         lastGeneratedEpochDay = base?.lastGeneratedEpochDay,
                         active = base?.active ?: true,
                         remind = f.remind,
+                        serviceKey = f.serviceKey,
                         updatedAt = clock.millis(),
                     ),
                 )
@@ -271,6 +284,7 @@ fun RecurringEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Rec
             Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            Services.of(form.serviceKey)?.let { ServiceHero(it) }
             SegmentedChoice(TransactionType.entries.toList(), form.type, { t -> viewModel.update { it.copy(type = t, categoryId = null) } }, { typeLabel(it) })
             AmountField(form.amount, { v -> viewModel.update { it.copy(amount = v) } }, form.currency)
             TextInput(form.note, { v -> viewModel.update { it.copy(note = v) } }, stringResource(R.string.field_description))

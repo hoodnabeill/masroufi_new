@@ -58,6 +58,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.masroufi.app.R
+import com.masroufi.app.feature.subscriptions.SubscriptionsScreen
 import com.masroufi.app.feature.analytics.AnalyticsScreen
 import com.masroufi.app.feature.budgets.BudgetEditorScreen
 import com.masroufi.app.feature.budgets.BudgetsScreen
@@ -243,6 +244,7 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     screen<MoreRoute> {
         MoreScreen(
             onWallets = { nav.navigate(WalletsRoute) },
+            onSubscriptions = { nav.navigate(SubscriptionsRoute) },
             onRecurring = { nav.navigate(RecurringRoute) },
             onGameya = { nav.navigate(GameyaListRoute) },
             onDebts = { nav.navigate(DebtsRoute) },
@@ -279,6 +281,13 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     screen<BudgetEditorRoute> { BudgetEditorScreen(onDone = back, onBack = back) }
     screen<GoalDetailRoute> { GoalDetailScreen(onBack = back, onEdit = { nav.navigate(GoalEditorRoute(it)) }) }
     screen<GoalEditorRoute> { GoalEditorScreen(onDone = back, onBack = back) }
+    screen<SubscriptionsRoute> {
+        SubscriptionsScreen(
+            onBack = back,
+            onOpen = { nav.navigate(RecurringEditorRoute(it)) },
+            onAdd = { key -> nav.navigate(RecurringEditorRoute(serviceKey = key)) },
+        )
+    }
     screen<RecurringRoute> { RecurringScreen(onBack = back, onAdd = { nav.navigate(RecurringEditorRoute()) }, onEdit = { nav.navigate(RecurringEditorRoute(it)) }) }
     screen<RecurringEditorRoute> { RecurringEditorScreen(onDone = back, onBack = back) }
     screen<DebtsRoute> { DebtsScreen(onBack = back, onAdd = { nav.navigate(DebtEditorRoute()) }, onOpen = { nav.navigate(DebtDetailRoute(it)) }) }
