@@ -30,6 +30,8 @@ data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = false,
     val solidGlass: Boolean = false,
+    /** Day of the month the salary lands (1–31), or 0 for calendar months. */
+    val paydayDay: Int = 0,
     val primaryCurrency: String = Money.DEFAULT_CURRENCY,
     val hiddenSections: Set<DashboardSection> = emptySet(),
     val lockEnabled: Boolean = false,
@@ -68,6 +70,7 @@ class SettingsRepository @Inject constructor(
         val theme = stringPreferencesKey("theme")
         val dynamic = booleanPreferencesKey("dynamic_color")
         val solidGlass = booleanPreferencesKey("solid_glass")
+        val payday = intPreferencesKey("payday_day")
         val currency = stringPreferencesKey("primary_currency")
         val hidden = stringSetPreferencesKey("hidden_sections")
         val lock = booleanPreferencesKey("lock_enabled")
@@ -102,6 +105,7 @@ class SettingsRepository @Inject constructor(
             themeMode = p[Keys.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
             dynamicColor = p[Keys.dynamic] ?: false,
             solidGlass = p[Keys.solidGlass] ?: false,
+            paydayDay = p[Keys.payday] ?: 0,
             primaryCurrency = p[Keys.currency] ?: Money.DEFAULT_CURRENCY,
             hiddenSections = p[Keys.hidden].orEmpty().mapNotNull { runCatching { DashboardSection.valueOf(it) }.getOrNull() }.toSet(),
             lockEnabled = p[Keys.lock] ?: false,
@@ -152,6 +156,7 @@ class SettingsRepository @Inject constructor(
     suspend fun setTheme(mode: ThemeMode) = store.edit { it[Keys.theme] = mode.name }
     suspend fun setDynamicColor(enabled: Boolean) = store.edit { it[Keys.dynamic] = enabled }
     suspend fun setSolidGlass(enabled: Boolean) = store.edit { it[Keys.solidGlass] = enabled }
+    suspend fun setPayday(day: Int) = store.edit { it[Keys.payday] = day.coerceIn(0, 31) }
     suspend fun setPrimaryCurrency(currency: String) = store.edit { it[Keys.currency] = currency }
     suspend fun setHiddenSections(sections: Set<DashboardSection>) = store.edit { p -> p[Keys.hidden] = sections.map { it.name }.toSet() }
     suspend fun setNotifications(enabled: Boolean) = store.edit { it[Keys.notifications] = enabled }

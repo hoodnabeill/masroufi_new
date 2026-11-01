@@ -23,4 +23,11 @@ class AmountKeyTest {
     @Test fun capsIntegerDigits() {
         assertEquals(12, type("9".repeat(20)).length)
     }
+
+    @Test fun quickNotesAddWholePounds() {
+        assertEquals("50", addWholeAmount("", 50))
+        assertEquals("62.5", addWholeAmount("12.5", 50))
+        assertEquals("300", addWholeAmount("100", 200))
+        assertEquals("9".repeat(12), addWholeAmount("9".repeat(12), 5))
+    }
 }

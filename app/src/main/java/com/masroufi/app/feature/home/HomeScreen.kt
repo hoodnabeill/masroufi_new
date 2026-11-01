@@ -21,6 +21,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import com.masroufi.app.domain.PayCycle
+import com.masroufi.app.ui.components.LocalMoneyFormatter
+import com.masroufi.app.ui.components.categoryColor
+import com.masroufi.app.ui.components.categoryLabel
+import com.masroufi.app.ui.components.liquidPress
+import com.masroufi.app.ui.components.IconBadge
+import com.masroufi.app.ui.components.CategoryIcons
+import java.time.LocalDate
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -82,20 +99,15 @@ import com.masroufi.app.domain.Insight
 import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.AnimatedAmount
 import com.masroufi.app.ui.components.AnimatedProgressBar
-import com.masroufi.app.ui.components.CategoryIcons
 import com.masroufi.app.ui.components.ChartLegend
 import com.masroufi.app.ui.components.ChartSlice
 import com.masroufi.app.ui.components.DonutChart
 import com.masroufi.app.ui.components.EmptyState
 import com.masroufi.app.ui.components.GlassIconButton
-import com.masroufi.app.ui.components.IconBadge
-import com.masroufi.app.ui.components.LocalMoneyFormatter
 import com.masroufi.app.ui.components.MoneyText
 import com.masroufi.app.ui.components.PressableCard
 import com.masroufi.app.ui.components.SectionHeader
 import com.masroufi.app.ui.components.TransactionItem
-import com.masroufi.app.ui.components.categoryColor
-import com.masroufi.app.ui.components.categoryLabel
 import com.masroufi.app.ui.components.glass
 import com.masroufi.app.ui.components.rememberDateFormatter
 import com.masroufi.app.ui.components.staggerIn
@@ -107,7 +119,6 @@ import com.masroufi.app.ui.theme.LocalGlass
 import com.masroufi.app.ui.theme.LocalReduceMotion
 import com.masroufi.app.ui.theme.Motion
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.FormatStyle
 
@@ -115,6 +126,7 @@ import java.time.format.FormatStyle
 @Composable
 fun HomeScreen(
     onAddTransaction: (String) -> Unit,
+    onQuickSpend: (categoryId: String) -> Unit,
     onOpenTransaction: (String) -> Unit,
     onOpenTransactions: () -> Unit,
     onOpenWallets: () -> Unit,
@@ -165,6 +177,7 @@ fun HomeScreen(
         if (state.visible(DashboardSection.QUICK_ACTIONS)) {
             val i = order++
             item(key = "quick") { QuickActions(onAddTransaction, Modifier.staggerIn(i)) }
+            item(key = "quickSpend") { QuickSpend(onQuickSpend, Modifier.staggerIn(i)) }
         }
         if (state.visible(DashboardSection.INSIGHTS) && state.insights.isNotEmpty()) {
             val i = order++
@@ -312,8 +325,9 @@ private fun BalanceHero(state: HomeUiState, onOpenWallets: () -> Unit, modifier:
             state.otherBalances.forEach { other ->
                 MoneyText(other.minor, other.currency, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            PaydayLine(state)
             Spacer(Modifier.height(18.dp))
-            Text(stringResource(R.string.home_this_month), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(if (PayCycle.isSet(state.settings.paydayDay)) R.string.home_this_cycle else R.string.home_this_month), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 FlowPill(MIcons.Income, stringResource(R.string.type_income), state.incomeMinor, state.currency, finance.income, Modifier.weight(1f))
@@ -605,4 +619,69 @@ private fun HomeSkeleton() {
         }
         Box(Modifier.fillMaxWidth().height(160.dp).glass(card).then(shimmer))
     }
+}
+
+/** Payday clock in the hero: days until the salary and what can be spent per day so the balance lasts. */
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun PaydayLine(state: HomeUiState) {
+    val day = state.settings.paydayDay
+    if (!PayCycle.isSet(day)) return
+    val today = remember { LocalDate.now() }
+    val left = PayCycle.daysUntilPayday(today, day)
+    val perDay = PayCycle.safePerDay(state.primaryBalance, today, day)
+    val formatter = LocalMoneyFormatter.current
+    val days = pluralStringResource(R.plurals.home_days_to_payday, left, left)
+    val spend = if (perDay > 0) stringResource(R.string.home_safe_per_day, formatter.format(perDay, state.currency)) else stringResource(R.string.home_safe_none)
+    Row(
+        Modifier.padding(top = 12.dp).glassInset(MaterialTheme.shapes.medium).padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(MIcons.Calendar, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text(days, style = MaterialTheme.typography.labelLarge)
+            Text(spend, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** Everyday Egyptian spends, one tap from Home: opens the editor with the category already chosen. */
+private val quickSpends = listOf("groceries" to 1, "transport" to 2, "food" to 0, "mobile" to 5, "bills" to 3)
+
+@Composable
+private fun QuickSpend(onPick: (categoryId: String) -> Unit, modifier: Modifier) {
+    Column(modifier.fillMaxWidth()) {
+        Text(
+            stringResource(R.string.home_quick_spend),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp).semantics { heading() },
+        )
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            quickSpends.forEach { (key, color) ->
+                val interaction = remember { MutableInteractionSource() }
+                Row(
+                    Modifier
+                        .liquidPress(interaction, CircleShape, scaleTo = 1.05f)
+                        .glass(CircleShape)
+                        .clickable(interactionSource = interaction, indication = null, role = Role.Button) { onPick("sys_$key") }
+                        .padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconBadge(CategoryIcons.of(quickSpendIcon(key)), categoryColor(color), size = 34.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(categoryLabel(null, key), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                }
+            }
+        }
+    }
+}
+
+private fun quickSpendIcon(key: String): String = when (key) {
+    "groceries" -> "cart"
+    "transport" -> "car"
+    "food" -> "restaurant"
+    "mobile" -> "phone"
+    else -> "bolt"
 }

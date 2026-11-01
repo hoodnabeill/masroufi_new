@@ -39,6 +39,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.DropdownField
 import com.masroufi.app.ui.components.edgeFade
 import com.masroufi.app.ui.components.GlassDialog
 import com.masroufi.app.ui.components.GlassSecondaryButton
@@ -136,6 +137,14 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 supportingContent = { Text(stringResource(R.string.settings_solid_glass_sub)) },
                 trailingContent = { GlassSwitch(s.solidGlass, { v -> viewModel.launch { setSolidGlass(v) } }) },
             )
+            DropdownField(
+                label = stringResource(R.string.settings_payday),
+                options = (0..31).toList(),
+                selected = s.paydayDay,
+                onSelect = { d -> viewModel.launch { setPayday(d) } },
+                optionLabel = { d -> if (d == 0) stringResource(R.string.payday_none) else d.toString() },
+            )
+            Text(stringResource(R.string.settings_payday_sub), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             CurrencyField(s.primaryCurrency, { c -> viewModel.launch { setPrimaryCurrency(c) } })
             Text(stringResource(R.string.settings_currency_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             ListItem(

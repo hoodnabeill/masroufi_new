@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object GoalsRoute
 @Serializable data object MoreRoute
 
-@Serializable data class TransactionEditorRoute(val id: String? = null, val type: String = "EXPENSE", val walletId: String? = null)
+@Serializable data class TransactionEditorRoute(val id: String? = null, val type: String = "EXPENSE", val walletId: String? = null, val categoryId: String? = null)
 @Serializable data class TransactionDetailRoute(val id: String)
 @Serializable data object WalletsRoute
 @Serializable data class WalletDetailRoute(val id: String)

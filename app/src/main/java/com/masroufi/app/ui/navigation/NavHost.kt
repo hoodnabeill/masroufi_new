@@ -185,7 +185,7 @@ fun MasroufiNavHost() {
                 onDismiss = { menuOpen = false },
                 onPick = { type ->
                     menuOpen = false
-                    nav.navigate(TransactionEditorRoute(type = type))
+                    if (type == QUICK_LOAN) nav.navigate(DebtEditorRoute()) else nav.navigate(TransactionEditorRoute(type = type))
                 },
             )
             AnimatedVisibility(
@@ -219,6 +219,7 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     screen<HomeRoute> {
         HomeScreen(
             onAddTransaction = { type -> nav.navigate(TransactionEditorRoute(type = type)) },
+            onQuickSpend = { categoryId -> nav.navigate(TransactionEditorRoute(type = "EXPENSE", categoryId = categoryId)) },
             onOpenTransaction = { nav.navigate(TransactionDetailRoute(it)) },
             onOpenTransactions = { nav.navigateToTab(TransactionsRoute) },
             onOpenWallets = { nav.navigate(WalletsRoute) },

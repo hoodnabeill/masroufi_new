@@ -100,6 +100,9 @@ val DockMaxWidth = 560.dp
 
 data class DockTab(val label: Int)
 
+/** Quick-add pick for lending or borrowing money (سلفة), which opens the debt editor instead of a transaction. */
+const val QUICK_LOAN = "LOAN"
+
 /**
  * The dock is the thickest glass in the app: it blurs and saturates the live screen beneath it and bends it at the
  * rim with a chromatic lens. Without live glass (older Android) it is a near-opaque frosted capsule.
@@ -349,6 +352,7 @@ fun QuickAddMenu(open: Boolean, onDismiss: () -> Unit, onPick: (String) -> Unit)
         Triple("EXPENSE", R.string.type_expense, MIcons.Expense) to finance.expense,
         Triple("INCOME", R.string.type_income, MIcons.Income) to finance.income,
         Triple("TRANSFER", R.string.type_transfer, MIcons.Transfer) to finance.transfer,
+        Triple(QUICK_LOAN, R.string.quick_loan, MIcons.Handshake) to finance.warning,
     )
     // Anchored to the + button: the column lives in the same centred, width-capped frame as the dock.
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {

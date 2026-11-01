@@ -499,6 +499,23 @@
     <string name="onboarding_plan_title">Every pound has a place.</string>
     <string name="onboarding_plan_body">Budgets, goals, gameya and debts move together, so you always know what is really yours to spend.</string>
     <string name="onboarding_skip">Skip</string>
+    <string name="home_this_cycle">This pay cycle</string>
+    <plurals name="home_days_to_payday">
+        <item quantity="one">%d day to payday</item>
+        <item quantity="other">%d days to payday</item>
+    </plurals>
+    <string name="home_safe_per_day">About %1$s a day</string>
+    <string name="home_safe_none">Nothing left to spend until payday</string>
+    <string name="home_quick_spend">Quick spend</string>
+    <string name="settings_payday">Payday</string>
+    <string name="settings_payday_sub">Your month runs from payday to payday</string>
+    <string name="payday_none">No fixed payday</string>
+    <string name="onboarding_wallets_title">Where is your money?</string>
+    <string name="wallet_preset_vodafone">Vodafone Cash</string>
+    <string name="wallet_preset_instapay">InstaPay</string>
+    <string name="wallet_preset_bank">Bank account</string>
+    <string name="quick_loan">Lend / borrow</string>
+    <string name="editor_quick_amounts">Quick amounts</string>
     <string name="onboarding_example">Example</string>
     <string name="dock_transactions">Activity</string>
     <string name="settings_solid_glass">Solid surfaces</string>

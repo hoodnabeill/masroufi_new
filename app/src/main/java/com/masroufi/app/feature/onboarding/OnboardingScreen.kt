@@ -85,6 +85,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.CategoryIcons
+import com.masroufi.app.ui.components.DropdownField
+import com.masroufi.app.ui.components.glassChipColors
+import androidx.compose.material3.FilterChip
+import androidx.compose.runtime.mutableIntStateOf
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
 import com.masroufi.app.data.model.Wallet
@@ -125,12 +130,15 @@ class OnboardingViewModel @Inject constructor(
     private val wallets: WalletRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    fun finish(currency: String, cashName: String, openingMinor: Long) {
+    /** [extra] are the other places the user keeps money (mobile wallets, bank), created empty beside cash. */
+    fun finish(currency: String, cashName: String, openingMinor: Long, paydayDay: Int, extra: List<Pair<String, WalletType>>) {
         viewModelScope.launch {
             if (!wallets.hasAnyWallet()) {
                 val now = clock.millis()
                 wallets.save(Wallet(newId(), cashName, WalletType.CASH, currency, openingMinor, createdAt = now, updatedAt = now))
+                extra.forEach { (name, type) -> wallets.save(Wallet(newId(), name, type, currency, 0L, createdAt = now, updatedAt = now)) }
             }
+            settings.setPayday(paydayDay)
             settings.setOnboardingDone(currency)
         }
     }
@@ -154,6 +162,9 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
     val reduce = LocalReduceMotion.current
     var currency by rememberSaveable { mutableStateOf(Money.DEFAULT_CURRENCY) }
     var opening by rememberSaveable { mutableStateOf("") }
+    var payday by rememberSaveable { mutableIntStateOf(0) }
+    var picked by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val presetNames = WalletPresets.associateWith { stringResource(it.label) }
     val cashName = stringResource(R.string.wallet_default_cash)
     val last = pager.currentPage == PAGES - 1
     val chrome = remember { Animatable(if (reduce) 1f else 0f) }
@@ -187,7 +198,13 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
                     2 -> StoryPage(offset, active, firstDelay = 0, stringResource(R.string.onboarding_page2_title), stringResource(R.string.onboarding_privacy)) {
                         PrivacySeal(active)
                     }
-                    else -> SetupPage(offset, active, currency, { currency = it }, opening, { opening = it })
+                    else -> SetupPage(
+                        offset, active, currency, { currency = it }, opening, { opening = it },
+                        payday = payday,
+                        onPayday = { payday = it },
+                        picked = picked,
+                        onToggle = { key -> picked = if (key in picked) picked - key else picked + key },
+                    )
                 }
             }
             LiquidDrop(pager, Modifier.align(Alignment.CenterHorizontally).graphicsLayer { alpha = chrome.value })
@@ -196,7 +213,10 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
                 onClick = {
                     haptics.confirm()
                     if (last) {
-                        viewModel.finish(currency, cashName, Money.parse(opening, currency) ?: 0L)
+                        viewModel.finish(
+                            currency, cashName, Money.parse(opening, currency) ?: 0L, payday,
+                            WalletPresets.filter { it.key in picked }.map { presetNames.getValue(it) to it.type },
+                        )
                     } else {
                         scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
                     }
@@ -518,6 +538,10 @@ private fun SetupPage(
     onCurrency: (String) -> Unit,
     opening: String,
     onOpening: (String) -> Unit,
+    payday: Int,
+    onPayday: (Int) -> Unit,
+    picked: List<String>,
+    onToggle: (String) -> Unit,
 ) {
     val language = LocalConfiguration.current.locales[0].language
     Column(
@@ -548,6 +572,29 @@ private fun SetupPage(
             CurrencyField(selected = currency, onSelect = onCurrency)
             Spacer(Modifier.height(12.dp))
             AmountField(value = opening, onValueChange = onOpening, currency = currency, label = stringResource(R.string.onboarding_cash_label))
+            Spacer(Modifier.height(18.dp))
+            Text(stringResource(R.string.onboarding_wallets_title), style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WalletPresets.forEach { preset ->
+                    FilterChip(
+                        colors = glassChipColors(),
+                        selected = preset.key in picked,
+                        onClick = { onToggle(preset.key) },
+                        label = { Text(stringResource(preset.label)) },
+                        leadingIcon = { Icon(CategoryIcons.wallet(preset.type), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                        shape = CircleShape,
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            DropdownField(
+                label = stringResource(R.string.settings_payday),
+                options = (0..31).toList(),
+                selected = payday,
+                onSelect = onPayday,
+                optionLabel = { d -> if (d == 0) stringResource(R.string.payday_none) else d.toString() },
+            )
         }
         Spacer(Modifier.height(14.dp))
         Text(stringResource(R.string.onboarding_privacy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -579,3 +626,12 @@ private fun LiquidDrop(pager: PagerState, modifier: Modifier) {
         drawRoundRect(primary, Offset(center - width / 2, 0f), Size(width, dot.toPx()), CornerRadius(r))
     }
 }
+
+/** Places Egyptians commonly keep money besides cash; picked ones are created as empty wallets at setup. */
+private data class WalletPreset(val key: String, val label: Int, val type: WalletType)
+
+private val WalletPresets = listOf(
+    WalletPreset("vodafone", R.string.wallet_preset_vodafone, WalletType.DIGITAL),
+    WalletPreset("instapay", R.string.wallet_preset_instapay, WalletType.DIGITAL),
+    WalletPreset("bank", R.string.wallet_preset_bank, WalletType.BANK),
+)

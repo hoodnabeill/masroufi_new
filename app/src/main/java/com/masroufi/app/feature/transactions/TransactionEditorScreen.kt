@@ -64,6 +64,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.liquidPress
+import androidx.compose.foundation.clickable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.horizontalScroll
 import com.masroufi.app.ui.components.edgeFade
 import com.masroufi.app.ui.components.GlassSnackbarHost
 import com.masroufi.app.ui.components.GlassSecondaryButton
@@ -143,6 +149,12 @@ fun TransactionEditorScreen(
             Column(Modifier.fillMaxWidth().navigationBarsPadding().imePadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
                 // The pad steps aside while note/tags use the system keyboard.
                 AnimatedVisibility(!showMore, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                    Column {
+                    QuickAmounts { add ->
+                        haptics.tick()
+                        viewModel.setAmount(addWholeAmount(state.amount, add))
+                    }
+                    Spacer(Modifier.height(10.dp))
                     Keypad(
                         onKey = { key ->
                             haptics.tick()
@@ -151,6 +163,7 @@ fun TransactionEditorScreen(
                         onClear = { viewModel.setAmount("") },
                         allowDecimal = Money.fractionDigits(state.currency) > 0,
                     )
+                    }
                 }
                 Spacer(Modifier.height(12.dp))
                 GlassButton(onClick = viewModel::save, enabled = state.canSave, modifier = Modifier.fillMaxWidth().height(56.dp)) {
@@ -347,6 +360,43 @@ private fun WalletChips(wallets: List<WalletWithBalance>, selected: String?, onS
                 leadingIcon = { Icon(CategoryIcons.wallet(item.wallet.type), contentDescription = null, modifier = Modifier.size(18.dp)) },
                 shape = MaterialTheme.shapes.extraLarge,
             )
+        }
+    }
+}
+
+/** Adds whole pounds to the typed amount (quick note chips); keeps any piastres already typed. */
+internal fun addWholeAmount(current: String, add: Int): String {
+    val base = current.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
+    val sum = base + java.math.BigDecimal(add)
+    // Same 12-digit ceiling as the keypad, so a chip can never overflow what the pad would allow.
+    if (sum.toBigInteger().toString().length > 12) return current
+    return sum.stripTrailingZeros().toPlainString()
+}
+
+/** The notes people actually hand over (5, 10, 20, 50, 100, 200), each tap adding to the amount. */
+@Composable
+private fun QuickAmounts(onAdd: (Int) -> Unit) {
+    val label = stringResource(R.string.editor_quick_amounts)
+    // Amount digits stay left-to-right in both languages, like the keypad.
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).semantics { contentDescription = label },
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            listOf(5, 10, 20, 50, 100, 200).forEach { note ->
+                val interaction = remember { MutableInteractionSource() }
+                Box(
+                    Modifier
+                        .heightIn(min = 40.dp)
+                        .liquidPress(interaction, CircleShape, scaleTo = 1.08f)
+                        .glass(CircleShape)
+                        .clickable(interactionSource = interaction, indication = null, role = Role.Button) { onAdd(note) }
+                        .padding(horizontal = 16.dp, vertical = 9.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("+$note", style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"))
+                }
+            }
         }
     }
 }

@@ -31,6 +31,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import com.masroufi.app.domain.PayCycle
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -91,11 +95,16 @@ class HomeViewModel @Inject constructor(
         clock.zone,
     )
 
+    // "This month" follows the pay cycle when a payday is set, the calendar month otherwise.
+    private val window = settings.settings.map { it.paydayDay }.distinctUntilChanged().map { day ->
+        if (PayCycle.isSet(day)) PayCycle.current(today, day).let { (start, next) -> DateWindow.days(start, next.minusDays(1), clock.zone) } else month
+    }
+
     private val core = combine(
         settings.settings,
         wallets.observeWallets(),
-        transactions.observeTypeTotals(month.startMillis, month.endMillis),
-        transactions.observeExpenseByCategory(month.startMillis, month.endMillis),
+        window.flatMapLatest { w -> transactions.observeTypeTotals(w.startMillis, w.endMillis) },
+        window.flatMapLatest { w -> transactions.observeExpenseByCategory(w.startMillis, w.endMillis) },
         categories.observeAll(),
     ) { s, w, totals, byCategory, cats ->
         val catMap = cats.associateBy { it.id }
