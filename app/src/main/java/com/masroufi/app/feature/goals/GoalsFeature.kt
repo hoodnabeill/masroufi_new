@@ -45,6 +45,27 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.theme.LocalReduceMotion
+import com.masroufi.app.ui.components.FitAmount
+import com.masroufi.app.ui.components.glassChipColors
+import com.masroufi.app.ui.components.FormSection
+import com.masroufi.app.ui.components.EditorSaveBar
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.Canvas
 import com.masroufi.app.ui.components.edgeFade
 import com.masroufi.app.ui.components.GlassSnackbarHost
 import com.masroufi.app.ui.components.GlassSheet
@@ -385,22 +406,99 @@ fun GoalEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: GoalEdit
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(if (form.isNew) R.string.goal_add else R.string.goal_edit), onBack = onBack) },
         snackbarHost = { GlassSnackbarHost(snackbar) },
+        bottomBar = { if (form.loaded) EditorSaveBar(viewModel::save) },
     ) { padding ->
         if (!form.loaded) return@Scaffold
         Column(
             Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name))
-            AmountField(form.target, { v -> viewModel.update { it.copy(target = v) } }, form.currency, label = stringResource(R.string.field_target_amount))
-            CurrencyField(form.currency, { c -> viewModel.update { it.copy(currency = c) } }, enabled = form.isNew)
-            OptionalDateChip(form.targetDate, { d -> viewModel.update { it.copy(targetDate = d) } }, stringResource(R.string.field_target_date))
-            AmountField(form.monthly, { v -> viewModel.update { it.copy(monthly = v) } }, form.currency, label = stringResource(R.string.field_planned_monthly))
-            Text(stringResource(R.string.field_icon), style = MaterialTheme.typography.titleSmall)
-            ChipChoice(goalIcons, form.iconKey, { k -> viewModel.update { it.copy(iconKey = k) } }, { "" }, leading = { Icon(CategoryIcons.of(it), contentDescription = it) })
-            Text(stringResource(R.string.field_color), style = MaterialTheme.typography.titleSmall)
-            ColorPicker(form.colorIndex, { i -> viewModel.update { it.copy(colorIndex = i) } })
-            GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            GoalPreview(form)
+            if (form.isNew) {
+                FormSection(stringResource(R.string.goal_templates)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        goalTemplates.forEach { template ->
+                            val name = stringResource(template.name)
+                            FilterChip(
+                                colors = glassChipColors(),
+                                selected = form.name == name,
+                                onClick = { viewModel.update { it.copy(name = name, iconKey = template.icon, colorIndex = template.color) } },
+                                label = { Text(name) },
+                                leadingIcon = { Icon(CategoryIcons.of(template.icon), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                                shape = CircleShape,
+                            )
+                        }
+                    }
+                }
+            }
+            FormSection(stringResource(R.string.section_details)) {
+                TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name))
+                AmountField(form.target, { v -> viewModel.update { it.copy(target = v) } }, form.currency, label = stringResource(R.string.field_target_amount))
+                CurrencyField(form.currency, { c -> viewModel.update { it.copy(currency = c) } }, enabled = form.isNew)
+            }
+            FormSection(stringResource(R.string.section_plan)) {
+                AmountField(form.monthly, { v -> viewModel.update { it.copy(monthly = v) } }, form.currency, label = stringResource(R.string.field_planned_monthly))
+                OptionalDateChip(form.targetDate, { d -> viewModel.update { it.copy(targetDate = d) } }, stringResource(R.string.field_target_date))
+            }
+            FormSection(stringResource(R.string.section_look)) {
+                ChipChoice(goalIcons, form.iconKey, { k -> viewModel.update { it.copy(iconKey = k) } }, { "" }, leading = { Icon(CategoryIcons.of(it), contentDescription = it) })
+                ColorPicker(form.colorIndex, { i -> viewModel.update { it.copy(colorIndex = i) } })
+            }
+        }
+    }
+}
+
+/** Seasonal Egyptian saving targets; picking one fills the name, icon and colour, never a price. */
+private data class GoalTemplate(val name: Int, val icon: String, val color: Int)
+
+private val goalTemplates = listOf(
+    GoalTemplate(R.string.tpl_summer, "travel", 1),
+    GoalTemplate(R.string.tpl_ramadan, "gift", 3),
+    GoalTemplate(R.string.tpl_school, "school", 2),
+    GoalTemplate(R.string.tpl_phone, "phone", 4),
+    GoalTemplate(R.string.tpl_emergency, "health", 8),
+    GoalTemplate(R.string.tpl_wedding, "family", 11),
+    GoalTemplate(R.string.tpl_car, "car", 7),
+)
+
+/** Live preview of the goal being made: its icon in a breathing ring, its name and target, and how long it takes. */
+@Composable
+private fun GoalPreview(form: GoalForm) {
+    val color = categoryColor(form.colorIndex)
+    val reduce = LocalReduceMotion.current
+    val breathe = if (reduce) null else rememberInfiniteTransition(label = "goalPreview").animateFloat(
+        0.82f, 1f, infiniteRepeatable(tween(2_400), RepeatMode.Reverse), label = "breathe",
+    )
+    val target = Money.parse(form.target, form.currency)
+    val monthly = Money.parse(form.monthly, form.currency)
+    PressableCard(onClick = null, modifier = Modifier.fillMaxWidth(), color = color.copy(alpha = 0.16f)) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(112.dp), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.fillMaxSize()) {
+                    val stroke = 10.dp.toPx()
+                    val sweep = 360f * (breathe?.value ?: 1f)
+                    drawArc(color.copy(alpha = 0.18f), -90f, 360f, false, Offset(stroke / 2, stroke / 2), Size(size.width - stroke, size.height - stroke), style = Stroke(stroke))
+                    drawArc(
+                        Brush.sweepGradient(listOf(color.copy(alpha = 0.2f), color, color.copy(alpha = 0.2f))),
+                        -90f, sweep, false, Offset(stroke / 2, stroke / 2), Size(size.width - stroke, size.height - stroke),
+                        style = Stroke(stroke, cap = StrokeCap.Round),
+                    )
+                }
+                Icon(CategoryIcons.of(form.iconKey), contentDescription = null, tint = color, modifier = Modifier.size(44.dp))
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(form.name.ifBlank { stringResource(R.string.goal_preview_name) }, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+            if (target != null && target > 0) {
+                FitAmount(target, form.currency, style = MaterialTheme.typography.titleLarge, color = color)
+                if (monthly != null && monthly > 0) {
+                    val months = ((target + monthly - 1) / monthly).toInt()
+                    Text(
+                        pluralStringResource(R.plurals.goal_months_estimate, months, months),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
     }
 }

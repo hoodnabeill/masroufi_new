@@ -4,6 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.core.DateWindow
 import com.masroufi.app.core.toLocalDate
+import com.masroufi.app.core.startMillis
+import com.masroufi.app.core.newId
+import com.masroufi.app.data.model.RepeatSpend
+import com.masroufi.app.data.model.Transaction
+import com.masroufi.app.data.repo.ProgressRepository
+import com.masroufi.app.domain.ProgressSnapshot
 import com.masroufi.app.data.model.Category
 import com.masroufi.app.data.model.DebtDirection
 import com.masroufi.app.data.model.GoalWithSaved
@@ -78,15 +84,42 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     wallets: WalletRepository,
-    transactions: TransactionRepository,
+    private val transactions: TransactionRepository,
     categories: CategoryRepository,
     budgets: BudgetRepository,
     goals: GoalRepository,
     recurring: RecurringRepository,
     debts: DebtRepository,
     private val settings: SettingsRepository,
-    clock: Clock,
+    progressRepo: ProgressRepository,
+    private val clock: Clock,
 ) : ViewModel() {
+    /** Streak, level and badges for the Home progress card. */
+    val progress: StateFlow<ProgressSnapshot?> = progressRepo.observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /**
+     * Smart one-tap suggestions: spends repeated at least three times in the last three weeks with the same category,
+     * amount and wallet, minus any already logged today.
+     */
+    val suggestions: StateFlow<List<RepeatSpend>> = transactions.observeRepeatSpends(LocalDate.now(clock).minusDays(21).startMillis(clock.zone))
+        .map { list -> list.filter { it.lastAt.toLocalDate(clock.zone) != LocalDate.now(clock) } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun logRepeat(spend: RepeatSpend) {
+        viewModelScope.launch {
+            val now = clock.millis()
+            // Validation failures (archived wallet, deleted category) simply leave the suggestion in place.
+            runCatching {
+                transactions.save(
+                    Transaction(
+                        id = newId(), type = TransactionType.EXPENSE, amountMinor = spend.amountMinor, currency = spend.currency,
+                        walletId = spend.walletId, categoryId = spend.categoryId, occurredAt = now, createdAt = now, updatedAt = now,
+                    ),
+                )
+            }
+        }
+    }
+
     private val today = LocalDate.now(clock)
     private val month = DateWindow.month(YearMonth.from(today), clock.zone)
     private val previousSameDays = DateWindow.days(

@@ -26,6 +26,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import java.time.LocalDate
+import com.masroufi.app.ui.theme.AmountStyle
+import com.masroufi.app.ui.components.staggerIn
+import com.masroufi.app.ui.components.glassInset
+import com.masroufi.app.ui.components.IconBadge
+import com.masroufi.app.ui.components.AnimatedProgressBar
+import com.masroufi.app.ui.components.AnimatedAmount
+import com.masroufi.app.ui.components.FitAmount
 import com.masroufi.app.ui.components.edgeFade
 import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.core.DateWindow
@@ -86,6 +94,8 @@ data class AnalyticsState(
     val monthlyRecurringIncome: Long = 0,
     val iOwe: Long = 0,
     val owedToMe: Long = 0,
+    /** Last 12 weeks of spending per day in the primary currency. */
+    val daily: Map<java.time.LocalDate, Long> = emptyMap(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -116,7 +126,13 @@ class AnalyticsViewModel @Inject constructor(
         Plan(b, g, r, d)
     }
 
-    val state: StateFlow<AnalyticsState> = combine(ranged, planning, categories.observeAll(), settings.settings) { (m, monthly, byCat), (b, g, r, d), cats, s ->
+    val state: StateFlow<AnalyticsState> = combine(
+        ranged,
+        planning,
+        categories.observeAll(),
+        settings.settings,
+        transactions.observeDailyExpense(java.time.LocalDate.now(clock).minusDays(HEATMAP_DAYS.toLong()).atStartOfDay(clock.zone).toInstant().toEpochMilli()),
+    ) { (m, monthly, byCat), (b, g, r, d), cats, s, daily ->
         val currency = s.primaryCurrency
         val catMap = cats.associateBy { it.id }
         val activeRules = r.filter { it.active && it.currency == currency }
@@ -136,6 +152,7 @@ class AnalyticsViewModel @Inject constructor(
             monthlyRecurringIncome = activeRules.filter { it.type == TransactionType.INCOME }.sumOf { monthlyEquivalent(it.amountMinor, it.frequency, it.interval) },
             iOwe = d.filter { it.debt.direction == DebtDirection.I_OWE && it.debt.currency == currency }.sumOf { DebtMath.remaining(it.debt.originalMinor, it.paidMinor) },
             owedToMe = d.filter { it.debt.direction == DebtDirection.OWED_TO_ME && it.debt.currency == currency }.sumOf { DebtMath.remaining(it.debt.originalMinor, it.paidMinor) },
+            daily = daily.filter { it.currency == currency }.associate { java.time.LocalDate.parse(it.day) to it.total },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AnalyticsState())
 
@@ -144,6 +161,8 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     companion object {
+        const val HEATMAP_DAYS = 84
+
         /** Approximation used only for the "about per month" figure; labelled as an estimate in the UI. */
         fun monthlyEquivalent(amount: Long, frequency: Frequency, interval: Int): Long {
             val i = interval.coerceAtLeast(1)
@@ -167,7 +186,7 @@ fun AnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltView
 
     Scaffold(topBar = { MasroufiTopBar(stringResource(R.string.analytics_title), onBack = onBack) }) { padding ->
         if (state.loading) return@Scaffold
-        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item {
                 SegmentedChoice(listOf(1, 3, 6, 12), state.months, viewModel::setMonths, { stringResource(R.string.analytics_months, it) })
             }
@@ -176,68 +195,90 @@ fun AnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltView
                 item { EmptyState(MIcons.Insights, stringResource(R.string.analytics_empty_title), stringResource(R.string.analytics_empty_body)) }
                 return@LazyColumn
             }
-            item {
-                val income = state.monthly.filter { it.type == TransactionType.INCOME }.sumOf { it.total }
-                val expense = state.monthly.filter { it.type == TransactionType.EXPENSE }.sumOf { it.total }
-                PressableCard(onClick = null) {
-                    Text(stringResource(R.string.analytics_income_vs_expense), style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(12.dp))
-                    GroupedBarChart(
-                        groups = months.map { key ->
-                            BarGroup(
-                                YearMonth.parse(key).format(monthFormat),
-                                listOf(
-                                    state.monthly.filter { it.month == key && it.type == TransactionType.INCOME }.sumOf { it.total },
-                                    state.monthly.filter { it.month == key && it.type == TransactionType.EXPENSE }.sumOf { it.total },
-                                ),
-                            )
-                        },
-                        colors = listOf(finance.income, finance.expense),
-                        description = stringResource(R.string.analytics_income_vs_expense),
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    LabeledRow(stringResource(R.string.type_income)) { MoneyText(income, state.currency, color = finance.income) }
-                    LabeledRow(stringResource(R.string.type_expense)) { MoneyText(expense, state.currency, color = finance.expense) }
-                    LabeledRow(stringResource(R.string.analytics_net_cash_flow)) {
-                        MoneyText(income - expense, state.currency, color = if (income >= expense) finance.income else finance.expense, signed = true)
+            val incomes = months.map { key -> state.monthly.filter { it.month == key && it.type == TransactionType.INCOME }.sumOf { it.total } }
+            val expenses = months.map { key -> state.monthly.filter { it.month == key && it.type == TransactionType.EXPENSE }.sumOf { it.total } }
+            val income = incomes.sum()
+            val expense = expenses.sum()
+            item(key = "net") {
+                val positive = income >= expense
+                PressableCard(onClick = null, modifier = Modifier.staggerIn(0), color = (if (positive) finance.income else finance.expense).copy(alpha = 0.12f)) {
+                    Text(stringResource(R.string.analytics_net_cash_flow), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    FitAmount(income - expense, state.currency, style = AmountStyle, color = if (positive) finance.income else finance.expense, signed = true)
+                    Spacer(Modifier.height(14.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        StatPill(stringResource(R.string.type_income), income, state.currency, finance.income, MIcons.Income, Modifier.weight(1f))
+                        StatPill(stringResource(R.string.type_expense), expense, state.currency, finance.expense, MIcons.Expense, Modifier.weight(1f))
                     }
+                    Spacer(Modifier.height(10.dp))
                     LabeledRow(stringResource(R.string.analytics_avg_monthly_expense)) { MoneyText(expense / months.size, state.currency) }
                 }
             }
+            item(key = "flow") {
+                PressableCard(onClick = null, modifier = Modifier.staggerIn(1)) {
+                    Text(stringResource(R.string.analytics_income_vs_expense), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.analytics_scrub_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(12.dp))
+                    CashFlowChart(
+                        labels = months.map { YearMonth.parse(it).format(monthFormat) },
+                        income = incomes,
+                        expense = expenses,
+                        currency = state.currency,
+                        incomeColor = finance.income,
+                        expenseColor = finance.expense,
+                        description = stringResource(R.string.analytics_income_vs_expense),
+                    )
+                }
+            }
             if (state.byCategory.isNotEmpty()) {
-                item {
+                item(key = "donut") {
                     val slices = state.byCategory.take(8).map { (cat, total) -> ChartSlice(categoryLabel(cat), total, categoryColor(cat?.colorIndex)) }
-                    PressableCard(onClick = null) {
+                    PressableCard(onClick = null, modifier = Modifier.staggerIn(2)) {
                         Text(stringResource(R.string.section_spending), style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(12.dp))
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                            DonutChart(slices, Modifier.size(180.dp), description = slices.joinToString { it.label })
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        ChartLegend(slices, valueText = { money.format(it.value, state.currency) })
+                        val shareFormat = stringResource(R.string.analytics_share)
+                        SpendingDonut(
+                            slices = slices,
+                            currency = state.currency,
+                            totalLabel = stringResource(R.string.type_expense),
+                            shareLabel = { percent -> String.format(locale, shareFormat, percent) },
+                            valueText = { money.format(it.value, state.currency) },
+                            description = slices.joinToString { it.label },
+                        )
                     }
+                }
+            }
+            item(key = "heatmap") {
+                PressableCard(onClick = null, modifier = Modifier.staggerIn(3)) {
+                    Text(stringResource(R.string.analytics_heatmap), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.analytics_heatmap_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(12.dp))
+                    SpendHeatmap(state.daily, LocalDate.now(), MaterialTheme.colorScheme.primary, stringResource(R.string.analytics_heatmap))
                 }
             }
             if (state.budgets.isNotEmpty()) {
-                item {
+                item(key = "budgets") {
                     PressableCard(onClick = null) {
                         Text(stringResource(R.string.analytics_budget_adherence), style = MaterialTheme.typography.titleMedium)
                         val within = state.budgets.count { it.progress.status != BudgetStatus.OVER }
-                        Text(stringResource(R.string.analytics_budgets_within, within, state.budgets.size), style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.analytics_budgets_within, within, state.budgets.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         state.budgets.forEach { b ->
+                            val over = b.progress.status == BudgetStatus.OVER
+                            Spacer(Modifier.height(12.dp))
                             LabeledRow(b.budget.name) {
-                                Text("${(b.progress.fraction * 100).toInt()}%", color = if (b.progress.status == BudgetStatus.OVER) finance.expense else MaterialTheme.colorScheme.onSurface)
+                                Text("${(b.progress.fraction * 100).toInt()}%", color = if (over) finance.expense else MaterialTheme.colorScheme.onSurface)
                             }
+                            AnimatedProgressBar(b.progress.fraction, if (over) finance.expense else MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
             }
-            item {
+            item(key = "obligations") {
                 PressableCard(onClick = null) {
                     Text(stringResource(R.string.analytics_obligations), style = MaterialTheme.typography.titleMedium)
                     LabeledRow(stringResource(R.string.analytics_savings_progress)) {
                         Text("${money.format(state.savedMinor, state.currency)} / ${money.format(state.targetMinor, state.currency)}")
                     }
+                    if (state.targetMinor > 0) AnimatedProgressBar(state.savedMinor.toFloat() / state.targetMinor, MaterialTheme.colorScheme.primary)
                     LabeledRow(stringResource(R.string.analytics_recurring_expense)) { MoneyText(state.monthlyRecurringExpense, state.currency) }
                     LabeledRow(stringResource(R.string.analytics_recurring_income)) { MoneyText(state.monthlyRecurringIncome, state.currency) }
                     LabeledRow(stringResource(debtLabel(DebtDirection.I_OWE))) { MoneyText(state.iOwe, state.currency, color = finance.expense) }
@@ -245,6 +286,24 @@ fun AnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltView
                     Text(stringResource(R.string.analytics_estimate_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun StatPill(
+    label: String,
+    minor: Long,
+    currency: String,
+    color: androidx.compose.ui.graphics.Color,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier,
+) {
+    Row(modifier.glassInset(MaterialTheme.shapes.medium).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        IconBadge(icon, color, size = 34.dp)
+        Column(Modifier.padding(horizontal = 8.dp)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            AnimatedAmount(minor, currency, style = MaterialTheme.typography.titleSmall)
         }
     }
 }

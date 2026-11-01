@@ -1,5 +1,6 @@
 package com.masroufi.app.work
 
+import com.masroufi.app.widget.MasroufiWidget
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
@@ -45,6 +46,7 @@ class DailyWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         recurring.processDue()
         if (settings.current().notificationsEnabled) notify()
+        MasroufiWidget.refresh(applicationContext)
         return Result.success()
     }
 

@@ -116,6 +116,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.coil.compose)
     implementation(libs.backdrop)
+    implementation(libs.glance.appwidget)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

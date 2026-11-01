@@ -499,6 +499,29 @@
     <string name="onboarding_plan_title">Every pound has a place.</string>
     <string name="onboarding_plan_body">Budgets, goals, gameya and debts move together, so you always know what is really yours to spend.</string>
     <string name="onboarding_skip">Skip</string>
+    <string name="widget_description">Your balance, payday countdown and quick add</string>
+    <string name="analytics_scrub_hint">Touch and drag across the chart</string>
+    <string name="analytics_share">%1$d%% of spending</string>
+    <string name="analytics_heatmap">Spending days</string>
+    <string name="analytics_heatmap_hint">The last 12 weeks. Darker means more spent</string>
+    <string name="goal_templates">Start from</string>
+    <string name="tpl_summer">Summer trip</string>
+    <string name="tpl_ramadan">Ramadan and Eid</string>
+    <string name="tpl_school">School fees</string>
+    <string name="tpl_phone">New phone</string>
+    <string name="tpl_emergency">Emergency fund</string>
+    <string name="tpl_wedding">Wedding</string>
+    <string name="tpl_car">Car</string>
+    <string name="section_details">Details</string>
+    <string name="section_plan">Plan</string>
+    <string name="section_look">Look</string>
+    <string name="goal_preview_name">Your goal</string>
+    <string name="wallet_preview_name">Your wallet</string>
+    <string name="budget_preview_left">%1$s to spend</string>
+    <plurals name="goal_months_estimate">
+        <item quantity="one">About a month at this pace</item>
+        <item quantity="other">About %d months at this pace</item>
+    </plurals>
     <string name="subs_title">Subscriptions</string>
     <string name="subs_more_sub">Spotify, Netflix, internet and every monthly bill</string>
     <string name="subs_monthly">You pay every month</string>
@@ -535,4 +558,56 @@
     <string name="settings_solid_glass">Solid surfaces</string>
     <string name="settings_solid_glass_sub">Replace see-through glass with solid panels for easier reading</string>
     <string name="onboarding_demo_wallet">Main wallet</string>
+    <plurals name="streak_days">
+        <item quantity="one">%d-day streak</item>
+        <item quantity="other">%d-day streak</item>
+    </plurals>
+    <string name="streak_keep">Log something today to keep it going</string>
+    <string name="streak_start">Log today to start a streak</string>
+    <string name="streak_done">Today counts. See you tomorrow</string>
+    <string name="streak_best">Best: %1$d days</string>
+    <string name="level_label">Level %1$d · %2$s</string>
+    <string name="xp_to_next">%1$d points to the next level</string>
+    <string name="xp_max">Top level reached</string>
+    <string-array name="level_titles">
+        <item>Beginner</item>
+        <item>Counting coins</item>
+        <item>Planner</item>
+        <item>Sharp saver</item>
+        <item>Smart stasher</item>
+        <item>Budget pro</item>
+        <item>Home finance minister</item>
+        <item>Savings whale</item>
+        <item>Money master</item>
+        <item>Masroufi legend</item>
+    </string-array>
+    <string name="suggest_title">Same as usual?</string>
+    <string name="suggest_times">Logged %1$d times in the last 3 weeks</string>
+    <string name="suggest_log">Log it</string>
+    <string name="achievements_title">Achievements</string>
+    <string name="achievements_badges">Badges</string>
+    <string name="badge_first_log">First step</string>
+    <string name="badge_first_log_desc">Log your first entry</string>
+    <string name="badge_streak_3">Warming up</string>
+    <string name="badge_streak_3_desc">3 days in a row</string>
+    <string name="badge_streak_7">One full week</string>
+    <string name="badge_streak_7_desc">7 days in a row</string>
+    <string name="badge_streak_30">Iron habit</string>
+    <string name="badge_streak_30_desc">30 days in a row</string>
+    <string name="badge_streak_100">Unstoppable</string>
+    <string name="badge_streak_100_desc">100 days in a row</string>
+    <string name="badge_logs_50">Keeping count</string>
+    <string name="badge_logs_50_desc">50 entries logged</string>
+    <string name="badge_logs_250">Nothing slips by</string>
+    <string name="badge_logs_250_desc">250 entries logged</string>
+    <string name="badge_first_goal">Dreaming big</string>
+    <string name="badge_first_goal_desc">Create a savings goal</string>
+    <string name="badge_goal_done">Made it</string>
+    <string name="badge_goal_done_desc">Reach a goal</string>
+    <string name="badge_subscriptions">No surprises</string>
+    <string name="badge_subscriptions_desc">Track a subscription</string>
+    <string name="badge_gameya">Gameya member</string>
+    <string name="badge_gameya_desc">Track a gameya</string>
+    <string name="badge_payday">Salary to salary</string>
+    <string name="badge_payday_desc">Set your payday</string>
 </resources>

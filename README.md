@@ -7,6 +7,10 @@ Masroufi is an offline-first personal finance app for Android, built mainly for 
 - **Wallets**: cash, bank, digital and custom wallets, each with its own currency. Balances are calculated from transactions. Totals are never added across currencies.
 - **Transactions**: income, expenses and transfers (a single atomic row), including transfers between currencies with a received amount. Each transaction can have categories and subcategories, notes, tags, a date and a private receipt photo. Search, filters and sorting are supported.
 - **Egyptian-first**: payday-to-payday months with "days to salary" and "safe to spend per day" on Home, one-tap quick spends (groceries, transport, food, mobile credit, bills), quick note amounts (+5 to +200) in the editor, wallet presets at setup (Vodafone Cash, InstaPay, bank account; names only, no integration), a one-tap "سلفة" quick-add, and friendly Egyptian colloquial Arabic copy.
+- **Subscriptions**: every paid service with its logo (Netflix, Spotify, Anghami, Shahid, WE and more), monthly and yearly cost, renewal countdown.
+- **Progress**: logging streaks, levels with Egyptian titles and badges, all derived from existing data (nothing stored, nothing to migrate).
+- **Smart suggestions**: spends you repeat ("same as usual?") become one-tap logs on Home.
+- **Home-screen widget**: balance (hidden when the app lock is on), payday countdown, streak and quick add.
 - **Home dashboard**: balance, this month's income and expenses, a spending donut, budgets, goals, upcoming recurring items, debts and recent transactions. You can choose which sections appear.
 - **Budgets**: monthly or custom-period budgets for a category or for all spending. They show warnings at 80% and when over budget, offer optional rollover, and compare with last month.
 - **Savings goals**: contributions and withdrawals recorded as earmarks, separate from wallet balances so nothing is counted twice. Goals have target dates, and an estimated completion date appears only after 30 days of history.

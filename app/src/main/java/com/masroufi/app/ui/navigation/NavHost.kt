@@ -52,12 +52,15 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavDeepLink
+import androidx.navigation.navDeepLink
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.masroufi.app.R
+import com.masroufi.app.feature.progress.AchievementsScreen
 import com.masroufi.app.feature.subscriptions.SubscriptionsScreen
 import com.masroufi.app.feature.analytics.AnalyticsScreen
 import com.masroufi.app.feature.budgets.BudgetEditorScreen
@@ -111,8 +114,12 @@ val ScreenGlide = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 // Zoom-through for depth (push/pop): the old screen recedes and fades quickly while the new one rises out of depth,
 // and back plays the same path in reverse (following the predictive-back gesture). Tabs are peers, so switching
 // between them only cross-fades. With "remove animations" on, everything is a short fade.
-inline fun <reified T : Any> NavGraphBuilder.screen(noinline content: @Composable (NavBackStackEntry) -> Unit) {
+inline fun <reified T : Any> NavGraphBuilder.screen(
+    deepLinks: List<NavDeepLink> = emptyList(),
+    noinline content: @Composable (NavBackStackEntry) -> Unit,
+) {
     composable<T>(
+        deepLinks = deepLinks,
         enterTransition = {
             when {
                 MotionFlags.reduce -> fadeIn(tween(120))
@@ -221,6 +228,7 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
         HomeScreen(
             onAddTransaction = { type -> nav.navigate(TransactionEditorRoute(type = type)) },
             onQuickSpend = { categoryId -> nav.navigate(TransactionEditorRoute(type = "EXPENSE", categoryId = categoryId)) },
+            onOpenAchievements = { nav.navigate(AchievementsRoute) },
             onOpenTransaction = { nav.navigate(TransactionDetailRoute(it)) },
             onOpenTransactions = { nav.navigateToTab(TransactionsRoute) },
             onOpenWallets = { nav.navigate(WalletsRoute) },
@@ -257,7 +265,7 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
             onPremium = { nav.navigate(PremiumRoute) },
         )
     }
-    screen<TransactionEditorRoute> {
+    screen<TransactionEditorRoute>(deepLinks = listOf(navDeepLink<TransactionEditorRoute>(basePath = "masroufi://add"))) {
         TransactionEditorScreen(onDone = back, onBack = back)
     }
     screen<TransactionDetailRoute> {
@@ -281,6 +289,7 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     screen<BudgetEditorRoute> { BudgetEditorScreen(onDone = back, onBack = back) }
     screen<GoalDetailRoute> { GoalDetailScreen(onBack = back, onEdit = { nav.navigate(GoalEditorRoute(it)) }) }
     screen<GoalEditorRoute> { GoalEditorScreen(onDone = back, onBack = back) }
+    screen<AchievementsRoute> { AchievementsScreen(onBack = back) }
     screen<SubscriptionsRoute> {
         SubscriptionsScreen(
             onBack = back,

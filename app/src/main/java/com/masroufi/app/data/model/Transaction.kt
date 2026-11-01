@@ -59,3 +59,9 @@ data class TypeTotal(val type: TransactionType, val currency: String, val total:
 data class CategoryTotal(val categoryId: String?, val currency: String, val total: Long)
 
 data class MonthTotal(val month: String, val type: TransactionType, val currency: String, val total: Long)
+
+/** A spend the user keeps repeating (same category, amount and wallet): the basis of one-tap smart suggestions. */
+data class RepeatSpend(val categoryId: String, val amountMinor: Long, val currency: String, val walletId: String, val times: Int, val lastAt: Long)
+
+/** Spending per local calendar day ("YYYY-MM-DD"), for the analytics heatmap. */
+data class DayTotal(val day: String, val currency: String, val total: Long)

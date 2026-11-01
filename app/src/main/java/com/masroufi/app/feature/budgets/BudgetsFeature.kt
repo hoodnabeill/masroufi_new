@@ -38,6 +38,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.width
+import com.masroufi.app.ui.theme.AmountStyle
+import com.masroufi.app.ui.components.FitAmount
+import com.masroufi.app.ui.components.CategoryIcons
+import com.masroufi.app.ui.components.IconBadge
+import com.masroufi.app.ui.components.categoryColor
+import com.masroufi.app.ui.components.FormSection
+import com.masroufi.app.ui.components.EditorSaveBar
 import com.masroufi.app.ui.components.edgeFade
 import com.masroufi.app.ui.components.GlassSnackbarHost
 import com.masroufi.app.ui.components.GlassSwitch
@@ -275,12 +284,15 @@ fun BudgetEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Budget
             }
         },
         snackbarHost = { GlassSnackbarHost(snackbar) },
+        bottomBar = { if (form.loaded) EditorSaveBar({ viewModel.save(defaultName) }) },
     ) { padding ->
         if (!form.loaded) return@Scaffold
         Column(
             Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
+            BudgetPreview(form.name.ifBlank { defaultName }, selectedCategory, Money.parse(form.limit, form.currency) ?: 0L, form.currency)
+            FormSection(stringResource(R.string.section_details)) {
             DropdownField(
                 label = stringResource(R.string.field_category),
                 options = listOf<Category?>(null) + form.categories,
@@ -292,6 +304,8 @@ fun BudgetEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Budget
             AmountField(form.limit, { v -> viewModel.update { it.copy(limit = v) } }, form.currency, label = stringResource(R.string.field_limit))
             TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name_optional))
             CurrencyField(form.currency, { c -> viewModel.update { it.copy(currency = c) } })
+            }
+            FormSection(stringResource(R.string.section_plan)) {
             SegmentedChoice(
                 listOf(BudgetPeriod.MONTHLY, BudgetPeriod.CUSTOM),
                 form.period,
@@ -310,10 +324,34 @@ fun BudgetEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Budget
                     trailingContent = { GlassSwitch(form.rollover, { v -> viewModel.update { it.copy(rollover = v) } }) },
                 )
             }
-            GlassButton(onClick = { viewModel.save(defaultName) }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            }
         }
     }
     if (confirmDelete) {
         ConfirmDialog(stringResource(R.string.budget_delete_title), stringResource(R.string.budget_delete_body), stringResource(R.string.action_delete), viewModel::delete, { confirmDelete = false })
+    }
+}
+
+/** Live preview of the budget: its category, its limit, and the bar that will fill as money is spent. */
+@Composable
+private fun BudgetPreview(name: String, category: Category?, limitMinor: Long, currency: String) {
+    val color = categoryColor(category?.colorIndex ?: 0)
+    val formatter = LocalMoneyFormatter.current
+    PressableCard(onClick = null, modifier = Modifier.fillMaxWidth(), color = color.copy(alpha = 0.16f)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBadge(CategoryIcons.of(category?.iconKey), color, size = 44.dp)
+            Spacer(Modifier.width(12.dp))
+            Text(name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), maxLines = 1)
+        }
+        Spacer(Modifier.height(14.dp))
+        FitAmount(limitMinor, currency, style = AmountStyle)
+        Spacer(Modifier.height(10.dp))
+        AnimatedProgressBar(if (limitMinor > 0) 0.08f else 0f, color)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            stringResource(R.string.budget_preview_left, formatter.format(limitMinor, currency)),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

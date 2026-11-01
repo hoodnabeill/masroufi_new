@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import com.masroufi.app.widget.MasroufiWidget
 import androidx.lifecycle.repeatOnLifecycle
 import com.masroufi.app.data.prefs.SettingsRepository
 import com.masroufi.app.ui.MasroufiRoot
@@ -38,5 +39,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         setContent { MasroufiRoot() }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Leaving the app is when balances last changed, so placed widgets catch up then.
+        lifecycleScope.launch { MasroufiWidget.refresh(applicationContext) }
     }
 }

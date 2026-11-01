@@ -251,6 +251,25 @@ object MIcons {
             line { circle(7.5f, 7.5f, 3.6f); rect(13f, 4f, 20f, 11f, 2f); moveTo(7.5f, 13f); lineTo(11f, 20f); lineTo(4f, 20f); close(); rect(13f, 13f, 20f, 20f, 3.5f) }
         }
     }
+    val Flame by lazy {
+        duo("flame") {
+            soft { flame() }
+            line { flame() }
+            solid { moveTo(12f, 14f); curveTo(13.3f, 15.2f, 14f, 16.2f, 14f, 17.4f); curveTo(14f, 18.6f, 13.1f, 19.5f, 12f, 19.5f); curveTo(10.9f, 19.5f, 10f, 18.6f, 10f, 17.4f); curveTo(10f, 16.2f, 10.7f, 15.2f, 12f, 14f); close() }
+        }
+    }
+    val Trophy by lazy {
+        duo("trophy") {
+            soft { trophyCup() }
+            line {
+                trophyCup()
+                moveTo(7f, 6f); lineTo(4.5f, 6f); curveTo(4.5f, 8.5f, 5.5f, 10f, 7.3f, 10.5f)
+                moveTo(17f, 6f); lineTo(19.5f, 6f); curveTo(19.5f, 8.5f, 18.5f, 10f, 16.7f, 10.5f)
+                moveTo(12f, 14f); lineTo(12f, 18f); moveTo(8.5f, 20.5f); lineTo(15.5f, 20.5f); moveTo(9.5f, 18f); lineTo(14.5f, 18f)
+            }
+        }
+    }
+
     // Actions and system glyphs, drawn in the same duotone language as everything above.
     val Back by lazy { duo("back", autoMirror = true) { line { moveTo(14.5f, 5.5f); lineTo(8f, 12f); lineTo(14.5f, 18.5f) } } }
     val ChevronForward by lazy { duo("forward", autoMirror = true) { line { moveTo(9.5f, 5.5f); lineTo(16f, 12f); lineTo(9.5f, 18.5f) } } }
@@ -492,6 +511,15 @@ private fun PathBuilder.rect(l: Float, t: Float, r: Float, b: Float, radius: Flo
     lineTo(l, t + radius)
     arcTo(radius, radius, 0f, isMoreThanHalf = false, isPositiveArc = true, x1 = l + radius, y1 = t)
     close()
+}
+
+private fun PathBuilder.flame() {
+    moveTo(12f, 2.5f); curveTo(13f, 6f, 17.5f, 8f, 17.5f, 13.5f); curveTo(17.5f, 17.4f, 15f, 20.5f, 12f, 20.5f); curveTo(9f, 20.5f, 6.5f, 17.4f, 6.5f, 13.8f)
+    curveTo(6.5f, 11f, 8f, 9.2f, 9.5f, 8f); curveTo(9.6f, 10f, 10.4f, 11.4f, 11.6f, 12f); curveTo(11.2f, 8.6f, 11f, 5.5f, 12f, 2.5f); close()
+}
+
+private fun PathBuilder.trophyCup() {
+    moveTo(7f, 4f); lineTo(17f, 4f); lineTo(17f, 9f); curveTo(17f, 11.8f, 14.8f, 14f, 12f, 14f); curveTo(9.2f, 14f, 7f, 11.8f, 7f, 9f); close()
 }
 
 private fun PathBuilder.trashBody() {

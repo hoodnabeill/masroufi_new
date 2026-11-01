@@ -18,6 +18,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class GoalEditorRoute(val id: String? = null)
 @Serializable data object RecurringRoute
 @Serializable data object SubscriptionsRoute
+@Serializable data object AchievementsRoute
 @Serializable data class RecurringEditorRoute(val id: String? = null, val serviceKey: String? = null)
 @Serializable data object DebtsRoute
 @Serializable data class DebtDetailRoute(val id: String)

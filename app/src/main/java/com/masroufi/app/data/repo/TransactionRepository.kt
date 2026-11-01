@@ -59,6 +59,9 @@ class TransactionRepository @Inject constructor(
     suspend fun expenseByCategory(from: Long, to: Long): List<CategoryTotal> = dao.expenseByCategory(from, to)
     fun observeMonthlyTotals(from: Long): Flow<List<MonthTotal>> = dao.observeMonthlyTotals(from)
     fun observeFirstOccurredAt(): Flow<Long?> = dao.observeFirstOccurredAt()
+    fun observeLogTimes(): Flow<List<Long>> = dao.observeLogTimes()
+    fun observeDailyExpense(fromMillis: Long) = dao.observeDailyExpense(fromMillis)
+    fun observeRepeatSpends(fromMillis: Long) = dao.observeRepeatSpends(fromMillis)
     suspend fun lastUsedExpenseWallet(): String? = dao.lastUsedExpenseWallet()
 
     /**

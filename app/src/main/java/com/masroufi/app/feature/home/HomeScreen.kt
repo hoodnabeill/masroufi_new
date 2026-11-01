@@ -88,6 +88,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.feature.progress.ProgressStrip
+import com.masroufi.app.ui.components.rememberHaptics
+import com.masroufi.app.ui.components.GlassButton
+import com.masroufi.app.data.model.Category
+import com.masroufi.app.data.model.RepeatSpend
 import com.masroufi.app.ui.components.GlassSheet
 import com.masroufi.app.ui.components.GlassSwitch
 import com.masroufi.app.ui.components.FitAmount
@@ -127,6 +132,7 @@ import java.time.format.FormatStyle
 fun HomeScreen(
     onAddTransaction: (String) -> Unit,
     onQuickSpend: (categoryId: String) -> Unit,
+    onOpenAchievements: () -> Unit,
     onOpenTransaction: (String) -> Unit,
     onOpenTransactions: () -> Unit,
     onOpenWallets: () -> Unit,
@@ -140,6 +146,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
     var customizing by rememberSaveable { mutableStateOf(false) }
     if (state.loading) {
         HomeSkeleton()
@@ -170,9 +178,13 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item(key = "header") { Header(onOpenAnalytics, onCustomize = { customizing = true }) }
+        progress?.let { snapshot -> item(key = "progress") { ProgressStrip(snapshot, onOpenAchievements, Modifier.staggerIn(0)) } }
         if (state.visible(DashboardSection.BALANCE)) {
             val i = order++
             item(key = "balance") { BalanceHero(state, onOpenWallets, Modifier.staggerIn(i).heroParallax(list)) }
+        }
+        if (suggestions.isNotEmpty()) {
+            item(key = "suggestions") { SuggestionsCard(suggestions, state.categories, viewModel::logRepeat, Modifier.animateItem()) }
         }
         if (state.visible(DashboardSection.QUICK_ACTIONS)) {
             val i = order++
@@ -684,4 +696,52 @@ private fun quickSpendIcon(key: String): String = when (key) {
     "food" -> "restaurant"
     "mobile" -> "phone"
     else -> "bolt"
+}
+
+/**
+ * Smart one-tap logging: spends the user repeats (same category, amount, wallet) offered as "same as usual?". One tap
+ * saves it for now, with a haptic, and the row leaves because today's entry now exists.
+ */
+@Composable
+private fun SuggestionsCard(
+    suggestions: List<RepeatSpend>,
+    categories: Map<String, Category>,
+    onLog: (RepeatSpend) -> Unit,
+    modifier: Modifier,
+) {
+    val haptics = rememberHaptics()
+    PressableCard(onClick = null, modifier = modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(MIcons.Insights, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.suggest_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+        }
+        suggestions.forEach { spend ->
+            val category = categories[spend.categoryId]
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconBadge(CategoryIcons.of(category?.iconKey), categoryColor(category?.colorIndex), size = 40.dp)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        MoneyText(spend.amountMinor, spend.currency, style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.width(6.dp))
+                        Text(categoryLabel(category), style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                    }
+                    Text(
+                        stringResource(R.string.suggest_times, spend.times),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                GlassButton(
+                    onClick = {
+                        haptics.confirm()
+                        onLog(spend)
+                    },
+                    modifier = Modifier.height(44.dp),
+                ) { Text(stringResource(R.string.suggest_log)) }
+            }
+        }
+    }
 }

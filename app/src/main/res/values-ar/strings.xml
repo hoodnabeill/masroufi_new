@@ -490,6 +490,33 @@
     <string name="onboarding_plan_title">لكل جنيه مكانه.</string>
     <string name="onboarding_plan_body">الميزانيات والأهداف والجمعيات والديون ماشيين مع بعض، فتعرف دايمًا الفلوس اللي تقدر تصرفها فعلًا.</string>
     <string name="onboarding_skip">تخطي</string>
+    <string name="widget_description">رصيدك، والعد التنازلي للمرتب، وإضافة سريعة</string>
+    <string name="analytics_scrub_hint">المس واسحب على الرسم</string>
+    <string name="analytics_share">%1$d%% من صرفك</string>
+    <string name="analytics_heatmap">أيام الصرف</string>
+    <string name="analytics_heatmap_hint">آخر ١٢ أسبوع. كل ما اللون يغمق يبقى صرفت أكتر</string>
+    <string name="goal_templates">ابدأ من</string>
+    <string name="tpl_summer">المصيف</string>
+    <string name="tpl_ramadan">رمضان والعيد</string>
+    <string name="tpl_school">مصاريف المدارس</string>
+    <string name="tpl_phone">موبايل جديد</string>
+    <string name="tpl_emergency">فلوس الطوارئ</string>
+    <string name="tpl_wedding">الجواز</string>
+    <string name="tpl_car">عربية</string>
+    <string name="section_details">التفاصيل</string>
+    <string name="section_plan">الخطة</string>
+    <string name="section_look">الشكل</string>
+    <string name="goal_preview_name">هدفك</string>
+    <string name="wallet_preview_name">محفظتك</string>
+    <string name="budget_preview_left">فاضلك %1$s تصرفهم</string>
+    <plurals name="goal_months_estimate">
+        <item quantity="zero">أقل من شهر بالمعدل ده</item>
+        <item quantity="one">حوالي شهر بالمعدل ده</item>
+        <item quantity="two">حوالي شهرين بالمعدل ده</item>
+        <item quantity="few">حوالي %d شهور بالمعدل ده</item>
+        <item quantity="many">حوالي %d شهر بالمعدل ده</item>
+        <item quantity="other">حوالي %d شهر بالمعدل ده</item>
+    </plurals>
     <string name="subs_title">اشتراكاتك</string>
     <string name="subs_more_sub">سبوتيفاي ونتفليكس والنت وكل حاجة بتدفعها كل شهر</string>
     <string name="subs_monthly">بتدفع كل شهر</string>
@@ -534,4 +561,60 @@
     <string name="settings_solid_glass">أسطح صلبة</string>
     <string name="settings_solid_glass_sub">استبدل الزجاج الشفاف بألواح صلبة لقراءة أسهل</string>
     <string name="onboarding_demo_wallet">المحفظة الرئيسية</string>
+    <plurals name="streak_days">
+        <item quantity="zero">مفيش سلسلة لسه</item>
+        <item quantity="one">سلسلة يوم</item>
+        <item quantity="two">سلسلة يومين</item>
+        <item quantity="few">سلسلة %d أيام</item>
+        <item quantity="many">سلسلة %d يوم</item>
+        <item quantity="other">سلسلة %d يوم</item>
+    </plurals>
+    <string name="streak_keep">سجّل حاجة النهارده عشان السلسلة متتكسرش</string>
+    <string name="streak_start">سجّل النهارده وابدأ سلسلة</string>
+    <string name="streak_done">النهارده اتحسب. نشوفك بكرة</string>
+    <string name="streak_best">أطول سلسلة: %1$d يوم</string>
+    <string name="level_label">مستوى %1$d · %2$s</string>
+    <string name="xp_to_next">فاضلك %1$d نقطة للمستوى الجاي</string>
+    <string name="xp_max">وصلت لأعلى مستوى</string>
+    <string-array name="level_titles">
+        <item>مبتدئ</item>
+        <item>بيتعلم يحسب</item>
+        <item>مدبّر</item>
+        <item>حويط</item>
+        <item>بيعرف يحوّش</item>
+        <item>أستاذ ميزانية</item>
+        <item>وزير مالية البيت</item>
+        <item>حوت تحويش</item>
+        <item>معلم الفلوس</item>
+        <item>أسطورة مصروفي</item>
+    </string-array>
+    <string name="suggest_title">زي كل مرة؟</string>
+    <string name="suggest_times">سجّلتها %1$d مرات في آخر ٣ أسابيع</string>
+    <string name="suggest_log">سجّلها</string>
+    <string name="achievements_title">إنجازاتك</string>
+    <string name="achievements_badges">الأوسمة</string>
+    <string name="badge_first_log">أول خطوة</string>
+    <string name="badge_first_log_desc">سجّل أول حاجة</string>
+    <string name="badge_streak_3">بدأت تسخن</string>
+    <string name="badge_streak_3_desc">٣ أيام ورا بعض</string>
+    <string name="badge_streak_7">أسبوع كامل</string>
+    <string name="badge_streak_7_desc">٧ أيام ورا بعض</string>
+    <string name="badge_streak_30">عادة حديد</string>
+    <string name="badge_streak_30_desc">٣٠ يوم ورا بعض</string>
+    <string name="badge_streak_100">محدش يوقفك</string>
+    <string name="badge_streak_100_desc">١٠٠ يوم ورا بعض</string>
+    <string name="badge_logs_50">ماسك الحساب</string>
+    <string name="badge_logs_50_desc">سجّلت ٥٠ حاجة</string>
+    <string name="badge_logs_250">مفيش حاجة بتفلت</string>
+    <string name="badge_logs_250_desc">سجّلت ٢٥٠ حاجة</string>
+    <string name="badge_first_goal">بتحلم كبير</string>
+    <string name="badge_first_goal_desc">اعمل هدف تحويش</string>
+    <string name="badge_goal_done">وصلتها</string>
+    <string name="badge_goal_done_desc">حقق هدف</string>
+    <string name="badge_subscriptions">مفيش مفاجآت</string>
+    <string name="badge_subscriptions_desc">تابع اشتراك</string>
+    <string name="badge_gameya">داخل جمعية</string>
+    <string name="badge_gameya_desc">تابع جمعية</string>
+    <string name="badge_payday">من المرتب للمرتب</string>
+    <string name="badge_payday_desc">حدد يوم المرتب</string>
 </resources>

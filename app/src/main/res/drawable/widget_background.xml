@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget's glass-dark purple card, matching the app's aurora. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:angle="135"
+        android:startColor="#FF6A3DE8"
+        android:centerColor="#FF3A1C8C"
+        android:endColor="#FF12082E" />
+    <corners android:radius="28dp" />
+</shape>

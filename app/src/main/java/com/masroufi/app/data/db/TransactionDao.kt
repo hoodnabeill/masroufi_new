@@ -10,6 +10,8 @@ import com.masroufi.app.data.model.MonthTotal
 import com.masroufi.app.data.model.Transaction
 import com.masroufi.app.data.model.TransactionRow
 import com.masroufi.app.data.model.TypeTotal
+import com.masroufi.app.data.model.RepeatSpend
+import com.masroufi.app.data.model.DayTotal
 import kotlinx.coroutines.flow.Flow
 
 private const val ROW_SELECT = """
@@ -85,6 +87,32 @@ interface TransactionDao {
         """,
     )
     suspend fun expenseByCategory(fromMillis: Long, toMillis: Long): List<CategoryTotal>
+
+    @Query(
+        """
+        SELECT strftime('%Y-%m-%d', occurredAt / 1000, 'unixepoch', 'localtime') AS day, currency, SUM(amountMinor) AS total
+        FROM transactions
+        WHERE deleted = 0 AND type = 'EXPENSE' AND occurredAt >= :fromMillis
+        GROUP BY day, currency
+        """,
+    )
+    fun observeDailyExpense(fromMillis: Long): Flow<List<DayTotal>>
+
+    /** When each entry was logged (not when it happened); recurring auto-entries are not the user logging. */
+    @Query("SELECT createdAt FROM transactions WHERE deleted = 0 AND recurringId IS NULL")
+    fun observeLogTimes(): Flow<List<Long>>
+
+    @Query(
+        """
+        SELECT categoryId, amountMinor, currency, walletId, COUNT(*) AS times, MAX(occurredAt) AS lastAt FROM transactions
+        WHERE deleted = 0 AND type = 'EXPENSE' AND recurringId IS NULL AND categoryId IS NOT NULL AND occurredAt >= :fromMillis
+        GROUP BY categoryId, amountMinor, currency, walletId
+        HAVING COUNT(*) >= 3
+        ORDER BY times DESC, lastAt DESC
+        LIMIT 3
+        """,
+    )
+    fun observeRepeatSpends(fromMillis: Long): Flow<List<RepeatSpend>>
 
     /** Month keys are computed in local time so totals match what the user sees on the calendar. */
     @Query(

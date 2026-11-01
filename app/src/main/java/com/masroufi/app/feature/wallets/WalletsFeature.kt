@@ -36,6 +36,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import androidx.compose.foundation.layout.Spacer
+import com.masroufi.app.ui.components.FormSection
+import com.masroufi.app.ui.components.EditorSaveBar
 import com.masroufi.app.ui.components.edgeFade
 import com.masroufi.app.ui.components.GlassIconButton
 import com.masroufi.app.ui.components.GlassSnackbarHost
@@ -304,21 +307,31 @@ fun WalletEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Wallet
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(if (form.isNew) R.string.wallet_add else R.string.wallet_edit), onBack = onBack) },
         snackbarHost = { GlassSnackbarHost(snackbar) },
+        bottomBar = { if (form.loaded) EditorSaveBar(viewModel::save) },
     ) { padding ->
         if (!form.loaded) return@Scaffold
         Column(
             Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name))
-            Text(stringResource(R.string.field_type), style = MaterialTheme.typography.titleSmall)
-            ChipChoice(WalletType.entries.toList(), form.type, { t -> viewModel.update { it.copy(type = t) } }, { walletTypeLabel(it) })
-            // Currency is fixed once a wallet exists: its history was recorded in that currency.
-            CurrencyField(form.currency, { c -> viewModel.update { it.copy(currency = c) } }, enabled = form.isNew)
-            AmountField(form.opening, { v -> viewModel.update { it.copy(opening = v) } }, form.currency, label = stringResource(R.string.field_opening_balance))
-            Text(stringResource(R.string.field_color), style = MaterialTheme.typography.titleSmall)
-            ColorPicker(form.colorIndex) { i -> viewModel.update { it.copy(colorIndex = i) } }
-            GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
+            // Live preview: the wallet card as it will appear, updating with every field.
+            val color = categoryColor(form.colorIndex)
+            PressableCard(onClick = null, modifier = Modifier.fillMaxWidth(), color = color.copy(alpha = 0.22f)) {
+                IconBadge(CategoryIcons.wallet(form.type), color, size = 48.dp)
+                Spacer(Modifier.height(20.dp))
+                Text(form.name.ifBlank { stringResource(R.string.wallet_preview_name) }, style = MaterialTheme.typography.titleMedium)
+                FitAmount(Money.parse(form.opening, form.currency) ?: 0L, form.currency, style = AmountStyle)
+            }
+            FormSection(stringResource(R.string.section_details)) {
+                TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name))
+                ChipChoice(WalletType.entries.toList(), form.type, { t -> viewModel.update { it.copy(type = t) } }, { walletTypeLabel(it) })
+                // Currency is fixed once a wallet exists: its history was recorded in that currency.
+                CurrencyField(form.currency, { c -> viewModel.update { it.copy(currency = c) } }, enabled = form.isNew)
+                AmountField(form.opening, { v -> viewModel.update { it.copy(opening = v) } }, form.currency, label = stringResource(R.string.field_opening_balance))
+            }
+            FormSection(stringResource(R.string.section_look)) {
+                ColorPicker(form.colorIndex) { i -> viewModel.update { it.copy(colorIndex = i) } }
+            }
         }
     }
 }
