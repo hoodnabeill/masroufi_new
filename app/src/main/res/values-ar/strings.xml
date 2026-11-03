@@ -617,4 +617,62 @@
     <string name="badge_gameya_desc">تابع جمعية</string>
     <string name="badge_payday">من المرتب للمرتب</string>
     <string name="badge_payday_desc">حدد يوم المرتب</string>
+    <string name="tab_plan">الخطة</string>
+    <string name="home_safe_today">تقدر تصرف النهارده</string>
+    <string name="home_safe_caption_month">عشان فلوسك تكفّي لآخر الشهر</string>
+    <string name="home_safe_caption_payday">عشان فلوسك تكفّي لحد المرتب</string>
+    <plurals name="home_days_left">
+        <item quantity="zero">آخر يوم</item>
+        <item quantity="one">فاضل يوم</item>
+        <item quantity="two">فاضل يومين</item>
+        <item quantity="few">فاضل %d أيام</item>
+        <item quantity="many">فاضل %d يوم</item>
+        <item quantity="other">فاضل %d يوم</item>
+    </plurals>
+    <string name="home_spent_today">صرفت النهارده %1$s</string>
+    <string name="home_limit">الحد %1$s</string>
+    <string name="home_have">معاك</string>
+    <string name="home_spent_month">صرفت الشهر ده</string>
+    <string name="home_income_month">دخل الشهر ده</string>
+    <string name="home_spent_cycle">صرفت من المرتب</string>
+    <string name="home_income_cycle">دخل من المرتب</string>
+    <string name="home_privacy_toggle">إخفاء أو إظهار الأرقام</string>
+    <string name="home_points">+%1$d نقطة</string>
+    <string name="home_level_progress">%1$d من %2$d للمستوى %3$d</string>
+    <string-array name="week_short">
+        <item>سبت</item>
+        <item>حد</item>
+        <item>اتنين</item>
+        <item>تلات</item>
+        <item>أربع</item>
+        <item>خميس</item>
+        <item>جمعة</item>
+    </string-array>
+    <string name="home_quick_title">سجّل في ثانية</string>
+    <string name="home_all_categories">كل الفئات</string>
+    <string name="home_type_hint">اكتب: 50 قهوة، أو 200 بنزين</string>
+    <string name="home_type_label">سجّل بالكتابة</string>
+    <string name="home_type_send">سجّل</string>
+    <string name="home_voice">سجّل بالصوت</string>
+    <string name="home_last_time">آخر مرة %1$s</string>
+    <string name="home_first_time">أول مرة</string>
+    <string name="home_insights_title">ملاحظات ذكية</string>
+    <string name="home_insights_all">%1$d جديد · الكل</string>
+    <string name="insight_tag_alert">تنبيه على المعدل</string>
+    <string name="insight_tag_discovery">اكتشاف</string>
+    <string name="insight_tag_soon">قريب</string>
+    <string name="insight_cta_budget">اعمل ميزانية</string>
+    <string name="home_month_spend">صرف %1$s</string>
+    <string name="home_details">التفاصيل</string>
+    <plurals name="home_in_days">
+        <item quantity="zero">النهارده</item>
+        <item quantity="one">في يوم</item>
+        <item quantity="two">في يومين</item>
+        <item quantity="few">في %d أيام</item>
+        <item quantity="many">في %d يوم</item>
+        <item quantity="other">في %d يوم</item>
+    </plurals>
+    <string name="day_today">النهارده</string>
+    <string name="day_yesterday">امبارح</string>
+    <string name="home_day_spent">صرفت %1$s</string>
 </resources>

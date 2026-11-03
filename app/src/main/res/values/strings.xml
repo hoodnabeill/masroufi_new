@@ -610,4 +610,54 @@
     <string name="badge_gameya_desc">Track a gameya</string>
     <string name="badge_payday">Salary to salary</string>
     <string name="badge_payday_desc">Set your payday</string>
+    <string name="tab_plan">Plan</string>
+    <string name="home_safe_today">You can spend today</string>
+    <string name="home_safe_caption_month">So your money lasts to the end of the month</string>
+    <string name="home_safe_caption_payday">So your money lasts to payday</string>
+    <plurals name="home_days_left">
+        <item quantity="one">%d day left</item>
+        <item quantity="other">%d days left</item>
+    </plurals>
+    <string name="home_spent_today">Spent today %1$s</string>
+    <string name="home_limit">Limit %1$s</string>
+    <string name="home_have">You have</string>
+    <string name="home_spent_month">Spent this month</string>
+    <string name="home_income_month">Income this month</string>
+    <string name="home_spent_cycle">Spent since payday</string>
+    <string name="home_income_cycle">Income since payday</string>
+    <string name="home_privacy_toggle">Hide or show amounts</string>
+    <string name="home_points">+%1$d points</string>
+    <string name="home_level_progress">%1$d of %2$d to level %3$d</string>
+    <string-array name="week_short">
+        <item>Sat</item>
+        <item>Sun</item>
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+    </string-array>
+    <string name="home_quick_title">Log in a second</string>
+    <string name="home_all_categories">All categories</string>
+    <string name="home_type_hint">Type: 50 coffee, or 200 fuel</string>
+    <string name="home_type_label">Log by typing</string>
+    <string name="home_type_send">Log it</string>
+    <string name="home_voice">Log by voice</string>
+    <string name="home_last_time">Last time %1$s</string>
+    <string name="home_first_time">First time</string>
+    <string name="home_insights_title">Smart notes</string>
+    <string name="home_insights_all">%1$d new · All</string>
+    <string name="insight_tag_alert">Pace alert</string>
+    <string name="insight_tag_discovery">Discovery</string>
+    <string name="insight_tag_soon">Coming up</string>
+    <string name="insight_cta_budget">Make a budget</string>
+    <string name="home_month_spend">%1$s spending</string>
+    <string name="home_details">Details</string>
+    <plurals name="home_in_days">
+        <item quantity="one">in %d day</item>
+        <item quantity="other">in %d days</item>
+    </plurals>
+    <string name="day_today">Today</string>
+    <string name="day_yesterday">Yesterday</string>
+    <string name="home_day_spent">Spent %1$s</string>
 </resources>

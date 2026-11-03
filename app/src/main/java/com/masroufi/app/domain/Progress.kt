@@ -23,7 +23,7 @@ data class ProgressInput(
     val paydaySet: Boolean,
 )
 
-data class ProgressSnapshot(val streak: Streak, val level: Level, val badges: Set<Badge>)
+data class ProgressSnapshot(val streak: Streak, val level: Level, val badges: Set<Badge>, val logDays: Set<LocalDate> = emptySet())
 
 /**
  * Progression is derived, never stored: XP comes from logging habits, so it cannot drift from the data, survives
@@ -77,6 +77,6 @@ object Progress {
 
     fun snapshot(input: ProgressInput, today: LocalDate): ProgressSnapshot {
         val streak = streak(input.logDays, today)
-        return ProgressSnapshot(streak, level(xp(input, streak)), badges(input, streak))
+        return ProgressSnapshot(streak, level(xp(input, streak)), badges(input, streak), input.logDays)
     }
 }

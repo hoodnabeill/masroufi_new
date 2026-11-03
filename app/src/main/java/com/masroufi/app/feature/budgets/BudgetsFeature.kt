@@ -112,11 +112,11 @@ class BudgetsViewModel @Inject constructor(budgets: BudgetRepository, categories
 }
 
 @Composable
-fun BudgetsScreen(onAdd: () -> Unit, onEdit: (String) -> Unit, viewModel: BudgetsViewModel = hiltViewModel()) {
+fun BudgetsScreen(onAdd: () -> Unit, onEdit: (String) -> Unit, embedded: Boolean = false, viewModel: BudgetsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     Scaffold(
         contentWindowInsets = TabInsets,
-        topBar = { MasroufiTopBar(stringResource(R.string.tab_budgets)) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.budget_add)) } } },
+        topBar = { if (!embedded) MasroufiTopBar(stringResource(R.string.tab_budgets)) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.budget_add)) } } },
     ) { padding ->
         if (state.loading) return@Scaffold
         if (state.items.isEmpty()) {

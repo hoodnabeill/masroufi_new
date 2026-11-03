@@ -65,3 +65,6 @@ data class RepeatSpend(val categoryId: String, val amountMinor: Long, val curren
 
 /** Spending per local calendar day ("YYYY-MM-DD"), for the analytics heatmap. */
 data class DayTotal(val day: String, val currency: String, val total: Long)
+
+/** The most recent expense in a category, for Home quick chips ("آخر مرة 205"). */
+data class LastSpend(val categoryId: String, val amountMinor: Long, val currency: String, val lastAt: Long)

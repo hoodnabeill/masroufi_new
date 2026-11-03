@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>مصروفي · هدف جديد</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&amp;family=Readex+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0A10}
+a{color:#A99BFF;text-decoration:none}a:hover{color:#C9C0FF}
+input::placeholder{color:#8E89A3}
+</style>
+</helmet>
+<div dir="rtl" style="width: 390px; height: 1040px; box-sizing: border-box; position: relative; overflow: hidden; background: #0B0A10; color: #F4F2FA; font-family: 'IBM Plex Sans Arabic', sans-serif; padding: 20px 16px 0;">
+
+  <header style="display: flex; align-items: center; justify-content: space-between;">
+    <a href="Budgets.dc.html" aria-label="رجوع" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2A2737; background: #15131D; color: #F4F2FA; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600;">هدف جديد</h1>
+    <span style="width: 44px;"></span>
+  </header>
+
+  <section style="margin-top: 16px; padding: 18px; border-radius: 26px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <div style="width: 84px; height: 84px; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center; color: {{color}};">
+        <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true" style="position: absolute; inset: 0;"><circle cx="42" cy="42" r="36" fill="none" stroke="{{dim}}" stroke-width="8"></circle><circle cx="42" cy="6" r="4" fill="{{color}}"></circle></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{icon}}"></path></svg>
+      </div>
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; font-weight: 600;">{{name}}</span>
+        <span style="display: flex; align-items: baseline; gap: 6px;">
+          <span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: {{color}};">{{amountLabel}}</span>
+          <span style="font-size: 14px; color: #B4AFC6;">ج.م</span>
+        </span>
+        <span style="font-size: 12px; color: #8E89A3;">لحد {{dateLabel}}</span>
+      </div>
+    </div>
+    <div style="height: 1px; background: #2A2737;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <span style="font-size: 13px; color: #B4AFC6;">محتاج تحوّش</span>
+      <span style="display: flex; align-items: baseline; gap: 6px;">
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 20px; font-weight: 700; color: #C8F169;">{{monthly}}</span>
+        <span style="font-size: 13px; color: #B4AFC6;">في الشهر · يعني {{daily}} في اليوم</span>
+      </span>
+    </div>
+  </section>
+
+  <h2 style="margin: 18px 4px 8px; font-size: 14px; font-weight: 500; color: #B4AFC6;">اختار هدف</h2>
+  <div role="radiogroup" aria-label="نوع الهدف" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">
+    <sc-for list="{{tpls}}" as="t" hint-placeholder-count="8">
+      <button onClick="{{t.pick}}" role="radio" aria-checked="{{t.aria}}" style="height: 70px; box-sizing: border-box; border-radius: 18px; border: 1px solid {{t.border}}; background: {{t.bg}}; color: {{t.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: {{t.c}};"><path d="{{t.icon}}"></path></svg>
+        <span>{{t.short}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
+    <label style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 13px; color: #B4AFC6; padding: 0 4px;">اسم الهدف</span>
+      <input type="text" value="{{name}}" onChange="{{onName}}" placeholder="مثلاً: موبايل جديد" style="height: 52px; box-sizing: border-box; padding: 0 16px; border-radius: 16px; border: 1px solid #2A2737; background: #15131D; color: #F4F2FA; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 15px; outline: none;">
+    </label>
+    <label style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 13px; color: #B4AFC6; padding: 0 4px;">المبلغ</span>
+      <span style="height: 52px; box-sizing: border-box; padding: 0 16px; border-radius: 16px; border: 1px solid #2A2737; background: #15131D; display: flex; align-items: center; gap: 8px;">
+        <input type="text" inputmode="numeric" value="{{amountLabel}}" onChange="{{onAmount}}" style="flex-grow: 1; min-width: 0; height: 100%; border: none; background: transparent; color: #F4F2FA; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600; outline: none;">
+        <span style="font-size: 14px; color: #8E89A3;">ج.م</span>
+      </span>
+    </label>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 13px; color: #B4AFC6; padding: 0 4px;">إمتى؟</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <sc-for list="{{spans}}" as="p" hint-placeholder-count="4">
+          <button onClick="{{p.pick}}" aria-pressed="{{p.aria}}" style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid {{p.border}}; background: {{p.bg}}; color: {{p.fg}}; display: flex; align-items: center; gap: 6px; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;">
+            <sc-if value="{{p.isDate}}" hint-placeholder-val="{{false}}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+            </sc-if>
+            <span>{{p.label}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <section style="margin-top: 16px; padding: 14px 16px; border-radius: 20px; background: #15131D; border: 1px solid #2A2737; display: flex; align-items: center; gap: 12px;">
+    <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 13px; background: #262046; color: #A99BFF; display: flex; align-items: center; justify-content: center;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l3 3-3 3"></path><path d="M4 11V9a4 4 0 0 1 4-4h12"></path><path d="M7 22l-3-3 3-3"></path><path d="M20 13v2a4 4 0 0 1-4 4H4"></path></svg>
+    </span>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+      <span style="font-size: 15px; font-weight: 600;">حوّش تلقائي</span>
+      <span style="font-size: 12px; color: #B4AFC6;">اقطع {{monthly}} ج.م أول كل شهر من دخلك</span>
+    </div>
+    <button onClick="{{toggleAuto}}" role="switch" aria-checked="{{autoAria}}" aria-label="حوّش تلقائي" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border-radius: 14px; border: none; background: {{autoTrack}}; display: flex; justify-content: {{autoJustify}}; cursor: pointer;">
+      <span style="width: 22px; height: 22px; border-radius: 11px; background: {{autoKnob}};"></span>
+    </button>
+  </section>
+
+  <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+    <span style="font-size: 13px; color: #B4AFC6;">اللون</span>
+    <div style="display: flex; gap: 10px;">
+      <sc-for list="{{swatches}}" as="w" hint-placeholder-count="6">
+        <button onClick="{{w.pick}}" aria-label="{{w.label}}" aria-pressed="{{w.aria}}" style="width: 34px; height: 34px; box-sizing: border-box; border-radius: 17px; border: {{w.ring}}; background: {{w.hex}}; color: #12160A; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+          <sc-if value="{{w.on}}" hint-placeholder-val="{{false}}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>
+          </sc-if>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 24px; background: #0B0A10; border-top: 1px solid #1D1B28;">
+    <a href="Budgets.dc.html" style="height: 56px; border-radius: 28px; background: #C8F169; color: #12160A; display: flex; align-items: center; justify-content: center; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600;">يلا نبدأ</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const set = (patch) => this.setState(patch);
+    const fmt = (n) => Math.round(n).toLocaleString('en-US');
+    const defs = [
+      { id: 'summer', short: 'المصيف', name: 'المصيف', c: '#FFD466', dim: '#332A12', icon: 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8zM12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' },
+      { id: 'ramadan', short: 'رمضان والعيد', name: 'رمضان والعيد', c: '#A99BFF', dim: '#262046', icon: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z' },
+      { id: 'phone', short: 'موبايل جديد', name: 'موبايل جديد', c: '#5EE3A1', dim: '#15302A', icon: 'M8.5 2h7A2.5 2.5 0 0 1 18 4.5v15a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 19.5v-15A2.5 2.5 0 0 1 8.5 2zM11 18h2' },
+      { id: 'emergency', short: 'الطوارئ', name: 'فلوس الطوارئ', c: '#FF8C73', dim: '#33201C', icon: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM12 9v4M12 16h.01' },
+      { id: 'wedding', short: 'الجواز', name: 'الجواز', c: '#E7A6FF', dim: '#2E1F38', icon: 'M12 20s-8-4.6-8-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.4-8 10-8 10z' },
+      { id: 'car', short: 'عربية', name: 'عربية', c: '#7DB4FF', dim: '#1A2638', icon: 'M4 16v-5l2-5h12l2 5v5zM4 11h16M7 16v3M17 16v3' },
+      { id: 'school', short: 'المدارس', name: 'مصاريف المدارس', c: '#FFA36B', dim: '#33231A', icon: 'M2 9l10-5 10 5-10 5zM6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5' },
+      { id: 'custom', short: 'تاني', name: 'هدف جديد', c: '#B4AFC6', dim: '#24222E', icon: 'M12 5v14M5 12h14' }
+    ];
+    const tplId = s.tpl || 'phone';
+    const tpl = defs.find((d) => d.id === tplId) || defs[2];
+    const name = s.name != null ? s.name : tpl.name;
+    const amount = s.amount != null ? s.amount : 15000;
+    const months = s.months || 7.5;
+    const auto = s.auto != null ? s.auto : true;
+
+    const swatchDefs = [
+      { hex: '#5EE3A1', dim: '#15302A', label: 'أخضر' },
+      { hex: '#C8F169', dim: '#24301A', label: 'ليموني' },
+      { hex: '#A99BFF', dim: '#262046', label: 'بنفسجي' },
+      { hex: '#FFB648', dim: '#33260F', label: 'برتقالي' },
+      { hex: '#FF8C73', dim: '#33201C', label: 'مرجاني' },
+      { hex: '#7DB4FF', dim: '#1A2638', label: 'أزرق' }
+    ];
+    const color = s.color || tpl.c;
+    const swatchMatch = swatchDefs.find((w) => w.hex === color);
+    const dim = swatchMatch ? swatchMatch.dim : tpl.dim;
+
+    const tpls = defs.map((d) => {
+      const on = d.id === tplId;
+      return {
+        short: d.short,
+        icon: d.icon,
+        c: d.c,
+        bg: on ? d.dim : '#15131D',
+        border: on ? d.c : '#2A2737',
+        fg: on ? '#F4F2FA' : '#B4AFC6',
+        aria: on ? 'true' : 'false',
+        pick: () => set({ tpl: d.id, name: null, color: null })
+      };
+    });
+
+    const spanDefs = [
+      { m: 3, label: '3 شهور', date: '2 فبراير 2027' },
+      { m: 6, label: '6 شهور', date: '2 مايو 2027' },
+      { m: 12, label: 'سنة', date: '2 نوفمبر 2027' },
+      { m: 7.5, label: '15 يونيو 2027', date: '15 يونيو 2027', isDate: true }
+    ];
+    const currentSpan = spanDefs.find((p) => p.m === months) || spanDefs[3];
+    const spans = spanDefs.map((p) => {
+      const on = p.m === months;
+      return {
+        label: p.label,
+        isDate: !!p.isDate,
+        bg: on ? '#24301A' : '#15131D',
+        border: on ? '#C8F169' : '#2A2737',
+        fg: on ? '#C8F169' : '#B4AFC6',
+        aria: on ? 'true' : 'false',
+        pick: () => set({ months: p.m })
+      };
+    });
+
+    const swatches = swatchDefs.map((w) => {
+      const on = w.hex === color;
+      return {
+        hex: w.hex,
+        label: w.label,
+        on: on,
+        aria: on ? 'true' : 'false',
+        ring: on ? '3px solid #F4F2FA' : 'none',
+        pick: () => set({ color: w.hex })
+      };
+    });
+
+    const monthly = amount / months;
+    return {
+      tpls: tpls,
+      spans: spans,
+      swatches: swatches,
+      name: name,
+      icon: tpl.icon,
+      color: color,
+      dim: dim,
+      amountLabel: fmt(amount),
+      dateLabel: currentSpan.date,
+      monthly: fmt(monthly),
+      daily: fmt(monthly / 30),
+      onName: (e) => set({ name: e.target.value }),
+      onAmount: (e) => {
+        const digits = String(e.target.value).replace(/[^0-9]/g, '').slice(0, 8);
+        set({ amount: digits ? parseInt(digits, 10) : 0 });
+      },
+      autoAria: auto ? 'true' : 'false',
+      autoTrack: auto ? '#C8F169' : '#3A3648',
+      autoKnob: auto ? '#12160A' : '#B4AFC6',
+      autoJustify: auto ? 'flex-end' : 'flex-start',
+      toggleAuto: () => set({ auto: !auto })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -158,6 +158,8 @@ class TransactionEditorViewModel @Inject constructor(
                         walletId = defaultWallet,
                         toWalletId = if (type == TransactionType.TRANSFER) wallets.firstOrNull { it.wallet.id != defaultWallet }?.wallet?.id else null,
                         categoryId = route.categoryId,
+                        amount = route.amount.orEmpty(),
+                        note = route.note.orEmpty(),
                         wallets = wallets,
                     )
                 }

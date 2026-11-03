@@ -52,6 +52,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
@@ -98,60 +100,49 @@ val DockClearance = 132.dp
 /** On tablets and landscape the dock stays phone-sized and centred instead of stretching edge to edge. */
 val DockMaxWidth = 560.dp
 
-data class DockTab(val label: Int)
+/** A bottom-bar destination: its label and which [TabGlyph] draws its icon. */
+data class DockTab(val label: Int, val glyph: Int)
 
 /** Quick-add pick for lending or borrowing money (سلفة), which opens the debt editor instead of a transaction. */
 const val QUICK_LOAN = "LOAN"
 
+private val BarHeight = 72.dp
+private val PlusSize = 60.dp
+
 /**
- * The dock is the thickest glass in the app: it blurs and saturates the live screen beneath it and bends it at the
- * rim with a chromatic lens. Without live glass (older Android) it is a near-opaque frosted capsule.
+ * The bar is the one place content scrolls under, so it is real glass when the device supports it: the live screen
+ * blurred beneath a near-solid surface tint (handoff: surface #15131D, line, radius 28). Elsewhere it is solid.
  */
 @Composable
 private fun Modifier.dockGlass(): Modifier {
     val glass = LocalGlass.current
     val backdrop = LocalGlassBackdrop.current
     val live = backdrop != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !LocalSolidGlass.current
-    val tint = when {
-        glass.dark -> glass.base.copy(alpha = if (live) 0.4f else 0.94f)
-        else -> Color.White.copy(alpha = if (live) 0.46f else 0.94f)
-    }
+    val shape = MaterialTheme.shapes.extraLarge
+    val tint = glass.fill.copy(alpha = if (live) 0.86f else 1f)
     if (!live || backdrop == null) {
         return this
-            .clip(CircleShape)
+            .shadow(16.dp, shape, ambientColor = Color.Black, spotColor = Color.Black)
+            .clip(shape)
             .background(tint)
-            .border(1.dp, Brush.verticalGradient(listOf(glass.strokeTop, glass.strokeBottom)), CircleShape)
+            .border(1.dp, glass.strokeTop, shape)
     }
     return drawBackdrop(
         backdrop = backdrop,
-        shape = { CircleShape },
+        shape = { shape },
         effects = {
             vibrancy()
-            blur(10.dp.toPx())
-            lens(refractionHeight = 22.dp.toPx(), refractionAmount = 30.dp.toPx(), chromaticAberration = true)
+            blur(16.dp.toPx())
         },
-        highlight = { Highlight(width = 1.dp, style = HighlightStyle.Default(intensity = if (glass.dark) 0.5f else 0.8f)) },
-        shadow = { Shadow(radius = 28.dp, color = Color.Black.copy(alpha = if (glass.dark) 0.5f else 0.14f)) },
+        highlight = null,
+        shadow = { Shadow(radius = 32.dp, color = Color.Black.copy(alpha = if (glass.dark) 0.55f else 0.14f)) },
         onDrawSurface = { drawRect(tint) },
-    )
+    ).border(1.dp, glass.strokeTop, shape)
 }
 
-/** Moves the two edges of the liquid pill: the leading edge is quick, the trailing one lags, so the pill stretches. */
-private suspend fun glide(lead: Animatable<Float, AnimationVector1D>, trail: Animatable<Float, AnimationVector1D>, to: Float, reduce: Boolean) =
-    coroutineScope {
-        if (reduce) {
-            lead.snapTo(to)
-            trail.snapTo(to)
-        } else {
-            launch { lead.animateTo(to, spring(dampingRatio = 0.72f, stiffness = 700f)) }
-            launch { trail.animateTo(to, spring(dampingRatio = 0.9f, stiffness = 220f)) }
-        }
-    }
-
 /**
- * Floating liquid-glass tab bar. Tap a tab, or press and slide along the dock: the selection drop follows the finger
- * 1:1, swells while held, ticks a haptic as it crosses each tab, and on release is thrown (velocity projection) to
- * the tab it was heading for.
+ * Bottom bar: الرئيسية · الحركة · [+] · الخطة · المزيد. The + is a raised lime circle that sits half above the bar;
+ * the current tab is in the primary text colour with a small accent dot under its label.
  */
 @Composable
 fun Dock(
@@ -162,117 +153,43 @@ fun Dock(
     onToggleMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val reduce = LocalReduceMotion.current
     val haptics = rememberHaptics()
-    val scope = rememberCoroutineScope()
-    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val lead = remember { Animatable(selected.toFloat()) }
-    val trail = remember { Animatable(selected.toFloat()) }
-    var dragging by remember { mutableStateOf(false) }
-    val lift by animateFloatAsState(if (dragging && !reduce) 1f else 0f, spring(dampingRatio = 0.6f, stiffness = 500f), label = "dockLift")
-    val currentSelected by rememberUpdatedState(selected)
-    val currentOnSelect by rememberUpdatedState(onSelect)
-    LaunchedEffect(selected) { if (!dragging) glide(lead, trail, selected.toFloat(), reduce) }
-    val last = tabs.lastIndex
-
-    Row(
-        modifier.widthIn(max = DockMaxWidth).fillMaxWidth().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    Box(
+        modifier
+            .widthIn(max = DockMaxWidth)
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+            .height(BarHeight + PlusSize / 2),
     ) {
-        BoxWithConstraints(
+        Row(
             Modifier
-                .weight(1f)
-                .height(66.dp)
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(BarHeight)
                 .dockGlass()
-                .pointerInput(tabs.size, rtl) {
-                    val inset = 5.dp.toPx()
-                    val tracker = VelocityTracker()
-                    var position = 0f
-                    var hovered = 0
-                    detectHorizontalDragGestures(
-                        onDragStart = {
-                            dragging = true
-                            tracker.resetTracking()
-                            position = lead.value
-                            hovered = position.roundToInt()
-                        },
-                        onDragEnd = {
-                            dragging = false
-                            val slot = (size.width - inset * 2) / tabs.size
-                            val velocity = tracker.calculateVelocity().x / slot * (if (rtl) -1f else 1f)
-                            // Project where the flick was heading (≈ Apple's deceleration projection), then snap.
-                            val target = (position + velocity * 0.12f).roundToInt().coerceIn(0, last)
-                            scope.launch { glide(lead, trail, target.toFloat(), reduce) }
-                            if (target != currentSelected) currentOnSelect(target) else haptics.tick()
-                        },
-                        onDragCancel = {
-                            dragging = false
-                            scope.launch { glide(lead, trail, currentSelected.toFloat(), reduce) }
-                        },
-                    ) { change, dx ->
-                        change.consume()
-                        tracker.addPosition(change.uptimeMillis, change.position)
-                        val slot = (size.width - inset * 2) / tabs.size
-                        position = (position + (if (rtl) -dx else dx) / slot).coerceIn(-0.3f, last + 0.3f)
-                        val to = position
-                        scope.launch { lead.snapTo(to) }
-                        scope.launch { trail.animateTo(to, spring(dampingRatio = 1f, stiffness = 600f)) }
-                        val index = to.roundToInt().coerceIn(0, last)
-                        if (index != hovered) {
-                            hovered = index
-                            haptics.tick()
-                        }
-                    }
-                }
                 .selectableGroup()
-                .padding(5.dp),
+                .padding(horizontal = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            val slotPx = constraints.maxWidth.toFloat() / tabs.size
-            val primary = MaterialTheme.colorScheme.primary
-            val dark = LocalGlass.current.dark
-            // The selection drop. Read in layout and draw only, so its motion never recomposes the dock.
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .layout { measurable, constraints ->
-                        val start = minOf(lead.value, trail.value)
-                        val span = 1f + abs(lead.value - trail.value)
-                        val width = (slotPx * span).roundToInt()
-                        val placeable = measurable.measure(Constraints.fixed(width, constraints.maxHeight))
-                        layout(constraints.maxWidth, constraints.maxHeight) { placeable.placeRelative((slotPx * start).roundToInt(), 0) }
-                    }
-                    .graphicsLayer {
-                        val s = 1f + 0.1f * lift
-                        scaleX = s
-                        scaleY = s
-                    }
-                    .clip(CircleShape)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(primary.copy(alpha = if (dark) 0.30f else 0.22f), primary.copy(alpha = if (dark) 0.16f else 0.12f)),
-                        ),
-                    )
-                    .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = if (dark) 0.28f else 0.8f), Color.Transparent)), CircleShape),
-            )
-            Row(Modifier.fillMaxSize()) {
-                tabs.forEachIndexed { index, tab ->
-                    DockItem(tab, index, index == selected, Modifier.weight(1f)) {
-                        if (index != selected) haptics.tick()
-                        onSelect(index)
-                    }
+            val middle = tabs.size / 2
+            tabs.forEachIndexed { index, tab ->
+                if (index == middle) Spacer(Modifier.width(PlusSize + 12.dp))
+                DockItem(tab, index == selected, Modifier.weight(1f)) {
+                    if (index != selected) haptics.tick()
+                    onSelect(index)
                 }
             }
         }
-        PlusButton(menuOpen, onClick = {
+        PlusButton(menuOpen, Modifier.align(Alignment.TopCenter)) {
             haptics.confirm()
             onToggleMenu()
-        })
+        }
     }
 }
 
 @Composable
-private fun DockItem(tab: DockTab, index: Int, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun DockItem(tab: DockTab, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val reduce = LocalReduceMotion.current
     val progress = remember { Animatable(if (selected) 1f else 0f) }
     LaunchedEffect(selected) {
@@ -280,56 +197,66 @@ private fun DockItem(tab: DockTab, index: Int, selected: Boolean, modifier: Modi
         if (reduce) progress.snapTo(target) else progress.animateTo(target, spring(dampingRatio = if (selected) 0.5f else 0.9f, stiffness = 320f))
     }
     val color by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        if (selected) MaterialTheme.colorScheme.onSurface else LocalGlass.current.textTertiary,
         Motion.effects(reduce),
         label = "tabColor",
     )
+    val accent = MaterialTheme.colorScheme.primary
     Column(
         modifier
             .fillMaxHeight()
-            .clip(CircleShape)
+            .clip(MaterialTheme.shapes.large)
             .selectable(selected = selected, role = Role.Tab, interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        TabGlyph(
-            kind = index,
-            progress = { progress.value },
-            color = color,
-            modifier = Modifier.graphicsLayer {
-                val p = progress.value
-                translationY = -2.dp.toPx() * p
-            },
-        )
+        TabGlyph(kind = tab.glyph, progress = { progress.value }, color = color, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.height(3.dp))
         // Labels shrink (down to 8sp) rather than clip when a translation or font scale makes them longer than the slot.
         BasicText(
             stringResource(tab.label),
-            style = MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Center),
+            style = MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Center, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal),
             color = { color },
             maxLines = 1,
             autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.labelSmall.fontSize),
             modifier = Modifier.padding(horizontal = 2.dp),
         )
+        Spacer(Modifier.height(3.dp))
+        Box(
+            Modifier
+                .size(4.dp)
+                .graphicsLayer {
+                    val p = progress.value.coerceIn(0f, 1.3f)
+                    scaleX = p
+                    scaleY = p
+                    alpha = progress.value.coerceIn(0f, 1f)
+                }
+                .clip(CircleShape)
+                .background(accent),
+        )
     }
 }
 
 @Composable
-private fun PlusButton(open: Boolean, onClick: () -> Unit) {
+private fun PlusButton(open: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val reduce = LocalReduceMotion.current
     val interaction = remember { MutableInteractionSource() }
     val rotation by animateFloatAsState(if (open) 135f else 0f, Motion.bouncy(reduce), label = "plusRotate")
     val description = stringResource(R.string.transaction_new)
+    val lime = MaterialTheme.colorScheme.primary
     Box(
-        Modifier
-            .size(66.dp)
-            .liquidPress(interaction, CircleShape, scaleTo = 1.12f)
+        modifier
+            .size(PlusSize)
+            .liquidPress(interaction, CircleShape, scaleTo = 1.1f)
+            .shadow(18.dp, CircleShape, ambientColor = lime, spotColor = lime)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary)
+            .background(lime)
+            .border(4.dp, LocalGlass.current.base, CircleShape)
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(MIcons.Plus, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(30.dp).graphicsLayer { rotationZ = rotation })
+        Icon(MIcons.Plus, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(28.dp).graphicsLayer { rotationZ = rotation })
     }
 }
 
@@ -358,8 +285,8 @@ fun QuickAddMenu(open: Boolean, onDismiss: () -> Unit, onPick: (String) -> Unit)
     // Anchored to the + button: the column lives in the same centred, width-capped frame as the dock.
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
         Column(
-            Modifier.widthIn(max = DockMaxWidth).fillMaxWidth().navigationBarsPadding().padding(end = 16.dp, bottom = 92.dp),
-            horizontalAlignment = Alignment.End,
+            Modifier.navigationBarsPadding().padding(bottom = 124.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items.forEachIndexed { index, (item, color) ->
@@ -371,9 +298,9 @@ fun QuickAddMenu(open: Boolean, onDismiss: () -> Unit, onPick: (String) -> Unit)
                     enter = scaleIn(
                         if (reduce) Motion.snappy<Float>(true) else spring(dampingRatio = 0.6f, stiffness = 420f - order * 70f),
                         initialScale = 0.15f,
-                        transformOrigin = TransformOrigin(1f, 1f),
+                        transformOrigin = TransformOrigin(0.5f, 1f),
                     ) + fadeIn(Motion.snappy(reduce)),
-                    exit = scaleOut(Motion.snappy(reduce), targetScale = 0.4f, transformOrigin = TransformOrigin(1f, 1f)) + fadeOut(Motion.snappy(reduce)),
+                    exit = scaleOut(Motion.snappy(reduce), targetScale = 0.4f, transformOrigin = TransformOrigin(0.5f, 1f)) + fadeOut(Motion.snappy(reduce)),
                 ) {
                     Row(
                         Modifier

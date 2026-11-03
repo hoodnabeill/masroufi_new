@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>مصروفي · التعريف</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&amp;family=Readex+Pro:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div dir="rtl" style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #0B0A10; color: #F4F2FA; font-family: 'IBM Plex Sans Arabic', sans-serif;">
+
+  <sc-if value="{{showTop}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; top: 0; left: 0; right: 0; z-index: 2; padding: 20px 16px 0; display: flex; align-items: center; gap: 12px;">
+      <button onClick="{{back}}" aria-label="رجوع" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; border: 1px solid #2A2737; background: #15131D; color: #F4F2FA; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+      </button>
+      <div role="progressbar" aria-valuemin="1" aria-valuemax="6" aria-valuenow="{{step}}" style="flex-grow: 1; display: flex; gap: 4px;">
+        <sc-for list="{{segs}}" as="g" hint-placeholder-count="6">
+          <span style="flex: 1 1 0; height: 4px; border-radius: 2px; background: {{g.c}}; transition: background 400ms ease;"></span>
+        </sc-for>
+      </div>
+      <sc-if value="{{canSkip}}" hint-placeholder-val="{{false}}">
+        <button onClick="{{skip}}" style="height: 40px; padding: 0 4px; border: none; background: transparent; color: #8E89A3; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 14px; cursor: pointer;">تخطي</button>
+      </sc-if>
+      <sc-if value="{{noSkip}}" hint-placeholder-val="{{true}}">
+        <span style="width: 40px; flex-shrink: 0;"></span>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s0}}" hint-placeholder-val="{{true}}">
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 28px 20px 28px; display: flex; flex-direction: column; align-items: center;">
+      <div style="margin-top: 92px; width: 230px; height: 230px; position: relative; display: flex; align-items: center; justify-content: center;">
+        <div aria-hidden="true" style="position: absolute; width: 230px; height: 230px; box-sizing: border-box; border-radius: 115px; border: 1px solid #1D1B28; opacity: {{op}}; transform: scale({{ringScale}}); transition: transform 1400ms cubic-bezier(.2,.8,.2,1) 300ms, opacity 900ms ease 300ms;"></div>
+        <div aria-hidden="true" style="position: absolute; width: 176px; height: 176px; box-sizing: border-box; border-radius: 88px; border: 1px solid #262338; opacity: {{op}}; transform: scale({{ringScale}}); transition: transform 1200ms cubic-bezier(.2,.8,.2,1) 150ms, opacity 700ms ease 150ms;"></div>
+        <svg width="160" height="160" viewBox="0 0 100 100" role="img" aria-label="مصروفي" style="overflow: visible; position: relative;">
+          <g style="transform: translateY({{coinY}}px); opacity: {{coinOp}}; transition: transform 950ms cubic-bezier(.34,1.56,.64,1) 250ms, opacity 300ms ease 250ms; filter: drop-shadow(0 0 10px rgba(200, 241, 105, 0.45));">
+            <circle cx="50" cy="38" r="17" fill="#C8F169"></circle>
+            <circle cx="50" cy="38" r="11.5" fill="none" stroke="#9FCC45" stroke-width="2"></circle>
+          </g>
+          <path d="M23 45H77V65Q77 71.5 71 74.5L54 82.5Q50 84.5 46 82.5L29 74.5Q23 71.5 23 65Z" fill="#A99BFF"></path>
+          <rect x="23" y="45" width="54" height="3.5" fill="#9483F5"></rect>
+          <path d="M27.5 52H72.5V64.5Q72.5 68.8 68.6 70.8L52.6 78.3Q50 79.6 47.4 78.3L31.4 70.8Q27.5 68.8 27.5 64.5Z" fill="none" stroke="#7463E3" stroke-width="1.6" stroke-dasharray="3.2 2.6" stroke-linecap="round"></path>
+          <path d="M73 18l1.5 3.8 3.8 1.5-3.8 1.5L73 28.6l-1.5-3.8-3.8-1.5 3.8-1.5z" fill="#C8F169" style="opacity: {{coinOp}}; transition: opacity 400ms ease 1150ms;"></path>
+        </svg>
+      </div>
+      <h1 style="margin: 36px 0 0; font-family: 'Readex Pro', sans-serif; font-size: 34px; font-weight: 700; text-align: center; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 500ms ease 550ms, transform 650ms cubic-bezier(.2,.8,.2,1) 550ms;">فلوسك في إيدك.</h1>
+      <p style="margin: 10px 0 0; max-width: 300px; font-size: 16px; line-height: 1.6; color: #B4AFC6; text-align: center; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 500ms ease 680ms, transform 650ms cubic-bezier(.2,.8,.2,1) 680ms;">اعرف تقدر تصرف كام النهارده، من غير ما تحسبها.</p>
+      <div style="margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 12px; opacity: {{op}}; transition: opacity 600ms ease 850ms;">
+        <div style="display: flex; justify-content: center; gap: 14px; font-size: 12px; color: #B4AFC6;">
+          <span style="display: flex; align-items: center; gap: 5px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #C8F169;"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>من غير حساب
+          </span>
+          <span style="display: flex; align-items: center; gap: 5px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #C8F169;"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>بيشتغل أوفلاين
+          </span>
+          <span style="display: flex; align-items: center; gap: 5px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #C8F169;"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>بياناتك عندك
+          </span>
+        </div>
+        <button onClick="{{next}}" style="height: 56px; border-radius: 28px; border: none; background: #C8F169; color: #12160A; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; box-shadow: 0 10px 28px rgba(200, 241, 105, 0.22);">يلا نبدأ</button>
+        <button style="height: 44px; border: none; background: transparent; color: #C9C0FF; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 14px; cursor: pointer;">عندي نسخة احتياطية</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s1}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 84px 20px 28px; display: flex; flex-direction: column; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 450ms ease, transform 550ms cubic-bezier(.2,.8,.2,1);">
+      <h1 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.35;">إيه اللي جابك هنا؟</h1>
+      <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: #B4AFC6;">اختار كل اللي يناسبك، وهنظبطلك الرئيسية على كده.</p>
+      <div style="margin-top: 22px; display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{goals}}" as="g" hint-placeholder-count="5">
+          <button onClick="{{g.toggle}}" role="checkbox" aria-checked="{{g.aria}}" style="height: 62px; box-sizing: border-box; padding: 0 14px; border-radius: 20px; border: 1.5px solid {{g.border}}; background: {{g.bg}}; color: #F4F2FA; display: flex; align-items: center; gap: 12px; text-align: right; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 200ms ease, border-color 200ms ease;">
+            <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: {{g.dim}}; color: {{g.c}}; display: flex; align-items: center; justify-content: center;">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{g.icon}}"></path></svg>
+            </span>
+            <span style="flex-grow: 1;">{{g.label}}</span>
+            <span style="width: 24px; height: 24px; box-sizing: border-box; flex-shrink: 0; border-radius: 12px; border: {{g.ring}}; background: {{g.checkBg}}; color: #12160A; display: flex; align-items: center; justify-content: center; transition: background 200ms ease;">
+              <sc-if value="{{g.on}}" hint-placeholder-val="{{false}}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>
+              </sc-if>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+        <span style="text-align: center; font-size: 13px; color: #8E89A3;">{{goalHint}}</span>
+        <button onClick="{{ctaAct}}" style="height: 56px; border-radius: 28px; border: none; background: {{ctaBg}}; color: {{ctaFg}}; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; transition: background 250ms ease, color 250ms ease;">كمّل</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 84px 20px 28px; display: flex; flex-direction: column; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 450ms ease, transform 550ms cubic-bezier(.2,.8,.2,1);">
+      <h1 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.35;">معاك كام دلوقتي؟</h1>
+      <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: #B4AFC6;">كل فلوسك: كاش ومحافظ وبنك. تقريباً كفاية، وتقدر تعدّله بعدين.</p>
+      <div style="margin-top: 22px; display: flex; justify-content: center; align-items: baseline; gap: 8px;">
+        <span dir="ltr" style="font-family: 'Readex Pro', sans-serif; font-size: 56px; font-weight: 700; letter-spacing: -1.5px; line-height: 1.1; color: {{amountColor}}; transition: color 200ms ease;">{{amountDisplay}}</span>
+        <span style="font-size: 20px; color: #B4AFC6;">ج.م</span>
+      </div>
+      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 13px; color: #8E89A3;">فين؟</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <sc-for list="{{wallets}}" as="w" hint-placeholder-count="4">
+            <button onClick="{{w.toggle}}" aria-pressed="{{w.aria}}" style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid {{w.border}}; background: {{w.bg}}; color: {{w.fg}}; display: flex; align-items: center; gap: 6px; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 200ms ease, border-color 200ms ease;">
+              <sc-if value="{{w.on}}" hint-placeholder-val="{{false}}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>
+              </sc-if>
+              <span>{{w.label}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      <div dir="ltr" style="margin-top: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;">
+        <sc-for list="{{keys}}" as="k" hint-placeholder-count="12">
+          <button onClick="{{k.press}}" aria-label="{{k.aria}}" style="height: 50px; border: none; border-radius: 16px; background: transparent; color: #F4F2FA; font-family: 'Readex Pro', sans-serif; font-size: 26px; font-weight: 500; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+            <sc-if value="{{k.isNum}}" hint-placeholder-val="{{true}}"><span>{{k.label}}</span></sc-if>
+            <sc-if value="{{k.isBack}}" hint-placeholder-val="{{false}}">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"></path><path d="m12 9 6 6M18 9l-6 6"></path></svg>
+            </sc-if>
+          </button>
+        </sc-for>
+      </div>
+      <button onClick="{{ctaAct}}" style="margin-top: 12px; height: 56px; border-radius: 28px; border: none; background: {{ctaBg}}; color: {{ctaFg}}; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; transition: background 250ms ease, color 250ms ease;">كمّل</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 84px 20px 28px; display: flex; flex-direction: column; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 450ms ease, transform 550ms cubic-bezier(.2,.8,.2,1);">
+      <h1 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.35;">فلوسك الجاية بتنزل إمتى؟</h1>
+      <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: #B4AFC6;">عشان نحسب الأيام لحد القبض أو المصروف الجاي.</p>
+      <div role="radiogroup" aria-label="موعد الفلوس الجاية" style="margin-top: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+        <sc-for list="{{paydays}}" as="p" hint-placeholder-count="4">
+          <button onClick="{{p.pick}}" role="radio" aria-checked="{{p.aria}}" style="height: 108px; box-sizing: border-box; padding: 14px; border-radius: 20px; border: 1.5px solid {{p.border}}; background: {{p.bg}}; color: #F4F2FA; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: right; font-family: 'IBM Plex Sans Arabic', sans-serif; cursor: pointer; transition: background 200ms ease, border-color 200ms ease;">
+            <span style="width: 36px; height: 36px; border-radius: 12px; background: {{p.tile}}; color: {{p.iconC}}; display: flex; align-items: center; justify-content: center;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{p.icon}}"></path></svg>
+            </span>
+            <span style="display: flex; flex-direction: column; gap: 1px;">
+              <span style="font-size: 15px; font-weight: 600;">{{p.label}}</span>
+              <span style="font-size: 12px; color: #8E89A3;">{{p.sub}}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <section style="margin-top: 18px; padding: 16px; border-radius: 22px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="width: 12px; height: 12px; flex-shrink: 0; border-radius: 6px; background: #C8F169;"></span>
+          <span style="flex-grow: 1; height: 0; border-top: 2px dashed #3A3648;"></span>
+          <span style="padding: 6px 12px; border-radius: 14px; background: #24301A; color: #C8F169; font-family: 'Readex Pro', sans-serif; font-size: 14px; font-weight: 600; white-space: nowrap;">{{days}} يوم</span>
+          <span style="flex-grow: 1; height: 0; border-top: 2px dashed #3A3648;"></span>
+          <span style="width: 12px; height: 12px; flex-shrink: 0; border-radius: 6px; background: #A99BFF;"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #8E89A3;">
+          <span>النهارده · 2 نوفمبر</span>
+          <span>{{payDate}}</span>
+        </div>
+      </section>
+      <button onClick="{{ctaAct}}" style="margin-top: auto; height: 56px; border-radius: 28px; border: none; background: {{ctaBg}}; color: {{ctaFg}}; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer;">احسبلي</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s4}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 84px 20px 28px; display: flex; flex-direction: column; align-items: center; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 450ms ease, transform 550ms cubic-bezier(.2,.8,.2,1);">
+      <span style="padding: 6px 14px; border-radius: 14px; background: #24301A; color: #C8F169; font-size: 13px; font-weight: 600;">رقمك اليومي جاهز</span>
+      <div style="margin-top: 24px; width: 248px; height: 248px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <svg width="248" height="248" viewBox="0 0 248 248" aria-hidden="true" style="position: absolute; inset: 0; transform: rotate(-90deg);">
+          <circle cx="124" cy="124" r="110" fill="none" stroke="#1D1B28" stroke-width="14"></circle>
+          <circle cx="124" cy="124" r="110" fill="none" stroke="#C8F169" stroke-width="14" stroke-linecap="round" stroke-dasharray="691" style="stroke-dashoffset: {{ringOff}}; transition: stroke-dashoffset 1200ms cubic-bezier(.2,.8,.2,1) 150ms; filter: drop-shadow(0 0 10px rgba(200, 241, 105, 0.35));"></circle>
+        </svg>
+        <span style="position: relative; font-family: 'Readex Pro', sans-serif; font-size: 72px; font-weight: 700; letter-spacing: -2px; line-height: 1; color: #C8F169;">{{shown}}</span>
+        <span style="position: relative; margin-top: 6px; font-size: 14px; color: #B4AFC6;">ج.م تقدر تصرفهم النهارده</span>
+      </div>
+      <section style="margin-top: 26px; width: 100%; box-sizing: border-box; padding: 16px; border-radius: 22px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; font-family: 'Readex Pro', sans-serif;">
+          <span style="padding: 6px 10px; border-radius: 12px; background: #1D1B28; font-size: 15px; font-weight: 600;">{{amountFmt}} ج.م</span>
+          <span style="font-size: 18px; color: #8E89A3;">÷</span>
+          <span style="padding: 6px 10px; border-radius: 12px; background: #1D1B28; font-size: 15px; font-weight: 600;">{{days}} يوم</span>
+          <span style="font-size: 18px; color: #8E89A3;">=</span>
+          <span style="padding: 6px 10px; border-radius: 12px; background: #24301A; color: #C8F169; font-size: 15px; font-weight: 700;">{{dailyFmt}}</span>
+        </div>
+        <span style="font-size: 12px; color: #8E89A3;">لحد {{payDate}}</span>
+      </section>
+      <p style="margin: 14px 0 0; font-size: 13px; line-height: 1.6; color: #8E89A3; text-align: center;">كل ما تسجّل، الرقم بيتحدّث على طول. صرفت أقل؟ الباقي بيتوزّع على الأيام الجاية.</p>
+      <button onClick="{{ctaAct}}" style="margin-top: auto; width: 100%; height: 56px; border-radius: 28px; border: none; background: #C8F169; color: #12160A; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer;">حلو! يلا نجرّبه</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s5}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 84px 20px 28px; display: flex; flex-direction: column; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 450ms ease, transform 550ms cubic-bezier(.2,.8,.2,1);">
+      <h1 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.35;">جرّب أول تسجيل</h1>
+      <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: #B4AFC6;">آخر حاجة صرفتها النهارده كانت إيه؟</p>
+      <section style="margin-top: 18px; padding: 16px 18px; border-radius: 22px; background: #15131D; border: 1px solid #2A2737; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 13px; color: #B4AFC6;">رقمك النهارده هيبقى</span>
+          <span style="display: flex; align-items: baseline; gap: 6px;">
+            <span dir="ltr" style="font-family: 'Readex Pro', sans-serif; font-size: 40px; font-weight: 700; letter-spacing: -1px; line-height: 1.1; color: {{previewColor}}; transition: color 250ms ease;">{{previewFmt}}</span>
+            <span style="font-size: 15px; color: #B4AFC6;">ج.م</span>
+          </span>
+        </div>
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 16px; color: #8E89A3; text-decoration: line-through;">{{dailyFmt}}</span>
+      </section>
+      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 13px; color: #8E89A3;">على إيه؟</span>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">
+          <sc-for list="{{logCats}}" as="lc" hint-placeholder-count="4">
+            <button onClick="{{lc.pick}}" aria-pressed="{{lc.aria}}" style="height: 72px; box-sizing: border-box; border-radius: 18px; border: 1.5px solid {{lc.border}}; background: {{lc.bg}}; color: {{lc.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 200ms ease, border-color 200ms ease;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: {{lc.c}};"><path d="{{lc.icon}}"></path></svg>
+              <span>{{lc.label}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 13px; color: #8E89A3;">بكام؟</span>
+        <div style="display: flex; gap: 8px;">
+          <sc-for list="{{logAmts}}" as="la" hint-placeholder-count="4">
+            <button onClick="{{la.pick}}" aria-pressed="{{la.aria}}" style="flex: 1 1 0; height: 44px; border-radius: 22px; border: 1.5px solid {{la.border}}; background: {{la.bg}}; color: {{la.fg}}; font-family: 'Readex Pro', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 200ms ease, border-color 200ms ease;">{{la.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <span style="margin-top: 12px; font-size: 13px; color: {{logNoteColor}};">{{logNote}}</span>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px;">
+        <button onClick="{{logIt}}" style="height: 56px; border-radius: 28px; border: none; background: #C8F169; color: #12160A; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer;">
+          <span>سجّل</span>
+          <span style="padding: 3px 9px; border-radius: 10px; background: #A9D24F; font-size: 12px;">+10 نقطة</span>
+        </button>
+        <button onClick="{{skip}}" style="height: 44px; border: none; background: transparent; color: #8E89A3; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 14px; cursor: pointer;">بعدين</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s6}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 84px 20px 28px; display: flex; flex-direction: column; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 450ms ease, transform 550ms cubic-bezier(.2,.8,.2,1);">
+      <h1 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.35;">إمتى نفكّرك تسجّل؟</h1>
+      <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: #B4AFC6;">تذكير واحد في اليوم، ولا رسالة زيادة.</p>
+      <div role="radiogroup" aria-label="وقت التذكير" style="margin-top: 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{reminds}}" as="r" hint-placeholder-count="3">
+          <button onClick="{{r.pick}}" role="radio" aria-checked="{{r.aria}}" style="height: 72px; box-sizing: border-box; border-radius: 18px; border: 1.5px solid {{r.border}}; background: {{r.bg}}; color: #F4F2FA; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-family: 'IBM Plex Sans Arabic', sans-serif; cursor: pointer; transition: background 200ms ease, border-color 200ms ease;">
+            <span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; font-weight: 600; color: {{r.timeC}};">{{r.time}}</span>
+            <span style="font-size: 12px; color: #8E89A3;">{{r.label}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <span style="margin: 20px 4px 8px; font-size: 12px; color: #8E89A3;">هيوصلك كده</span>
+      <section style="padding: 14px; border-radius: 22px; background: #1D1B28; border: 1px solid #2E2B3D; display: flex; gap: 12px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);">
+        <svg width="36" height="36" viewBox="0 0 100 100" aria-hidden="true" style="flex-shrink: 0;"><rect width="100" height="100" rx="26" fill="#0B0A10"></rect><circle cx="50" cy="37" r="18" fill="#C8F169"></circle><path d="M21 45H79V66Q79 72 73 75L54 84Q50 86 46 84L27 75Q21 72 21 66Z" fill="#A99BFF"></path></svg>
+        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #8E89A3;">
+            <span style="font-weight: 600; color: #B4AFC6;">مصروفي</span>
+            <span>{{remindFull}}</span>
+          </div>
+          <span style="font-size: 14px; font-weight: 600;">{{notifTitle}}</span>
+          <span style="font-size: 13px; line-height: 1.5; color: #B4AFC6;">{{notifBody}}</span>
+        </div>
+      </section>
+      <section style="margin-top: 12px; padding: 14px 16px; border-radius: 20px; background: #15131D; border: 1px solid #2A2737; display: flex; align-items: center; gap: 12px;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 13px; background: #1A2638; color: #7DB4FF; display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4.9 7l14.2 10M4.9 17 19.1 7M9 4l3 2 3-2M9 20l3-2 3 2"></path></svg>
+        </span>
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 14px; font-weight: 600;">تجميد السلسلة</span>
+          <span style="font-size: 12px; line-height: 1.5; color: #B4AFC6;">نسيت يوم؟ عندك تجميد مجاني كل أسبوع، وسلسلتك مش هتضيع.</span>
+        </div>
+      </section>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px;">
+        <button onClick="{{next}}" style="height: 56px; border-radius: 28px; border: none; background: #C8F169; color: #12160A; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer;">فعّل التذكير</button>
+        <button onClick="{{next}}" style="height: 44px; border: none; background: transparent; color: #8E89A3; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 14px; cursor: pointer;">مش دلوقتي</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s7}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 40px 20px 28px; display: flex; flex-direction: column; align-items: center;">
+      <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; opacity: {{op}}; transition: opacity 600ms ease 200ms;">
+        <span style="position: absolute; top: 60px; right: 60px; width: 10px; height: 18px; border-radius: 3px; background: #C8F169; transform: rotate(24deg);"></span>
+        <span style="position: absolute; top: 108px; right: 30px; width: 8px; height: 8px; border-radius: 4px; background: #FFB648;"></span>
+        <span style="position: absolute; top: 170px; right: 84px; width: 12px; height: 6px; border-radius: 3px; background: #A99BFF; transform: rotate(-30deg);"></span>
+        <span style="position: absolute; top: 52px; left: 70px; width: 9px; height: 16px; border-radius: 3px; background: #FF8C73; transform: rotate(-18deg);"></span>
+        <span style="position: absolute; top: 130px; left: 34px; width: 10px; height: 10px; border-radius: 2px; background: #C8F169; transform: rotate(40deg);"></span>
+        <span style="position: absolute; top: 210px; left: 64px; width: 7px; height: 14px; border-radius: 3px; background: #FFB648; transform: rotate(60deg);"></span>
+        <span style="position: absolute; top: 236px; right: 46px; width: 8px; height: 8px; border-radius: 4px; background: #E7A6FF;"></span>
+        <span style="position: absolute; top: 36px; right: 176px; width: 8px; height: 14px; border-radius: 3px; background: #5EE3A1; transform: rotate(12deg);"></span>
+      </div>
+      <div style="margin-top: 52px; width: 132px; height: 132px; border-radius: 66px; display: flex; align-items: center; justify-content: center; transform: scale({{popScale}}); transition: transform 700ms cubic-bezier(.34,1.56,.64,1) 100ms; background: {{heroBg}}; box-shadow: 0 0 60px {{heroGlow}};">
+        <sc-if value="{{logged}}" hint-placeholder-val="{{true}}">
+          <span style="display: flex; flex-direction: column; align-items: center; color: #1A1206;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 22c3.9 0 7-2.8 7-6.8 0-2.9-1.5-5.2-3.4-7-.4 1.7-1.3 2.9-2.7 3.5.3-3.3-1-6.4-4-8.7C8.4 5.4 5 8.4 5 15.2 5 19.2 8.1 22 12 22z"></path></svg>
+            <span style="font-family: 'Readex Pro', sans-serif; font-size: 50px; font-weight: 700; line-height: 1;">1</span>
+          </span>
+        </sc-if>
+        <sc-if value="{{notLogged}}" hint-placeholder-val="{{false}}">
+          <svg width="88" height="88" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="38" r="17" fill="#C8F169"></circle><path d="M23 45H77V65Q77 71.5 71 74.5L54 82.5Q50 84.5 46 82.5L29 74.5Q23 71.5 23 65Z" fill="#A99BFF"></path></svg>
+        </sc-if>
+      </div>
+      <h1 style="margin: 24px 0 0; font-family: 'Readex Pro', sans-serif; font-size: 32px; font-weight: 700; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 500ms ease 300ms, transform 600ms cubic-bezier(.2,.8,.2,1) 300ms;">جاهز!</h1>
+      <p style="margin: 6px 0 0; font-size: 15px; color: #B4AFC6; opacity: {{op}}; transition: opacity 500ms ease 400ms;">مصروفي بقى متظبط عليك.</p>
+      <section style="margin-top: 22px; width: 100%; box-sizing: border-box; padding: 6px 16px; border-radius: 22px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; opacity: {{op}}; transform: translateY({{ty}}px); transition: opacity 500ms ease 500ms, transform 600ms cubic-bezier(.2,.8,.2,1) 500ms;">
+        <div style="height: 48px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2A2737;">
+          <span style="font-size: 14px; color: #B4AFC6;">رقمك اليومي</span>
+          <span style="font-family: 'Readex Pro', sans-serif; font-size: 16px; font-weight: 600; color: #C8F169;"><span dir="ltr">{{finalFmt}}</span> ج.م</span>
+        </div>
+        <div style="height: 48px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2A2737;">
+          <span style="font-size: 14px; color: #B4AFC6;">التذكير</span>
+          <span style="font-size: 14px; font-weight: 600;">{{remindSummary}}</span>
+        </div>
+        <div style="height: 48px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2A2737;">
+          <span style="font-size: 14px; color: #B4AFC6;">هدفك</span>
+          <span style="font-size: 14px; font-weight: 600;">{{goalSummary}}</span>
+        </div>
+        <div style="height: 48px; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 14px; color: #B4AFC6;">السلسلة</span>
+          <span style="font-size: 14px; font-weight: 600; color: #FFB648;">{{streakSummary}}</span>
+        </div>
+      </section>
+      <section style="margin-top: 12px; width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: 20px; background: #1A2114; border: 1px solid #34431F; display: flex; align-items: center; gap: 12px; opacity: {{op}}; transition: opacity 500ms ease 650ms;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 13px; background: #24301A; color: #C8F169; display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M9 17h6"></path></svg>
+        </span>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 14px; font-weight: 600;">شارة «أول خطوة» اتفتحت</span>
+          <span style="font-size: 12px; color: #B4AFC6;">مستوى 1 · {{pts}} من 100 نقطة</span>
+        </div>
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; font-weight: 700; color: #C8F169;">+{{pts}}</span>
+      </section>
+      <a href="Main.dc.html" style="margin-top: auto; width: 100%; height: 56px; border-radius: 28px; background: #C8F169; color: #12160A; display: flex; align-items: center; justify-content: center; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600; text-decoration: none; box-shadow: 0 10px 28px rgba(200, 241, 105, 0.22);">افتح مصروفي</a>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{burst}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; z-index: 5; background: rgba(11, 10, 16, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: {{bOp}}; transition: opacity 250ms ease;">
+      <div style="width: 150px; height: 150px; border-radius: 75px; background: #FFB648; color: #1A1206; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: scale({{bScale}}); transition: transform 650ms cubic-bezier(.34,1.56,.64,1); box-shadow: 0 0 90px rgba(255, 182, 72, 0.45);">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 22c3.9 0 7-2.8 7-6.8 0-2.9-1.5-5.2-3.4-7-.4 1.7-1.3 2.9-2.7 3.5.3-3.3-1-6.4-4-8.7C8.4 5.4 5 8.4 5 15.2 5 19.2 8.1 22 12 22z"></path></svg>
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 56px; font-weight: 700; line-height: 1;">1</span>
+      </div>
+      <span style="margin-top: 10px; font-family: 'Readex Pro', sans-serif; font-size: 26px; font-weight: 700;">السلسلة بدأت!</span>
+      <span style="font-size: 15px; font-weight: 600; color: #C8F169;">+10 نقطة</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"step":{"editor":"enum","options":["0","1","2","3","4","5","6","7"],"default":"0"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  startStep() {
+    const raw = this.props.step;
+    const n = parseInt(raw != null ? raw : 0, 10);
+    if (isNaN(n)) return 0;
+    return Math.max(0, Math.min(7, n));
+  }
+
+  cfg() {
+    const s = this.state || {};
+    const start = this.startStep();
+    return {
+      step: s.step != null ? s.step : start,
+      goals: s.goals || { track: true, save: true },
+      amount: s.amount != null ? s.amount : '4500',
+      wallets: s.wallets || { cash: true, vf: true },
+      payday: s.payday || 'month',
+      logCat: s.logCat || 'transport',
+      logAmt: s.logAmt != null ? s.logAmt : 50,
+      remind: s.remind || '21',
+      logged: s.logged != null ? s.logged : start >= 6,
+      entered: !!s.entered,
+      burst: !!s.burst,
+      burstIn: !!s.burstIn,
+      shown: s.shown
+    };
+  }
+
+  daysFor(p) {
+    const m = { month: 29, d25: 23, week: 7, flex: 28 };
+    return m[p] || 29;
+  }
+
+  dailyFor(c) {
+    const a = parseFloat(c.amount || '0') || 0;
+    return Math.floor(a / this.daysFor(c.payday));
+  }
+
+  later(fn, ms) {
+    if (!this.timers) this.timers = [];
+    const t = setTimeout(fn, ms);
+    this.timers.push(t);
+    return t;
+  }
+
+  componentDidMount() {
+    this.later(() => this.setState({ entered: true }), 80);
+    if (this.startStep() === 4) this.later(() => this.count(), 160);
+  }
+
+  componentWillUnmount() {
+    (this.timers || []).forEach((t) => clearTimeout(t));
+    if (this.ci) clearInterval(this.ci);
+  }
+
+  go(step) {
+    const target = Math.max(0, Math.min(7, step));
+    this.setState({ step: target, entered: false });
+    this.later(() => this.setState({ entered: true }), 50);
+    if (target === 4) this.later(() => this.count(), 140);
+  }
+
+  count() {
+    if (this.ci) clearInterval(this.ci);
+    const target = this.dailyFor(this.cfg());
+    const t0 = Date.now();
+    this.setState({ shown: 0 });
+    this.ci = setInterval(() => {
+      const t = Math.min(1, (Date.now() - t0) / 1100);
+      const e = 1 - Math.pow(1 - t, 3);
+      this.setState({ shown: Math.round(target * e) });
+      if (t >= 1) {
+        clearInterval(this.ci);
+        this.ci = null;
+      }
+    }, 30);
+  }
+
+  logIt() {
+    this.setState({ logged: true, burst: true, burstIn: false });
+    this.later(() => this.setState({ burstIn: true }), 30);
+    this.later(() => {
+      this.setState({ burst: false, burstIn: false });
+      this.go(6);
+    }, 1600);
+  }
+
+  renderVals() {
+    const c = this.cfg();
+    const step = c.step;
+    const on = c.entered;
+    const set = (patch) => this.setState(patch);
+    const fmt = (n) => Math.round(n).toLocaleString('en-US');
+    const days = this.daysFor(c.payday);
+    const daily = this.dailyFor(c);
+    const amtNum = parseFloat(c.amount || '0') || 0;
+    const preview = daily - c.logAmt;
+    const finalDaily = c.logged ? preview : daily;
+
+    const goalDefs = [
+      { id: 'track', label: 'أعرف فلوسي بتروح فين', short: 'أعرف فلوسي بتروح فين', c: '#7DB4FF', dim: '#1A2638', icon: 'M5 20V11M12 20V4M19 20v-7' },
+      { id: 'month', label: 'أوصل لآخر الشهر من غير زنقة', short: 'أوصل لآخر الشهر', c: '#C8F169', dim: '#24301A', icon: 'M6 5h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM3 10h18M8 3v4M16 3v4' },
+      { id: 'save', label: 'أحوّش لحاجة نفسي فيها', short: 'أحوّش لحاجة', c: '#5EE3A1', dim: '#15302A', icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8zM12 11.5v1' },
+      { id: 'cut', label: 'أوقف الصرف الزيادة', short: 'أوقف الصرف الزيادة', c: '#FF8C73', dim: '#33201C', icon: 'M3 7l6 6 4-4 8 8M21 11v6h-6' },
+      { id: 'gameya', label: 'أنظّم الجمعيات والسلف', short: 'أنظّم الجمعيات', c: '#E7A6FF', dim: '#2E1F38', icon: 'M10 5a2 2 0 1 0 4 0a2 2 0 1 0-4 0M3 17a2 2 0 1 0 4 0a2 2 0 1 0-4 0M17 17a2 2 0 1 0 4 0a2 2 0 1 0-4 0M10.8 6.8 6.2 15M13.2 6.8l4.6 8.2M7 17h10' }
+    ];
+    const goals = goalDefs.map((g) => {
+      const sel = !!c.goals[g.id];
+      return {
+        label: g.label,
+        icon: g.icon,
+        c: g.c,
+        dim: g.dim,
+        on: sel,
+        aria: sel ? 'true' : 'false',
+        border: sel ? '#C8F169' : '#2A2737',
+        bg: sel ? '#1A2114' : '#15131D',
+        ring: sel ? 'none' : '1.5px solid #4A4659',
+        checkBg: sel ? '#C8F169' : 'transparent',
+        toggle: () => {
+          const cur = this.cfg().goals;
+          const nx = Object.assign({}, cur);
+          nx[g.id] = !cur[g.id];
+          set({ goals: nx });
+        }
+      };
+    });
+    const picked = goalDefs.filter((g) => c.goals[g.id]);
+    const goalCount = picked.length;
+    const goalHint = goalCount === 0 ? 'اختار حاجة واحدة على الأقل' : (goalCount === 1 ? 'اخترت حاجة واحدة · تقدر تختار أكتر' : 'اخترت ' + goalCount + ' · تمام كده');
+
+    const press = (k) => () => {
+      const cur = this.cfg().amount;
+      let a = cur;
+      if (k === 'back') {
+        a = cur.slice(0, -1);
+      } else if (k === '.') {
+        if (cur.indexOf('.') === -1) a = (cur === '' ? '0' : cur) + '.';
+      } else if (cur === '0' || cur === '') {
+        a = k;
+      } else {
+        const p = cur.split('.');
+        if (p.length === 2 && p[1].length >= 2) a = cur;
+        else if (p.length === 1 && p[0].length >= 7) a = cur;
+        else a = cur + k;
+      }
+      set({ amount: a });
+    };
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'back'].map((k) => ({
+      label: k,
+      isBack: k === 'back',
+      isNum: k !== 'back',
+      aria: k === 'back' ? 'امسح' : (k === '.' ? 'علامة عشرية' : k),
+      press: press(k)
+    }));
+    const raw = c.amount === '' ? '0' : c.amount;
+    const parts = raw.split('.');
+    const intPart = (parts[0] || '0').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const amountDisplay = parts.length > 1 ? intPart + '.' + parts[1] : intPart;
+
+    const walletDefs = [
+      { id: 'cash', label: 'الكاش' },
+      { id: 'vf', label: 'فودافون كاش' },
+      { id: 'instapay', label: 'إنستاباي' },
+      { id: 'bank', label: 'البنك' }
+    ];
+    const wallets = walletDefs.map((w) => {
+      const sel = !!c.wallets[w.id];
+      return {
+        label: w.label,
+        on: sel,
+        aria: sel ? 'true' : 'false',
+        border: sel ? '#C8F169' : '#2A2737',
+        bg: sel ? '#1A2114' : '#15131D',
+        fg: sel ? '#F4F2FA' : '#B4AFC6',
+        toggle: () => {
+          const cur = this.cfg().wallets;
+          const nx = Object.assign({}, cur);
+          nx[w.id] = !cur[w.id];
+          set({ wallets: nx });
+        }
+      };
+    });
+
+    const payDefs = [
+      { id: 'month', label: 'أول الشهر', sub: 'مرتب شهري', date: '1 ديسمبر', icon: 'M6 5h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM3 10h18M8 3v4M16 3v4' },
+      { id: 'd25', label: 'يوم 25', sub: 'قبض بدري', date: '25 نوفمبر', icon: 'M6 5h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM3 10h18M8 3v4M16 3v4M9 15l2 2 4-4' },
+      { id: 'week', label: 'كل أسبوع', sub: 'مصروف أسبوعي', date: '9 نوفمبر', icon: 'M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4' },
+      { id: 'flex', label: 'مش ثابت', sub: 'شغل حر أو فريلانس', date: '30 نوفمبر', icon: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z' }
+    ];
+    const currentPay = payDefs.find((p) => p.id === c.payday) || payDefs[0];
+    const paydays = payDefs.map((p) => {
+      const sel = p.id === c.payday;
+      return {
+        label: p.label,
+        sub: p.sub,
+        icon: p.icon,
+        aria: sel ? 'true' : 'false',
+        border: sel ? '#C8F169' : '#2A2737',
+        bg: sel ? '#1A2114' : '#15131D',
+        tile: sel ? '#C8F169' : '#1D1B28',
+        iconC: sel ? '#12160A' : '#B4AFC6',
+        pick: () => set({ payday: p.id })
+      };
+    });
+
+    const catDefs = [
+      { id: 'transport', label: 'مواصلات', c: '#7DB4FF', dim: '#1A2638', icon: 'M4 16v-5l2-5h12l2 5v5zM4 11h16M7 16v3M17 16v3' },
+      { id: 'coffee', label: 'قهوة', c: '#FFA36B', dim: '#33231A', icon: 'M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 11h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3' },
+      { id: 'food', label: 'أكل', c: '#FF8C73', dim: '#33201C', icon: 'M6 3v6a3 3 0 0 0 6 0V3M9 3v18M17 3c-2 2-2.5 6 0 8v10' },
+      { id: 'grocery', label: 'بقالة', c: '#FFD466', dim: '#332A12', icon: 'M3 4h2l2.4 11h10.2L20 8H6.2M7.7 19.5a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0M15.7 19.5a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0' }
+    ];
+    const logCats = catDefs.map((d) => {
+      const sel = d.id === c.logCat;
+      return {
+        label: d.label,
+        icon: d.icon,
+        c: d.c,
+        aria: sel ? 'true' : 'false',
+        border: sel ? d.c : '#2A2737',
+        bg: sel ? d.dim : '#15131D',
+        fg: sel ? '#F4F2FA' : '#B4AFC6',
+        pick: () => set({ logCat: d.id })
+      };
+    });
+    const logAmts = [20, 50, 100, 200].map((v) => {
+      const sel = v === c.logAmt;
+      return {
+        label: fmt(v),
+        aria: sel ? 'true' : 'false',
+        border: sel ? '#C8F169' : '#2A2737',
+        bg: sel ? '#1A2114' : '#15131D',
+        fg: sel ? '#C8F169' : '#B4AFC6',
+        pick: () => set({ logAmt: v })
+      };
+    });
+    const over = preview < 0;
+
+    const remindDefs = [
+      { id: '18', time: '6 م', label: 'بعد الشغل', full: '6:00 م' },
+      { id: '21', time: '9 م', label: 'بالليل', full: '9:00 م' },
+      { id: '23', time: '11 م', label: 'قبل النوم', full: '11:00 م' }
+    ];
+    const currentRemind = remindDefs.find((r) => r.id === c.remind) || remindDefs[1];
+    const reminds = remindDefs.map((r) => {
+      const sel = r.id === c.remind;
+      return {
+        time: r.time,
+        label: r.label,
+        aria: sel ? 'true' : 'false',
+        border: sel ? '#C8F169' : '#2A2737',
+        bg: sel ? '#1A2114' : '#15131D',
+        timeC: sel ? '#C8F169' : '#F4F2FA',
+        pick: () => set({ remind: r.id })
+      };
+    });
+
+    const enabled = step === 1 ? goalCount > 0 : (step === 2 ? amtNum > 0 : true);
+    const noop = () => {};
+    const next = () => this.go(step + 1);
+    const pts = c.logged ? 30 : 20;
+
+    return {
+      step: step,
+      s0: step === 0,
+      s1: step === 1,
+      s2: step === 2,
+      s3: step === 3,
+      s4: step === 4,
+      s5: step === 5,
+      s6: step === 6,
+      s7: step === 7,
+      showTop: step >= 1 && step <= 6,
+      canSkip: step === 1 || step === 6,
+      noSkip: step >= 2 && step <= 5,
+      segs: [1, 2, 3, 4, 5, 6].map((i) => ({ c: step >= i ? '#C8F169' : '#272435' })),
+      back: () => this.go(step - 1),
+      skip: () => this.go(step + 1),
+      next: next,
+      ctaAct: enabled ? next : noop,
+      ctaBg: enabled ? '#C8F169' : '#272435',
+      ctaFg: enabled ? '#12160A' : '#8E89A3',
+
+      op: on ? 1 : 0,
+      ty: on ? 0 : 22,
+      ringScale: on ? 1 : 0.6,
+      coinY: on ? 0 : -48,
+      coinOp: on ? 1 : 0,
+
+      goals: goals,
+      goalHint: goalHint,
+
+      keys: keys,
+      amountDisplay: amountDisplay,
+      amountColor: amtNum > 0 ? '#F4F2FA' : '#4A4659',
+      wallets: wallets,
+
+      paydays: paydays,
+      days: days,
+      payDate: currentPay.date,
+
+      shown: fmt(c.shown != null ? c.shown : daily),
+      ringOff: step === 4 && on ? 0 : 691,
+      amountFmt: fmt(amtNum),
+      dailyFmt: fmt(daily),
+
+      logCats: logCats,
+      logAmts: logAmts,
+      previewFmt: fmt(preview),
+      previewColor: over ? '#FF8C73' : '#C8F169',
+      logNote: over ? 'ده أكتر من رقمك النهارده، عادي. بكرة بيتظبط لوحده.' : 'هيفضلك ' + fmt(preview) + ' ج.م للنهارده',
+      logNoteColor: over ? '#FF8C73' : '#8E89A3',
+      logIt: () => this.logIt(),
+
+      reminds: reminds,
+      remindFull: currentRemind.full,
+      notifTitle: c.logged ? 'فاضلك ' + fmt(preview) + ' ج.م النهارده' : 'رقمك النهارده ' + fmt(daily) + ' ج.م',
+      notifBody: c.logged ? 'سجّل مصاريف النهارده عشان سلسلتك توصل يوم 2' : 'سجّل أول مصروف وابدأ سلسلتك',
+
+      logged: c.logged,
+      notLogged: !c.logged,
+      popScale: on ? 1 : 0.4,
+      heroBg: c.logged ? '#FFB648' : '#1D1B28',
+      heroGlow: c.logged ? 'rgba(255, 182, 72, 0.4)' : 'rgba(169, 155, 255, 0.25)',
+      finalFmt: fmt(finalDaily),
+      remindSummary: currentRemind.time + ' · ' + currentRemind.label,
+      goalSummary: picked.length ? picked[0].short : 'لسه',
+      streakSummary: c.logged ? 'يوم 1' : 'ابدأها النهارده',
+      pts: pts,
+
+      burst: c.burst,
+      bOp: c.burstIn ? 1 : 0,
+      bScale: c.burstIn ? 1 : 0.4
+    };
+  }
+}
+</script>
+</body>
+</html>

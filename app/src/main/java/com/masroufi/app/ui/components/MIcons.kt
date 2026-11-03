@@ -270,6 +270,16 @@ object MIcons {
         }
     }
 
+    val Eye by lazy { duo("eye") { soft { eye() }; line { eye(); circle(12f, 12f, 3f) } } }
+    val EyeOff by lazy { duo("eyeOff") { line { eye(); circle(12f, 12f, 3f); moveTo(4f, 4f); lineTo(20f, 20f) } } }
+    val Mic by lazy {
+        duo("mic") {
+            soft { rect(9f, 3f, 15f, 14f, 3f) }
+            line { rect(9f, 3f, 15f, 14f, 3f); moveTo(5f, 11f); curveTo(5f, 14.9f, 8.1f, 18f, 12f, 18f); curveTo(15.9f, 18f, 19f, 14.9f, 19f, 11f); moveTo(12f, 18f); lineTo(12f, 21f) }
+        }
+    }
+    val Sparkle by lazy { duo("sparkle") { soft { sparkle(11f, 10f, 7f) }; line { sparkle(11f, 10f, 7f) }; solid { sparkle(19f, 18.5f, 2.5f) } } }
+
     // Actions and system glyphs, drawn in the same duotone language as everything above.
     val Back by lazy { duo("back", autoMirror = true) { line { moveTo(14.5f, 5.5f); lineTo(8f, 12f); lineTo(14.5f, 18.5f) } } }
     val ChevronForward by lazy { duo("forward", autoMirror = true) { line { moveTo(9.5f, 5.5f); lineTo(16f, 12f); lineTo(9.5f, 18.5f) } } }
@@ -520,6 +530,11 @@ private fun PathBuilder.flame() {
 
 private fun PathBuilder.trophyCup() {
     moveTo(7f, 4f); lineTo(17f, 4f); lineTo(17f, 9f); curveTo(17f, 11.8f, 14.8f, 14f, 12f, 14f); curveTo(9.2f, 14f, 7f, 11.8f, 7f, 9f); close()
+}
+
+private fun PathBuilder.eye() {
+    moveTo(2f, 12f); curveTo(2f, 12f, 5.6f, 5f, 12f, 5f); curveTo(18.4f, 5f, 22f, 12f, 22f, 12f); curveTo(22f, 12f, 18.4f, 19f, 12f, 19f)
+    curveTo(5.6f, 19f, 2f, 12f, 2f, 12f); close()
 }
 
 private fun PathBuilder.trashBody() {

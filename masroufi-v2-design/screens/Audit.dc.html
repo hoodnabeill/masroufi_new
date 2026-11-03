@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Masroufi design audit</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&amp;family=Readex+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0A10}
+a{color:#A99BFF}a:hover{color:#C9C0FF}
+</style>
+</helmet>
+<div style="width: 1200px; height: 1640px; box-sizing: border-box; background: #0B0A10; color: #F4F2FA; font-family: 'IBM Plex Sans Arabic', sans-serif; padding: 56px; display: flex; flex-direction: column; gap: 32px;">
+
+  <header style="display: flex; flex-direction: column; gap: 10px;">
+    <span style="font-size: 12px; letter-spacing: 2px; color: #8E89A3; font-weight: 600;">MASROUFI · DESIGN AUDIT</span>
+    <h1 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 40px; font-weight: 700; letter-spacing: -0.5px;">Why it feels basic, and what fixes it</h1>
+    <p style="margin: 0; max-width: 780px; font-size: 16px; line-height: 1.6; color: #B4AFC6;">Reviewed from 13 screenshots of the current build: Home, Activity, Budgets, New budget, New goal, More and the add menu. Findings are ranked by how much they hold back clarity and the daily habit.</p>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
+    <div style="padding: 18px; border-radius: 20px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 13px; color: #B4AFC6;">Visual hierarchy</span>
+      <span style="font-family: 'Readex Pro', sans-serif; font-size: 32px; font-weight: 700;">4<span style="font-size: 18px; color: #8E89A3;">/10</span></span>
+      <div style="height: 6px; border-radius: 3px; background: #272435; overflow: hidden;"><div style="width: 40%; height: 100%; background: #FF8C73;"></div></div>
+      <span style="font-size: 12px; color: #8E89A3;">Every card has the same weight</span>
+    </div>
+    <div style="padding: 18px; border-radius: 20px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 13px; color: #B4AFC6;">Money clarity</span>
+      <span style="font-family: 'Readex Pro', sans-serif; font-size: 32px; font-weight: 700;">5<span style="font-size: 18px; color: #8E89A3;">/10</span></span>
+      <div style="height: 6px; border-radius: 3px; background: #272435; overflow: hidden;"><div style="width: 50%; height: 100%; background: #FFB648;"></div></div>
+      <span style="font-size: 12px; color: #8E89A3;">Big numbers, little meaning</span>
+    </div>
+    <div style="padding: 18px; border-radius: 20px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 13px; color: #B4AFC6;">Habit loop</span>
+      <span style="font-family: 'Readex Pro', sans-serif; font-size: 32px; font-weight: 700;">3<span style="font-size: 18px; color: #8E89A3;">/10</span></span>
+      <div style="height: 6px; border-radius: 3px; background: #272435; overflow: hidden;"><div style="width: 30%; height: 100%; background: #FF8C73;"></div></div>
+      <span style="font-size: 12px; color: #8E89A3;">A streak with no reward moment</span>
+    </div>
+    <div style="padding: 18px; border-radius: 20px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 13px; color: #B4AFC6;">Local fit</span>
+      <span style="font-family: 'Readex Pro', sans-serif; font-size: 32px; font-weight: 700;">8<span style="font-size: 18px; color: #8E89A3;">/10</span></span>
+      <div style="height: 6px; border-radius: 3px; background: #272435; overflow: hidden;"><div style="width: 80%; height: 100%; background: #C8F169;"></div></div>
+      <span style="font-size: 12px; color: #8E89A3;">Dialect and templates are a real edge</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start;">
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px 4px;">
+        <span style="width: 10px; height: 10px; border-radius: 5px; background: #FF8C73;"></span>
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 16px; font-weight: 600;">Critical</span>
+        <span style="font-size: 13px; color: #8E89A3;">4</span>
+      </div>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Purple soup: nothing leads the eye</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">Every surface is the same glowing purple glass with the same radius and border. The streak card outranks the money; grey text sinks into the background.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>Near-black ink surfaces, one accent per meaning, glass only on things that float.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">The hero answers the wrong question</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;"><span lang="ar">«معاك كام»</span> is a number you already know. It doesn't change your next decision.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>Lead with <span lang="ar">«تقدر تصرف النهارده»</span>, a daily safe-to-spend that moves every time you log.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Gamification is a sticker, not a loop</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">A streak of 1 and a level bar with no points, no reward after logging, and no reason to come back tomorrow.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>Log → reward screen (+points, streak grows, one good fact) → week dots → next badge.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">The "smart" note isn't smart</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;"><span lang="ar">«صرفت 1,105 لحد دلوقتي»</span> repeats the number printed right above it.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>Insights must say something new (pace, bill share, renewals) and offer one action.</p>
+      </article>
+
+      <section style="margin-top: 10px; padding: 18px; border-radius: 18px; background: #1A2114; border: 1px solid #34431F; display: flex; flex-direction: column; gap: 10px;">
+        <h3 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 15px; font-weight: 600; color: #C8F169;">Keep: this is your edge</h3>
+        <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.5; color: #D9D5E6;">
+          <li>Egyptian dialect copy that sounds like a person</li>
+          <li>Local goals: <span lang="ar">رمضان والعيد، الجواز، الجمعيات</span></li>
+          <li>RTL handled correctly, consistent Western digits</li>
+          <li>Privacy and offline-first as the promise</li>
+        </ul>
+      </section>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px 4px;">
+        <span style="width: 10px; height: 10px; border-radius: 5px; background: #FFB648;"></span>
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 16px; font-weight: 600;">Major</span>
+        <span style="font-size: 13px; color: #8E89A3;">7</span>
+      </div>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Three doors to the same room</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">Expense, income and transfer appear as big tiles, as quick chips and in the + menu, taking a third of the first screen.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>One center + button, quick chips with last amount, and type-to-log.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Low-contrast secondary text</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">Lavender on purple for dates, wallets and placeholders lands around 3:1.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>Neutral greys tuned to at least 4.5:1 on every surface.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Money formatting is inconsistent</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">A trailing dot on <span lang="ar">«ج.م.»</span>, a truncated <span lang="ar">«1,105.00 ج.»</span>, and .00 on every amount.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span><span lang="ar">«1,105 ج.م»</span>: decimals only when non-zero, currency smaller and lighter.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">The donut chart misleads</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">A double ring with a misaligned track, no percentages, and legend numbers without currency.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>One stacked bar plus ranked rows with percentages.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Lists hide the useful part</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">Titles repeat the category, there are no daily totals, dates are absolute, and the Spotify row truncates.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>Note or merchant as title, daily totals, <span lang="ar">«امبارح / النهارده»</span>.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Forms ask before they help</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">A currency field on every form in an EGP app, a preview that reads 0.00, and a $ icon on goals.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>Amount first, live translation (<span lang="ar">«يعني 40 في اليوم»</span>), currency in settings.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Navigation has duplicates and dead ends</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">Five tabs plus a floating +, a Budgets empty state that is a wall, and two subscription entries with the same icon.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>Four tabs and a center +; Budgets and Goals merge into <span lang="ar">«الخطة»</span>.</p>
+      </article>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px 4px;">
+        <span style="width: 10px; height: 10px; border-radius: 5px; background: #A99BFF;"></span>
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 16px; font-weight: 600;">Polish</span>
+        <span style="font-size: 13px; color: #8E89A3;">6</span>
+      </div>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Content runs under the status bar</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">The insights header collides with the clock when you scroll.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>A sticky header with a solid scrim.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">The + menu leaks</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">Blurred ghost text shows behind the pills, and they cover the list.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>A bottom sheet with a type switch and keypad.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Picker overload</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">12 colours with a ragged second row, plus an icon grid that repeats the templates.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>The template sets icon and colour; 6 swatches to override.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Fixed buttons clip fields</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">Save floats over the target-amount field with no separation.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>A solid footer bar with a hairline border.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Oversized greeting</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">A huge <span lang="ar">«مساء الخير»</span> takes the most valuable pixels on the screen.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>A small greeting; the space goes to the daily number.</p>
+      </article>
+      <article style="padding: 16px; border-radius: 18px; background: #15131D; border: 1px solid #2A2737; display: flex; flex-direction: column; gap: 8px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600;">No backup nudge</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #B4AFC6;">An offline-first app with no backup is one lost phone away from zero.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55;"><span style="color: #C8F169; font-weight: 600;">Fix · </span>A persistent card in More until backup is on.</p>
+      </article>
+
+      <section style="margin-top: 10px; padding: 18px; border-radius: 18px; background: #1B1830; border: 1px solid #332C55; display: flex; flex-direction: column; gap: 10px;">
+        <h3 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 15px; font-weight: 600; color: #C9C0FF;">Addictive, but honest</h3>
+        <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.5; color: #D9D5E6;">
+          <li>Reward logging, never spending</li>
+          <li>Streak freeze: one missed day doesn't erase a month</li>
+          <li>No guilt copy; every warning comes with one fix</li>
+          <li>One daily number beats ten notifications</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1200,"height":1640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

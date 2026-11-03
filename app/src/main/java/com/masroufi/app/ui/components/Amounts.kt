@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -141,9 +142,12 @@ fun MoneyText(
     Text(annotated, modifier = modifier, style = style.copy(fontFeatureSettings = "tnum"), color = color, maxLines = 1)
 }
 
-/** The currency beside an amount: ~60% of the number's size, untracked (Arabic must not be letter-spaced). */
+/**
+ * The currency beside an amount, smaller and untracked (Arabic must not be letter-spaced). Size follows the handoff:
+ * 20 sp beside a 68 sp hero, ~14 beside 34, ~11 beside 16, i.e. 8 sp + 18% of the number.
+ */
 private fun currencyStyle(style: TextStyle): TextStyle = style.copy(
-    fontSize = if (style.fontSize.isSpecified) style.fontSize * 0.6f else style.fontSize,
+    fontSize = if (style.fontSize.isSpecified) (8f + style.fontSize.value * 0.18f).coerceAtMost(style.fontSize.value).sp else style.fontSize,
     letterSpacing = TextUnit.Unspecified,
     fontWeight = FontWeight.Medium,
 )

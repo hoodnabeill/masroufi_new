@@ -24,6 +24,17 @@ object PayCycle {
     /** Whole days from today until the next salary; on payday itself the new cycle has just begun. */
     fun daysUntilPayday(today: LocalDate, day: Int): Int = ChronoUnit.DAYS.between(today, current(today, day).second).toInt()
 
+    /** Days until the next income, today included: the payday when one is set, otherwise the end of the month. */
+    fun daysUntilNextIncome(today: LocalDate, day: Int): Int =
+        if (isSet(day)) daysUntilPayday(today, day) else today.lengthOfMonth() - today.dayOfMonth + 1
+
+    /**
+     * "تقدر تصرف النهارده": the balance as it stood this morning (today's spending added back) spread over the days
+     * until the next income. Using the morning balance keeps today's limit fixed while the user logs against it.
+     */
+    fun safeToday(balanceMinor: Long, spentTodayMinor: Long, today: LocalDate, day: Int): Long =
+        ((balanceMinor + spentTodayMinor) / daysUntilNextIncome(today, day)).coerceAtLeast(0)
+
     /** What can be spent per day, today included, so the balance lasts until payday. Never negative. */
     fun safePerDay(balanceMinor: Long, today: LocalDate, day: Int): Long =
         (balanceMinor / daysUntilPayday(today, day).coerceAtLeast(1)).coerceAtLeast(0)

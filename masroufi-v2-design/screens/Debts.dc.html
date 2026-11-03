@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>مصروفي · الديون والسلف</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&amp;family=Readex+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0A10}
+a{color:#A99BFF;text-decoration:none}a:hover{color:#C9C0FF}
+</style>
+</helmet>
+<div dir="rtl" style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #0B0A10; color: #F4F2FA; font-family: 'IBM Plex Sans Arabic', sans-serif; padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px;">
+
+  <header style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+    <a href="More.dc.html" aria-label="رجوع" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2A2737; background: #15131D; color: #F4F2FA; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 17px; font-weight: 600;">الديون والسلف</h1>
+    <button aria-label="سلفة جديدة" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2A2737; background: #15131D; color: #F4F2FA; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+    </button>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+    <div style="padding: 16px; border-radius: 22px; background: #1A2114; border: 1px solid #34431F; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 13px; color: #B4AFC6;">ليك</span>
+      <span style="display: flex; align-items: baseline; gap: 4px;"><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; font-weight: 700; color: #C8F169;">{{owedTotal}}</span><span style="font-size: 13px; color: #B4AFC6;">ج.م</span></span>
+      <span style="font-size: 12px; color: #8E89A3;">عند اتنين</span>
+    </div>
+    <div style="padding: 16px; border-radius: 22px; background: #26171A; border: 1px solid #4A2C25; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 13px; color: #B4AFC6;">عليك</span>
+      <span style="display: flex; align-items: baseline; gap: 4px;"><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; font-weight: 700; color: #FF8C73;">{{oweTotal}}</span><span style="font-size: 13px; color: #B4AFC6;">ج.م</span></span>
+      <span style="font-size: 12px; color: #8E89A3;">{{oweSub}}</span>
+    </div>
+  </div>
+
+  <div role="tablist" style="height: 44px; box-sizing: border-box; padding: 4px; border-radius: 22px; background: #15131D; border: 1px solid #2A2737; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;">
+    <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+      <button onClick="{{f.pick}}" role="tab" aria-selected="{{f.aria}}" style="border: none; border-radius: 18px; background: {{f.bg}}; color: {{f.fg}}; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 14px; font-weight: {{f.fw}}; cursor: pointer;">{{f.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="border-radius: 24px; background: #15131D; border: 1px solid #2A2737; padding: 4px 0;">
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+      <div style="padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: {{r.divider}};">
+        <span style="width: 42px; height: 42px; flex-shrink: 0; border-radius: 21px; background: {{r.av}}; color: #0B0A10; display: flex; align-items: center; justify-content: center; font-family: 'Readex Pro', sans-serif; font-size: 16px; font-weight: 700;">{{r.initial}}</span>
+        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 15px; font-weight: 500;">{{r.name}}</span>
+            <span dir="ltr" style="font-family: 'Readex Pro', sans-serif; font-size: 16px; font-weight: 600; color: {{r.amtC}};">{{r.amount}}</span>
+          </div>
+          <span style="font-size: 12px; color: #8E89A3;">{{r.note}}</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+            <span style="font-size: 12px; font-weight: 600; color: {{r.dueC}};">{{r.due}}</span>
+            <button onClick="{{r.act}}" style="height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid {{r.btnBorder}}; background: {{r.btnBg}}; color: {{r.btnFg}}; display: flex; align-items: center; gap: 6px; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer;">{{r.btn}}</button>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{sheetOpen}}" hint-placeholder-val="{{true}}">
+    <button onClick="{{closeSheet}}" aria-label="اقفل" style="position: absolute; inset: 0; z-index: 4; border: none; background: rgba(5, 4, 8, 0.72); cursor: pointer;"></button>
+    <div role="dialog" aria-label="فكّره بلُطف" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; box-sizing: border-box; padding: 10px 16px 24px; border-radius: 32px 32px 0 0; background: #15131D; border-top: 1px solid #2A2737; display: flex; flex-direction: column; gap: 14px;">
+      <div style="width: 40px; height: 5px; border-radius: 3px; background: #3A3648; align-self: center;"></div>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <h2 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 18px; font-weight: 600;">فكّر {{sheet.name}} بلُطف</h2>
+          <span style="font-size: 13px; color: #8E89A3;">{{sheet.amount}} ج.م · {{sheet.note}}</span>
+        </div>
+        <button onClick="{{closeSheet}}" aria-label="اقفل" style="width: 36px; height: 36px; border-radius: 18px; border: none; background: #1D1B28; color: #B4AFC6; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+        </button>
+      </div>
+      <div role="radiogroup" aria-label="أسلوب الرسالة" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{tones}}" as="t" hint-placeholder-count="3">
+          <button onClick="{{t.pick}}" role="radio" aria-checked="{{t.aria}}" style="height: 40px; border-radius: 20px; border: 1.5px solid {{t.border}}; background: {{t.bg}}; color: {{t.fg}}; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer;">{{t.label}}</button>
+        </sc-for>
+      </div>
+      <div style="align-self: flex-start; max-width: 300px; padding: 12px 14px; border-radius: 18px 18px 4px 18px; background: #1F3A2C; color: #E8F7EE; font-size: 14px; line-height: 1.7;">{{message}}</div>
+      <div style="display: flex; gap: 8px;">
+        <button style="flex: 1 1 0; height: 52px; border-radius: 26px; border: none; background: #C8F169; color: #12160A; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Readex Pro', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.7-5.2A8.5 8.5 0 1 1 21 11.5z"></path></svg>
+          ابعت على واتساب
+        </button>
+        <button aria-label="انسخ الرسالة" style="width: 52px; height: 52px; border-radius: 26px; border: 1px solid #2A2737; background: transparent; color: #B4AFC6; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
+        </button>
+      </div>
+      <span style="font-size: 12px; color: #8E89A3; text-align: center;">لو مرجّعش، هنفكّرك تاني بعد 3 أيام.</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const filter = s.filter || 'all';
+    const sheetId = s.sheet !== undefined ? s.sheet : 'karim';
+    const tone = s.tone || 'friendly';
+    const settled = !!s.settled;
+    const set = (patch) => this.setState(patch);
+
+    const people = [
+      { id: 'karim', name: 'كريم', initial: 'ك', av: '#FF8C73', dir: 'owed', amt: 300, note: 'سلفة · 12 أكتوبر', date: '12 أكتوبر', verb: 'سلفتهملك', due: 'متأخر 6 أيام', dueC: '#FF8C73' },
+      { id: 'mai', name: 'مي', initial: 'م', av: '#E7A6FF', dir: 'owed', amt: 350, note: 'عزومة عيد ميلاد · 25 أكتوبر', date: '25 أكتوبر', verb: 'دفعتهم عنك في العزومة', due: 'ميعادها 10 نوفمبر', dueC: '#8E89A3' },
+      { id: 'bro', name: 'محمد', initial: 'م', av: '#7DB4FF', dir: 'owe', amt: 200, note: 'بنزين · 30 أكتوبر', date: '30 أكتوبر', verb: '', due: 'رجّعهم قبل 5 نوفمبر', dueC: '#FFB648' }
+    ];
+
+    const filters = [
+      { id: 'all', label: 'الكل' },
+      { id: 'owed', label: 'ليك' },
+      { id: 'owe', label: 'عليك' }
+    ].map((f) => {
+      const on = f.id === filter;
+      return {
+        label: f.label,
+        aria: on ? 'true' : 'false',
+        bg: on ? '#272435' : 'transparent',
+        fg: on ? '#F4F2FA' : '#8E89A3',
+        fw: on ? '600' : '500',
+        pick: () => set({ filter: f.id })
+      };
+    });
+
+    const visible = people.filter((p) => filter === 'all' || p.dir === filter);
+    const rows = visible.map((p, i) => {
+      const owed = p.dir === 'owed';
+      const done = !owed && settled;
+      return {
+        name: p.name,
+        initial: p.initial,
+        av: p.av,
+        note: p.note,
+        amount: done ? 'اتسدّد' : (owed ? '+' : '−') + p.amt.toLocaleString('en-US'),
+        amtC: done ? '#8E89A3' : (owed ? '#C8F169' : '#FF8C73'),
+        due: done ? 'خلصان' : p.due,
+        dueC: done ? '#C8F169' : p.dueC,
+        btn: owed ? 'فكّره' : (done ? 'تراجع' : 'سدّدت'),
+        btnBg: owed ? '#24301A' : 'transparent',
+        btnFg: owed ? '#C8F169' : '#B4AFC6',
+        btnBorder: owed ? '#34431F' : '#2A2737',
+        divider: i < visible.length - 1 ? '1px solid #2A2737' : 'none',
+        act: owed ? () => set({ sheet: p.id }) : () => set({ settled: !settled })
+      };
+    });
+
+    const person = people.find((p) => p.id === sheetId);
+    const tones = [
+      { id: 'friendly', label: 'ودّي' },
+      { id: 'normal', label: 'عادي' },
+      { id: 'firm', label: 'جد' }
+    ].map((t) => {
+      const on = t.id === tone;
+      return {
+        label: t.label,
+        aria: on ? 'true' : 'false',
+        border: on ? '#C8F169' : '#2A2737',
+        bg: on ? '#1A2114' : 'transparent',
+        fg: on ? '#C8F169' : '#B4AFC6',
+        pick: () => set({ tone: t.id })
+      };
+    });
+    let message = '';
+    if (person) {
+      const amt = person.amt.toLocaleString('en-US');
+      if (tone === 'friendly') message = 'ازيك يا ' + person.name + '! فاكر الـ ' + amt + ' اللي ' + person.verb + ' يوم ' + person.date + '؟ لما تقدر بقى، من غير استعجال.';
+      else if (tone === 'normal') message = 'يا ' + person.name + '، فاضل الـ ' + amt + ' بتوع ' + person.date + '. ممكن ترجعهم الأسبوع ده؟';
+      else message = person.name + '، الـ ' + amt + ' بتوع ' + person.date + ' اتأخروا. محتاجهم لحد يوم 5 نوفمبر لو سمحت.';
+    }
+
+    return {
+      owedTotal: '650',
+      oweTotal: settled ? '0' : '200',
+      oweSub: settled ? 'مفيش عليك حاجة' : 'لواحد',
+      filters: filters,
+      rows: rows,
+      sheetOpen: !!person,
+      sheet: person ? { name: person.name, amount: person.amt.toLocaleString('en-US'), note: person.note } : { name: '', amount: '', note: '' },
+      tones: tones,
+      message: message,
+      closeSheet: () => set({ sheet: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

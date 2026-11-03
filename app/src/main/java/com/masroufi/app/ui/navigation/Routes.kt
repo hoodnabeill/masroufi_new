@@ -4,11 +4,19 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object HomeRoute
 @Serializable data object TransactionsRoute
-@Serializable data object BudgetsRoute
-@Serializable data object GoalsRoute
+/** The merged "الخطة" tab; [tab] picks budgets or goals. */
+@Serializable data class PlanRoute(val tab: String = "budgets")
 @Serializable data object MoreRoute
 
-@Serializable data class TransactionEditorRoute(val id: String? = null, val type: String = "EXPENSE", val walletId: String? = null, val categoryId: String? = null)
+@Serializable data class TransactionEditorRoute(
+    val id: String? = null,
+    val type: String = "EXPENSE",
+    val walletId: String? = null,
+    val categoryId: String? = null,
+    /** Prefilled by Home quick-log (typed or spoken) and quick chips. */
+    val amount: String? = null,
+    val note: String? = null,
+)
 @Serializable data class TransactionDetailRoute(val id: String)
 @Serializable data object WalletsRoute
 @Serializable data class WalletDetailRoute(val id: String)

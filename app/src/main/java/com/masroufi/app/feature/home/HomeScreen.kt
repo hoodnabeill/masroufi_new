@@ -131,7 +131,7 @@ import java.time.format.FormatStyle
 @Composable
 fun HomeScreen(
     onAddTransaction: (String) -> Unit,
-    onQuickSpend: (categoryId: String) -> Unit,
+    onQuickLog: (amount: String?, categoryId: String?, note: String?) -> Unit,
     onOpenAchievements: () -> Unit,
     onOpenTransaction: (String) -> Unit,
     onOpenTransactions: () -> Unit,
@@ -148,6 +148,8 @@ fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
     val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
+    val spentToday by viewModel.spentToday.collectAsStateWithLifecycle()
+    val lastSpends by viewModel.lastSpends.collectAsStateWithLifecycle()
     var customizing by rememberSaveable { mutableStateOf(false) }
     if (state.loading) {
         HomeSkeleton()
@@ -168,36 +170,49 @@ fun HomeScreen(
     }
 
     var order = 0
-    val list = rememberLazyListState()
+    val hidden = state.settings.hideAmounts
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     LazyColumn(
         // Cards dissolve under the status bar instead of sliding beneath the clock and icons.
         Modifier.fillMaxSize().edgeFade(top = statusTop + 10.dp),
-        state = list,
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = DockClearance),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item(key = "header") { Header(onOpenAnalytics, onCustomize = { customizing = true }) }
-        progress?.let { snapshot -> item(key = "progress") { ProgressStrip(snapshot, onOpenAchievements, Modifier.staggerIn(0)) } }
+        item(key = "header") { HomeHeader(progress?.streak?.current ?: 0, onOpenAchievements, onCustomize = { customizing = true }) }
         if (state.visible(DashboardSection.BALANCE)) {
             val i = order++
-            item(key = "balance") { BalanceHero(state, onOpenWallets, Modifier.staggerIn(i).heroParallax(list)) }
+            item(key = "hero") {
+                Box(Modifier.staggerIn(i)) {
+                    SafeHero(state, spentToday, hidden, onToggleHidden = { viewModel.setHideAmounts(!hidden) }, onOpenWallets = onOpenWallets)
+                }
+            }
+        }
+        progress?.let { snapshot ->
+            val i = order++
+            item(key = "streak") { Box(Modifier.staggerIn(i)) { StreakCard(snapshot, onOpenAchievements) } }
+        }
+        if (state.visible(DashboardSection.QUICK_ACTIONS)) {
+            val i = order++
+            item(key = "quick") {
+                Box(Modifier.staggerIn(i)) {
+                    QuickLogSection(lastSpends, state.categories, state.currency, onLog = onQuickLog, onAllCategories = { onAddTransaction("EXPENSE") })
+                }
+            }
         }
         if (suggestions.isNotEmpty()) {
             item(key = "suggestions") { SuggestionsCard(suggestions, state.categories, viewModel::logRepeat, Modifier.animateItem()) }
         }
-        if (state.visible(DashboardSection.QUICK_ACTIONS)) {
-            val i = order++
-            item(key = "quick") { QuickActions(onAddTransaction, Modifier.staggerIn(i)) }
-            item(key = "quickSpend") { QuickSpend(onQuickSpend, Modifier.staggerIn(i)) }
-        }
         if (state.visible(DashboardSection.INSIGHTS) && state.insights.isNotEmpty()) {
             val i = order++
-            item(key = "insights") { InsightsCarousel(state, Modifier.staggerIn(i)) }
+            item(key = "insights") { Box(Modifier.staggerIn(i)) { InsightsRow(state, onOpenAll = onOpenAnalytics, onMakeBudget = onOpenBudgets) } }
         }
         if (state.visible(DashboardSection.SPENDING) && state.spending.isNotEmpty()) {
             val i = order++
-            item(key = "spending") { SpendingCard(state, onOpenAnalytics, Modifier.staggerIn(i)) }
+            item(key = "spending") { Box(Modifier.staggerIn(i)) { MonthSpendCard(state, hidden, onOpenDetails = onOpenTransactions) } }
+        }
+        if (state.visible(DashboardSection.RECENT) && state.recent.isNotEmpty()) {
+            val i = order++
+            item(key = "recent") { Box(Modifier.staggerIn(i)) { RecentByDay(state.recent, state.currency, onOpenTransaction, onOpenTransactions) } }
         }
         if (state.visible(DashboardSection.BUDGETS) && state.budgets.isNotEmpty()) {
             val i = order++
@@ -214,10 +229,6 @@ fun HomeScreen(
         if (state.visible(DashboardSection.DEBTS) && (state.iOweMinor > 0 || state.owedToMeMinor > 0)) {
             val i = order++
             item(key = "debts") { DebtsCard(state, onOpenDebts, Modifier.staggerIn(i)) }
-        }
-        if (state.visible(DashboardSection.RECENT)) {
-            val i = order++
-            item(key = "recent") { RecentCard(state, onOpenTransaction, onOpenTransactions, Modifier.staggerIn(i)) }
         }
     }
 
@@ -237,27 +248,6 @@ fun HomeScreen(
     }
 }
 
-@Composable
-private fun Header(onOpenAnalytics: () -> Unit, onCustomize: () -> Unit) {
-    val hour = LocalTime.now().hour
-    val greeting = stringResource(
-        when (hour) {
-            in 5..11 -> R.string.home_greeting_morning
-            in 12..16 -> R.string.home_greeting_afternoon
-            else -> R.string.home_greeting_evening
-        },
-    )
-    val date = LocalDate.now().format(rememberDateFormatter(FormatStyle.FULL))
-    Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 14.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(date, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-            Text(greeting, style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        GlassIconButton(onClick = onOpenAnalytics) { Icon(MIcons.Insights, contentDescription = stringResource(R.string.analytics_title)) }
-        Spacer(Modifier.width(8.dp))
-        GlassIconButton(onClick = onCustomize) { Icon(MIcons.Tune, contentDescription = stringResource(R.string.home_customize)) }
-    }
-}
 
 private fun sectionLabel(section: DashboardSection): Int = when (section) {
     DashboardSection.BALANCE -> R.string.section_balance
@@ -271,143 +261,10 @@ private fun sectionLabel(section: DashboardSection): Int = when (section) {
     DashboardSection.RECENT -> R.string.home_recent
 }
 
-/**
- * The hero card leans toward the finger while it is pressed (observed, never consumed, so the list still scrolls)
- * and a holographic sheen slides across with the tilt. Release springs it flat from wherever it is.
- */
-@Composable
-private fun BalanceHero(state: HomeUiState, onOpenWallets: () -> Unit, modifier: Modifier) {
-    val finance = LocalFinanceColors.current
-    val glass = LocalGlass.current
-    val reduce = LocalReduceMotion.current
-    val scope = rememberCoroutineScope()
-    val tiltX = remember { Animatable(0f) }
-    val tiltY = remember { Animatable(0f) }
-    val primary = MaterialTheme.colorScheme.primary
-    val shape = MaterialTheme.shapes.large
 
-    Box(
-        modifier
-            .fillMaxWidth()
-            .sharedContainer("wallets")
-            .pointerInput(reduce) {
-                if (reduce) return@pointerInput
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    fun tiltTo(p: Offset) {
-                        val nx = ((p.x / size.width) - 0.5f).coerceIn(-0.5f, 0.5f)
-                        val ny = ((p.y / size.height) - 0.5f).coerceIn(-0.5f, 0.5f)
-                        scope.launch { tiltY.animateTo(nx * 14f, Motion.snappy(false)) }
-                        scope.launch { tiltX.animateTo(-ny * 12f, Motion.snappy(false)) }
-                    }
-                    tiltTo(down.position)
-                    do {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull() ?: break
-                        if (change.pressed) tiltTo(change.position)
-                    } while (event.changes.any { it.pressed })
-                    scope.launch { tiltX.animateTo(0f, Motion.bouncy(false)) }
-                    scope.launch { tiltY.animateTo(0f, Motion.bouncy(false)) }
-                }
-            }
-            .graphicsLayer {
-                rotationX = tiltX.value
-                rotationY = tiltY.value
-                cameraDistance = 14f * density
-            },
-    ) {
-        val rim = Brush.linearGradient(listOf(primary.copy(alpha = 0.5f), Color.Transparent, primary.copy(alpha = 0.25f)))
-        PressableCard(onClick = onOpenWallets, color = primary.copy(alpha = if (glass.dark) 0.16f else 0.12f), decoration = {
-            // Sheen: a soft diagonal band whose position follows the tilt. Drawn inside the glass, so it scales with presses.
-            val shift = (tiltY.value / 14f + tiltX.value / 12f) * size.width * 0.6f
-            drawRect(
-                Brush.linearGradient(
-                    0f to Color.Transparent,
-                    0.45f to Color.White.copy(alpha = if (glass.dark) 0.10f else 0.35f),
-                    0.55f to Color.White.copy(alpha = 0f),
-                    start = Offset(-size.width * 0.3f + shift, 0f),
-                    end = Offset(size.width * 0.7f + shift, size.height),
-                ),
-            )
-            drawOutline(shape.createOutline(size, layoutDirection, this), rim, style = Stroke(1.dp.toPx()))
-        }) {
-            Text(stringResource(R.string.home_total_balance), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(4.dp))
-            FitAmount(state.primaryBalance, state.currency, style = AmountStyle.copy(fontSize = MaterialTheme.typography.displayMedium.fontSize))
-            state.otherBalances.forEach { other ->
-                MoneyText(other.minor, other.currency, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            PaydayLine(state)
-            Spacer(Modifier.height(18.dp))
-            Text(stringResource(if (PayCycle.isSet(state.settings.paydayDay)) R.string.home_this_cycle else R.string.home_this_month), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(8.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                FlowPill(MIcons.Income, stringResource(R.string.type_income), state.incomeMinor, state.currency, finance.income, Modifier.weight(1f))
-                FlowPill(MIcons.Expense, stringResource(R.string.type_expense), state.expenseMinor, state.currency, finance.expense, Modifier.weight(1f))
-            }
-        }
-    }
-}
 
-@Composable
-private fun FlowPill(icon: ImageVector, label: String, minor: Long, currency: String, tint: Color, modifier: Modifier) {
-    Row(modifier.glassInset(MaterialTheme.shapes.medium).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconBadge(icon, tint, size = 34.dp)
-        Column(Modifier.padding(horizontal = 8.dp)) {
-            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            AnimatedAmount(minor, currency, style = MaterialTheme.typography.titleSmall)
-        }
-    }
-}
 
-@Composable
-private fun QuickActions(onAdd: (String) -> Unit, modifier: Modifier) {
-    val finance = LocalFinanceColors.current
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        QuickAction(MIcons.Expense, stringResource(R.string.type_expense), finance.expense, Modifier.weight(1f)) { onAdd("EXPENSE") }
-        QuickAction(MIcons.Income, stringResource(R.string.type_income), finance.income, Modifier.weight(1f)) { onAdd("INCOME") }
-        QuickAction(MIcons.Transfer, stringResource(R.string.type_transfer), finance.transfer, Modifier.weight(1f)) { onAdd("TRANSFER") }
-    }
-}
 
-@Composable
-private fun QuickAction(icon: ImageVector, label: String, tint: Color, modifier: Modifier, onClick: () -> Unit) {
-    PressableCard(onClick = onClick, modifier = modifier) {
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            IconBadge(icon, tint, size = 40.dp)
-            Spacer(Modifier.height(8.dp))
-            Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun InsightsCarousel(state: HomeUiState, modifier: Modifier) {
-    val listState = rememberLazyListState()
-    Column(modifier) {
-        SectionHeader(stringResource(R.string.section_insights))
-        LazyRow(
-            state = listState,
-            flingBehavior = rememberSnapFlingBehavior(listState),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            itemsIndexed(state.insights.take(5)) { index, insight ->
-                val tint = when (insight) {
-                    is Insight.BudgetAlert -> LocalFinanceColors.current.warning
-                    is Insight.MonthEndProjection -> MaterialTheme.colorScheme.secondary
-                    is Insight.CategoryRising -> LocalFinanceColors.current.expense
-                    else -> MaterialTheme.colorScheme.tertiary
-                }
-                PressableCard(onClick = null, color = tint.copy(alpha = 0.10f), modifier = Modifier.width(260.dp).height(132.dp).staggerIn(index)) {
-                    IconBadge(MIcons.Bulb, tint, size = 34.dp)
-                    Spacer(Modifier.height(10.dp))
-                    Text(insightText(insight, state), style = MaterialTheme.typography.bodyMedium, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun insightText(insight: Insight, state: HomeUiState): String {
@@ -442,32 +299,6 @@ fun insightText(insight: Insight, state: HomeUiState): String {
     }
 }
 
-@Composable
-private fun SpendingCard(state: HomeUiState, onOpenAnalytics: () -> Unit, modifier: Modifier) {
-    val money = LocalMoneyFormatter.current
-    val top = state.spending.take(5)
-    val rest = state.spending.drop(5).sumOf { it.second }
-    val slices = top.map { (cat, total) -> ChartSlice(categoryLabel(cat), total, categoryColor(cat?.colorIndex)) } +
-        if (rest > 0) listOf(ChartSlice(stringResource(R.string.category_other_group), rest, MaterialTheme.colorScheme.outline)) else emptyList()
-    PressableCard(onClick = onOpenAnalytics, modifier = modifier) {
-        Text(stringResource(R.string.section_spending), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(14.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            DonutChart(
-                slices = slices,
-                modifier = Modifier.size(138.dp),
-                description = slices.joinToString { "${it.label} ${money.format(it.value, state.currency)}" },
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.type_expense), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(money.formatCompact(state.expenseMinor, state.currency), style = MaterialTheme.typography.titleMedium)
-                }
-            }
-            Spacer(Modifier.width(18.dp))
-            ChartLegend(slices, valueText = { money.formatCompact(it.value, state.currency) }, modifier = Modifier.weight(1f))
-        }
-    }
-}
 
 @Composable
 private fun BudgetsCard(state: HomeUiState, onOpen: () -> Unit, modifier: Modifier) {
@@ -561,42 +392,12 @@ private fun DebtsCard(state: HomeUiState, onOpen: () -> Unit, modifier: Modifier
     }
 }
 
-@Composable
-private fun RecentCard(state: HomeUiState, onOpenTransaction: (String) -> Unit, onOpenTransactions: () -> Unit, modifier: Modifier) {
-    Column(modifier) {
-        SectionHeader(stringResource(R.string.home_recent), action = stringResource(R.string.action_see_all), onAction = onOpenTransactions)
-        if (state.recent.isEmpty()) {
-            EmptyState(MIcons.Activity, stringResource(R.string.transactions_empty_title), stringResource(R.string.transactions_empty_body))
-        } else {
-            Column(Modifier.fillMaxWidth().glass(MaterialTheme.shapes.large).padding(vertical = 6.dp)) {
-                state.recent.forEachIndexed { index, row ->
-                    if (index > 0) HorizontalDivider(Modifier.padding(start = 72.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                    TransactionItem(row, onClick = { onOpenTransaction(row.transaction.id) })
-                }
-            }
-        }
-    }
-}
 
 fun debtLabel(direction: DebtDirection): Int = when (direction) {
     DebtDirection.I_OWE -> R.string.debt_i_owe
     DebtDirection.OWED_TO_ME -> R.string.debt_owed_to_me
 }
 
-/**
- * As the list scrolls the hero card lags behind (parallax), recedes and dims, so the content below slides over it
- * like a sheet. Read from the list layout while drawing only.
- */
-private fun Modifier.heroParallax(list: LazyListState): Modifier = graphicsLayer {
-    val offset = list.layoutInfo.visibleItemsInfo.firstOrNull { it.key == "balance" }?.offset ?: return@graphicsLayer
-    val scrolled = (-offset).coerceAtLeast(0).toFloat()
-    val progress = (scrolled / size.height.coerceAtLeast(1f)).coerceIn(0f, 1f)
-    translationY = scrolled * 0.4f
-    val s = 1f - 0.08f * progress
-    scaleX = s
-    scaleY = s
-    alpha = 1f - 0.6f * progress
-}
 
 /** Loading placeholder in the shape of the dashboard, with a soft light sweep across it (still when motion is off). */
 @Composable
@@ -633,70 +434,9 @@ private fun HomeSkeleton() {
     }
 }
 
-/** Payday clock in the hero: days until the salary and what can be spent per day so the balance lasts. */
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-private fun PaydayLine(state: HomeUiState) {
-    val day = state.settings.paydayDay
-    if (!PayCycle.isSet(day)) return
-    val today = remember { LocalDate.now() }
-    val left = PayCycle.daysUntilPayday(today, day)
-    val perDay = PayCycle.safePerDay(state.primaryBalance, today, day)
-    val formatter = LocalMoneyFormatter.current
-    val days = pluralStringResource(R.plurals.home_days_to_payday, left, left)
-    val spend = if (perDay > 0) stringResource(R.string.home_safe_per_day, formatter.format(perDay, state.currency)) else stringResource(R.string.home_safe_none)
-    Row(
-        Modifier.padding(top = 12.dp).glassInset(MaterialTheme.shapes.medium).padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(MIcons.Calendar, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(10.dp))
-        Column {
-            Text(days, style = MaterialTheme.typography.labelLarge)
-            Text(spend, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
 
-/** Everyday Egyptian spends, one tap from Home: opens the editor with the category already chosen. */
-private val quickSpends = listOf("groceries" to 1, "transport" to 2, "food" to 0, "mobile" to 5, "bills" to 3)
 
-@Composable
-private fun QuickSpend(onPick: (categoryId: String) -> Unit, modifier: Modifier) {
-    Column(modifier.fillMaxWidth()) {
-        Text(
-            stringResource(R.string.home_quick_spend),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp).semantics { heading() },
-        )
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            quickSpends.forEach { (key, color) ->
-                val interaction = remember { MutableInteractionSource() }
-                Row(
-                    Modifier
-                        .liquidPress(interaction, CircleShape, scaleTo = 1.05f)
-                        .glass(CircleShape)
-                        .clickable(interactionSource = interaction, indication = null, role = Role.Button) { onPick("sys_$key") }
-                        .padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconBadge(CategoryIcons.of(quickSpendIcon(key)), categoryColor(color), size = 34.dp)
-                    Spacer(Modifier.width(8.dp))
-                    Text(categoryLabel(null, key), style = MaterialTheme.typography.labelLarge, maxLines = 1)
-                }
-            }
-        }
-    }
-}
 
-private fun quickSpendIcon(key: String): String = when (key) {
-    "groceries" -> "cart"
-    "transport" -> "car"
-    "food" -> "restaurant"
-    "mobile" -> "phone"
-    else -> "bolt"
-}
 
 /**
  * Smart one-tap logging: spends the user repeats (same category, amount, wallet) offered as "same as usual?". One tap

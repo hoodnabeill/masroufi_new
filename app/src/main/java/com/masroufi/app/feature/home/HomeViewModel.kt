@@ -7,6 +7,7 @@ import com.masroufi.app.core.toLocalDate
 import com.masroufi.app.core.startMillis
 import com.masroufi.app.core.newId
 import com.masroufi.app.data.model.RepeatSpend
+import com.masroufi.app.data.model.LastSpend
 import com.masroufi.app.data.model.Transaction
 import com.masroufi.app.data.repo.ProgressRepository
 import com.masroufi.app.domain.ProgressSnapshot
@@ -104,6 +105,21 @@ class HomeViewModel @Inject constructor(
     val suggestions: StateFlow<List<RepeatSpend>> = transactions.observeRepeatSpends(LocalDate.now(clock).minusDays(21).startMillis(clock.zone))
         .map { list -> list.filter { it.lastAt.toLocalDate(clock.zone) != LocalDate.now(clock) } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Today's spending (primary currency) for the "تقدر تصرف النهارده" bar. */
+    val spentToday: StateFlow<Long> = combine(
+        transactions.observeTypeTotals(LocalDate.now(clock).startMillis(clock.zone), LocalDate.now(clock).plusDays(1).startMillis(clock.zone)),
+        settings.settings,
+    ) { totals, s -> totals.filter { it.type == TransactionType.EXPENSE && it.currency == s.primaryCurrency }.sumOf { it.total } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0L)
+
+    /** Each recently used category with its last amount, for the quick-log chips. */
+    val lastSpends: StateFlow<List<LastSpend>> = transactions.observeLastSpends(6)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun setHideAmounts(hide: Boolean) {
+        viewModelScope.launch { settings.setHideAmounts(hide) }
+    }
 
     fun logRepeat(spend: RepeatSpend) {
         viewModelScope.launch {

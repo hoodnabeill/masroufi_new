@@ -7,6 +7,16 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <!-- allowBackup is off: financial data leaves the device only through the user's own encrypted backup or WebDAV sync. -->
+    <!-- Voice logging asks the system speech recogniser; Android 11+ only reveals it when declared here. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
     <application
         android:name=".MasroufiApplication"
         android:allowBackup="false"

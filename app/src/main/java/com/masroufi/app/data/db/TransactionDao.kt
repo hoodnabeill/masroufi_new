@@ -12,6 +12,7 @@ import com.masroufi.app.data.model.TransactionRow
 import com.masroufi.app.data.model.TypeTotal
 import com.masroufi.app.data.model.RepeatSpend
 import com.masroufi.app.data.model.DayTotal
+import com.masroufi.app.data.model.LastSpend
 import kotlinx.coroutines.flow.Flow
 
 private const val ROW_SELECT = """
@@ -97,6 +98,18 @@ interface TransactionDao {
         """,
     )
     fun observeDailyExpense(fromMillis: Long): Flow<List<DayTotal>>
+
+    /** SQLite returns the row holding MAX(occurredAt) for the bare columns, i.e. each category's latest expense. */
+    @Query(
+        """
+        SELECT categoryId, amountMinor, currency, MAX(occurredAt) AS lastAt FROM transactions
+        WHERE deleted = 0 AND type = 'EXPENSE' AND categoryId IS NOT NULL
+        GROUP BY categoryId
+        ORDER BY lastAt DESC
+        LIMIT :limit
+        """,
+    )
+    fun observeLastSpends(limit: Int): Flow<List<LastSpend>>
 
     /** When each entry was logged (not when it happened); recurring auto-entries are not the user logging. */
     @Query("SELECT createdAt FROM transactions WHERE deleted = 0 AND recurringId IS NULL")

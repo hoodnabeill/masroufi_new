@@ -136,11 +136,11 @@ class GoalsViewModel @Inject constructor(goals: GoalRepository) : ViewModel() {
 }
 
 @Composable
-fun GoalsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: GoalsViewModel = hiltViewModel()) {
+fun GoalsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, embedded: Boolean = false, viewModel: GoalsViewModel = hiltViewModel()) {
     val goals by viewModel.goals.collectAsStateWithLifecycle()
     Scaffold(
         contentWindowInsets = TabInsets,
-        topBar = { MasroufiTopBar(stringResource(R.string.tab_goals)) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.goal_add)) } } },
+        topBar = { if (!embedded) MasroufiTopBar(stringResource(R.string.tab_goals)) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.goal_add)) } } },
     ) { padding ->
         val list = goals ?: return@Scaffold
         if (list.isEmpty()) {

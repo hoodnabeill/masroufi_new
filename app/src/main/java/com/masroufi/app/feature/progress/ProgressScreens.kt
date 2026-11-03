@@ -124,59 +124,7 @@ fun StreakFlame(lit: Boolean, modifier: Modifier = Modifier) {
     )
 }
 
-/** Home's progress strip: streak, level and a thin bar to the next level. Tapping opens Achievements. */
-@Composable
-fun ProgressStrip(snapshot: ProgressSnapshot, onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    val streak = snapshot.streak
-    PressableCard(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(44.dp).glassInset(CircleShape), contentAlignment = Alignment.Center) {
-                StreakFlame(lit = streak.loggedToday, modifier = Modifier.size(26.dp))
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    if (streak.current > 0) pluralStringResource(R.plurals.streak_days, streak.current, streak.current) else stringResource(R.string.streak_start),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    stringResource(if (streak.loggedToday) R.string.streak_done else if (streak.current > 0) R.string.streak_keep else R.string.streak_start),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                )
-            }
-            Spacer(Modifier.width(10.dp))
-            LevelBadge(snapshot.level, size = 44)
-        }
-        Spacer(Modifier.height(12.dp))
-        Text(
-            stringResource(R.string.level_label, snapshot.level.number, levelTitle(snapshot.level)),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(6.dp))
-        LevelBar(snapshot.level.progress)
-    }
-}
 
-@Composable
-private fun LevelBar(progress: Float) {
-    val reduce = LocalReduceMotion.current
-    val fill = remember { Animatable(if (reduce) progress else 0f) }
-    LaunchedEffect(progress) { if (reduce) fill.snapTo(progress) else fill.animateTo(progress, spring(dampingRatio = 0.8f, stiffness = 60f)) }
-    val primary = MaterialTheme.colorScheme.primary
-    val secondary = MaterialTheme.colorScheme.secondary
-    Box(Modifier.fillMaxWidth().height(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))) {
-        Box(
-            Modifier
-                .fillMaxWidth(fill.value.coerceIn(0.02f, 1f))
-                .height(8.dp)
-                .clip(CircleShape)
-                .background(Brush.horizontalGradient(listOf(primary, secondary))),
-        )
-    }
-}
 
 /** The level number inside a ring that fills towards the next level. */
 @Composable

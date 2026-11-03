@@ -60,11 +60,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.masroufi.app.R
+import com.masroufi.app.feature.plan.PLAN_BUDGETS
+import com.masroufi.app.feature.plan.PLAN_GOALS
+import com.masroufi.app.feature.plan.PlanScreen
+import androidx.navigation.toRoute
 import com.masroufi.app.feature.progress.AchievementsScreen
 import com.masroufi.app.feature.subscriptions.SubscriptionsScreen
 import com.masroufi.app.feature.analytics.AnalyticsScreen
 import com.masroufi.app.feature.budgets.BudgetEditorScreen
-import com.masroufi.app.feature.budgets.BudgetsScreen
 import com.masroufi.app.feature.debts.DebtDetailScreen
 import com.masroufi.app.feature.debts.DebtEditorScreen
 import com.masroufi.app.feature.debts.DebtsScreen
@@ -73,7 +76,6 @@ import com.masroufi.app.feature.gameya.GameyaEditorScreen
 import com.masroufi.app.feature.gameya.GameyaListScreen
 import com.masroufi.app.feature.goals.GoalDetailScreen
 import com.masroufi.app.feature.goals.GoalEditorScreen
-import com.masroufi.app.feature.goals.GoalsScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.more.MoreScreen
 import com.masroufi.app.feature.recurring.RecurringEditorScreen
@@ -99,14 +101,13 @@ val TabInsets = WindowInsets(0, 0, 0, 0)
 /** Widest the screen content grows; beyond it, content centres over the full-bleed light. */
 val ContentMaxWidth = 680.dp
 
-private data class Tab(val route: Any, val routeClass: KClass<*>, val label: Int)
+private data class Tab(val route: Any, val routeClass: KClass<*>, val label: Int, val glyph: Int)
 
 private val tabs = listOf(
-    Tab(HomeRoute, HomeRoute::class, R.string.tab_home),
-    Tab(TransactionsRoute, TransactionsRoute::class, R.string.dock_transactions),
-    Tab(BudgetsRoute, BudgetsRoute::class, R.string.tab_budgets),
-    Tab(GoalsRoute, GoalsRoute::class, R.string.tab_goals),
-    Tab(MoreRoute, MoreRoute::class, R.string.tab_more),
+    Tab(HomeRoute, HomeRoute::class, R.string.tab_home, glyph = 0),
+    Tab(TransactionsRoute, TransactionsRoute::class, R.string.dock_transactions, glyph = 1),
+    Tab(PlanRoute(), PlanRoute::class, R.string.tab_plan, glyph = 3),
+    Tab(MoreRoute, MoreRoute::class, R.string.tab_more, glyph = 4),
 )
 
 val ScreenGlide = CubicBezierEasing(0.2f, 0f, 0f, 1f)
@@ -169,7 +170,7 @@ fun MasroufiNavHost() {
     var menuOpen by rememberSaveable { mutableStateOf(false) }
     val scene = rememberLayerBackdrop()
     val reduce = LocalReduceMotion.current
-    val dockTabs = remember { tabs.map { DockTab(it.label) } }
+    val dockTabs = remember { tabs.map { DockTab(it.label, it.glyph) } }
     BackHandler(enabled = menuOpen) { menuOpen = false }
 
     Box(Modifier.fillMaxSize()) {
@@ -227,14 +228,14 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     screen<HomeRoute> {
         HomeScreen(
             onAddTransaction = { type -> nav.navigate(TransactionEditorRoute(type = type)) },
-            onQuickSpend = { categoryId -> nav.navigate(TransactionEditorRoute(type = "EXPENSE", categoryId = categoryId)) },
+            onQuickLog = { amount, categoryId, note -> nav.navigate(TransactionEditorRoute(type = "EXPENSE", categoryId = categoryId, amount = amount, note = note)) },
             onOpenAchievements = { nav.navigate(AchievementsRoute) },
             onOpenTransaction = { nav.navigate(TransactionDetailRoute(it)) },
             onOpenTransactions = { nav.navigateToTab(TransactionsRoute) },
             onOpenWallets = { nav.navigate(WalletsRoute) },
-            onOpenBudgets = { nav.navigateToTab(BudgetsRoute) },
+            onOpenBudgets = { nav.navigateToTab(PlanRoute(PLAN_BUDGETS)) },
             onOpenGoal = { nav.navigate(GoalDetailRoute(it)) },
-            onOpenGoals = { nav.navigateToTab(GoalsRoute) },
+            onOpenGoals = { nav.navigateToTab(PlanRoute(PLAN_GOALS)) },
             onOpenRecurring = { nav.navigate(RecurringRoute) },
             onOpenDebts = { nav.navigate(DebtsRoute) },
             onOpenAnalytics = { nav.navigate(AnalyticsRoute) },
@@ -247,8 +248,15 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
             onOpen = { nav.navigate(TransactionDetailRoute(it)) },
         )
     }
-    screen<BudgetsRoute> { BudgetsScreen(onAdd = { nav.navigate(BudgetEditorRoute()) }, onEdit = { nav.navigate(BudgetEditorRoute(it)) }) }
-    screen<GoalsRoute> { GoalsScreen(onAdd = { nav.navigate(GoalEditorRoute()) }, onOpen = { nav.navigate(GoalDetailRoute(it)) }) }
+    screen<PlanRoute> { entry ->
+        PlanScreen(
+            initialTab = entry.toRoute<PlanRoute>().tab,
+            onAddBudget = { nav.navigate(BudgetEditorRoute()) },
+            onEditBudget = { nav.navigate(BudgetEditorRoute(it)) },
+            onAddGoal = { nav.navigate(GoalEditorRoute()) },
+            onOpenGoal = { nav.navigate(GoalDetailRoute(it)) },
+        )
+    }
     screen<MoreRoute> {
         MoreScreen(
             onWallets = { nav.navigate(WalletsRoute) },
