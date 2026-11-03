@@ -486,7 +486,7 @@ private fun BudgetsCard(state: HomeUiState, onOpen: () -> Unit, modifier: Modifi
                 when (item.progress.status) {
                     BudgetStatus.ON_TRACK -> MaterialTheme.colorScheme.primary
                     BudgetStatus.WARNING -> finance.warning
-                    BudgetStatus.OVER -> finance.expense
+                    BudgetStatus.OVER -> finance.over
                 },
             )
         }

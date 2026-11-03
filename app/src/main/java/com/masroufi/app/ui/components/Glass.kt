@@ -87,73 +87,16 @@ val LocalGlassBackdrop = staticCompositionLocalOf<Backdrop?> { null }
 /** The window the backdrops were recorded in. Sheets and dialogs are other windows, so glass there stays flat. */
 val LocalBackdropView = staticCompositionLocalOf<View?> { null }
 
-/** Each tab has its own light: blob positions (fractions of the screen) the aurora glides to with a spring. */
-private val auroraLayouts = listOf(
-    listOf(Offset(0.15f, 0.05f), Offset(0.95f, 0.18f), Offset(0.05f, 0.62f), Offset(0.85f, 0.92f)),
-    listOf(Offset(0.85f, 0.02f), Offset(0.10f, 0.30f), Offset(0.95f, 0.65f), Offset(0.20f, 0.95f)),
-    listOf(Offset(0.50f, 0.00f), Offset(0.00f, 0.45f), Offset(1.00f, 0.40f), Offset(0.50f, 1.00f)),
-    listOf(Offset(0.05f, 0.15f), Offset(0.70f, 0.05f), Offset(0.90f, 0.75f), Offset(0.10f, 0.85f)),
-    listOf(Offset(0.95f, 0.08f), Offset(0.35f, 0.20f), Offset(0.15f, 0.80f), Offset(0.80f, 0.98f)),
-)
-
 /**
- * Ambient light behind every screen. Animated values are only read inside the draw lambda, so motion costs a
- * redraw, never a recomposition. The idle drift is deliberately slow and small (one cycle ≈ 30 s).
+ * The stage behind every screen: Midnight Ledger's flat ink. The moving aurora is gone (the handoff keeps light and
+ * blur for floating chrome only), which also means nothing redraws while the app is idle. [layout] is kept so call
+ * sites stay unchanged.
  */
 @Composable
-fun AuroraBackground(layout: Int, modifier: Modifier = Modifier) {
-    val glass = LocalGlass.current
-    val reduce = LocalReduceMotion.current
-    val target = auroraLayouts[layout.mod(auroraLayouts.size)]
-    val blobs = remember { List(4) { i -> Animatable(auroraLayouts[0][i], Offset.VectorConverter) } }
-    target.forEachIndexed { i, offset ->
-        LaunchedEffect(offset) { blobs[i].animateTo(offset, Motion.effects(reduce)) }
-    }
-    val drift = if (reduce) {
-        null
-    } else {
-        rememberInfiniteTransition(label = "aurora").animateFloat(
-            initialValue = 0f,
-            targetValue = (2 * PI).toFloat(),
-            animationSpec = infiniteRepeatable(tween(30_000, easing = LinearEasing), RepeatMode.Restart),
-            label = "drift",
-        )
-    }
-    // The drift is slow enough that ~10 updates a second look continuous; stepping it means every live glass surface
-    // re-renders 10 times a second while idle instead of on every display frame.
-    val tick by remember(drift) { derivedStateOf { drift?.let { (it.value * DRIFT_STEPS_PER_RADIAN).toInt() } ?: 0 } }
-    val alpha = if (glass.dark) 0.42f else 0.66f
-    Canvas(modifier.fillMaxSize()) {
-        drawRect(glass.base)
-        val phase = tick / DRIFT_STEPS_PER_RADIAN
-        val radius = size.maxDimension * 0.6f
-        blobs.forEachIndexed { i, blob ->
-            val wobble = Offset(cos(phase + i * 1.7f) * 0.04f, sin(phase * 1.3f + i) * 0.035f)
-            val center = Offset((blob.value.x + wobble.x) * size.width, (blob.value.y + wobble.y) * size.height)
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(glass.aurora[i].copy(alpha = alpha), glass.aurora[i].copy(alpha = alpha * 0.32f), Color.Transparent),
-                    center = center,
-                    radius = radius,
-                ),
-                radius = radius,
-                center = center,
-            )
-        }
-        // A small bright caustic orbits slowly; refractive glass bends it, which is what makes the glass read as glass.
-        val caustic = Offset(size.width * (0.5f + 0.32f * cos(phase * 2f)), size.height * (0.3f + 0.18f * sin(phase * 3f)))
-        val causticRadius = size.minDimension * 0.34f
-        drawCircle(
-            Brush.radialGradient(listOf(Color.White.copy(alpha = if (glass.dark) 0.10f else 0.38f), Color.Transparent), caustic, causticRadius),
-            causticRadius,
-            caustic,
-        )
-        // A soft fade at the bottom keeps the dock and lists legible over the brightest blob.
-        drawRect(Brush.verticalGradient(0.55f to Color.Transparent, 1f to glass.base.copy(alpha = 0.55f)))
-    }
+fun AuroraBackground(@Suppress("UNUSED_PARAMETER") layout: Int, modifier: Modifier = Modifier) {
+    val base = LocalGlass.current.base
+    Canvas(modifier.fillMaxSize()) { drawRect(base) }
 }
-
-private const val DRIFT_STEPS_PER_RADIAN = 48f
 
 /**
  * The ambient light plus the backdrop that glass inside [content] refracts. Every full-screen surface that shows the
@@ -170,41 +113,36 @@ fun GlassStage(layout: Int, modifier: Modifier = Modifier, content: @Composable 
 }
 
 /**
- * Liquid glass. On Android 12+ the surface samples what is behind it, boosts its saturation, bends it near the edges
- * like a thick lens (Android 13+) and catches a specular rim light. Elsewhere (older phones, dialogs) it is a
- * translucent fill with a light-catching hairline. [strong] adds frost for surfaces that carry text over busy content.
+ * Surface material. By default a solid card (or raised tile when [strong]) with a 1 px line, per the handoff.
+ * [floating] chrome (dock, quick-add, snackbars) gets real glass on Android 12+: it blurs and saturates the live
+ * content beneath, bends it at the rim (Android 13+) and catches a specular highlight.
  */
 fun Modifier.glass(
     shape: Shape,
     tint: Color = Color.Unspecified,
     strong: Boolean = false,
     onDrawFront: (DrawScope.() -> Unit)? = null,
+    floating: Boolean = false,
 ): Modifier = composed {
     val glass = LocalGlass.current
-    val fill = if (strong) glass.fillStrong else glass.fill
-    val top = if (tint.isSpecified()) tint.compositeOverGlass(fill, 1.6f) else fill.copy(alpha = (fill.alpha * 1.5f).coerceAtMost(1f))
-    val bottom = if (tint.isSpecified()) tint.compositeOverGlass(fill, 0.8f) else fill
-    val surface = Brush.verticalGradient(listOf(top, bottom))
-    val rim = Brush.verticalGradient(listOf(glass.strokeTop, glass.strokeBottom))
-    if (LocalSolidGlass.current) {
-        // Solid mode: an opaque panel so text never sits on moving light; the tint is kept as a wash on top.
-        val panel = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 1f)
+    val line = glass.strokeTop
+    val front = if (onDrawFront != null) Modifier.drawWithContent { drawContent(); onDrawFront() } else Modifier
+    val backdrop = LocalGlassBackdrop.current
+    val live = floating && !LocalSolidGlass.current && backdrop != null &&
+        LocalBackdropView.current === LocalView.current && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    if (!live || backdrop == null) {
+        // Midnight Ledger: content surfaces are solid. A card is `surface`, a raised tile `raised`, both with a 1 px
+        // line; a tint is laid on top as a wash so tinted cards stay legible.
+        val panel = if (strong) glass.fillStrong else glass.fill
         return@composed this
             .clip(shape)
             .background(panel)
-            .background(if (tint.isSpecified()) tint.copy(alpha = tint.alpha * 0.5f) else Color.Transparent)
-            .border(1.dp, rim, shape)
-            .then(if (onDrawFront != null) Modifier.drawWithContent { drawContent(); onDrawFront() } else Modifier)
+            .then(if (tint.isSpecified()) Modifier.background(tint.copy(alpha = (tint.alpha * 0.7f).coerceAtMost(0.9f))) else Modifier)
+            .border(1.dp, line, shape)
+            .then(front)
     }
-    val backdrop = LocalGlassBackdrop.current
-    val live = backdrop != null && LocalBackdropView.current === LocalView.current && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    if (!live || backdrop == null) {
-        return@composed this
-            .clip(shape)
-            .background(surface)
-            .border(1.dp, rim, shape)
-            .then(if (onDrawFront != null) Modifier.drawWithContent { drawContent(); onDrawFront() } else Modifier)
-    }
+    // Floating chrome only (dock, quick-add, snackbars): real glass over the live content beneath.
+    val surface = if (tint.isSpecified()) tint.copy(alpha = (tint.alpha * 0.85f).coerceAtMost(0.92f)) else glass.fill.copy(alpha = if (strong) 0.78f else 0.62f)
     val dark = glass.dark
     val shade = glass.shadow.copy(alpha = glass.shadow.alpha * 0.7f)
     this.drawBackdrop(
@@ -212,12 +150,11 @@ fun Modifier.glass(
         shape = { shape },
         effects = {
             vibrancy()
-            if (strong) blur(6.dp.toPx())
+            blur(if (strong) 10.dp.toPx() else 6.dp.toPx())
             // The lens shader needs corner radii; every app shape is corner-based, anything else just skips it.
             if (shape is CornerBasedShape) lens(refractionHeight = 14.dp.toPx(), refractionAmount = 22.dp.toPx(), chromaticAberration = true)
         },
-        highlight = { Highlight(width = 1.dp, style = HighlightStyle.Default(intensity = if (dark) 0.45f else 0.7f)) },
-        // A shadow on a near-black canvas is invisible but still costs a blur pass, so only light mode casts one.
+        highlight = { Highlight(width = 1.dp, style = HighlightStyle.Default(intensity = if (dark) 0.35f else 0.6f)) },
         shadow = if (dark) null else ({ Shadow(radius = 22.dp, color = shade) }),
         onDrawSurface = { drawRect(surface) },
         onDrawFront = onDrawFront,
@@ -225,16 +162,15 @@ fun Modifier.glass(
 }
 
 /**
- * A flat recessed well for controls that sit on top of glass (segmented tracks, pills inside cards). Glass on
- * glass would sample the light behind the card and punch a hole through it, so nested surfaces use this instead.
+ * A recessed tile for controls that sit on a card (segmented tracks, pills, inner stats): the raised layer, or a
+ * 12% tint of [tint], with the hairline.
  */
 fun Modifier.glassInset(shape: Shape, tint: Color = Color.Unspecified): Modifier = composed {
     val glass = LocalGlass.current
-    val base = if (tint.isSpecified()) tint.copy(alpha = 0.12f) else MaterialTheme.colorScheme.onSurface.copy(alpha = if (glass.dark) 0.06f else 0.05f)
     this
         .clip(shape)
-        .background(base)
-        .border(1.dp, Brush.verticalGradient(listOf(Color.Black.copy(alpha = if (glass.dark) 0.18f else 0.06f), glass.strokeTop.copy(alpha = 0.5f))), shape)
+        .background(if (tint.isSpecified()) tint.copy(alpha = 0.12f) else glass.fillStrong)
+        .border(1.dp, glass.strokeTop, shape)
 }
 
 /**
@@ -276,17 +212,6 @@ fun BlurBehindWindow(radius: Dp = 28.dp) {
 }
 
 private fun Color.isSpecified(): Boolean = this != Color.Unspecified
-
-private fun Color.compositeOverGlass(fill: Color, strength: Float): Color =
-    copy(alpha = (alpha * strength).coerceIn(0f, 1f)).let { tint ->
-        // Blend manually so the tint stays translucent instead of flattening the glass.
-        Color(
-            red = tint.red * tint.alpha + fill.red * (1 - tint.alpha),
-            green = tint.green * tint.alpha + fill.green * (1 - tint.alpha),
-            blue = tint.blue * tint.alpha + fill.blue * (1 - tint.alpha),
-            alpha = (tint.alpha + fill.alpha * (1 - tint.alpha)).coerceAtMost(0.92f),
-        )
-    }
 
 /**
  * Liquid press: the surface swells to [scaleTo] on a bouncy spring and light blooms from the exact point the finger

@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.masroufi.app.widget.MasroufiWidget
+import com.masroufi.app.core.migrateArabicDigits
 import androidx.lifecycle.repeatOnLifecycle
 import com.masroufi.app.data.prefs.SettingsRepository
 import com.masroufi.app.ui.MasroufiRoot
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        migrateArabicDigits()
         // Secure by default until settings load, so the recents thumbnail never flashes balances.
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         lifecycleScope.launch {

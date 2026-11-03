@@ -165,14 +165,13 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
 
 @Composable
 fun IconBadge(icon: ImageVector, tint: Color, modifier: Modifier = Modifier, size: Dp = 44.dp) {
-    // A small tinted gem: deeper colour at the bottom, a lit rim on top, so badges read as objects, not dots.
-    val shape = RoundedCornerShape(percent = 34)
+    // Handoff icon tile: the category colour at ~18% on the card, radius ~30% of the size (14 dp at 46 dp).
+    val shape = RoundedCornerShape(percent = 30)
     Box(
         modifier = modifier
             .size(size)
             .clip(shape)
-            .background(Brush.verticalGradient(listOf(tint.copy(alpha = 0.14f), tint.copy(alpha = 0.30f))))
-            .border(1.dp, Brush.verticalGradient(listOf(tint.copy(alpha = 0.55f), tint.copy(alpha = 0.06f))), shape),
+            .background(tint.copy(alpha = 0.18f)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.54f))

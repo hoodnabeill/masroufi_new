@@ -39,6 +39,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.core.applyAppLanguage
 import com.masroufi.app.ui.components.DropdownField
 import com.masroufi.app.ui.components.edgeFade
 import com.masroufi.app.ui.components.GlassDialog
@@ -109,7 +110,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             SegmentedChoice(
                 listOf("ar", "en"),
                 if (language == "ar") "ar" else "en",
-                { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(it)) },
+                { applyAppLanguage(it) },
                 { if (it == "ar") "العربية" else "English" },
             )
             Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.titleSmall)

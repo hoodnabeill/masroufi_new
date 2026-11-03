@@ -64,7 +64,7 @@ import kotlin.math.sin
 
 /** Sheets and dialogs float above the app: a translucent pane that the system blurs the app behind (Android 12+). */
 @Composable
-private fun paneColor(): Color = if (LocalGlass.current.dark) Color(0xE0121619) else Color(0xE8F9FAFD)
+private fun paneColor(): Color = LocalGlass.current.fill.copy(alpha = 0.94f)
 
 @Composable
 private fun LiquidButton(
@@ -80,10 +80,10 @@ private fun LiquidButton(
     val fade by animateFloatAsState(if (enabled) 1f else 0.42f, Motion.effects(reduce), label = "buttonEnabled")
     Row(
         modifier
-            .defaultMinSize(minHeight = 52.dp)
+            .defaultMinSize(minHeight = 56.dp)
             .graphicsLayer { alpha = fade }
             .liquidPress(interaction, CircleShape, scaleTo = 1.04f)
-            .glass(CircleShape, tint = tint, strong = true)
+            .then(if (tint != Color.Unspecified) Modifier.clip(CircleShape).background(tint) else Modifier.glass(CircleShape, strong = true))
             .clickable(interactionSource = interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 22.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.Center,
@@ -225,7 +225,7 @@ fun GlassSnackbarHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
                 .padding(horizontal = 16.dp, vertical = 10.dp)
                 .fillMaxWidth()
                 .heightIn(min = 52.dp)
-                .glass(MaterialTheme.shapes.large, tint = glass.base.copy(alpha = 0.72f), strong = true)
+                .glass(MaterialTheme.shapes.large, tint = glass.fillStrong.copy(alpha = 0.8f), strong = true, floating = true)
                 .padding(start = 18.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

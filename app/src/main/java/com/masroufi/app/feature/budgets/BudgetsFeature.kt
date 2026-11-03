@@ -142,7 +142,7 @@ private fun BudgetCard(item: BudgetWithProgress, categories: Map<String, Categor
     val color = when (p.status) {
         BudgetStatus.ON_TRACK -> MaterialTheme.colorScheme.primary
         BudgetStatus.WARNING -> finance.warning
-        BudgetStatus.OVER -> finance.expense
+        BudgetStatus.OVER -> finance.over
     }
     PressableCard(onClick = { onEdit(item.budget.id) }, modifier = modifier) {
         Row {
@@ -177,7 +177,7 @@ private fun BudgetCard(item: BudgetWithProgress, categories: Map<String, Categor
             )
         }
         when (p.status) {
-            BudgetStatus.OVER -> Text(stringResource(R.string.budget_over), color = finance.expense, style = MaterialTheme.typography.labelLarge)
+            BudgetStatus.OVER -> Text(stringResource(R.string.budget_over), color = finance.over, style = MaterialTheme.typography.labelLarge)
             BudgetStatus.WARNING -> Text(stringResource(R.string.budget_warning), color = finance.warning, style = MaterialTheme.typography.labelLarge)
             BudgetStatus.ON_TRACK -> Unit
         }

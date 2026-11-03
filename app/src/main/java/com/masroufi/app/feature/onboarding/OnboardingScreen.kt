@@ -85,6 +85,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.core.applyAppLanguage
 import com.masroufi.app.ui.components.CategoryIcons
 import com.masroufi.app.ui.components.DropdownField
 import com.masroufi.app.ui.components.glassChipColors
@@ -167,6 +168,7 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
     val presetNames = WalletPresets.associateWith { stringResource(it.label) }
     val cashName = stringResource(R.string.wallet_default_cash)
     val last = pager.currentPage == PAGES - 1
+    val uiLanguage = LocalConfiguration.current.locales[0].language
     val chrome = remember { Animatable(if (reduce) 1f else 0f) }
     LaunchedEffect(Unit) {
         delay(1_050)
@@ -213,6 +215,8 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
                 onClick = {
                     haptics.confirm()
                     if (last) {
+                        // Pin the language the user saw, so Arabic gets Latin digits even when it came from the system locale.
+                        if (AppCompatDelegate.getApplicationLocales().isEmpty) applyAppLanguage(uiLanguage)
                         viewModel.finish(
                             currency, cashName, Money.parse(opening, currency) ?: 0L, payday,
                             WalletPresets.filter { it.key in picked }.map { presetNames.getValue(it) to it.type },
@@ -565,7 +569,7 @@ private fun SetupPage(
             SegmentedChoice(
                 options = listOf("ar", "en"),
                 selected = if (language == "ar") "ar" else "en",
-                onSelect = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(it)) },
+                onSelect = { applyAppLanguage(it) },
                 label = { if (it == "ar") "العربية" else "English" },
             )
             Spacer(Modifier.height(16.dp))

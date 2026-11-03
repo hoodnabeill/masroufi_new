@@ -109,7 +109,7 @@ class MasroufiWidget : GlanceAppWidget() {
                 .clickable(actionStartActivity(intent)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(label, style = TextStyle(color = ColorProvider(Color.White), fontSize = 14.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+            Text(label, style = TextStyle(color = ColorProvider(Color(0xFF12160A)), fontSize = 14.sp, fontWeight = FontWeight.Medium), maxLines = 1)
         }
     }
 

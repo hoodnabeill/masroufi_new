@@ -38,110 +38,153 @@ import androidx.core.view.WindowCompat
 import com.masroufi.app.R
 import com.masroufi.app.data.prefs.ThemeMode
 
-/** Surface tokens for the glass material; every translucent layer reads from here so light and dark stay consistent. */
+/**
+ * "Midnight Ledger" surface tokens (masroufi-v2-design/README.md §1). Field names are kept from the glass era so
+ * every component reads the new values: [fill] is the card surface, [fillStrong] the raised layer (inputs, chips,
+ * inner tiles), [strokeTop]/[strokeBottom] the 1 px line.
+ */
 @Immutable
 data class GlassTokens(
     val base: Color,
     val fill: Color,
     val fillStrong: Color,
+    val track: Color,
     val strokeTop: Color,
     val strokeBottom: Color,
     val shadow: Color,
     val textSecondary: Color,
+    val textTertiary: Color,
+    /** Accent sequence for decorative art (onboarding cards and similar). */
     val aurora: List<Color>,
     val dark: Boolean,
 )
 
+// Design accents. Dark values are from the handoff; the light theme's darker variants are derived for 4.5:1 text
+// contrast on white, since the handoff is dark-only.
+private val Lime = Color(0xFFC8F169)
+private val Violet = Color(0xFFA99BFF)
+private val Amber = Color(0xFFFFB648)
+private val Coral = Color(0xFFFF8C73)
+private val Blue = Color(0xFF7DB4FF)
+private val Mint = Color(0xFF5EE3A1)
+private val Pink = Color(0xFFE7A6FF)
+private val Yellow = Color(0xFFFFD466)
+private val Orange = Color(0xFFFFA36B)
+
 private val DarkGlass = GlassTokens(
-    base = Color(0xFF07050E),
-    fill = Color.White.copy(alpha = 0.06f),
-    fillStrong = Color.White.copy(alpha = 0.11f),
-    strokeTop = Color.White.copy(alpha = 0.24f),
-    strokeBottom = Color.White.copy(alpha = 0.04f),
-    shadow = Color.Black.copy(alpha = 0.45f),
-    textSecondary = Color(0xFFA9A2BF),
-    aurora = listOf(Color(0xFF7B4DFF), Color(0xFFC04BFF), Color(0xFF3D5AFE), Color(0xFFFF5CA8)),
+    base = Color(0xFF0B0A10),
+    fill = Color(0xFF15131D),
+    fillStrong = Color(0xFF1D1B28),
+    track = Color(0xFF272435),
+    strokeTop = Color(0xFF2A2737),
+    strokeBottom = Color(0xFF2A2737),
+    shadow = Color.Black.copy(alpha = 0.5f),
+    textSecondary = Color(0xFFB4AFC6),
+    textTertiary = Color(0xFF8E89A3),
+    aurora = listOf(Violet, Pink, Blue, Lime),
     dark = true,
 )
 
 private val LightGlass = GlassTokens(
-    base = Color(0xFFF4F1FA),
-    fill = Color.White.copy(alpha = 0.55f),
-    fillStrong = Color.White.copy(alpha = 0.78f),
-    strokeTop = Color.White.copy(alpha = 0.95f),
-    strokeBottom = Color.White.copy(alpha = 0.35f),
-    shadow = Color(0xFF1B2A4A).copy(alpha = 0.10f),
-    textSecondary = Color(0xFF5C5670),
-    aurora = listOf(Color(0xFFC6B3FF), Color(0xFFE6B8FF), Color(0xFFB3C1FF), Color(0xFFFFC4E1)),
+    base = Color(0xFFF6F4FA),
+    fill = Color(0xFFFFFFFF),
+    fillStrong = Color(0xFFF0EDF6),
+    track = Color(0xFFE4E0EE),
+    strokeTop = Color(0xFFE1DDEA),
+    strokeBottom = Color(0xFFE1DDEA),
+    shadow = Color(0xFF15131D).copy(alpha = 0.08f),
+    textSecondary = Color(0xFF4F4A62),
+    textTertiary = Color(0xFF6C6782),
+    aurora = listOf(Color(0xFF6A5AE0), Color(0xFFB25ACF), Color(0xFF2F6FE0), Color(0xFF4A7A00)),
     dark = false,
 )
 
 val LocalGlass = staticCompositionLocalOf { DarkGlass }
 
-/** Background and plain surfaces are transparent: the ambient aurora behind every screen is the canvas. */
+/**
+ * Lime is money and the primary action, violet is brand and navigation, amber is streaks and "soon", coral is
+ * over-pace, overdue and destructive. Background and surface stay transparent so the stage behind every screen
+ * (and the floating glass that refracts it) shows through.
+ */
 private fun scheme(dark: Boolean, glass: GlassTokens): ColorScheme {
-    val onBase = if (dark) Color(0xFFF4F6FA) else Color(0xFF0B0F14)
-    val primary = if (dark) Color(0xFFB79CFF) else Color(0xFF6A3DE8)
-    val sheet = if (dark) Color(0xF2111519) else Color(0xF5FBFCFE)
+    val text = if (dark) Color(0xFFF4F2FA) else Color(0xFF15131D)
     val common = if (dark) darkColorScheme() else lightColorScheme()
     return common.copy(
-        primary = primary,
-        onPrimary = if (dark) Color(0xFF1C0B47) else Color.White,
-        primaryContainer = primary.copy(alpha = 0.18f),
-        onPrimaryContainer = onBase,
-        secondary = if (dark) Color(0xFFF59BD0) else Color(0xFFB0307A),
-        onSecondary = Color.White,
-        secondaryContainer = primary.copy(alpha = if (dark) 0.22f else 0.16f),
-        onSecondaryContainer = onBase,
-        tertiary = if (dark) Color(0xFFFFC56B) else Color(0xFF8F5B00),
-        onTertiary = Color(0xFF2A1800),
-        tertiaryContainer = Color(0xFFFFC56B).copy(alpha = 0.18f),
-        onTertiaryContainer = onBase,
+        primary = if (dark) Lime else Color(0xFF4A7A00),
+        onPrimary = if (dark) Color(0xFF12160A) else Color.White,
+        primaryContainer = if (dark) Color(0xFF24301A) else Color(0xFFE6F5C9),
+        onPrimaryContainer = if (dark) Lime else Color(0xFF2E4D00),
+        secondary = if (dark) Violet else Color(0xFF5B4BD6),
+        onSecondary = if (dark) Color(0xFF17132E) else Color.White,
+        secondaryContainer = if (dark) Color(0xFF262046) else Color(0xFFE7E3FF),
+        onSecondaryContainer = if (dark) Violet else Color(0xFF3A2E8C),
+        tertiary = if (dark) Amber else Color(0xFF8A5600),
+        onTertiary = Color(0xFF2A1A00),
+        tertiaryContainer = if (dark) Color(0xFF33260F) else Color(0xFFFFEBC7),
+        onTertiaryContainer = if (dark) Amber else Color(0xFF5A3800),
         background = Color.Transparent,
-        onBackground = onBase,
+        onBackground = text,
         surface = Color.Transparent,
-        onSurface = onBase,
-        surfaceVariant = glass.fill,
+        onSurface = text,
+        surfaceVariant = glass.fillStrong,
         onSurfaceVariant = glass.textSecondary,
         surfaceTint = Color.Transparent,
-        surfaceContainerLowest = sheet,
-        surfaceContainerLow = sheet,
-        surfaceContainer = sheet,
-        surfaceContainerHigh = sheet,
-        surfaceContainerHighest = glass.fillStrong,
-        inverseSurface = onBase,
+        surfaceContainerLowest = glass.base,
+        surfaceContainerLow = glass.fill,
+        surfaceContainer = glass.fill,
+        surfaceContainerHigh = glass.fillStrong,
+        surfaceContainerHighest = glass.track,
+        inverseSurface = text,
         inverseOnSurface = glass.base,
-        outline = onBase.copy(alpha = 0.22f),
-        outlineVariant = onBase.copy(alpha = 0.10f),
-        scrim = Color.Black.copy(alpha = 0.55f),
-        error = if (dark) Color(0xFFFF7A7A) else Color(0xFFD12C2C),
-        errorContainer = Color(0xFFFF7A7A).copy(alpha = 0.18f),
+        outline = glass.strokeTop,
+        outlineVariant = glass.strokeTop,
+        scrim = Color.Black.copy(alpha = 0.6f),
+        error = if (dark) Coral else Color(0xFFC2410C),
+        onError = if (dark) Color(0xFF2B0D06) else Color.White,
+        errorContainer = if (dark) Color(0xFF33201C) else Color(0xFFFFE4DC),
+        onErrorContainer = if (dark) Coral else Color(0xFF7A2A0A),
     )
 }
 
-/** Semantic money colours stay fixed regardless of dynamic colour so income/expense never swap meaning. */
+/**
+ * Semantic money colours stay fixed regardless of dynamic colour so their meaning never changes. Spending is shown
+ * in the normal text colour, not red: spending is not shameful. [over] marks over-pace and overdue; [warning] the
+ * "getting close" and "soon" states; [streak] the streak flame.
+ */
 @Immutable
-data class FinanceColors(val income: Color, val expense: Color, val transfer: Color, val warning: Color, val categories: List<Color>)
+data class FinanceColors(
+    val income: Color,
+    val expense: Color,
+    val transfer: Color,
+    val warning: Color,
+    val over: Color,
+    val streak: Color,
+    val categories: List<Color>,
+)
 
 private val DarkFinance = FinanceColors(
-    income = Color(0xFF4BE3A5),
-    expense = Color(0xFFFF7A86),
-    transfer = Color(0xFF7DB3FF),
-    warning = Color(0xFFFFC56B),
+    income = Lime,
+    expense = Color(0xFFF4F2FA),
+    transfer = Blue,
+    warning = Amber,
+    over = Coral,
+    streak = Amber,
     categories = listOf(
-        Color(0xFFFF8A65), Color(0xFF4DD9C7), Color(0xFF7DB3FF), Color(0xFFFFD166), Color(0xFFC792FF), Color(0xFF4BE3A5),
-        Color(0xFFFFA94D), Color(0xFF6EC8FF), Color(0xFFFF7A86), Color(0xFFD7B899), Color(0xFF45D0B0), Color(0xFFFF8FC7),
+        Coral, Blue, Mint, Pink, Yellow, Orange,
+        Lime, Violet, Amber, Color(0xFF5ED6E3), Color(0xFFFF9EBB), Color(0xFFD9C3A0),
     ),
 )
 
 private val LightFinance = FinanceColors(
-    income = Color(0xFF087A50),
-    expense = Color(0xFFD12C3F),
+    income = Color(0xFF4A7A00),
+    expense = Color(0xFF15131D),
     transfer = Color(0xFF2F6FE0),
-    warning = Color(0xFF9A6200),
+    warning = Color(0xFF8A5600),
+    over = Color(0xFFC2410C),
+    streak = Color(0xFF8A5600),
     categories = listOf(
-        Color(0xFFE8613C), Color(0xFF14A897), Color(0xFF2F6FE0), Color(0xFFD9A400), Color(0xFF8E4FE0), Color(0xFF0A9F67),
-        Color(0xFFE07A10), Color(0xFF168ED6), Color(0xFFE0394B), Color(0xFF9C7550), Color(0xFF0E9C80), Color(0xFFD9468F),
+        Color(0xFFD9542F), Color(0xFF2F6FE0), Color(0xFF0E9C6B), Color(0xFFA64BC9), Color(0xFFB58800), Color(0xFFD96A1F),
+        Color(0xFF4A7A00), Color(0xFF5B4BD6), Color(0xFF8A5600), Color(0xFF0F8C99), Color(0xFFD9467A), Color(0xFF8C7350),
     ),
 )
 
@@ -181,14 +224,15 @@ object Motion {
         if (reduce) snap() else spring(dampingRatio = 0.72f, stiffness = stiffness(0.34f))
 }
 
-private val Jakarta = FontFamily(
-    Font(R.font.jakarta, FontWeight.Normal),
-    Font(R.font.jakarta, FontWeight.Medium),
-    Font(R.font.jakarta, FontWeight.SemiBold),
-    Font(R.font.jakarta, FontWeight.Bold),
-    Font(R.font.jakarta, FontWeight.ExtraBold),
+/** Display and numbers: Readex Pro (one variable font; Compose drives the weight axis from FontWeight). */
+private val Readex = FontFamily(
+    Font(R.font.readex, FontWeight.Normal),
+    Font(R.font.readex, FontWeight.Medium),
+    Font(R.font.readex, FontWeight.SemiBold),
+    Font(R.font.readex, FontWeight.Bold),
 )
 
+/** Body text in both languages: IBM Plex Sans Arabic, which also carries Latin. */
 private val PlexArabic = FontFamily(
     Font(R.font.plex_arabic_regular, FontWeight.Normal),
     Font(R.font.plex_arabic_medium, FontWeight.Medium),
@@ -198,48 +242,69 @@ private val PlexArabic = FontFamily(
 )
 
 /**
- * Latin display sizes get Apple-style negative tracking. Arabic is a joined script, so letter-spacing would break
- * the connections: it keeps zero tracking and slightly taller leading for its ascenders and descenders.
+ * Handoff scale: H1 28, H2 18, titles 15–17, body 15, caption 12. Large Latin display text gets slight negative
+ * tracking; Arabic is a joined script, so it keeps zero tracking and ~18% taller leading for its ascenders.
  */
 private fun typography(arabic: Boolean): Typography {
-    val family = if (arabic) PlexArabic else Jakarta
-    fun style(size: Int, line: Int, weight: FontWeight, tracking: Float): TextStyle = TextStyle(
+    fun style(family: FontFamily, size: Int, line: Int, weight: FontWeight, tracking: Float = 0f): TextStyle = TextStyle(
         fontFamily = family,
         fontWeight = weight,
         fontSize = size.sp,
         lineHeight = (if (arabic) line * 1.18f else line.toFloat()).sp,
-        letterSpacing = if (arabic) TextUnit.Unspecified else tracking.em,
+        letterSpacing = if (arabic || tracking == 0f) TextUnit.Unspecified else tracking.em,
     )
     return Typography(
-        displayLarge = style(56, 60, FontWeight.Bold, -0.035f),
-        displayMedium = style(44, 50, FontWeight.Bold, -0.03f),
-        displaySmall = style(34, 40, FontWeight.Bold, -0.025f),
-        headlineLarge = style(30, 36, FontWeight.Bold, -0.022f),
-        headlineMedium = style(26, 32, FontWeight.SemiBold, -0.02f),
-        headlineSmall = style(22, 28, FontWeight.SemiBold, -0.016f),
-        titleLarge = style(20, 26, FontWeight.SemiBold, -0.012f),
-        titleMedium = style(17, 22, FontWeight.SemiBold, -0.008f),
-        titleSmall = style(15, 20, FontWeight.SemiBold, -0.004f),
-        bodyLarge = style(17, 24, FontWeight.Normal, -0.006f),
-        bodyMedium = style(15, 21, FontWeight.Normal, -0.002f),
-        bodySmall = style(13, 18, FontWeight.Normal, 0.004f),
-        labelLarge = style(15, 20, FontWeight.SemiBold, -0.002f),
-        labelMedium = style(13, 18, FontWeight.Medium, 0.006f),
-        labelSmall = style(11, 14, FontWeight.Medium, 0.02f),
+        displayLarge = style(Readex, 64, 68, FontWeight.Bold, -0.03f),
+        displayMedium = style(Readex, 44, 50, FontWeight.Bold, -0.025f),
+        displaySmall = style(Readex, 28, 34, FontWeight.SemiBold, -0.015f),
+        headlineLarge = style(Readex, 24, 30, FontWeight.SemiBold, -0.01f),
+        headlineMedium = style(Readex, 20, 26, FontWeight.SemiBold),
+        headlineSmall = style(Readex, 18, 24, FontWeight.SemiBold),
+        titleLarge = style(PlexArabic, 17, 24, FontWeight.SemiBold),
+        titleMedium = style(PlexArabic, 16, 22, FontWeight.SemiBold),
+        titleSmall = style(PlexArabic, 15, 20, FontWeight.SemiBold),
+        bodyLarge = style(PlexArabic, 15, 22, FontWeight.Normal),
+        bodyMedium = style(PlexArabic, 14, 20, FontWeight.Normal),
+        bodySmall = style(PlexArabic, 12, 16, FontWeight.Normal),
+        labelLarge = style(PlexArabic, 14, 18, FontWeight.SemiBold),
+        labelMedium = style(PlexArabic, 12, 16, FontWeight.Medium),
+        labelSmall = style(PlexArabic, 11, 14, FontWeight.Medium),
     )
 }
 
-/** Tabular figures keep every digit the same width, so rolling and changing amounts never jitter sideways. */
+/**
+ * Card-level money: Readex Pro with tabular figures, so rolling and changing amounts never jitter sideways. The
+ * negative tracking applies to the digits; amount components render the currency in its own smaller, untracked style.
+ */
 val AmountStyle: TextStyle
-    @Composable get() = MaterialTheme.typography.displaySmall.copy(fontSize = 40.sp, lineHeight = 46.sp, fontFeatureSettings = "tnum")
+    @Composable get() = TextStyle(
+        fontFamily = Readex,
+        fontWeight = FontWeight.Bold,
+        fontSize = 40.sp,
+        lineHeight = 46.sp,
+        letterSpacing = (-0.03).em,
+        fontFeatureSettings = "tnum",
+    )
 
+/** Radii from the handoff: icon tile 14, tile 18, card 24, hero and sheets 28; chips and buttons are full pills. */
 private val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(10.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(22.dp),
-    large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(36.dp),
+    extraSmall = RoundedCornerShape(14.dp),
+    small = RoundedCornerShape(18.dp),
+    medium = RoundedCornerShape(18.dp),
+    large = RoundedCornerShape(24.dp),
+    extraLarge = RoundedCornerShape(28.dp),
 )
+
+/** Spacing steps from the handoff (4/8/12/16/20/28) with the 16 dp screen gutter. */
+object Spacing {
+    val xs = 4.dp
+    val s = 8.dp
+    val m = 12.dp
+    val l = 16.dp
+    val xl = 20.dp
+    val xxl = 28.dp
+    val gutter = 16.dp
+}
 
 @Composable
 fun MasroufiTheme(mode: ThemeMode, dynamicColor: Boolean, solidGlass: Boolean = false, content: @Composable () -> Unit) {

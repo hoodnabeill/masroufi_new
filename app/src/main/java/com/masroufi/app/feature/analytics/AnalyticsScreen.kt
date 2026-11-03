@@ -265,9 +265,9 @@ fun AnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltView
                             val over = b.progress.status == BudgetStatus.OVER
                             Spacer(Modifier.height(12.dp))
                             LabeledRow(b.budget.name) {
-                                Text("${(b.progress.fraction * 100).toInt()}%", color = if (over) finance.expense else MaterialTheme.colorScheme.onSurface)
+                                Text("${(b.progress.fraction * 100).toInt()}%", color = if (over) finance.over else MaterialTheme.colorScheme.onSurface)
                             }
-                            AnimatedProgressBar(b.progress.fraction, if (over) finance.expense else MaterialTheme.colorScheme.primary)
+                            AnimatedProgressBar(b.progress.fraction, if (over) finance.over else MaterialTheme.colorScheme.primary)
                         }
                     }
                 }

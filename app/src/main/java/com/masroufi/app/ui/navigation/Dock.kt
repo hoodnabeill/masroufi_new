@@ -323,7 +323,8 @@ private fun PlusButton(open: Boolean, onClick: () -> Unit) {
         Modifier
             .size(66.dp)
             .liquidPress(interaction, CircleShape, scaleTo = 1.12f)
-            .glass(CircleShape, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f), strong = true)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary)
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
@@ -377,7 +378,7 @@ fun QuickAddMenu(open: Boolean, onDismiss: () -> Unit, onPick: (String) -> Unit)
                     Row(
                         Modifier
                             .liquidPress(interaction, CircleShape, scaleTo = 1.06f)
-                            .glass(CircleShape, strong = true)
+                            .glass(CircleShape, strong = true, floating = true)
                             .clickable(interactionSource = interaction, indication = null, role = Role.Button) { onPick(type) }
                             .padding(start = 18.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,

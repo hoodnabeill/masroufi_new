@@ -268,7 +268,7 @@ private fun RoundCard(
             Text(
                 stringResource(R.string.gameya_paid_count, round.paidMemberIds.size, members.size),
                 style = MaterialTheme.typography.labelLarge,
-                color = if (overdue) finance.expense else MaterialTheme.colorScheme.onSurface,
+                color = if (overdue) finance.over else MaterialTheme.colorScheme.onSurface,
             )
         }
         round.recipient?.let { recipient ->
@@ -290,7 +290,7 @@ private fun RoundCard(
         round.myStatus?.let { status ->
             val (text, color) = when (status) {
                 ContributionStatus.PAID -> stringResource(R.string.gameya_status_paid) to finance.income
-                ContributionStatus.OVERDUE -> stringResource(R.string.gameya_status_overdue) to finance.expense
+                ContributionStatus.OVERDUE -> stringResource(R.string.gameya_status_overdue) to finance.over
                 ContributionStatus.DUE_TODAY -> stringResource(R.string.gameya_status_due_today) to finance.warning
                 ContributionStatus.SCHEDULED -> stringResource(R.string.gameya_status_scheduled) to MaterialTheme.colorScheme.onSurfaceVariant
             }

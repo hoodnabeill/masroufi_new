@@ -109,7 +109,7 @@ fun StreakFlame(lit: Boolean, modifier: Modifier = Modifier) {
     val flicker = if (!lit || reduce) null else rememberInfiniteTransition(label = "flame").animateFloat(
         0f, (2 * Math.PI).toFloat(), infiniteRepeatable(tween(1_600, easing = LinearEasing), RepeatMode.Restart), label = "f",
     )
-    val warm = LocalFinanceColors.current.warning
+    val warm = LocalFinanceColors.current.streak
     Icon(
         MIcons.Flame,
         contentDescription = null,

@@ -103,7 +103,7 @@ private fun StatusChip(status: DebtStatus) {
     val finance = LocalFinanceColors.current
     val (label, color) = when (status) {
         DebtStatus.OPEN -> stringResource(R.string.debt_status_open) to MaterialTheme.colorScheme.primary
-        DebtStatus.OVERDUE -> stringResource(R.string.debt_status_overdue) to finance.expense
+        DebtStatus.OVERDUE -> stringResource(R.string.debt_status_overdue) to finance.over
         DebtStatus.SETTLED -> stringResource(R.string.debt_status_settled) to finance.income
     }
     AssistChip(onClick = {}, label = { Text(label, color = color) })

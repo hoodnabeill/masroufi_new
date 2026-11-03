@@ -52,26 +52,56 @@ object Money {
     }
 }
 
-class MoneyFormatter(private val locale: Locale) {
-    private val cache = HashMap<String, NumberFormat>()
+/**
+ * Money as Egyptians write it: Western digits grouped by thousands, decimals only when they are not zero, and the
+ * currency after the number in Arabic (`1,105 ج.م`, no trailing dot) or before it in English (`EGP 1,105`).
+ * The space between number and currency is non-breaking so an amount never wraps.
+ */
+class MoneyFormatter(locale: Locale) {
+    private val arabic = locale.language == "ar"
+    private val symbolLocale = locale
+    private val numbers = HashMap<Int, NumberFormat>()
 
     fun format(minor: Long, currency: String, signed: Boolean = false): String {
-        val nf = cache.getOrPut(currency) {
-            NumberFormat.getCurrencyInstance(locale).apply {
-                runCatching { this.currency = Currency.getInstance(currency) }
-                val digits = Money.fractionDigits(currency)
-                minimumFractionDigits = digits
-                maximumFractionDigits = digits
-            }
+        val digits = Money.fractionDigits(currency)
+        val value = BigDecimal.valueOf(minor, digits).abs()
+        val fraction = if (value.remainder(BigDecimal.ONE).signum() == 0) 0 else digits
+        val number = numberFormat(fraction).format(value)
+        val sign = when {
+            minor < 0 -> "-"
+            signed && minor > 0 -> "+"
+            else -> ""
         }
-        val text = nf.format(BigDecimal.valueOf(minor, Money.fractionDigits(currency)))
-        return if (signed && minor > 0) "+$text" else text
+        val symbol = symbol(currency)
+        return if (arabic) "$sign$number $symbol" else "$sign$symbol $number"
     }
 
+    /** Whole units only, still in Western digits (chart axes and compact labels). */
     fun formatCompact(minor: Long, currency: String): String {
-        val digits = Money.fractionDigits(currency)
-        val whole = BigDecimal.valueOf(minor, digits).setScale(0, RoundingMode.HALF_UP)
-        val nf = NumberFormat.getIntegerInstance(locale)
-        return nf.format(whole)
+        val whole = BigDecimal.valueOf(minor, Money.fractionDigits(currency)).setScale(0, RoundingMode.HALF_UP)
+        return numberFormat(0).format(whole)
+    }
+
+    private fun numberFormat(fraction: Int): NumberFormat = numbers.getOrPut(fraction) {
+        NumberFormat.getNumberInstance(Locale.US).apply {
+            minimumFractionDigits = fraction
+            maximumFractionDigits = fraction
+            roundingMode = RoundingMode.HALF_UP
+        }
+    }
+
+    private fun symbol(currency: String): String =
+        if (arabic) {
+            ARABIC_SYMBOLS[currency] ?: currency
+        } else {
+            runCatching { Currency.getInstance(currency).getSymbol(symbolLocale) }.getOrDefault(currency)
+        }
+
+    private companion object {
+        /** Short Arabic symbols without the trailing dot and direction marks the JDK adds (`ج.م.‏`). */
+        val ARABIC_SYMBOLS = mapOf(
+            "EGP" to "ج.م", "SAR" to "ر.س", "AED" to "د.إ", "KWD" to "د.ك",
+            "USD" to "\$", "EUR" to "€", "GBP" to "£",
+        )
     }
 }

@@ -28,6 +28,10 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
@@ -76,9 +80,15 @@ fun AnimatedAmount(
     val rising = minor >= previous[0]
     SideEffect { previous[0] = minor }
     val tabular = style.copy(fontFeatureSettings = "tnum")
+    val unitStyle = currencyStyle(style)
+    val currencyColor = MaterialTheme.colorScheme.onSurfaceVariant
+    // A leading sign belongs with the digits; whatever follows it before the number is the currency.
+    val sign = parts.prefix.takeWhile { it == '-' || it == '+' }
+    val leadingCurrency = parts.prefix.drop(sign.length)
 
     Row(modifier.clearAndSetSemantics { contentDescription = text }, verticalAlignment = Alignment.CenterVertically) {
-        if (parts.prefix.isNotEmpty()) Text(parts.prefix, style = tabular, color = color, maxLines = 1)
+        if (leadingCurrency.isNotEmpty()) Text(leadingCurrency, style = unitStyle, color = currencyColor, maxLines = 1)
+        if (sign.isNotEmpty()) Text(sign, style = tabular, color = color, maxLines = 1)
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Row {
                 val count = parts.number.length
@@ -98,7 +108,7 @@ fun AnimatedAmount(
                 }
             }
         }
-        if (parts.suffix.isNotEmpty()) Text(parts.suffix, style = tabular, color = color, maxLines = 1)
+        if (parts.suffix.isNotEmpty()) Text(parts.suffix, style = unitStyle, color = currencyColor, maxLines = 1)
     }
 }
 
@@ -119,14 +129,24 @@ fun MoneyText(
     color: Color = Color.Unspecified,
     signed: Boolean = false,
 ) {
-    Text(
-        LocalMoneyFormatter.current.format(minor, currency, signed),
-        modifier = modifier,
-        style = style.copy(fontFeatureSettings = "tnum"),
-        color = color,
-        maxLines = 1,
-    )
+    val text = LocalMoneyFormatter.current.format(minor, currency, signed)
+    val currencySpan = currencyStyle(style).toSpanStyle().copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val first = text.indexOfFirst { it.isAnyDigit() || it == '-' || it == '+' }
+    val last = text.indexOfLast { it.isAnyDigit() }
+    val annotated = buildAnnotatedString {
+        append(text)
+        if (first > 0) addStyle(currencySpan, 0, first)
+        if (last >= 0 && last < text.lastIndex) addStyle(currencySpan, last + 1, text.length)
+    }
+    Text(annotated, modifier = modifier, style = style.copy(fontFeatureSettings = "tnum"), color = color, maxLines = 1)
 }
+
+/** The currency beside an amount: ~60% of the number's size, untracked (Arabic must not be letter-spaced). */
+private fun currencyStyle(style: TextStyle): TextStyle = style.copy(
+    fontSize = if (style.fontSize.isSpecified) style.fontSize * 0.6f else style.fontSize,
+    letterSpacing = TextUnit.Unspecified,
+    fontWeight = FontWeight.Medium,
+)
 
 @Composable
 fun typeColor(type: TransactionType): Color = when (type) {
