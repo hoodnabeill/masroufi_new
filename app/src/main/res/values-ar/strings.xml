@@ -578,45 +578,16 @@
     <string name="xp_max">وصلت لأعلى مستوى</string>
     <string-array name="level_titles">
         <item>مبتدئ</item>
-        <item>بيتعلم يحسب</item>
-        <item>مدبّر</item>
-        <item>حويط</item>
-        <item>بيعرف يحوّش</item>
-        <item>أستاذ ميزانية</item>
-        <item>وزير مالية البيت</item>
-        <item>حوت تحويش</item>
-        <item>معلم الفلوس</item>
-        <item>أسطورة مصروفي</item>
+        <item>منظّم</item>
+        <item>شاطر</item>
+        <item>محترف</item>
+        <item>ملك الفلوس</item>
     </string-array>
     <string name="suggest_title">زي كل مرة؟</string>
     <string name="suggest_times">سجّلتها %1$d مرات في آخر ٣ أسابيع</string>
     <string name="suggest_log">سجّلها</string>
     <string name="achievements_title">إنجازاتك</string>
     <string name="achievements_badges">الأوسمة</string>
-    <string name="badge_first_log">أول خطوة</string>
-    <string name="badge_first_log_desc">سجّل أول حاجة</string>
-    <string name="badge_streak_3">بدأت تسخن</string>
-    <string name="badge_streak_3_desc">٣ أيام ورا بعض</string>
-    <string name="badge_streak_7">أسبوع كامل</string>
-    <string name="badge_streak_7_desc">٧ أيام ورا بعض</string>
-    <string name="badge_streak_30">عادة حديد</string>
-    <string name="badge_streak_30_desc">٣٠ يوم ورا بعض</string>
-    <string name="badge_streak_100">محدش يوقفك</string>
-    <string name="badge_streak_100_desc">١٠٠ يوم ورا بعض</string>
-    <string name="badge_logs_50">ماسك الحساب</string>
-    <string name="badge_logs_50_desc">سجّلت ٥٠ حاجة</string>
-    <string name="badge_logs_250">مفيش حاجة بتفلت</string>
-    <string name="badge_logs_250_desc">سجّلت ٢٥٠ حاجة</string>
-    <string name="badge_first_goal">بتحلم كبير</string>
-    <string name="badge_first_goal_desc">اعمل هدف تحويش</string>
-    <string name="badge_goal_done">وصلتها</string>
-    <string name="badge_goal_done_desc">حقق هدف</string>
-    <string name="badge_subscriptions">مفيش مفاجآت</string>
-    <string name="badge_subscriptions_desc">تابع اشتراك</string>
-    <string name="badge_gameya">داخل جمعية</string>
-    <string name="badge_gameya_desc">تابع جمعية</string>
-    <string name="badge_payday">من المرتب للمرتب</string>
-    <string name="badge_payday_desc">حدد يوم المرتب</string>
     <string name="tab_plan">الخطة</string>
     <string name="home_safe_today">تقدر تصرف النهارده</string>
     <string name="home_safe_caption_month">عشان فلوسك تكفّي لآخر الشهر</string>
@@ -675,4 +646,89 @@
     <string name="day_today">النهارده</string>
     <string name="day_yesterday">امبارح</string>
     <string name="home_day_spent">صرفت %1$s</string>
+    <string name="badge_first_log">أول خطوة</string>
+    <string name="badge_first_log_desc">سجّلت أول مصروف ليك. بداية حلوة.</string>
+    <string name="badge_started_right">بدأت صح</string>
+    <string name="badge_started_right_desc">سجّل 3 أيام ورا بعض.</string>
+    <string name="badge_full_week">أسبوع كامل</string>
+    <string name="badge_full_week_desc">سلسلة 7 أيام من غير ما تقطع.</string>
+    <string name="badge_zero_day">يوم صفر</string>
+    <string name="badge_zero_day_desc">عدّي يوم كامل من غير أي صرف.</string>
+    <string name="badge_home_cook">طبّاخ البيت</string>
+    <string name="badge_home_cook_desc">3 أيام من غير أكل برّه.</string>
+    <string name="badge_planner">المخطط</string>
+    <string name="badge_planner_desc">اعمل 3 ميزانيات وفعّلهم.</string>
+    <string name="badge_emergency">حارس الطوارئ</string>
+    <string name="badge_emergency_desc">ابدأ هدف لفلوس الطوارئ.</string>
+    <string name="badge_gameya_member">ابن الجمعية</string>
+    <string name="badge_gameya_member_desc">سجّل جمعية وادفع أول قسط.</string>
+    <string name="badge_green_month">الشهر الأخضر</string>
+    <string name="badge_green_month_desc">اقفل الشهر وانت تحت رقمك اليومي.</string>
+    <string name="xp_next_named">%1$d من %2$d نقطة وتبقى «%3$s»</string>
+    <string name="badges_count">%1$d من %2$d</string>
+    <string name="badge_unlocked">اتفتحت</string>
+    <string name="badge_progress">%1$d من %2$d</string>
+    <string name="freeze_available">تجميد متاح</string>
+    <string name="freeze_used">استخدمت تجميد الأسبوع</string>
+    <string name="add_type_loan">سلفة</string>
+    <string name="add_save_expense">سجّل الصرف</string>
+    <string name="add_save_income">سجّل الدخل</string>
+    <string name="add_save_transfer">حوّل</string>
+    <string name="add_save_loan">سجّل السلفة</string>
+    <string name="add_close">اقفل</string>
+    <string name="add_decimal">علامة عشرية</string>
+    <string name="add_on_what">على إيه؟</string>
+    <string name="add_note_chip">ملاحظة</string>
+    <string name="add_note_empty">اكتب المبلغ</string>
+    <string name="add_note_pct">ده %1$d%% من اللي تقدر تصرفه النهارده</string>
+    <string name="add_note_over">أكتر من المتاح النهارده بـ %1$s</string>
+    <string name="add_note_income">اللي تقدر تصرفه هيبقى %1$s في اليوم</string>
+    <string name="add_note_transfer">من %1$s إلى %2$s</string>
+    <string name="add_note_loan">هتختار الشخص في الخطوة الجاية</string>
+    <plurals name="reward_headline">
+        <item quantity="zero">أول يوم في السلسلة!</item>
+        <item quantity="one">أول يوم في السلسلة!</item>
+        <item quantity="two">يومين ورا بعض!</item>
+        <item quantity="few">%d أيام ورا بعض!</item>
+        <item quantity="many">%d يوم ورا بعض!</item>
+        <item quantity="other">%d يوم ورا بعض!</item>
+    </plurals>
+    <plurals name="reward_sub">
+        <item quantity="zero">سلسلتك بتكبر. سجّل بكرة.</item>
+        <item quantity="one">سلسلتك بتكبر. سجّل بكرة.</item>
+        <item quantity="two">سلسلتك بتكبر. سجّل بكرة وتوصل يومين.</item>
+        <item quantity="few">سلسلتك بتكبر. سجّل بكرة وتوصل %d أيام.</item>
+        <item quantity="many">سلسلتك بتكبر. سجّل بكرة وتوصل %d يوم.</item>
+        <item quantity="other">سلسلتك بتكبر. سجّل بكرة وتوصل %d يوم.</item>
+    </plurals>
+    <string name="reward_saved_title">اتسجّل!</string>
+    <string name="reward_saved_sub">النهارده محسوب في سلسلتك بالفعل.</string>
+    <string name="reward_level_line">مستوى %1$d · %2$d من %3$d</string>
+    <string name="reward_to_next">فاضلك %1$d نقطة وتبقى «%2$s»</string>
+    <string name="reward_fact_title">حاجة حلوة</string>
+    <string name="reward_fact_left">لسه فاضلك %1$s تقدر تصرفها النهارده</string>
+    <string name="reward_fact_income">رقمك اليومي بقى %1$s</string>
+    <plurals name="reward_fact_logged">
+        <item quantity="zero">سجّلت %d حاجة النهارده</item>
+        <item quantity="one">سجّلت حاجة واحدة النهارده</item>
+        <item quantity="two">سجّلت حاجتين النهارده</item>
+        <item quantity="few">سجّلت %d حاجات النهارده</item>
+        <item quantity="many">سجّلت %d حاجة النهارده</item>
+        <item quantity="other">سجّلت %d حاجة النهارده</item>
+    </plurals>
+    <string name="reward_badge">شارة «%1$s»</string>
+    <string name="reward_done">تمام</string>
+    <string name="reward_more">سجّل حاجة كمان</string>
+    <string name="filter_all">الكل</string>
+    <string name="filter_recurring">متكرر</string>
+    <string name="activity_search">دوّر</string>
+    <string name="activity_prev_month">الشهر اللي فات</string>
+    <string name="activity_next_month">الشهر الجاي</string>
+    <string name="activity_custom_range">فترة مخصصة</string>
+    <string name="activity_spent">صرف</string>
+    <string name="activity_income">دخل</string>
+    <string name="activity_daily_avg">متوسط اليوم</string>
+    <string name="activity_today_empty">لسه مفيش</string>
+    <string name="activity_today_cta">سجّل أول حاجة النهارده</string>
+    <string name="activity_today_cta_sub">+10 نقطة وتكمّل السلسلة</string>
 </resources>

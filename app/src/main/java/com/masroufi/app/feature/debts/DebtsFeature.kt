@@ -285,7 +285,8 @@ class DebtEditorViewModel @Inject constructor(
     settings: SettingsRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val id = savedState.toRoute<DebtEditorRoute>().id
+    private val route = savedState.toRoute<DebtEditorRoute>()
+    private val id = route.id
     private var original: Debt? = null
     private val _form = MutableStateFlow(DebtForm())
     val form: StateFlow<DebtForm> = _form.asStateFlow()
@@ -297,7 +298,7 @@ class DebtEditorViewModel @Inject constructor(
             original = existing
             _form.value = existing?.let {
                 DebtForm(true, false, it.direction, it.personName, Money.toPlainString(it.originalMinor, it.currency), it.currency, it.dueEpochDay?.let(LocalDate::ofEpochDay), it.note, it.remind)
-            } ?: DebtForm(loaded = true, currency = settings.current().primaryCurrency)
+            } ?: DebtForm(loaded = true, amount = route.amount.orEmpty(), currency = settings.current().primaryCurrency)
         }
     }
 

@@ -57,6 +57,8 @@ import androidx.navigation.navDeepLink
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.masroufi.app.R
@@ -65,6 +67,8 @@ import com.masroufi.app.feature.plan.PLAN_GOALS
 import com.masroufi.app.feature.plan.PlanScreen
 import androidx.navigation.toRoute
 import com.masroufi.app.feature.progress.AchievementsScreen
+import com.masroufi.app.feature.progress.RewardScreen
+import com.masroufi.app.feature.transactions.AddSheet
 import com.masroufi.app.feature.subscriptions.SubscriptionsScreen
 import com.masroufi.app.feature.analytics.AnalyticsScreen
 import com.masroufi.app.feature.budgets.BudgetEditorScreen
@@ -167,11 +171,9 @@ fun MasroufiNavHost() {
     val tabIndex = tabs.indexOfFirst { tab -> destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true }
     var lastTab by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(tabIndex) { if (tabIndex >= 0) lastTab = tabIndex }
-    var menuOpen by rememberSaveable { mutableStateOf(false) }
     val scene = rememberLayerBackdrop()
     val reduce = LocalReduceMotion.current
     val dockTabs = remember { tabs.map { DockTab(it.label, it.glyph) } }
-    BackHandler(enabled = menuOpen) { menuOpen = false }
 
     Box(Modifier.fillMaxSize()) {
         // The whole scene (light + screens) is recorded once so the floating chrome above can refract it; glass
@@ -189,14 +191,6 @@ fun MasroufiNavHost() {
             }
         }
         CompositionLocalProvider(LocalGlassBackdrop provides scene, LocalBackdropView provides LocalView.current) {
-            QuickAddMenu(
-                open = menuOpen && tabIndex >= 0,
-                onDismiss = { menuOpen = false },
-                onPick = { type ->
-                    menuOpen = false
-                    if (type == QUICK_LOAN) nav.navigate(DebtEditorRoute()) else nav.navigate(TransactionEditorRoute(type = type))
-                },
-            )
             AnimatedVisibility(
                 visible = tabIndex >= 0,
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -207,8 +201,7 @@ fun MasroufiNavHost() {
                     tabs = dockTabs,
                     selected = lastTab,
                     onSelect = { nav.navigateToTab(tabs[it].route) },
-                    menuOpen = menuOpen,
-                    onToggleMenu = { menuOpen = !menuOpen },
+                    onAdd = { nav.navigate(AddSheetRoute()) },
                 )
             }
         }
@@ -227,8 +220,8 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     val back: () -> Unit = { nav.popBackStack() }
     screen<HomeRoute> {
         HomeScreen(
-            onAddTransaction = { type -> nav.navigate(TransactionEditorRoute(type = type)) },
-            onQuickLog = { amount, categoryId, note -> nav.navigate(TransactionEditorRoute(type = "EXPENSE", categoryId = categoryId, amount = amount, note = note)) },
+            onAddTransaction = { type -> nav.navigate(AddSheetRoute(type = type)) },
+            onQuickLog = { amount, categoryId, note -> nav.navigate(AddSheetRoute(type = "EXPENSE", categoryId = categoryId, amount = amount, note = note)) },
             onOpenAchievements = { nav.navigate(AchievementsRoute) },
             onOpenTransaction = { nav.navigate(TransactionDetailRoute(it)) },
             onOpenTransactions = { nav.navigateToTab(TransactionsRoute) },
@@ -244,7 +237,7 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     }
     screen<TransactionsRoute> {
         TransactionsScreen(
-            onAdd = { nav.navigate(TransactionEditorRoute()) },
+            onAdd = { nav.navigate(AddSheetRoute()) },
             onOpen = { nav.navigate(TransactionDetailRoute(it)) },
         )
     }
@@ -273,9 +266,32 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
             onPremium = { nav.navigate(PremiumRoute) },
         )
     }
-    screen<TransactionEditorRoute>(deepLinks = listOf(navDeepLink<TransactionEditorRoute>(basePath = "masroufi://add"))) {
-        TransactionEditorScreen(onDone = back, onBack = back)
+    // New entries open the quick-add sheet (also the widget's masroufi://add); edits keep the full-screen editor.
+    dialog<AddSheetRoute>(
+        deepLinks = listOf(navDeepLink<AddSheetRoute>(basePath = "masroufi://add")),
+        dialogProperties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    ) {
+        val replaceSheet: androidx.navigation.NavOptionsBuilder.() -> Unit = { popUpTo<AddSheetRoute> { inclusive = true } }
+        AddSheet(
+            onClose = back,
+            onSaved = { type -> nav.navigate(RewardRoute(type.name), replaceSheet) },
+            onLoan = { amount -> nav.navigate(DebtEditorRoute(amount = amount.ifEmpty { null }), replaceSheet) },
+            onMoreDetails = { s ->
+                nav.navigate(
+                    TransactionEditorRoute(type = s.type.name, walletId = s.walletId, categoryId = s.categoryId, amount = s.amount.ifEmpty { null }, note = s.note.ifEmpty { null }),
+                    replaceSheet,
+                )
+            },
+        )
     }
+    screen<RewardRoute> { entry ->
+        RewardScreen(
+            type = entry.toRoute<RewardRoute>().type,
+            onDone = back,
+            onLogAnother = { nav.navigate(AddSheetRoute()) { popUpTo<RewardRoute> { inclusive = true } } },
+        )
+    }
+    screen<TransactionEditorRoute> { TransactionEditorScreen(onDone = back, onBack = back) }
     screen<TransactionDetailRoute> {
         TransactionDetailScreen(
             onBack = back,
@@ -290,7 +306,7 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
             onBack = back,
             onEdit = { nav.navigate(WalletEditorRoute(it)) },
             onOpenTransaction = { nav.navigate(TransactionDetailRoute(it)) },
-            onAddTransaction = { walletId -> nav.navigate(TransactionEditorRoute(walletId = walletId)) },
+            onAddTransaction = { walletId -> nav.navigate(AddSheetRoute(walletId = walletId)) },
         )
     }
     screen<WalletEditorRoute> { WalletEditorScreen(onDone = back, onBack = back) }

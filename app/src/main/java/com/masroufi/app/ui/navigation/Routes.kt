@@ -17,6 +17,19 @@ import kotlinx.serialization.Serializable
     val amount: String? = null,
     val note: String? = null,
 )
+/**
+ * The quick-add bottom sheet for new entries. Its arguments mirror [TransactionEditorRoute] (minus the id) so the
+ * same editor view model decodes either route.
+ */
+@Serializable data class AddSheetRoute(
+    val type: String = "EXPENSE",
+    val walletId: String? = null,
+    val categoryId: String? = null,
+    val amount: String? = null,
+    val note: String? = null,
+)
+/** Shown after the sheet saves; [type] is the saved entry's type. */
+@Serializable data class RewardRoute(val type: String = "EXPENSE")
 @Serializable data class TransactionDetailRoute(val id: String)
 @Serializable data object WalletsRoute
 @Serializable data class WalletDetailRoute(val id: String)
@@ -30,7 +43,8 @@ import kotlinx.serialization.Serializable
 @Serializable data class RecurringEditorRoute(val id: String? = null, val serviceKey: String? = null)
 @Serializable data object DebtsRoute
 @Serializable data class DebtDetailRoute(val id: String)
-@Serializable data class DebtEditorRoute(val id: String? = null)
+/** [amount] is prefilled when a سلفة starts from the quick-add sheet. */
+@Serializable data class DebtEditorRoute(val id: String? = null, val amount: String? = null)
 @Serializable data object GameyaListRoute
 @Serializable data class GameyaDetailRoute(val id: String)
 @Serializable data class GameyaEditorRoute(val id: String? = null)

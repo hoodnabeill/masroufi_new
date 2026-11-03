@@ -30,4 +30,19 @@ class AmountKeyTest {
         assertEquals("300", addWholeAmount("100", 200))
         assertEquals("9".repeat(12), addWholeAmount("9".repeat(12), 5))
     }
+
+    @Test fun sheetGroupsTypedThousandsAndKeepsTheFraction() {
+        assertEquals("0", groupTyped(""))
+        assertEquals("85", groupTyped("85"))
+        assertEquals("1,105", groupTyped("1105"))
+        assertEquals("1,234,567.5", groupTyped("1234567.5"))
+        assertEquals("1,000.", groupTyped("1000."))
+    }
+
+    @Test fun todayBudgetRoundsDownToWholePounds() {
+        val today = com.masroufi.app.data.repo.TodayBudget("EGP", safeMinor = 15_600, spentMinor = 5_000, balanceMinor = 400_000, days = 29)
+        assertEquals(10_600, today.remainingMinor)
+        // (4,000 + 50 + 500) / 29 = 156.89 → 156
+        assertEquals(15_600, today.afterIncome(50_000))
+    }
 }

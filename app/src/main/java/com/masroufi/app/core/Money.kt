@@ -90,7 +90,7 @@ class MoneyFormatter(locale: Locale) {
         }
     }
 
-    private fun symbol(currency: String): String =
+    fun symbol(currency: String): String =
         if (arabic) {
             ARABIC_SYMBOLS[currency] ?: currency
         } else {

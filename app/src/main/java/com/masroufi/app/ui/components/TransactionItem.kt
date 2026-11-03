@@ -75,8 +75,10 @@ fun TransactionItem(row: TransactionRow, onClick: () -> Unit, modifier: Modifier
         isTransfer -> stringResource(R.string.type_transfer)
         else -> categoryLabel(row.categoryName, row.categorySystemKey)
     }
+    val recurringTag = stringResource(R.string.filter_recurring)
     val subtitle = buildList {
         if (tx.note.isNotBlank()) add(tx.note)
+        if (tx.recurringId != null) add(recurringTag)
         if (isTransfer) add("${row.walletName.orEmpty()} → ${row.toWalletName.orEmpty()}") else row.walletName?.let(::add)
         if (showDate) add(tx.occurredAt.toLocalDate().format(dateFormatter))
     }.joinToString(" · ")

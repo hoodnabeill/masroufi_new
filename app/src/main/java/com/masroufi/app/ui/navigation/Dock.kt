@@ -103,9 +103,6 @@ val DockMaxWidth = 560.dp
 /** A bottom-bar destination: its label and which [TabGlyph] draws its icon. */
 data class DockTab(val label: Int, val glyph: Int)
 
-/** Quick-add pick for lending or borrowing money (سلفة), which opens the debt editor instead of a transaction. */
-const val QUICK_LOAN = "LOAN"
-
 private val BarHeight = 72.dp
 private val PlusSize = 60.dp
 
@@ -149,8 +146,7 @@ fun Dock(
     tabs: List<DockTab>,
     selected: Int,
     onSelect: (Int) -> Unit,
-    menuOpen: Boolean,
-    onToggleMenu: () -> Unit,
+    onAdd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val haptics = rememberHaptics()
@@ -181,9 +177,9 @@ fun Dock(
                 }
             }
         }
-        PlusButton(menuOpen, Modifier.align(Alignment.TopCenter)) {
+        PlusButton(Modifier.align(Alignment.TopCenter)) {
             haptics.confirm()
-            onToggleMenu()
+            onAdd()
         }
     }
 }
@@ -238,10 +234,8 @@ private fun DockItem(tab: DockTab, selected: Boolean, modifier: Modifier, onClic
 }
 
 @Composable
-private fun PlusButton(open: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val reduce = LocalReduceMotion.current
+private fun PlusButton(modifier: Modifier, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
-    val rotation by animateFloatAsState(if (open) 135f else 0f, Motion.bouncy(reduce), label = "plusRotate")
     val description = stringResource(R.string.transaction_new)
     val lime = MaterialTheme.colorScheme.primary
     Box(
@@ -256,66 +250,6 @@ private fun PlusButton(open: Boolean, modifier: Modifier, onClick: () -> Unit) {
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(MIcons.Plus, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(28.dp).graphicsLayer { rotationZ = rotation })
-    }
-}
-
-/**
- * Quick-add bloom: three glass drops grow out of the + button (their transform origin is the button's corner) with a
- * staggered bounce, over a dim that closes the menu when tapped. The drops refract the undimmed scene.
- */
-@Composable
-fun QuickAddMenu(open: Boolean, onDismiss: () -> Unit, onPick: (String) -> Unit) {
-    val reduce = LocalReduceMotion.current
-    val finance = LocalFinanceColors.current
-    AnimatedVisibility(open, enter = fadeIn(Motion.effects(reduce)), exit = fadeOut(Motion.snappy(reduce))) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss),
-        )
-    }
-    val items = listOf(
-        Triple("EXPENSE", R.string.type_expense, MIcons.Expense) to finance.expense,
-        Triple("INCOME", R.string.type_income, MIcons.Income) to finance.income,
-        Triple("TRANSFER", R.string.type_transfer, MIcons.Transfer) to finance.transfer,
-        Triple(QUICK_LOAN, R.string.quick_loan, MIcons.Handshake) to finance.warning,
-    )
-    // Anchored to the + button: the column lives in the same centred, width-capped frame as the dock.
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-        Column(
-            Modifier.navigationBarsPadding().padding(bottom = 124.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items.forEachIndexed { index, (item, color) ->
-                val (type, label, icon) = item
-                val order = items.size - 1 - index
-                val interaction = remember { MutableInteractionSource() }
-                AnimatedVisibility(
-                    open,
-                    enter = scaleIn(
-                        if (reduce) Motion.snappy<Float>(true) else spring(dampingRatio = 0.6f, stiffness = 420f - order * 70f),
-                        initialScale = 0.15f,
-                        transformOrigin = TransformOrigin(0.5f, 1f),
-                    ) + fadeIn(Motion.snappy(reduce)),
-                    exit = scaleOut(Motion.snappy(reduce), targetScale = 0.4f, transformOrigin = TransformOrigin(0.5f, 1f)) + fadeOut(Motion.snappy(reduce)),
-                ) {
-                    Row(
-                        Modifier
-                            .liquidPress(interaction, CircleShape, scaleTo = 1.06f)
-                            .glass(CircleShape, strong = true, floating = true)
-                            .clickable(interactionSource = interaction, indication = null, role = Role.Button) { onPick(type) }
-                            .padding(start = 18.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(stringResource(label), style = MaterialTheme.typography.titleSmall)
-                        Spacer(Modifier.width(12.dp))
-                        IconBadge(icon, color, size = 42.dp)
-                    }
-                }
-            }
-        }
+        Icon(MIcons.Plus, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(28.dp))
     }
 }

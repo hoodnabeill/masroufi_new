@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.masroufi.app.core.DateWindow
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
 import com.masroufi.app.core.startMillis
@@ -18,6 +19,8 @@ import com.masroufi.app.data.model.WalletWithBalance
 import com.masroufi.app.data.prefs.SettingsRepository
 import com.masroufi.app.data.repo.CategoryRepository
 import com.masroufi.app.data.repo.TransactionFilter
+import com.masroufi.app.data.repo.TodayBudget
+import com.masroufi.app.data.repo.TodayRepository
 import com.masroufi.app.data.repo.TransactionRepository
 import com.masroufi.app.data.repo.WalletRepository
 import com.masroufi.app.receipts.ReceiptStore
@@ -44,6 +47,7 @@ import java.io.File
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.YearMonth
 import javax.inject.Inject
 
 data class TransactionsUiState(
@@ -53,7 +57,16 @@ data class TransactionsUiState(
     val query: String = "",
     val wallets: List<WalletWithBalance> = emptyList(),
     val categories: List<Category> = emptyList(),
-)
+    /** The month being browsed; ignored while the filter sets its own dates. */
+    val month: YearMonth = YearMonth.now(),
+    val recurringOnly: Boolean = false,
+    /** Totals for the shown range, primary currency only (currencies are never added together). */
+    val currency: String = Money.DEFAULT_CURRENCY,
+    val expenseMinor: Long = 0,
+    val incomeMinor: Long = 0,
+) {
+    val customRange: Boolean get() = filter.fromMillis != null || filter.toMillis != null
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -61,18 +74,44 @@ class TransactionsViewModel @Inject constructor(
     private val transactions: TransactionRepository,
     wallets: WalletRepository,
     categories: CategoryRepository,
+    settings: SettingsRepository,
+    clock: Clock,
 ) : ViewModel() {
     private val filter = MutableStateFlow(TransactionFilter())
     private val query = MutableStateFlow("")
+    private val month = MutableStateFlow(YearMonth.now(clock))
+    private val recurringOnly = MutableStateFlow(false)
+
+    // The month switcher supplies the date range unless the filter sheet picked dates of its own.
+    private val range = combine(filter, month) { f, m ->
+        if (f.fromMillis != null || f.toMillis != null) f else DateWindow.month(m, clock.zone).let { f.copy(fromMillis = it.startMillis, toMillis = it.endMillis) }
+    }
+    private val data = range.flatMapLatest { f ->
+        combine(transactions.observeRows(f), transactions.observeTypeTotals(f.fromMillis ?: 0L, f.toMillis ?: Long.MAX_VALUE)) { rows, totals -> rows to totals }
+    }
 
     val state: StateFlow<TransactionsUiState> = combine(
-        filter.flatMapLatest { f -> transactions.observeRows(f) },
-        filter,
+        data,
+        combine(filter, month, recurringOnly, ::Triple),
         query,
-        wallets.observeWallets(),
-        categories.observeAll(),
-    ) { rows, f, q, w, c -> TransactionsUiState(false, rows, f, q, w, c) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TransactionsUiState())
+        combine(wallets.observeWallets(), categories.observeAll(), ::Pair),
+        settings.settings,
+    ) { (rows, totals), (f, m, recurring), q, (w, c), s ->
+        val currency = s.primaryCurrency
+        TransactionsUiState(
+            loading = false,
+            rows = if (recurring) rows.filter { it.transaction.recurringId != null } else rows,
+            filter = f,
+            query = q,
+            wallets = w,
+            categories = c,
+            month = m,
+            recurringOnly = recurring,
+            currency = currency,
+            expenseMinor = totals.filter { it.type == TransactionType.EXPENSE && it.currency == currency }.sumOf { it.total },
+            incomeMinor = totals.filter { it.type == TransactionType.INCOME && it.currency == currency }.sumOf { it.total },
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TransactionsUiState())
 
     fun setQuery(value: String) {
         query.value = value
@@ -81,6 +120,12 @@ class TransactionsViewModel @Inject constructor(
     fun setFilter(value: TransactionFilter) {
         filter.value = value
     }
+
+    fun setRecurringOnly(value: Boolean) {
+        recurringOnly.value = value
+    }
+
+    fun shiftMonth(by: Long) = month.update { it.plusMonths(by) }
 }
 
 data class EditorUiState(
@@ -118,11 +163,16 @@ class TransactionEditorViewModel @Inject constructor(
     private val categoriesRepo: CategoryRepository,
     private val settings: SettingsRepository,
     private val receipts: ReceiptStore,
+    todayRepo: TodayRepository,
     private val clock: Clock,
 ) : ViewModel() {
+    // The quick-add sheet's AddSheetRoute has the same argument names, so it decodes as this route with no id.
     private val route = savedState.toRoute<TransactionEditorRoute>()
     private val _state = MutableStateFlow(EditorUiState(date = LocalDate.now(clock)))
     val state: StateFlow<EditorUiState> = _state.asStateFlow()
+
+    /** Today's number, for the sheet's live "% of today" line. Only computed while the sheet collects it. */
+    val today: StateFlow<TodayBudget?> = todayRepo.observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
     val effects = EffectChannel<EditorEffect>()
     private var original: Transaction? = null
     private var saved = false

@@ -10,12 +10,15 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,23 +35,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,47 +66,54 @@ import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.ProgressRepository
 import com.masroufi.app.domain.Badge
+import com.masroufi.app.domain.BadgeProgress
 import com.masroufi.app.domain.Level
+import com.masroufi.app.domain.Progress
 import com.masroufi.app.domain.ProgressSnapshot
-import com.masroufi.app.ui.components.AnimatedAmount
 import com.masroufi.app.ui.components.MIcons
 import com.masroufi.app.ui.components.MasroufiTopBar
-import com.masroufi.app.ui.components.PressableCard
-import com.masroufi.app.ui.components.SectionHeader
 import com.masroufi.app.ui.components.edgeFade
-import com.masroufi.app.ui.components.glass
-import com.masroufi.app.ui.components.glassInset
 import com.masroufi.app.ui.components.staggerIn
 import com.masroufi.app.ui.theme.LocalFinanceColors
+import com.masroufi.app.ui.theme.LocalGlass
 import com.masroufi.app.ui.theme.LocalReduceMotion
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
+import java.util.Locale
 import javax.inject.Inject
 
-private data class BadgeInfo(val icon: ImageVector, val name: Int, val description: Int)
+/** How a badge looks and reads: icon, accent, name and what earns it. */
+data class BadgeInfo(val icon: ImageVector, val color: Color, val name: Int, val how: Int)
 
-private fun Badge.info(): BadgeInfo = when (this) {
-    Badge.FIRST_LOG -> BadgeInfo(MIcons.Pencil, R.string.badge_first_log, R.string.badge_first_log_desc)
-    Badge.STREAK_3 -> BadgeInfo(MIcons.Flame, R.string.badge_streak_3, R.string.badge_streak_3_desc)
-    Badge.STREAK_7 -> BadgeInfo(MIcons.Flame, R.string.badge_streak_7, R.string.badge_streak_7_desc)
-    Badge.STREAK_30 -> BadgeInfo(MIcons.Flame, R.string.badge_streak_30, R.string.badge_streak_30_desc)
-    Badge.STREAK_100 -> BadgeInfo(MIcons.Flame, R.string.badge_streak_100, R.string.badge_streak_100_desc)
-    Badge.LOGS_50 -> BadgeInfo(MIcons.Activity, R.string.badge_logs_50, R.string.badge_logs_50_desc)
-    Badge.LOGS_250 -> BadgeInfo(MIcons.Activity, R.string.badge_logs_250, R.string.badge_logs_250_desc)
-    Badge.FIRST_GOAL -> BadgeInfo(MIcons.Goals, R.string.badge_first_goal, R.string.badge_first_goal_desc)
-    Badge.GOAL_DONE -> BadgeInfo(MIcons.Trophy, R.string.badge_goal_done, R.string.badge_goal_done_desc)
-    Badge.SUBSCRIPTIONS -> BadgeInfo(MIcons.Repeat, R.string.badge_subscriptions, R.string.badge_subscriptions_desc)
-    Badge.GAMEYA -> BadgeInfo(MIcons.Gameya, R.string.badge_gameya, R.string.badge_gameya_desc)
-    Badge.PAYDAY -> BadgeInfo(MIcons.Calendar, R.string.badge_payday, R.string.badge_payday_desc)
+@Composable
+fun Badge.info(): BadgeInfo {
+    val finance = LocalFinanceColors.current
+    val scheme = MaterialTheme.colorScheme
+    return when (this) {
+        Badge.FIRST_LOG -> BadgeInfo(MIcons.Trophy, scheme.primary, R.string.badge_first_log, R.string.badge_first_log_desc)
+        Badge.STARTED_RIGHT -> BadgeInfo(MIcons.Flame, finance.streak, R.string.badge_started_right, R.string.badge_started_right_desc)
+        Badge.FULL_WEEK -> BadgeInfo(MIcons.Calendar, finance.streak, R.string.badge_full_week, R.string.badge_full_week_desc)
+        Badge.ZERO_DAY -> BadgeInfo(MIcons.Check, finance.categories[2], R.string.badge_zero_day, R.string.badge_zero_day_desc)
+        Badge.HOME_COOK -> BadgeInfo(MIcons.Food, finance.over, R.string.badge_home_cook, R.string.badge_home_cook_desc)
+        Badge.PLANNER -> BadgeInfo(MIcons.Budgets, scheme.secondary, R.string.badge_planner, R.string.badge_planner_desc)
+        Badge.EMERGENCY_GUARD -> BadgeInfo(MIcons.Health, finance.over, R.string.badge_emergency, R.string.badge_emergency_desc)
+        Badge.GAMEYA_MEMBER -> BadgeInfo(MIcons.Gameya, finance.categories[3], R.string.badge_gameya_member, R.string.badge_gameya_member_desc)
+        Badge.GREEN_MONTH -> BadgeInfo(MIcons.Trending, scheme.primary, R.string.badge_green_month, R.string.badge_green_month_desc)
+    }
 }
 
 @Composable
-fun levelTitle(level: Level): String {
+fun levelTitle(level: Level): String = levelTitle(level.number)
+
+@Composable
+fun levelTitle(number: Int): String {
     val titles = stringArrayResource(R.array.level_titles)
-    return titles[(level.number - 1).coerceIn(0, titles.lastIndex)]
+    return titles[(number - 1).coerceIn(0, titles.lastIndex)]
 }
 
 /** A flame that flickers while today's streak is secured, and sits still (dimmed) while it is at risk. */
@@ -119,33 +133,26 @@ fun StreakFlame(lit: Boolean, modifier: Modifier = Modifier) {
             scaleY = 1f + 0.06f * kotlin.math.sin(t * 2f)
             scaleX = 1f - 0.03f * kotlin.math.sin(t * 2f + 1f)
             rotationZ = 3f * kotlin.math.sin(t)
-            transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+            transformOrigin = TransformOrigin(0.5f, 1f)
         },
     )
 }
 
-
-
-/** The level number inside a ring that fills towards the next level. */
+/** The level number inside a violet ring that fills towards the next level. */
 @Composable
 fun LevelBadge(level: Level, size: Int, modifier: Modifier = Modifier) {
     val reduce = LocalReduceMotion.current
     val sweep = remember { Animatable(if (reduce) level.progress else 0f) }
     LaunchedEffect(level.progress) { if (reduce) sweep.snapTo(level.progress) else sweep.animateTo(level.progress, spring(dampingRatio = 0.85f, stiffness = 50f)) }
-    val primary = MaterialTheme.colorScheme.primary
-    val secondary = MaterialTheme.colorScheme.secondary
-    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
+    val violet = MaterialTheme.colorScheme.secondary
+    val track = LocalGlass.current.track
     Box(modifier.size(size.dp).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
-            val stroke = this.size.minDimension * 0.1f
+            val stroke = this.size.minDimension * 0.09f
             val inset = stroke / 2
             val arc = Size(this.size.width - stroke, this.size.height - stroke)
             drawArc(track, -90f, 360f, false, Offset(inset, inset), arc, style = Stroke(stroke))
-            drawArc(
-                Brush.sweepGradient(listOf(primary, secondary, primary)),
-                -90f, 360f * sweep.value, false, Offset(inset, inset), arc,
-                style = Stroke(stroke, cap = StrokeCap.Round),
-            )
+            drawArc(violet, -90f, 360f * sweep.value, false, Offset(inset, inset), arc, style = Stroke(stroke, cap = StrokeCap.Round))
         }
         Text(
             level.number.toString(),
@@ -160,103 +167,231 @@ class AchievementsViewModel @Inject constructor(progress: ProgressRepository) : 
     val state: StateFlow<ProgressSnapshot?> = progress.observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }
 
-/** Level hero, streak stats and every badge, earned ones lit and the rest waiting behind a lock. */
+/** Level path, this month's streak calendar with the weekly freeze, and the nine badges with a detail panel. */
 @Composable
 fun AchievementsScreen(onBack: () -> Unit, viewModel: AchievementsViewModel = hiltViewModel()) {
     val snapshot by viewModel.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { MasroufiTopBar(stringResource(R.string.achievements_title), onBack = onBack) }) { padding ->
         val s = snapshot ?: return@Scaffold
+        // Opens on the next badge to chase, so the detail panel always says what to do next.
+        var selected by rememberSaveable { mutableIntStateOf(s.badges.indexOfFirst { !it.earned }.coerceAtLeast(0)) }
         Column(
             Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            PressableCard(onClick = null, modifier = Modifier.fillMaxWidth().staggerIn(0), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)) {
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    LevelBadge(s.level, size = 132)
-                    Spacer(Modifier.height(14.dp))
-                    Text(levelTitle(s.level), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        s.level.nextXp?.let { stringResource(R.string.xp_to_next, it - s.level.xp) } ?: stringResource(R.string.xp_max),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Row(Modifier.fillMaxWidth().staggerIn(1), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatTile(
-                    Modifier.weight(1f),
-                    icon = { StreakFlame(s.streak.loggedToday, Modifier.size(28.dp)) },
-                    value = pluralStringResource(R.plurals.streak_days, s.streak.current, s.streak.current),
-                )
-                StatTile(
-                    Modifier.weight(1f),
-                    icon = { Icon(MIcons.Trophy, contentDescription = null, tint = LocalFinanceColors.current.warning, modifier = Modifier.size(28.dp)) },
-                    value = stringResource(R.string.streak_best, s.streak.best),
+            LevelCard(s.level, Modifier.staggerIn(0))
+            StreakCalendar(s, Modifier.staggerIn(1))
+            Row(Modifier.fillMaxWidth().padding(top = 10.dp, start = 4.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.achievements_badges), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+                Text(
+                    stringResource(R.string.badges_count, s.badges.count { it.earned }, s.badges.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LocalGlass.current.textTertiary,
                 )
             }
-            SectionHeader(stringResource(R.string.achievements_badges))
             FlowRow(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 maxItemsInEachRow = 3,
             ) {
-                Badge.entries.forEachIndexed { i, badge -> BadgeMedal(badge, badge in s.badges, i, Modifier.weight(1f)) }
+                s.badges.forEachIndexed { i, b -> BadgeTile(b, i == selected, Modifier.weight(1f)) { selected = i } }
+            }
+            s.badges.getOrNull(selected)?.let { BadgeDetail(it) }
+        }
+    }
+}
+
+@Composable
+private fun Panel(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val glass = LocalGlass.current
+    val shape = MaterialTheme.shapes.large
+    Box(modifier.fillMaxWidth().clip(shape).background(glass.fill).border(1.dp, glass.strokeTop, shape).padding(18.dp)) { content() }
+}
+
+@Composable
+private fun LevelCard(level: Level, modifier: Modifier) {
+    val glass = LocalGlass.current
+    val violet = MaterialTheme.colorScheme.secondary
+    Panel(modifier) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            LevelBadge(level, size = 112)
+            Spacer(Modifier.height(12.dp))
+            Text(stringResource(R.string.level_label, level.number, levelTitle(level)), style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                level.nextXp?.let { stringResource(R.string.xp_next_named, level.xp, it, levelTitle(level.number + 1)) } ?: stringResource(R.string.xp_max),
+                style = MaterialTheme.typography.bodySmall,
+                color = glass.textTertiary,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(18.dp))
+            // The path: one node per level, filled up to the current one.
+            Row(Modifier.fillMaxWidth()) {
+                Progress.levelFloors.forEachIndexed { i, floor ->
+                    val reached = level.number > i
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            Modifier
+                                .size(14.dp)
+                                .clip(CircleShape)
+                                .background(if (reached) violet else glass.track)
+                                .then(if (level.number == i + 1) Modifier.border(3.dp, violet.copy(alpha = 0.35f), CircleShape) else Modifier),
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            levelTitle(i + 1),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (reached) MaterialTheme.colorScheme.onSurface else glass.textTertiary,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(String.format(Locale.US, "%,d", floor), style = MaterialTheme.typography.labelSmall, color = glass.textTertiary)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun StatTile(modifier: Modifier, icon: @Composable () -> Unit, value: String) {
-    Column(modifier.glass(MaterialTheme.shapes.large).padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        icon()
-        Spacer(Modifier.height(8.dp))
-        Text(value, style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center)
+private fun StreakCalendar(s: ProgressSnapshot, modifier: Modifier) {
+    val glass = LocalGlass.current
+    val amber = LocalFinanceColors.current.streak
+    val blue = LocalFinanceColors.current.transfer
+    val today = remember { LocalDate.now() }
+    val first = today.withDayOfMonth(1)
+    val last = first.plusMonths(1).minusDays(1)
+    val names = stringArrayResource(R.array.week_short)
+    val streak = s.streak
+    Panel(modifier) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                StreakFlame(lit = streak.loggedToday, modifier = Modifier.size(28.dp))
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        if (streak.current > 0) pluralStringResource(R.plurals.streak_days, streak.current, streak.current) else stringResource(R.string.streak_start),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(stringResource(R.string.streak_best, streak.best), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+                }
+                Text(
+                    stringResource(if (streak.freezeAvailable) R.string.freeze_available else R.string.freeze_used),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = blue,
+                    modifier = Modifier.clip(CircleShape).background(blue.copy(alpha = 0.14f)).padding(horizontal = 10.dp, vertical = 6.dp),
+                )
+            }
+            Row(Modifier.fillMaxWidth()) {
+                names.forEach { Text(it, style = MaterialTheme.typography.labelSmall, color = glass.textTertiary, textAlign = TextAlign.Center, modifier = Modifier.weight(1f)) }
+            }
+            // Saturday-first weeks, like the dots on Home.
+            var week = first.with(TemporalAdjusters.previousOrSame(DayOfWeek.SATURDAY))
+            while (!week.isAfter(last)) {
+                Row(Modifier.fillMaxWidth()) {
+                    for (offset in 0L until 7L) {
+                        val day = week.plusDays(offset)
+                        Box(Modifier.weight(1f).aspectRatio(1f).padding(3.dp), contentAlignment = Alignment.Center) {
+                            if (day.month == today.month) {
+                                val logged = day in s.logDays
+                                val frozen = day in streak.frozenDays
+                                val isToday = day == today
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape)
+                                        .background(
+                                            when {
+                                                logged -> amber
+                                                frozen -> blue.copy(alpha = 0.22f)
+                                                isToday -> Color.Transparent
+                                                else -> glass.fillStrong
+                                            },
+                                        )
+                                        .then(if (isToday && !logged) Modifier.border(2.dp, amber, CircleShape) else Modifier),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        day.dayOfMonth.toString(),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = when {
+                                            logged -> MaterialTheme.colorScheme.onTertiary
+                                            isToday -> amber
+                                            frozen -> blue
+                                            else -> glass.textTertiary
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                week = week.plusWeeks(1)
+            }
+        }
     }
 }
 
-/** A medal: earned ones glow in the accent and pop in one after another; locked ones are recessed and dim. */
 @Composable
-private fun BadgeMedal(badge: Badge, earned: Boolean, index: Int, modifier: Modifier) {
-    val info = badge.info()
-    val reduce = LocalReduceMotion.current
-    val pop = remember { Animatable(if (reduce || !earned) 1f else 0f) }
-    LaunchedEffect(earned) {
-        if (earned && pop.value < 1f) {
-            delay(120L + index * 70L)
-            pop.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = 300f))
-        }
-    }
-    val primary = MaterialTheme.colorScheme.primary
-    val name = stringResource(info.name)
-    val description = stringResource(info.description)
+private fun BadgeTile(progress: BadgeProgress, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val info = progress.badge.info()
+    val glass = LocalGlass.current
+    val shape = MaterialTheme.shapes.small
     Column(
-        modifier.semantics(mergeDescendants = true) { contentDescription = "$name. $description" },
+        modifier
+            .clip(shape)
+            .background(glass.fill)
+            .border(if (selected) 2.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else glass.strokeTop, shape)
+            .clickable(role = Role.Tab, onClick = onClick)
+            .semantics(mergeDescendants = true) { this.selected = selected }
+            .padding(vertical = 14.dp, horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
-            Modifier
-                .size(72.dp)
-                .graphicsLayer {
-                    val p = pop.value
-                    scaleX = 0.6f + 0.4f * p
-                    scaleY = 0.6f + 0.4f * p
-                    alpha = if (earned) p.coerceIn(0f, 1f) else 0.55f
-                }
-                .then(if (earned) Modifier.glass(CircleShape, tint = primary.copy(alpha = 0.55f), strong = true) else Modifier.glassInset(CircleShape)),
+            Modifier.size(52.dp).clip(MaterialTheme.shapes.extraSmall).background(if (progress.earned) info.color.copy(alpha = 0.18f) else glass.fillStrong),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                if (earned) info.icon else MIcons.Lock,
+                if (progress.earned) info.icon else MIcons.Lock,
                 contentDescription = null,
-                tint = if (earned) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(30.dp),
+                tint = if (progress.earned) info.color else glass.textTertiary,
+                modifier = Modifier.size(24.dp),
             )
         }
         Spacer(Modifier.height(8.dp))
-        Text(name, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, maxLines = 2)
-        Text(description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, maxLines = 2)
+        Text(stringResource(info.name), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, maxLines = 2)
+        Text(
+            if (progress.earned) stringResource(R.string.badge_unlocked) else stringResource(R.string.badge_progress, progress.done, progress.badge.target),
+            style = MaterialTheme.typography.labelSmall,
+            color = glass.textTertiary,
+        )
+    }
+}
+
+@Composable
+private fun BadgeDetail(progress: BadgeProgress) {
+    val info = progress.badge.info()
+    val glass = LocalGlass.current
+    Panel(Modifier.semantics(mergeDescendants = true) {}) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(44.dp).clip(MaterialTheme.shapes.extraSmall).background(info.color.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+                    Icon(info.icon, contentDescription = null, tint = info.color, modifier = Modifier.size(22.dp))
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(stringResource(info.name), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text(
+                    stringResource(R.string.home_points, progress.badge.reward),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)).padding(horizontal = 10.dp, vertical = 6.dp),
+                )
+            }
+            Text(stringResource(info.how), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Box(Modifier.fillMaxWidth().height(6.dp).clip(CircleShape).background(glass.track)) {
+                Box(Modifier.fillMaxWidth(progress.fraction.coerceAtLeast(0.02f)).height(6.dp).clip(CircleShape).background(info.color))
+            }
+        }
     }
 }

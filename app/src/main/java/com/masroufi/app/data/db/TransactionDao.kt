@@ -111,6 +111,14 @@ interface TransactionDao {
     )
     fun observeLastSpends(limit: Int): Flow<List<LastSpend>>
 
+    @Query(
+        """
+        SELECT DISTINCT strftime('%Y-%m-%d', occurredAt / 1000, 'unixepoch', 'localtime') FROM transactions
+        WHERE deleted = 0 AND type = 'EXPENSE' AND categoryId = :categoryId
+        """,
+    )
+    fun observeExpenseDays(categoryId: String): Flow<List<String>>
+
     /** When each entry was logged (not when it happened); recurring auto-entries are not the user logging. */
     @Query("SELECT createdAt FROM transactions WHERE deleted = 0 AND recurringId IS NULL")
     fun observeLogTimes(): Flow<List<Long>>
