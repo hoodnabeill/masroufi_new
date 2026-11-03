@@ -88,7 +88,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.feature.progress.ProgressStrip
 import com.masroufi.app.ui.components.rememberHaptics
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.data.model.Category
