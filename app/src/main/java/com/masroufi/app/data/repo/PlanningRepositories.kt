@@ -76,6 +76,10 @@ class BudgetRepository @Inject constructor(
 
     suspend fun get(id: String) = dao.get(id)
 
+    /** Spending a budget on [categoryId] (null = everything) would count, sub-categories included. */
+    fun observeSpent(categoryId: String?, currency: String, window: DateWindow): Flow<Long> =
+        txDao.observeSpent(categoryId, currency, window.startMillis, window.endMillis)
+
     suspend fun save(budget: Budget) {
         ensure(budget.limitMinor > 0, FinanceError.AMOUNT_REQUIRED)
         ensure(budget.name.isNotBlank(), FinanceError.NAME_REQUIRED)

@@ -26,7 +26,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         RecurringRule::class, Debt::class, DebtPayment::class, Gameya::class, GameyaMember::class,
         GameyaPayment::class, GameyaPayout::class, SplitRule::class, Allocation::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -47,6 +47,13 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE recurring ADD COLUMN serviceKey TEXT")
+            }
+        }
+
+        /** v3: goals can save their monthly plan automatically. */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE goals ADD COLUMN autoSave INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

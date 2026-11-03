@@ -28,8 +28,7 @@ data class TodayBudget(
 
     companion object {
         fun wholeUnits(minor: Long, currency: String): Long {
-            var unit = 1L
-            repeat(Money.fractionDigits(currency)) { unit *= 10 }
+            val unit = Money.unit(currency)
             return minor.coerceAtLeast(0) / unit * unit
         }
     }

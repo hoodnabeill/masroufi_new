@@ -19,6 +19,9 @@ object Money {
             .getOrDefault(2)
             .coerceAtLeast(0)
 
+    /** Minor units in one whole unit (100 piastres in a pound). */
+    fun unit(currency: String): Long = (1..fractionDigits(currency)).fold(1L) { acc, _ -> acc * 10 }
+
     /** Parses user input (Western or Arabic-Indic digits) into minor units; null when invalid or too precise. */
     fun parse(input: String, currency: String): Long? {
         val normalized = normalizeDigits(input).trim()

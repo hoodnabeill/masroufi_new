@@ -15,6 +15,7 @@ import com.masroufi.app.backup.SyncRepository
 import com.masroufi.app.backup.SyncStatus
 import com.masroufi.app.core.MoneyFormatter
 import com.masroufi.app.data.db.AppDatabase
+import com.masroufi.app.data.model.GoalEntry
 import com.masroufi.app.data.model.TransactionType
 import com.masroufi.app.data.prefs.SettingsRepository
 import com.masroufi.app.data.repo.BudgetRepository
@@ -45,9 +46,35 @@ class DailyWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         recurring.processDue()
+        autoSaveGoals()
         if (settings.current().notificationsEnabled) notify()
         MasroufiWidget.refresh(applicationContext)
         return Result.success()
+    }
+
+    /**
+     * Goals with auto-save get their monthly plan earmarked once a month (never past the target), starting the month
+     * after they were made. The entry id is derived from the goal and month, so a rerun cannot save twice.
+     */
+    private suspend fun autoSaveGoals() {
+        val month = YearMonth.now(clock)
+        val monthStart = month.atDay(1).atStartOfDay(clock.zone).toInstant().toEpochMilli()
+        val done = applicationContext.getSharedPreferences("auto_save", Context.MODE_PRIVATE)
+        db.goalDao().observeWithSaved().first().forEach { item ->
+            val goal = item.goal
+            val plan = goal.plannedMonthlyMinor ?: return@forEach
+            if (!goal.autoSave || goal.archived || goal.createdAt >= monthStart) return@forEach
+            val key = "${goal.id}:$month"
+            if (done.getBoolean(key, false)) return@forEach
+            val amount = minOf(plan, goal.targetMinor - item.savedMinor)
+            if (amount > 0) {
+                val now = clock.millis()
+                db.goalDao().upsertEntry(
+                    GoalEntry(id = "auto:$key", goalId = goal.id, amountMinor = amount, occurredAt = now, note = applicationContext.getString(R.string.goal_auto_note), updatedAt = now),
+                )
+            }
+            done.edit().putBoolean(key, true).apply()
+        }
     }
 
     private suspend fun notify() {
@@ -87,13 +114,24 @@ class DailyWorker @AssistedInject constructor(
         }
 
         val month = YearMonth.from(today)
-        budgets.observeWithProgress().first().filter { it.progress.status == BudgetStatus.OVER }.forEach { item ->
-            once("budget:${item.budget.id}:$month") {
-                notifier.show(
-                    item.budget.id.hashCode(),
-                    ctx.getString(R.string.notify_budget_title),
-                    ctx.getString(R.string.notify_budget_body, item.budget.name),
-                )
+        budgets.observeWithProgress().first().forEach { item ->
+            when (item.progress.status) {
+                BudgetStatus.OVER -> once("budget:${item.budget.id}:$month") {
+                    notifier.show(
+                        item.budget.id.hashCode(),
+                        ctx.getString(R.string.notify_budget_title),
+                        ctx.getString(R.string.notify_budget_body, item.budget.name),
+                    )
+                }
+                // "نبّهني لما أوصل 80%": one heads-up a month, before the over-budget one.
+                BudgetStatus.WARNING -> once("budget80:${item.budget.id}:$month") {
+                    notifier.show(
+                        item.budget.id.hashCode(),
+                        ctx.getString(R.string.notify_budget_warn_title),
+                        ctx.getString(R.string.notify_budget_warn_body, item.budget.name),
+                    )
+                }
+                BudgetStatus.ON_TRACK -> Unit
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.masroufi.app.data.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -20,6 +21,8 @@ data class Goal(
     val iconKey: String = "savings",
     val colorIndex: Int = 0,
     val plannedMonthlyMinor: Long? = null,
+    /** Earmark [plannedMonthlyMinor] automatically at the start of each month (v3). */
+    @ColumnInfo(defaultValue = "0") val autoSave: Boolean = false,
     val archived: Boolean = false,
     val createdAt: Long,
     val updatedAt: Long,
