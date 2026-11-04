@@ -72,4 +72,28 @@ object Services {
     )
 
     fun of(key: String?): Service? = key?.let { k -> all.firstOrNull { it.key == k } }
+
+    /**
+     * Egyptian wallets, payment apps and banks, recognised from the wallet's name (Arabic or English) so a wallet
+     * called "فودافون كاش" or "CIB" shows its brand. Same rule as the catalogue: a free mark where Simple Icons has
+     * one, otherwise a brand-colour monogram.
+     */
+    private val walletBrands: List<Pair<List<String>, Service>> = listOf(
+        listOf("فودافون", "vodafone", "vf cash") to all.first { it.key == "vodafone" }.copy(key = "w_vodafone", title = "Vodafone Cash"),
+        listOf("اورنج", "أورنج", "orange") to all.first { it.key == "orange" }.copy(key = "w_orange", title = "Orange Cash"),
+        listOf("اتصالات", "e&", "etisalat") to Service("w_eand", "e& cash", 0xFFE00800, Service.Category.TELECOM, null, "e&"),
+        listOf("وي باي", "we pay", "wepay") to Service("w_we", "WE Pay", 0xFF5B2C8E, Service.Category.TELECOM, null, "WE"),
+        listOf("انستا", "إنستا", "insta") to Service("w_instapay", "InstaPay", 0xFF4A2A8A, Service.Category.TELECOM, null, "IP"),
+        listOf("فوري", "fawry") to Service("w_fawry", "Fawry", 0xFFFFC20E, Service.Category.TELECOM, null, "F"),
+        listOf("cib", "التجاري الدولي") to Service("w_cib", "CIB", 0xFF0B3C7A, Service.Category.TELECOM, null, "CIB"),
+        listOf("الأهلي", "الاهلي", "nbe", "national bank") to Service("w_nbe", "NBE", 0xFF00704A, Service.Category.TELECOM, null, "NBE"),
+        listOf("مصر", "misr") to Service("w_bm", "Banque Misr", 0xFFB01E23, Service.Category.TELECOM, null, "BM"),
+        listOf("qnb") to Service("w_qnb", "QNB", 0xFF5A1F44, Service.Category.TELECOM, null, "QNB"),
+    )
+
+    /** The brand tile for a wallet name, or null when the name is not one we know. */
+    fun forWallet(name: String): Service? {
+        val n = name.lowercase()
+        return walletBrands.firstOrNull { (keys, _) -> keys.any { it in n } }?.second
+    }
 }

@@ -108,7 +108,7 @@ fun DebtsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Unit,
             .sortedWith(compareBy<DebtWithPaid> { it.paidMinor >= it.debt.originalMinor }.thenBy { it.debt.dueEpochDay ?: Long.MAX_VALUE })
         LazyColumn(
             Modifier.fillMaxSize().padding(padding).edgeFade(),
-            contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 32.dp),
+            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "totals") {

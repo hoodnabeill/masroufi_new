@@ -22,6 +22,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,43 +31,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * A service as a liquid-glass app icon: the brand colour poured as a glossy gradient, a curved specular sheen across
- * the top, a lit rim, and the white mark floating on it. Monogram services use a palette colour and their initials.
+ * A service or wallet as a liquid-glass app icon in the Midnight Ledger style: the brand colour as a calm, slightly
+ * lit fill, a light-catching rim, and the mark in whichever ink reads best on it. Monogram services use their
+ * initials in the display face.
  */
 @Composable
 fun ServiceTile(service: Service, modifier: Modifier = Modifier, size: Dp = 48.dp) {
     val base = service.color ?: categoryColor(service.key.hashCode())
-    val shape = RoundedCornerShape(percent = 28)
-    val top = Color.White.copy(alpha = 0.22f).compositeOver(base)
-    val bottom = Color.Black.copy(alpha = 0.28f).compositeOver(base)
+    val shape = RoundedCornerShape(percent = 30)
+    val ink = if (base.luminance() > 0.6f) Color(0xFF15131D) else Color.White
+    val lit = Color.White.copy(alpha = 0.12f).compositeOver(base)
     Box(
         modifier
             .size(size)
-            .shadow(size * 0.18f, shape, ambientColor = base, spotColor = base)
             .clip(shape)
-            .background(Brush.verticalGradient(listOf(top, base, bottom)))
-            .drawWithContent {
-                drawContent()
-                // Specular sheen: a soft elliptical highlight across the upper half, like light on a glass bead.
-                drawOval(
-                    Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.42f), Color.White.copy(alpha = 0f)), startY = 0f, endY = this.size.width * 0.55f),
-                    topLeft = Offset(-this.size.width * 0.15f, -this.size.width * 0.42f),
-                    size = androidx.compose.ui.geometry.Size(this.size.width * 1.3f, this.size.width * 0.95f),
-                )
-            }
-            .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.6f), Color.White.copy(alpha = 0.06f))), shape)
+            .background(Brush.verticalGradient(0f to lit, 0.6f to base))
+            .border(1.dp, Brush.verticalGradient(0f to Color.White.copy(alpha = 0.45f), 0.5f to Color.White.copy(alpha = 0.04f)), shape)
             .clearAndSetSemantics { },
         contentAlignment = Alignment.Center,
     ) {
         val logo = service.logo
         if (logo != null) {
-            Icon(logo, contentDescription = null, tint = Color.White, modifier = Modifier.size(size * 0.5f))
+            Icon(logo, contentDescription = null, tint = ink, modifier = Modifier.size(size * 0.52f))
         } else {
+            val mono = service.monogram.orEmpty()
             Text(
-                service.monogram.orEmpty(),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = (size.value * if ((service.monogram?.length ?: 0) > 2) 0.24f else 0.34f).sp,
+                mono,
+                color = ink,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = (size.value * if (mono.length > 2) 0.26f else 0.36f).sp,
+                    letterSpacing = (-0.02f * size.value).sp,
+                ),
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )

@@ -106,6 +106,9 @@ data class DockTab(val label: Int, val glyph: Int)
 private val BarHeight = 72.dp
 private val PlusSize = 60.dp
 
+/** How far the + rises above the bar: a light lift, so it reads as part of the dock rather than floating off it. */
+private val PlusLift = 14.dp
+
 /**
  * The bar is the one place content scrolls under, so it is real glass when the device supports it: the live screen
  * blurred beneath a near-solid surface tint (handoff: surface #15131D, line, radius 28). Elsewhere it is solid.
@@ -138,7 +141,7 @@ private fun Modifier.dockGlass(): Modifier {
 }
 
 /**
- * Bottom bar: الرئيسية · الحركة · [+] · الخطة · المزيد. The + is a raised lime circle that sits half above the bar;
+ * Bottom bar: الرئيسية · الحركة · [+] · الخطة · المزيد. The + is a raised lime circle lifted just above the bar;
  * the current tab is in the primary text colour with a small accent dot under its label.
  */
 @Composable
@@ -156,7 +159,7 @@ fun Dock(
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-            .height(BarHeight + PlusSize / 2),
+            .height(BarHeight + PlusLift),
     ) {
         Row(
             Modifier

@@ -265,6 +265,8 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
             onSecurity = { nav.navigate(SecurityRoute) },
             onSettings = { nav.navigate(SettingsRoute) },
             onPremium = { nav.navigate(PremiumRoute) },
+            onRecap = { nav.navigate(RecapRoute) },
+            onLegal = { nav.navigate(LegalRoute(it)) },
         )
     }
     // New entries open the quick-add sheet (also the widget's masroufi://add); edits keep the full-screen editor.
@@ -338,7 +340,17 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     screen<GameyaEditorRoute> { GameyaEditorScreen(onDone = back, onBack = back) }
     screen<SplitRulesRoute> { SplitRulesScreen(onBack = back, onAdd = { nav.navigate(SplitEditorRoute()) }, onEdit = { nav.navigate(SplitEditorRoute(it)) }) }
     screen<SplitEditorRoute> { SplitEditorScreen(onDone = back, onBack = back) }
-    screen<AnalyticsRoute> { AnalyticsScreen(onBack = back) }
+    screen<AnalyticsRoute> {
+        AnalyticsScreen(
+            onBack = back,
+            onEmergencyGoal = { nav.navigate(GoalEditorRoute()) },
+            onLog = { nav.navigate(AddSheetRoute()) },
+            onBudgets = { nav.navigateToTab(PlanRoute(PLAN_BUDGETS)) },
+            onRecap = { nav.navigate(RecapRoute) },
+        )
+    }
+    screen<RecapRoute> { com.masroufi.app.feature.recap.RecapScreen(onClose = back) }
+    screen<LegalRoute> { entry -> com.masroufi.app.feature.legal.LegalScreen(entry.toRoute<LegalRoute>().doc, onBack = back) }
     screen<SettingsRoute> { SettingsScreen(onBack = back) }
     screen<SecurityRoute> { SecurityScreen(onBack = back) }
     screen<BackupRoute> { BackupScreen(onBack = back, onPremium = { nav.navigate(PremiumRoute) }) }

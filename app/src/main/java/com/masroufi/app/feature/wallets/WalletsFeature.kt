@@ -164,7 +164,9 @@ fun WalletsScreen(
 private fun WalletCard(item: WalletWithBalance, onOpen: (String) -> Unit) {
     PressableCard(onClick = { onOpen(item.wallet.id) }, modifier = Modifier.sharedContainer("wallet-${item.wallet.id}")) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconBadge(CategoryIcons.wallet(item.wallet.type), categoryColor(item.wallet.colorIndex))
+            val brand = com.masroufi.app.ui.components.Services.forWallet(item.wallet.name)
+            if (brand != null) com.masroufi.app.ui.components.ServiceTile(brand, size = 44.dp)
+            else IconBadge(CategoryIcons.wallet(item.wallet.type), categoryColor(item.wallet.colorIndex))
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(item.wallet.name, style = MaterialTheme.typography.titleMedium, maxLines = 1)
                 Text(walletTypeLabel(item.wallet.type), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

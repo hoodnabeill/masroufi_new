@@ -39,12 +39,13 @@ class Notifier @Inject constructor(
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-    fun show(id: Int, title: String, body: String) {
+    /** [open] is what a tap opens (a deep link, say); by default the app as it was. */
+    fun show(id: Int, title: String, body: String, open: Intent? = null) {
         if (!canNotify()) return
         val intent = PendingIntent.getActivity(
             context,
-            0,
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            id,
+            open ?: Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val publicVersion = NotificationCompat.Builder(context, CHANNEL_REMINDERS)

@@ -133,6 +133,21 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                     trailingContent = { GlassSwitch(s.dynamicColor, { v -> viewModel.launch { setDynamicColor(v) } }) },
                 )
             }
+            // Reading money SMS is opt-in: the switch asks for RECEIVE_SMS, and only turns on once it is granted.
+            val smsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                viewModel.launch { setSmsAutoLog(granted) }
+            }
+            val context = androidx.compose.ui.platform.LocalContext.current
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.settings_sms)) },
+                supportingContent = { Text(stringResource(R.string.settings_sms_sub)) },
+                trailingContent = {
+                    GlassSwitch(s.smsAutoLog, { v ->
+                        val granted = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECEIVE_SMS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        if (v && !granted) smsPermission.launch(android.Manifest.permission.RECEIVE_SMS) else viewModel.launch { setSmsAutoLog(v) }
+                    })
+                },
+            )
             ListItem(
                 headlineContent = { Text(stringResource(R.string.settings_solid_glass)) },
                 supportingContent = { Text(stringResource(R.string.settings_solid_glass_sub)) },

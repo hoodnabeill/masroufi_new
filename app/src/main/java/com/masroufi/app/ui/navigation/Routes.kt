@@ -51,6 +51,10 @@ import kotlinx.serialization.Serializable
 @Serializable data object SplitRulesRoute
 @Serializable data class SplitEditorRoute(val id: String? = null)
 @Serializable data object AnalyticsRoute
+/** The monthly story (Phase 6). */
+@Serializable data object RecapRoute
+/** [doc] is "privacy" or "terms". */
+@Serializable data class LegalRoute(val doc: String)
 @Serializable data object SettingsRoute
 @Serializable data object SecurityRoute
 @Serializable data object BackupRoute

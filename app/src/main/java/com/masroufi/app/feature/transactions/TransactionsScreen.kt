@@ -150,7 +150,7 @@ fun TransactionsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: T
             }
         },
     ) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(bottom = DockClearance)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(top = 16.dp, bottom = DockClearance)) {
             if (searching || state.query.isNotEmpty()) {
                 item(key = "search") {
                     OutlinedTextField(colors = glassFieldColors(),

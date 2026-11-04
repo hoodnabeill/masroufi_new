@@ -177,8 +177,17 @@ class AnalyticsViewModel @Inject constructor(
 }
 
 @Composable
-fun AnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltViewModel()) {
+fun AnalyticsScreen(
+    onBack: () -> Unit,
+    onEmergencyGoal: () -> Unit = {},
+    onLog: () -> Unit = {},
+    onBudgets: () -> Unit = {},
+    onRecap: () -> Unit = {},
+    viewModel: AnalyticsViewModel = hiltViewModel(),
+    insightsViewModel: InsightsViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val insights by insightsViewModel.state.collectAsStateWithLifecycle()
     val money = LocalMoneyFormatter.current
     val finance = LocalFinanceColors.current
     val locale = LocalConfiguration.current.locales[0]
@@ -187,6 +196,17 @@ fun AnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltView
     Scaffold(topBar = { MasroufiTopBar(stringResource(R.string.analytics_title), onBack = onBack) }) { padding ->
         if (state.loading) return@Scaffold
         LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            insights?.let { s ->
+                item(key = "health") { HealthCard(s) }
+                item(key = "raise") { RaiseCard(s, onEmergencyGoal, onLog, onBudgets) }
+                item(key = "forecast") { ForecastCard(s) }
+                item(key = "ask") { AskCard(s) }
+            }
+            item(key = "recap") {
+                com.masroufi.app.ui.components.GlassSecondaryButton(onClick = onRecap, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.recap_open))
+                }
+            }
             item {
                 SegmentedChoice(listOf(1, 3, 6, 12), state.months, viewModel::setMonths, { stringResource(R.string.analytics_months, it) })
             }

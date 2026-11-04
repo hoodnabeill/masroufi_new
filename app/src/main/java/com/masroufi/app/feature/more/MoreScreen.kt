@@ -45,11 +45,14 @@ fun MoreScreen(
     onSecurity: () -> Unit,
     onSettings: () -> Unit,
     onPremium: () -> Unit,
+    onRecap: () -> Unit,
+    onLegal: (String) -> Unit,
 ) {
     val money = listOf(
         Entry(MIcons.Wallet, R.string.wallets_title, R.string.more_wallets_sub, onWallets),
         Entry(MIcons.Repeat, R.string.subs_title, R.string.subs_more_sub, onSubscriptions),
         Entry(MIcons.Insights, R.string.analytics_title, R.string.more_analytics_sub, onAnalytics),
+        Entry(MIcons.Sparkle, R.string.recap_entry, R.string.recap_entry_sub, onRecap),
         Entry(MIcons.Repeat, R.string.recurring_title, R.string.more_recurring_sub, onRecurring),
         Entry(MIcons.Gameya, R.string.gameya_title, R.string.more_gameya_sub, onGameya),
         Entry(MIcons.Handshake, R.string.debts_title, R.string.more_debts_sub, onDebts),
@@ -61,6 +64,8 @@ fun MoreScreen(
         Entry(MIcons.Lock, R.string.security_title, R.string.more_security_sub, onSecurity),
         Entry(MIcons.Gear, R.string.settings_title, R.string.more_settings_sub, onSettings),
         Entry(MIcons.Crown, R.string.premium_title, R.string.more_premium_sub, onPremium),
+        Entry(MIcons.Lock, R.string.legal_privacy, R.string.legal_privacy_sub) { onLegal("privacy") },
+        Entry(MIcons.Pencil, R.string.legal_terms, R.string.legal_terms_sub) { onLegal("terms") },
     )
     Scaffold(contentWindowInsets = TabInsets, topBar = { MasroufiTopBar(stringResource(R.string.tab_more)) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(top = 16.dp, bottom = DockClearance)) {

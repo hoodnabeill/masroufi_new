@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Opt-in (Settings): incoming wallet/bank SMS are parsed on the device to suggest an entry. SMS history is never
+         read and nothing is sent. Play policy: "SMS-based money management" exception, see docs/legal/PLAY_CONSOLE.md. -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
 
     <!-- allowBackup is off: financial data leaves the device only through the user's own encrypted backup or WebDAV sync. -->
     <!-- Voice logging asks the system speech recogniser; Android 11+ only reveals it when declared here. -->
@@ -71,6 +74,26 @@
         </service>
 
         <!-- WorkManager is initialised by MasroufiApplication with the Hilt worker factory. -->
+        <receiver
+            android:name=".sms.MoneySmsReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Shares the monthly recap image; only the share cache folder is reachable. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

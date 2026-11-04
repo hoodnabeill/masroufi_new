@@ -30,6 +30,8 @@ data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = false,
     val solidGlass: Boolean = false,
+    /** Offer to log incoming wallet and bank SMS (needs RECEIVE_SMS; off by default). */
+    val smsAutoLog: Boolean = false,
     /** Day of the month the salary lands (1–31), or 0 for calendar months. */
     val paydayDay: Int = 0,
     /** Privacy eye on Home: amounts render as dots until tapped again. */
@@ -72,6 +74,7 @@ class SettingsRepository @Inject constructor(
         val theme = stringPreferencesKey("theme")
         val dynamic = booleanPreferencesKey("dynamic_color")
         val solidGlass = booleanPreferencesKey("solid_glass")
+        val smsAutoLog = booleanPreferencesKey("sms_auto_log")
         val payday = intPreferencesKey("payday_day")
         val hideAmounts = booleanPreferencesKey("hide_amounts")
         val currency = stringPreferencesKey("primary_currency")
@@ -108,6 +111,7 @@ class SettingsRepository @Inject constructor(
             themeMode = p[Keys.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
             dynamicColor = p[Keys.dynamic] ?: false,
             solidGlass = p[Keys.solidGlass] ?: false,
+            smsAutoLog = p[Keys.smsAutoLog] ?: false,
             paydayDay = p[Keys.payday] ?: 0,
             hideAmounts = p[Keys.hideAmounts] ?: false,
             primaryCurrency = p[Keys.currency] ?: Money.DEFAULT_CURRENCY,
@@ -160,6 +164,7 @@ class SettingsRepository @Inject constructor(
     suspend fun setTheme(mode: ThemeMode) = store.edit { it[Keys.theme] = mode.name }
     suspend fun setDynamicColor(enabled: Boolean) = store.edit { it[Keys.dynamic] = enabled }
     suspend fun setSolidGlass(enabled: Boolean) = store.edit { it[Keys.solidGlass] = enabled }
+    suspend fun setSmsAutoLog(enabled: Boolean) = store.edit { it[Keys.smsAutoLog] = enabled }
     suspend fun setPayday(day: Int) = store.edit { it[Keys.payday] = day.coerceIn(0, 31) }
     suspend fun setHideAmounts(hide: Boolean) = store.edit { it[Keys.hideAmounts] = hide }
     suspend fun setPrimaryCurrency(currency: String) = store.edit { it[Keys.currency] = currency }

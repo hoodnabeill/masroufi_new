@@ -525,7 +525,11 @@ private fun WalletChip(wallets: List<WalletWithBalance>, current: WalletWithBala
             colors = glassAssistChipColors(),
             onClick = { open = true },
             label = { Text(prefix?.let { "$it: $name" } ?: name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            leadingIcon = { Icon(current?.let { CategoryIcons.wallet(it.wallet.type) } ?: MIcons.Wallet, contentDescription = null, modifier = Modifier.size(16.dp)) },
+            leadingIcon = {
+                val brand = current?.let { com.masroufi.app.ui.components.Services.forWallet(it.wallet.name) }
+                if (brand != null) com.masroufi.app.ui.components.ServiceTile(brand, size = 20.dp)
+                else Icon(current?.let { CategoryIcons.wallet(it.wallet.type) } ?: MIcons.Wallet, contentDescription = null, modifier = Modifier.size(16.dp))
+            },
         )
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             wallets.forEach { item ->
