@@ -43,6 +43,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.categoryColor
+import com.masroufi.app.ui.components.IconBadge
+import com.masroufi.app.ui.components.pressClick
+import com.masroufi.app.ui.components.GroupedRow
+import com.masroufi.app.ui.components.GroupedSection
 import com.masroufi.app.data.model.DebtDirection
 import com.masroufi.app.data.model.DebtWithPaid
 import com.masroufi.app.data.model.RecurringRule
@@ -188,12 +193,12 @@ fun MoreScreen(
             item(key = "app") {
                 AppList(
                     listOf(
-                        Triple(R.string.security_title, R.string.more_security_line, onSecurity),
-                        Triple(R.string.backup_title, if (s.backedUp) R.string.more_backup_on else R.string.more_backup_off, onBackup),
-                        Triple(R.string.categories_title, R.string.more_categories_line, onCategories),
-                        Triple(R.string.settings_title, R.string.more_settings_line, onSettings),
-                        Triple(R.string.legal_privacy, R.string.legal_privacy_sub) { onLegal("privacy") },
-                        Triple(R.string.legal_terms, R.string.legal_terms_sub) { onLegal("terms") },
+                        AppEntry(MIcons.Lock, 0, R.string.security_title, R.string.more_security_line, onSecurity),
+                        AppEntry(MIcons.Cloud, 1, R.string.backup_title, if (s.backedUp) R.string.more_backup_on else R.string.more_backup_off, onBackup),
+                        AppEntry(MIcons.Shapes, 5, R.string.categories_title, R.string.more_categories_line, onCategories),
+                        AppEntry(MIcons.Gear, null, R.string.settings_title, R.string.more_settings_line, onSettings),
+                        AppEntry(MIcons.Eye, 7, R.string.legal_privacy, R.string.legal_privacy_sub) { onLegal("privacy") },
+                        AppEntry(MIcons.Clip, null, R.string.legal_terms, R.string.legal_terms_sub) { onLegal("terms") },
                     ),
                 )
             }
@@ -320,39 +325,38 @@ private fun ToolTile(tool: Tool, modifier: Modifier) {
     val glass = LocalGlass.current
     Column(
         modifier
+            .pressClick(MaterialTheme.shapes.medium, onClick = tool.onClick)
             .heightIn(min = 104.dp)
             .clip(MaterialTheme.shapes.medium)
             .background(glass.fill)
-            .border(1.dp, glass.rim, MaterialTheme.shapes.medium)
-            .clickable(role = Role.Button, onClick = tool.onClick)
             .padding(14.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(tool.color.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
-            Icon(tool.icon, contentDescription = null, tint = tool.color, modifier = Modifier.size(20.dp))
-        }
+        IconBadge(tool.icon, tool.color, size = 36.dp)
         Spacer(Modifier.height(10.dp))
         Text(stringResource(tool.title), style = MaterialTheme.typography.titleSmall, maxLines = 1)
         Text(tool.sub, style = MaterialTheme.typography.labelSmall, color = glass.textTertiary, maxLines = 1)
     }
 }
 
+private data class AppEntry(val icon: ImageVector, val color: Int?, val title: Int, val sub: Int, val onClick: () -> Unit)
+
+/** The app rows as an inset-grouped list with Settings-style icon tiles (grey for the plain ones). */
 @Composable
-private fun AppList(rows: List<Triple<Int, Int, () -> Unit>>) {
-    val glass = LocalGlass.current
-    Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large)) {
-        rows.forEachIndexed { i, (title, sub, onClick) ->
-            if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = glass.strokeBottom)
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 58.dp).clickable(role = Role.Button, onClick = onClick).padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(stringResource(title), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                Text(stringResource(sub), style = MaterialTheme.typography.labelSmall, color = glass.textTertiary, maxLines = 1)
-                Spacer(Modifier.width(8.dp))
-                Icon(MIcons.ChevronForward, contentDescription = null, tint = glass.textTertiary, modifier = Modifier.size(16.dp))
+private fun AppList(rows: List<AppEntry>) {
+    GroupedSection(
+        rows = rows.map { e ->
+            @Composable {
+                GroupedRow(
+                    title = stringResource(e.title),
+                    subtitle = stringResource(e.sub),
+                    icon = e.icon,
+                    iconTint = e.color?.let { categoryColor(it) } ?: Color(0xFF8E8E93),
+                    onClick = e.onClick,
+                )
             }
-        }
-    }
+        },
+        inset = 58.dp,
+    )
 }
 

@@ -225,7 +225,7 @@ private fun TabCapsule(tabs: List<DockTab>, selected: Int, modifier: Modifier, o
             Modifier
                 .offset {
                     val x = (lens.value * slot).roundToInt()
-                    IntOffset(if (rtl) (maxWidth.roundToPx() - slot.roundToInt() - x) else x, 0)
+                    IntOffset(if (rtl) ((slot * tabs.size).roundToInt() - slot.roundToInt() - x) else x, 0)
                 }
                 .width(with(density) { slot.toDp() })
                 .fillMaxHeight()

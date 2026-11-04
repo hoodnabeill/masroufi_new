@@ -39,6 +39,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.categoryColor
+import com.masroufi.app.ui.components.GroupedContent
+import com.masroufi.app.ui.components.GroupedRow
+import com.masroufi.app.ui.components.GroupedSection
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.clickable
 import com.masroufi.app.core.applyAppLanguage
@@ -105,83 +109,123 @@ fun SettingsScreen(onBack: () -> Unit, onPremium: () -> Unit = {}, viewModel: Se
     }
     Scaffold(topBar = { MasroufiTopBar(stringResource(R.string.settings_title), onBack = onBack) }) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp, 8.dp, 16.dp, 32.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            ListItem(
-                modifier = Modifier.clickable(onClick = onPremium),
-                leadingContent = { Icon(MIcons.Crown, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
-                headlineContent = { Text(stringResource(R.string.premium_title)) },
-                supportingContent = { Text(stringResource(R.string.more_premium_sub)) },
-                trailingContent = { Icon(MIcons.ChevronForward, contentDescription = null) },
-            )
-            Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleSmall)
-            SegmentedChoice(
-                listOf("ar", "en"),
-                if (language == "ar") "ar" else "en",
-                { applyAppLanguage(it) },
-                { if (it == "ar") "العربية" else "English" },
-            )
-            Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.titleSmall)
-            SegmentedChoice(
-                ThemeMode.entries.toList(),
-                s.themeMode,
-                { m -> viewModel.launch { setTheme(m) } },
-                {
-                    stringResource(
-                        when (it) {
-                            ThemeMode.SYSTEM -> R.string.theme_system
-                            ThemeMode.LIGHT -> R.string.theme_light
-                            ThemeMode.DARK -> R.string.theme_dark
-                        },
-                    )
-                },
-            )
             // Reading money SMS is opt-in: the switch asks for RECEIVE_SMS, and only turns on once it is granted.
             val smsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
                 viewModel.launch { setSmsAutoLog(granted) }
             }
             val context = androidx.compose.ui.platform.LocalContext.current
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_sms)) },
-                supportingContent = { Text(stringResource(R.string.settings_sms_sub)) },
-                trailingContent = {
-                    GlassSwitch(s.smsAutoLog, { v ->
-                        val granted = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECEIVE_SMS) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                        if (v && !granted) smsPermission.launch(android.Manifest.permission.RECEIVE_SMS) else viewModel.launch { setSmsAutoLog(v) }
-                    })
-                },
+            GroupedSection(
+                rows = listOf<@Composable () -> Unit>(
+                    {
+                        GroupedRow(
+                            title = stringResource(R.string.premium_title),
+                            subtitle = stringResource(R.string.more_premium_sub),
+                            icon = MIcons.Crown,
+                            iconTint = MaterialTheme.colorScheme.secondary,
+                            onClick = onPremium,
+                        )
+                    },
+                ),
+                inset = 58.dp,
             )
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_solid_glass)) },
-                supportingContent = { Text(stringResource(R.string.settings_solid_glass_sub)) },
-                trailingContent = { GlassSwitch(s.solidGlass, { v -> viewModel.launch { setSolidGlass(v) } }) },
-            )
-            DropdownField(
-                label = stringResource(R.string.settings_payday),
-                options = (0..31).toList(),
-                selected = s.paydayDay,
-                onSelect = { d -> viewModel.launch { setPayday(d) } },
-                optionLabel = { d -> if (d == 0) stringResource(R.string.payday_none) else d.toString() },
-            )
-            Text(stringResource(R.string.settings_payday_sub), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            CurrencyField(s.primaryCurrency, { c -> viewModel.launch { setPrimaryCurrency(c) } })
-            Text(stringResource(R.string.settings_currency_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_notifications)) },
-                supportingContent = { Text(stringResource(R.string.settings_notifications_sub)) },
-                trailingContent = {
-                    GlassSwitch(s.notificationsEnabled, { v ->
-                        if (v && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            viewModel.launch { setNotifications(v) }
+            GroupedSection(
+                header = stringResource(R.string.settings_language),
+                rows = listOf<@Composable () -> Unit>(
+                    {
+                        GroupedContent {
+                            SegmentedChoice(
+                                listOf("ar", "en"),
+                                if (language == "ar") "ar" else "en",
+                                { applyAppLanguage(it) },
+                                { if (it == "ar") "العربية" else "English" },
+                            )
                         }
-                    })
-                },
+                    },
+                ),
             )
-            SectionHeader(stringResource(R.string.settings_privacy))
-            Text(stringResource(R.string.settings_privacy_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            GroupedSection(
+                header = stringResource(R.string.settings_theme),
+                rows = listOf<@Composable () -> Unit>(
+                    {
+                        GroupedContent {
+                            SegmentedChoice(
+                                ThemeMode.entries.toList(),
+                                s.themeMode,
+                                { m -> viewModel.launch { setTheme(m) } },
+                                {
+                                    stringResource(
+                                        when (it) {
+                                            ThemeMode.SYSTEM -> R.string.theme_system
+                                            ThemeMode.LIGHT -> R.string.theme_light
+                                            ThemeMode.DARK -> R.string.theme_dark
+                                        },
+                                    )
+                                },
+                            )
+                        }
+                    },
+                    {
+                        GroupedRow(
+                            title = stringResource(R.string.settings_solid_glass),
+                            subtitle = stringResource(R.string.settings_solid_glass_sub),
+                            trailing = { GlassSwitch(s.solidGlass, { v -> viewModel.launch { setSolidGlass(v) } }) },
+                        )
+                    },
+                ),
+            )
+            GroupedSection(
+                footer = stringResource(R.string.settings_payday_sub) + "\n" + stringResource(R.string.settings_currency_note),
+                rows = listOf<@Composable () -> Unit>(
+                    {
+                        GroupedContent {
+                            DropdownField(
+                                label = stringResource(R.string.settings_payday),
+                                options = (0..31).toList(),
+                                selected = s.paydayDay,
+                                onSelect = { d -> viewModel.launch { setPayday(d) } },
+                                optionLabel = { d -> if (d == 0) stringResource(R.string.payday_none) else d.toString() },
+                            )
+                        }
+                    },
+                    { GroupedContent { CurrencyField(s.primaryCurrency, { c -> viewModel.launch { setPrimaryCurrency(c) } }) } },
+                ),
+            )
+            GroupedSection(
+                header = stringResource(R.string.settings_privacy),
+                footer = stringResource(R.string.settings_privacy_body),
+                rows = listOf<@Composable () -> Unit>(
+                    {
+                        GroupedRow(
+                            title = stringResource(R.string.settings_sms),
+                            subtitle = stringResource(R.string.settings_sms_sub),
+                            trailing = {
+                                GlassSwitch(s.smsAutoLog, { v ->
+                                    val granted = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECEIVE_SMS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                    if (v && !granted) smsPermission.launch(android.Manifest.permission.RECEIVE_SMS) else viewModel.launch { setSmsAutoLog(v) }
+                                })
+                            },
+                        )
+                    },
+                    {
+                        GroupedRow(
+                            title = stringResource(R.string.settings_notifications),
+                            subtitle = stringResource(R.string.settings_notifications_sub),
+                            trailing = {
+                                GlassSwitch(s.notificationsEnabled, { v ->
+                                    if (v && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        viewModel.launch { setNotifications(v) }
+                                    }
+                                })
+                            },
+                        )
+                    },
+                ),
+            )
         }
     }
 }
@@ -197,42 +241,87 @@ fun SecurityScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
     val cancel = stringResource(R.string.action_cancel)
     Scaffold(topBar = { MasroufiTopBar(stringResource(R.string.security_title), onBack = onBack) }) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp, 8.dp, 16.dp, 32.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.security_app_lock)) },
-                supportingContent = { Text(stringResource(R.string.security_app_lock_sub)) },
-                trailingContent = { GlassSwitch(s.lockEnabled, { v -> if (v) settingPin = true else confirmDisable = true }) },
+            val available = canUseBiometric(activity)
+            GroupedSection(
+                footer = stringResource(R.string.security_app_lock_sub),
+                rows = buildList<@Composable () -> Unit> {
+                    add {
+                        GroupedRow(
+                            title = stringResource(R.string.security_app_lock),
+                            icon = MIcons.Lock,
+                            iconTint = categoryColor(0),
+                            trailing = { GlassSwitch(s.lockEnabled, { v -> if (v) settingPin = true else confirmDisable = true }) },
+                        )
+                    }
+                    if (s.lockEnabled) {
+                        add {
+                            GroupedRow(
+                                title = stringResource(R.string.security_biometric),
+                                subtitle = stringResource(if (available) R.string.security_biometric_sub else R.string.security_biometric_unavailable),
+                                icon = MIcons.Fingerprint,
+                                iconTint = categoryColor(6),
+                                trailing = {
+                                    GlassSwitch(s.biometricEnabled, { v ->
+                                        // Confirm the sensor works before relying on it, so the user can't lock themselves into a broken path.
+                                        if (v) showBiometricPrompt(activity, biometricTitle, cancel) { viewModel.launch { setBiometric(true) } } else viewModel.launch { setBiometric(false) }
+                                    }, enabled = available)
+                                },
+                            )
+                        }
+                        add {
+                            GroupedRow(
+                                title = stringResource(R.string.security_change_pin),
+                                icon = MIcons.Pencil,
+                                iconTint = categoryColor(1),
+                                titleColor = MaterialTheme.colorScheme.secondary,
+                                onClick = { settingPin = true },
+                            )
+                        }
+                    }
+                },
+                inset = 58.dp,
             )
             if (s.lockEnabled) {
-                val available = canUseBiometric(activity)
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.security_biometric)) },
-                    supportingContent = { Text(stringResource(if (available) R.string.security_biometric_sub else R.string.security_biometric_unavailable)) },
-                    trailingContent = {
-                        GlassSwitch(s.biometricEnabled, { v ->
-                            // Confirm the sensor works before relying on it, so the user can't lock themselves into a broken path.
-                            if (v) showBiometricPrompt(activity, biometricTitle, cancel) { viewModel.launch { setBiometric(true) } } else viewModel.launch { setBiometric(false) }
-                        }, enabled = available)
+                GroupedSection(
+                    header = stringResource(R.string.security_timeout),
+                    rows = listOf<@Composable () -> Unit>(
+                        {
+                            GroupedContent {
+                                ChipChoice(
+                                    listOf(0, 30, 60, 300), s.lockTimeoutSeconds, { t -> viewModel.launch { setLockTimeout(t) } },
+                                    { if (it == 0) stringResource(R.string.security_timeout_immediate) else stringResource(R.string.security_timeout_seconds, it) },
+                                )
+                            }
+                        },
+                    ),
+                )
+            }
+            GroupedSection(
+                footer = stringResource(R.string.security_hide_recents_sub),
+                rows = listOf<@Composable () -> Unit>(
+                    {
+                        GroupedRow(
+                            title = stringResource(R.string.security_hide_recents),
+                            trailing = { GlassSwitch(s.hideInRecents, { v -> viewModel.launch { setHideInRecents(v) } }) },
+                        )
                     },
-                )
-                Text(stringResource(R.string.security_timeout), style = MaterialTheme.typography.titleSmall)
-                ChipChoice(
-                    listOf(0, 30, 60, 300), s.lockTimeoutSeconds, { t -> viewModel.launch { setLockTimeout(t) } },
-                    { if (it == 0) stringResource(R.string.security_timeout_immediate) else stringResource(R.string.security_timeout_seconds, it) },
-                )
-                GlassSecondaryButton(onClick = { settingPin = true }) { Text(stringResource(R.string.security_change_pin)) }
-            }
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.security_hide_recents)) },
-                supportingContent = { Text(stringResource(R.string.security_hide_recents_sub)) },
-                trailingContent = { GlassSwitch(s.hideInRecents, { v -> viewModel.launch { setHideInRecents(v) } }) },
+                ),
             )
-            PressableCard(onClick = null) {
-                Text(stringResource(R.string.security_model_title), style = MaterialTheme.typography.titleSmall)
-                Text(stringResource(R.string.security_model_body), style = MaterialTheme.typography.bodySmall)
-            }
+            GroupedSection(
+                header = stringResource(R.string.security_model_title),
+                rows = listOf<@Composable () -> Unit>(
+                    {
+                        Text(
+                            stringResource(R.string.security_model_body),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(16.dp),
+                        )
+                    },
+                ),
+            )
         }
     }
     if (settingPin) {
