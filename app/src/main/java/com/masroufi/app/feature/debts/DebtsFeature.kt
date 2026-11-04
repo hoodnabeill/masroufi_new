@@ -186,6 +186,10 @@ fun DebtDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: De
                     GlassButton(onClick = { paying = true }, enabled = remaining > 0, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.debt_record_payment))
                     }
+                    debt.phone?.takeIf { it.isNotBlank() }?.let { phone ->
+                        Spacer(Modifier.height(8.dp))
+                        com.masroufi.app.ui.components.ContactActions(phone, Modifier.fillMaxWidth())
+                    }
                 }
             }
             item { SectionHeader(stringResource(R.string.debt_payments)) }
@@ -226,6 +230,7 @@ data class DebtForm(
     val due: LocalDate? = null,
     val note: String = "",
     val remind: Boolean = false,
+    val phone: String = "",
 )
 
 @HiltViewModel
@@ -247,7 +252,7 @@ class DebtEditorViewModel @Inject constructor(
             val existing = id?.let { debts.get(it) }
             original = existing
             _form.value = existing?.let {
-                DebtForm(true, false, it.direction, it.personName, Money.toPlainString(it.originalMinor, it.currency), it.currency, it.dueEpochDay?.let(LocalDate::ofEpochDay), it.note, it.remind)
+                DebtForm(true, false, it.direction, it.personName, Money.toPlainString(it.originalMinor, it.currency), it.currency, it.dueEpochDay?.let(LocalDate::ofEpochDay), it.note, it.remind, it.phone.orEmpty())
             } ?: DebtForm(loaded = true, amount = route.amount.orEmpty(), currency = settings.current().primaryCurrency)
         }
     }
@@ -269,6 +274,7 @@ class DebtEditorViewModel @Inject constructor(
                         dueEpochDay = f.due?.toEpochDay(),
                         note = f.note,
                         remind = f.remind,
+                        phone = f.phone.trim().takeIf { it.isNotEmpty() },
                         createdAt = original?.createdAt ?: now,
                         updatedAt = now,
                     ),
@@ -293,7 +299,12 @@ fun DebtEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: DebtEdit
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             SegmentedChoice(DebtDirection.entries.toList(), form.direction, { d -> viewModel.update { it.copy(direction = d) } }, { stringResource(debtLabel(it)) })
-            TextInput(form.person, { v -> viewModel.update { it.copy(person = v) } }, stringResource(R.string.field_person))
+            val pick = com.masroufi.app.ui.components.rememberContactPicker { c -> viewModel.update { it.copy(person = it.person.ifBlank { c.name }, phone = c.phone) } }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextInput(form.person, { v -> viewModel.update { it.copy(person = v) } }, stringResource(R.string.field_person), modifier = Modifier.weight(1f))
+                GlassIconButton(onClick = pick, modifier = Modifier.padding(start = 8.dp)) { Icon(MIcons.Person, stringResource(R.string.contact_pick)) }
+            }
+            TextInput(form.phone, { v -> viewModel.update { it.copy(phone = v) } }, stringResource(R.string.field_phone_optional), keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone)
             AmountField(form.amount, { v -> viewModel.update { it.copy(amount = v) } }, form.currency)
             CurrencyField(form.currency, { c -> viewModel.update { it.copy(currency = c) } }, enabled = form.isNew)
             OptionalDateChip(form.due, { d -> viewModel.update { it.copy(due = d) } }, stringResource(R.string.field_due_date))

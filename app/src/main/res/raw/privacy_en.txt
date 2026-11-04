@@ -32,6 +32,7 @@ Logging by voice uses your device's speech recognition service. Your speech is h
 # Other permissions
 - Notifications: reminders for bills, debts, budgets and logging, and the SMS log suggestion. You can turn them off in Settings or Android settings.
 - Biometric: to unlock the app with your fingerprint or face, if you enable the app lock. Biometric data never reaches the app; Android only tells it whether unlocking succeeded.
+- Contacts: when you link a debt or a gameya member to a contact, Android's contact picker hands the app that one name and number. The app cannot read your address book; the number is stored on your device with that entry and used only when you tap Call or WhatsApp.
 - Internet: used only for WebDAV sync, and opening links you tap (such as a WhatsApp reminder you choose to send).
 
 # Sharing

@@ -122,3 +122,27 @@ internal fun GameyaHero(gameya: Gameya, summary: GameyaSummary) {
         }
     }
 }
+
+/** Members with a saved number, each one tap from a call or a WhatsApp chat (to remind them of their instalment). */
+@Composable
+internal fun GameyaPeople(members: List<com.masroufi.app.data.model.GameyaMember>) {
+    val glass = LocalGlass.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Column(
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(vertical = 6.dp),
+    ) {
+        members.forEach { m ->
+            val phone = m.phone ?: return@forEach
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(m.name, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f), maxLines = 1)
+                com.masroufi.app.ui.components.GlassIconButton(onClick = { com.masroufi.app.ui.components.Phones.call(context, phone) }) {
+                    androidx.compose.material3.Icon(com.masroufi.app.ui.components.MIcons.Phone, stringResource(R.string.contact_call))
+                }
+                Spacer(Modifier.width(8.dp))
+                com.masroufi.app.ui.components.GlassIconButton(onClick = { com.masroufi.app.ui.components.Phones.whatsapp(context, phone) }) {
+                    androidx.compose.material3.Icon(com.masroufi.app.ui.components.MIcons.Chat, stringResource(R.string.contact_whatsapp))
+                }
+            }
+        }
+    }
+}

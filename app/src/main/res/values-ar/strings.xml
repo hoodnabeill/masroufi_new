@@ -962,4 +962,8 @@
     <string name="sms_notify_income">وصلك %1$s؟</string>
     <string name="sms_notify_cash">سحبت %1$s؟</string>
     <string name="sms_notify_body">اضغط عشان تسجّلها · %1$s</string>
+    <string name="contact_pick">اختار من جهات الاتصال</string>
+    <string name="contact_call">اتصل</string>
+    <string name="contact_whatsapp">واتساب</string>
+    <string name="field_phone_optional">رقم الموبايل (اختياري)</string>
 </resources>

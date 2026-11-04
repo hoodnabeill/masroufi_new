@@ -31,6 +31,8 @@ data class GameyaMember(
     val name: String,
     val payoutOrder: Int,
     val isMe: Boolean = false,
+    /** For call / WhatsApp (v4). */
+    val phone: String? = null,
     val updatedAt: Long,
     val deleted: Boolean = false,
 )

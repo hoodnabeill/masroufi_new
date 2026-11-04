@@ -19,6 +19,8 @@ data class Debt(
     val dueEpochDay: Long? = null,
     val note: String = "",
     val remind: Boolean = false,
+    /** The person's number, picked from contacts or typed, for call / WhatsApp (v4). */
+    val phone: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
     val deleted: Boolean = false,

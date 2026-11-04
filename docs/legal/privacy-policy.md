@@ -32,6 +32,7 @@ Logging by voice uses your device's speech recognition service. Your speech is h
 # Other permissions
 - Notifications: reminders for bills, debts, budgets and logging, and the SMS log suggestion. You can turn them off in Settings or Android settings.
 - Biometric: to unlock the app with your fingerprint or face, if you enable the app lock. Biometric data never reaches the app; Android only tells it whether unlocking succeeded.
+- Contacts: when you link a debt or a gameya member to a contact, Android's contact picker hands the app that one name and number. The app cannot read your address book; the number is stored on your device with that entry and used only when you tap Call or WhatsApp.
 - Internet: used only for WebDAV sync, and opening links you tap (such as a WhatsApp reminder you choose to send).
 
 # Sharing
@@ -89,6 +90,7 @@ For questions about privacy, use the developer email shown on the app's Google P
 # أذونات تانية
 - الإشعارات: تذكيرات بالفواتير والديون والميزانيات والتسجيل، واقتراح تسجيل رسالة الفلوس. تقدر تقفلها من الإعدادات أو من أندرويد.
 - البصمة: لفتح التطبيق ببصمتك أو وشّك لو فعّلت القفل. بيانات البصمة عمرها ما بتوصل للتطبيق؛ أندرويد بيقوله بس الفتح نجح ولا لأ.
+- جهات الاتصال: لما تربط دين أو عضو جمعية بجهة اتصال، أداة اختيار جهات الاتصال في أندرويد بتدّي التطبيق الاسم والرقم ده بس. التطبيق ما يقدرش يقرا دفتر العناوين بتاعك؛ الرقم بيتحفظ على جهازك مع الحركة دي وبيُستخدم بس لما تدوس اتصل أو واتساب.
 - الإنترنت: بيُستخدم بس لمزامنة WebDAV، وفتح الروابط اللي بتدوس عليها (زي تذكير واتساب انت اللي بتبعته).
 
 # المشاركة

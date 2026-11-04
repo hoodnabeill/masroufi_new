@@ -212,6 +212,9 @@ fun GameyaDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: 
         if (gameya == null || summary == null) return@Scaffold
         LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item(key = "hero") { GameyaHero(gameya, summary) }
+            state.members.filter { !it.isMe && !it.phone.isNullOrBlank() }.takeIf { it.isNotEmpty() }?.let { reachable ->
+                item(key = "people") { GameyaPeople(reachable) }
+            }
             item {
                 PressableCard(onClick = null) {
                     LabeledRow(stringResource(R.string.gameya_pot)) { MoneyText(summary.potMinor, gameya.currency) }
@@ -353,7 +356,7 @@ class GameyaEditorViewModel @Inject constructor(
                     loaded = true, isNew = false, name = existing.name,
                     contribution = Money.toPlainString(existing.contributionMinor, existing.currency), currency = existing.currency,
                     monthly = existing.monthly, intervalDays = existing.intervalDays.toString(), start = LocalDate.ofEpochDay(existing.startEpochDay),
-                    organizer = existing.organizer, members = members.map { MemberDraft(it.id, it.name) }, meIndex = members.indexOfFirst { it.isMe }.takeIf { it >= 0 },
+                    organizer = existing.organizer, members = members.map { MemberDraft(it.id, it.name, it.phone) }, meIndex = members.indexOfFirst { it.isMe }.takeIf { it >= 0 },
                 )
             } else {
                 GameyaForm(loaded = true, currency = settings.current().primaryCurrency, start = LocalDate.now(clock))
@@ -446,15 +449,20 @@ fun GameyaEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Gameya
             Text(stringResource(R.string.gameya_members_order), style = MaterialTheme.typography.titleSmall)
             Text(stringResource(R.string.gameya_members_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             form.members.forEachIndexed { index, draft ->
+                val pick = com.masroufi.app.ui.components.rememberContactPicker { c ->
+                    viewModel.update { f -> f.copy(members = f.members.mapIndexed { i, old -> if (i == index) old.copy(name = old.name.ifBlank { c.name }, phone = c.phone) else old }) }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = form.meIndex == index, onClick = { viewModel.update { it.copy(meIndex = index) } })
                     OutlinedTextField(colors = glassFieldColors(), shape = MaterialTheme.shapes.medium,
                         value = draft.name,
                         onValueChange = { v -> viewModel.update { f -> f.copy(members = f.members.mapIndexed { i, old -> if (i == index) old.copy(name = v) else old }) } },
                         label = { Text(stringResource(R.string.gameya_member_n, index + 1)) },
+                        supportingText = draft.phone?.let { { Text(it) } },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
+                    IconButton(onClick = pick) { Icon(MIcons.Person, stringResource(R.string.contact_pick)) }
                     IconButton(onClick = { viewModel.move(index, -1) }, enabled = index > 0) { Icon(MIcons.ArrowUp, stringResource(R.string.action_move_up)) }
                     IconButton(onClick = { viewModel.move(index, 1) }, enabled = index < form.members.lastIndex) { Icon(MIcons.ArrowDown, stringResource(R.string.action_move_down)) }
                     IconButton(onClick = { viewModel.remove(index) }, enabled = form.members.size > 2) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }

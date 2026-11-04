@@ -55,7 +55,7 @@ class DebtRepository @Inject constructor(
     }
 }
 
-data class MemberDraft(val id: String? = null, val name: String = "")
+data class MemberDraft(val id: String? = null, val name: String = "", val phone: String? = null)
 
 @Singleton
 class GameyaRepository @Inject constructor(
@@ -93,6 +93,7 @@ class GameyaRepository @Inject constructor(
                 name = draft.name.trim(),
                 payoutOrder = index + 1,
                 isMe = index == meIndex,
+                phone = draft.phone?.trim()?.takeIf { it.isNotEmpty() },
                 updatedAt = now,
             )
         }

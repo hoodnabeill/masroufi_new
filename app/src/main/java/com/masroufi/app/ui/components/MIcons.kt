@@ -104,6 +104,7 @@ object MIcons {
         }
     }
     val Phone by lazy { duo("phone") { soft { rect(6.5f, 2.5f, 17.5f, 21.5f, 3f) }; line { rect(6.5f, 2.5f, 17.5f, 21.5f, 3f); moveTo(10.5f, 18.5f); lineTo(13.5f, 18.5f) } } }
+    val Chat by lazy { duo("chat") { soft { rect(3.5f, 4.5f, 20.5f, 16.5f, 4f) }; line { rect(3.5f, 4.5f, 20.5f, 16.5f, 4f); moveTo(8f, 16.5f); lineTo(7f, 20.5f); lineTo(12.5f, 16.5f) } } }
 
     val Food by lazy {
         duo("food") {

@@ -274,12 +274,10 @@ private fun ReminderSheet(item: DebtWithPaid, today: LocalDate, onDismiss: () ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 GlassButton(
                     onClick = {
-                        // wa.me with no number lets the user pick the chat; WhatsApp shows the text and the user sends it.
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/?text=" + Uri.encode(message)))
-                        try {
-                            context.startActivity(intent)
+                        // To their chat when the number is saved, otherwise WhatsApp lets the user pick; they press send.
+                        if (com.masroufi.app.ui.components.Phones.whatsapp(context, debt.phone, message)) {
                             onDismiss()
-                        } catch (e: ActivityNotFoundException) {
+                        } else {
                             clipboard.setText(AnnotatedString(message))
                             copied = true
                         }
