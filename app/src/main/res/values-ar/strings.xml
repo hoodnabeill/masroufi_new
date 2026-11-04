@@ -873,4 +873,21 @@
     <string name="recurring_instalment_of">قسط %1$d من %2$d</string>
     <string name="recurring_instalments">عدد الأقساط (اختياري)</string>
     <string name="recurring_instalments_hint">بيحدد ميعاد آخر قسط لوحده</string>
+    <string name="gameya_hero_payout">هتقبض في %1$s</string>
+    <string name="gameya_hero_received">قبضت دورك</string>
+    <string name="gameya_hero_today">دورك النهارده</string>
+    <plurals name="gameya_hero_in_days">
+        <item quantity="zero">بعد %d يوم</item>
+        <item quantity="one">بكرة</item>
+        <item quantity="two">بعد يومين</item>
+        <item quantity="few">بعد %d أيام</item>
+        <item quantity="many">بعد %d يوم</item>
+        <item quantity="other">بعد %d يوم</item>
+    </plurals>
+    <string name="split_effects">جرّبها على دخل</string>
+    <string name="split_total_ok">المجموع %1$.0f%%</string>
+    <string name="split_total_off">المجموع %1$.1f%%، لازم يبقى 100%%</string>
+    <string name="split_daily_number">رقمك اليومي: %1$s</string>
+    <string name="split_fixed_over">المبالغ الثابتة أكتر من الدخل ده.</string>
+    <string name="split_percent_over" formatted="false">النسب مجموعها أكتر من 100%.</string>
 </resources>

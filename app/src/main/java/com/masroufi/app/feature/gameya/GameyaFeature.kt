@@ -211,10 +211,10 @@ fun GameyaDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: 
     ) { padding ->
         if (gameya == null || summary == null) return@Scaffold
         LazyColumn(Modifier.fillMaxSize().padding(padding).edgeFade(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            item(key = "hero") { GameyaHero(gameya, summary) }
             item {
-                PressableCard(onClick = null, color = MaterialTheme.colorScheme.tertiaryContainer) {
-                    Text(stringResource(R.string.gameya_pot), style = MaterialTheme.typography.labelLarge)
-                    FitAmount(summary.potMinor, gameya.currency, style = AmountStyle)
+                PressableCard(onClick = null) {
+                    LabeledRow(stringResource(R.string.gameya_pot)) { MoneyText(summary.potMinor, gameya.currency) }
                     LabeledRow(stringResource(R.string.gameya_contribution)) { MoneyText(gameya.contributionMinor, gameya.currency) }
                     LabeledRow(stringResource(R.string.gameya_frequency)) {
                         Text(if (gameya.monthly) stringResource(R.string.gameya_monthly) else stringResource(R.string.gameya_every_days, gameya.intervalDays))

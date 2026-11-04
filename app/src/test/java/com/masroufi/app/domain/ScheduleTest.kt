@@ -1,6 +1,5 @@
 package com.masroufi.app.domain
 
-import com.masroufi.app.data.model.Frequency
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate

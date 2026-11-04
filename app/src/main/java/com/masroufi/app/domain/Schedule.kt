@@ -1,6 +1,5 @@
 package com.masroufi.app.domain
 
-import com.masroufi.app.data.model.Frequency
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 

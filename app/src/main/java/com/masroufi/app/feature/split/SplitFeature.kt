@@ -34,6 +34,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.material3.FilterChip
+import com.masroufi.app.ui.components.glassChipColors
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -243,7 +245,23 @@ data class SplitForm(
     val currency: String = Money.DEFAULT_CURRENCY,
     val items: List<SplitItemDraft> = listOf(SplitItemDraft()),
     val goals: List<GoalWithSaved> = emptyList(),
-)
+) {
+    /** The drafts that are complete enough to split with, as stored items. */
+    fun toItems(): List<SplitItem> = items.filter { it.label.isNotBlank() }.mapNotNull { d ->
+        val value = when (d.kind) {
+            SplitKind.PERCENT -> Money.normalizeDigits(d.value).toBigDecimalOrNull()?.movePointRight(2)?.setScale(0, RoundingMode.DOWN)?.toLong()
+            SplitKind.FIXED -> Money.parse(d.value, currency)
+        } ?: return@mapNotNull null
+        if (value <= 0) null else SplitItem(d.label.trim(), d.kind, value, d.goalId)
+    }
+}
+
+/** One ±5 step on a typed percentage, kept within 0–100 and shown without trailing zeros. */
+internal fun stepPercent(value: String, delta: Int): String {
+    val next = ((Money.normalizeDigits(value).toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO) + java.math.BigDecimal(delta))
+        .coerceIn(java.math.BigDecimal.ZERO, java.math.BigDecimal(100))
+    return next.stripTrailingZeros().toPlainString()
+}
 
 @HiltViewModel
 class SplitEditorViewModel @Inject constructor(
@@ -291,14 +309,7 @@ class SplitEditorViewModel @Inject constructor(
         val f = _form.value
         viewModelScope.launch {
             effects.attempt {
-                val items = f.items.filter { it.label.isNotBlank() }.mapNotNull { d ->
-                    val value = when (d.kind) {
-                        SplitKind.PERCENT -> Money.normalizeDigits(d.value).toBigDecimalOrNull()?.movePointRight(2)?.setScale(0, RoundingMode.DOWN)?.toLong()
-                        SplitKind.FIXED -> Money.parse(d.value, f.currency)
-                    } ?: return@mapNotNull null
-                    if (value <= 0) null else SplitItem(d.label.trim(), d.kind, value, d.goalId)
-                }
-                repo.save(original?.id ?: newId(), f.name, f.currency, items)
+                repo.save(original?.id ?: newId(), f.name, f.currency, f.toItems())
             }
         }
     }
@@ -347,12 +358,17 @@ fun SplitEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: SplitEd
                     )
                     Spacer(Modifier.height(8.dp))
                     if (item.kind == SplitKind.PERCENT) {
-                        TextInput(
-                            item.value,
-                            { v -> viewModel.updateItem(index) { it.copy(value = Money.normalizeDigits(v).filter { c -> c.isDigit() || c == '.' }.take(6)) } },
-                            stringResource(R.string.split_percent_value),
-                            keyboardType = KeyboardType.Decimal,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            GlassIconButton(onClick = { viewModel.updateItem(index) { it.copy(value = stepPercent(it.value, -5)) } }) { Text("−5", style = MaterialTheme.typography.labelLarge) }
+                            TextInput(
+                                item.value,
+                                { v -> viewModel.updateItem(index) { it.copy(value = Money.normalizeDigits(v).filter { c -> c.isDigit() || c == '.' }.take(6)) } },
+                                stringResource(R.string.split_percent_value),
+                                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                                keyboardType = KeyboardType.Decimal,
+                            )
+                            GlassIconButton(onClick = { viewModel.updateItem(index) { it.copy(value = stepPercent(it.value, 5)) } }) { Text("+5", style = MaterialTheme.typography.labelLarge) }
+                        }
                     } else {
                         AmountField(item.value, { v -> viewModel.updateItem(index) { it.copy(value = v) } }, form.currency)
                     }
@@ -371,10 +387,72 @@ fun SplitEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: SplitEd
                 Icon(MIcons.Plus, contentDescription = null)
                 Text(stringResource(R.string.split_add_item), modifier = Modifier.padding(start = 8.dp))
             }
+            SplitLiveEffects(form)
             GlassButton(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.action_save)) }
         }
     }
     if (confirmDelete) {
         ConfirmDialog(stringResource(R.string.split_delete_title), stringResource(R.string.split_delete_body), stringResource(R.string.action_delete), viewModel::delete, { confirmDelete = false })
+    }
+}
+
+/** Sample incomes to try the split against, in whole pounds. */
+private val incomePresets = listOf(5_000L, 8_000L, 12_000L, 20_000L)
+
+/**
+ * Live effects: pick a sample income and see each line's amount, what the percentages add up to (they must reach
+ * 100%), and the daily number the money not set aside for goals leaves: spendable ÷ 30.
+ */
+@Composable
+private fun SplitLiveEffects(form: SplitForm) {
+    val money = LocalMoneyFormatter.current
+    val finance = LocalFinanceColors.current
+    val unit = Money.unit(form.currency)
+    var income by rememberSaveable { mutableStateOf(8_000L) }
+    val items = form.toItems()
+    val percent = items.filter { it.kind == SplitKind.PERCENT }.sumOf { it.value }
+    val result = SplitCalculator.calculate(income * unit, items)
+    PressableCard(onClick = null) {
+        Text(stringResource(R.string.split_effects), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            incomePresets.forEach { preset ->
+                FilterChip(
+                    colors = glassChipColors(),
+                    selected = preset == income,
+                    onClick = { income = preset },
+                    label = { Text(money.formatCompact(preset * unit, form.currency)) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        if (percent > 0) {
+            val exact = percent == 10_000L
+            Text(
+                stringResource(if (exact) R.string.split_total_ok else R.string.split_total_off, percent / 100.0),
+                style = MaterialTheme.typography.labelLarge,
+                color = if (exact) finance.income else finance.warning,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+        when (result) {
+            is SplitResult.Ok -> {
+                Spacer(Modifier.height(8.dp))
+                result.lines.forEach { line ->
+                    LabeledRow(line.item.label) { MoneyText(line.amountMinor, form.currency) }
+                }
+                if (result.unallocatedMinor > 0) LabeledRow(stringResource(R.string.split_unallocated)) { MoneyText(result.unallocatedMinor, form.currency) }
+                val spendable = result.lines.filter { it.item.goalId == null }.sumOf { it.amountMinor } + result.unallocatedMinor
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    stringResource(R.string.split_daily_number, money.format(spendable / 30, form.currency)),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            is SplitResult.FixedExceedsIncome -> Text(stringResource(R.string.split_fixed_over), color = finance.over, style = MaterialTheme.typography.bodySmall)
+            is SplitResult.PercentOver100 -> Text(stringResource(R.string.split_percent_over), color = finance.over, style = MaterialTheme.typography.bodySmall)
+            SplitResult.Empty -> Unit
+        }
     }
 }

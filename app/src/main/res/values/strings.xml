@@ -826,4 +826,17 @@
     <string name="recurring_instalment_of">Instalment %1$d of %2$d</string>
     <string name="recurring_instalments">Number of instalments (optional)</string>
     <string name="recurring_instalments_hint">Sets the end date for you</string>
+    <string name="gameya_hero_payout">You cash out in %1$s</string>
+    <string name="gameya_hero_received">You\'ve received your turn</string>
+    <string name="gameya_hero_today">Your turn is today</string>
+    <plurals name="gameya_hero_in_days">
+        <item quantity="one">in %d day</item>
+        <item quantity="other">in %d days</item>
+    </plurals>
+    <string name="split_effects">Try it on an income</string>
+    <string name="split_total_ok">Adds up to %1$.0f%%</string>
+    <string name="split_total_off">Adds up to %1$.1f%%, aim for 100%%</string>
+    <string name="split_daily_number">Your daily number: %1$s</string>
+    <string name="split_fixed_over">The fixed amounts are more than this income.</string>
+    <string name="split_percent_over" formatted="false">The percentages add up to more than 100%.</string>
 </resources>
