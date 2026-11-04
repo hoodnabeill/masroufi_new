@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.masroufi.app.feature.budgets
 
 import androidx.compose.foundation.background
@@ -61,6 +63,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.masroufi.app.core.DateWindow
 import com.masroufi.app.core.Money
 import com.masroufi.app.core.newId
@@ -229,9 +232,11 @@ fun BudgetsScreen(onAdd: () -> Unit, onEdit: (String) -> Unit, embedded: Boolean
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     HandleEditorEffects(viewModel.effects.flow, snackbar) {}
+    val largeTitle = androidx.compose.material3.TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
+        modifier = if (embedded) Modifier else Modifier.nestedScroll(largeTitle.nestedScrollConnection),
         contentWindowInsets = TabInsets,
-        topBar = { if (!embedded) MasroufiTopBar(stringResource(R.string.tab_budgets)) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.budget_add)) } } },
+        topBar = { if (!embedded) MasroufiTopBar(stringResource(R.string.tab_budgets), scrollBehavior = largeTitle) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.budget_add)) } } },
         snackbarHost = { GlassSnackbarHost(snackbar) },
     ) { padding ->
         if (state.loading) return@Scaffold

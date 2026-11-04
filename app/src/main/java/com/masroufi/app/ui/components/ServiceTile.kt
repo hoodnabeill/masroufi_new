@@ -1,5 +1,7 @@
 package com.masroufi.app.ui.components
 
+import com.masroufi.app.ui.theme.continuousPercent
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -38,7 +40,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ServiceTile(service: Service, modifier: Modifier = Modifier, size: Dp = 48.dp) {
     val base = service.color ?: categoryColor(service.key.hashCode())
-    val shape = RoundedCornerShape(percent = 30)
+    val shape = continuousPercent(23)
     val ink = if (base.luminance() > 0.6f) Color(0xFF15131D) else Color.White
     val lit = Color.White.copy(alpha = 0.12f).compositeOver(base)
     Box(

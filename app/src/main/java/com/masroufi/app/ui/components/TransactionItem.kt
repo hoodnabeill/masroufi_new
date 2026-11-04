@@ -16,6 +16,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.R
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.semantics.Role
+import com.masroufi.app.ui.theme.LocalGlass
+import com.masroufi.app.ui.theme.LocalReduceMotion
+import com.masroufi.app.ui.theme.Motion
 import com.masroufi.app.core.toLocalDate
 import com.masroufi.app.data.model.Category
 import com.masroufi.app.data.model.TransactionRow
@@ -87,16 +97,31 @@ fun TransactionItem(row: TransactionRow, onClick: () -> Unit, modifier: Modifier
         TransactionType.EXPENSE -> MaterialTheme.colorScheme.onSurface
         TransactionType.TRANSFER -> LocalFinanceColors.current.transfer
     }
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val reduce = LocalReduceMotion.current
+    val fillStrong = LocalGlass.current.fillStrong
+    // UITableView highlight: the cell greys at once on touch-down and eases back on release.
+    val highlight by animateColorAsState(
+        if (pressed) fillStrong else fillStrong.copy(alpha = 0f),
+        if (pressed || reduce) snap() else Motion.effects(false),
+        label = "txHighlight",
+    )
     Row(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .background(highlight)
+            .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconBadge(
             icon = if (isTransfer) MIcons.Transfer else CategoryIcons.of(row.categoryIcon),
             tint = if (isTransfer) LocalFinanceColors.current.transfer else categoryColor(row.categoryColor),
+            size = 40.dp,
         )
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (subtitle.isNotEmpty()) {
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -109,7 +134,7 @@ fun TransactionItem(row: TransactionRow, onClick: () -> Unit, modifier: Modifier
         MoneyText(
             minor = if (sign == 0L) tx.amountMinor else tx.amountMinor * sign,
             currency = tx.currency,
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleMedium,
             color = color,
             signed = sign > 0,
         )

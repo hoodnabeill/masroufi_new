@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.masroufi.app.feature.more
 
 import androidx.compose.foundation.background
@@ -43,6 +45,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.theme.continuous
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.masroufi.app.ui.components.categoryColor
 import com.masroufi.app.ui.components.IconBadge
 import com.masroufi.app.ui.components.pressClick
@@ -174,7 +178,8 @@ fun MoreScreen(
         Tool(MIcons.Split, finance.categories[4], R.string.split_title, stringResource(R.string.more_split_line), onSplit),
     )
 
-    Scaffold(contentWindowInsets = TabInsets, topBar = { MasroufiTopBar(stringResource(R.string.tab_more)) }) { padding ->
+    val largeTitle = androidx.compose.material3.TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    Scaffold(modifier = Modifier.nestedScroll(largeTitle.nestedScrollConnection), contentWindowInsets = TabInsets, topBar = { MasroufiTopBar(stringResource(R.string.tab_more), scrollBehavior = largeTitle) }) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding).edgeFade(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = DockClearance),
@@ -282,7 +287,7 @@ private fun RecapEntry(onClick: () -> Unit, modifier: Modifier) {
         modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(violet).clickable(role = Role.Button, onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(Color.Black.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(44.dp).clip(continuous(14)).background(Color.Black.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
             Icon(MIcons.Sparkle, contentDescription = null, tint = ink, modifier = Modifier.size(22.dp))
         }
         Spacer(Modifier.width(12.dp))
@@ -302,7 +307,7 @@ private fun BackupNudge(onBackup: () -> Unit) {
         Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(coral.copy(alpha = 0.10f)).border(1.dp, coral.copy(alpha = 0.3f), MaterialTheme.shapes.large).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(coral.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(40.dp).clip(continuous(13)).background(coral.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
             Icon(MIcons.Cloud, contentDescription = null, tint = coral, modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.width(12.dp))

@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.R
+import com.masroufi.app.ui.theme.continuous
 import com.masroufi.app.ui.components.FitAmount
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.core.Money
@@ -77,7 +78,7 @@ internal fun WalletsTotal(wallets: List<WalletWithBalance>, currency: String) {
     val total = mine.sumOf { it.balanceMinor }
     val positive = mine.filter { it.balanceMinor > 0 }
     val shareBase = positive.sumOf { it.balanceMinor }.coerceAtLeast(1)
-    val shape = RoundedCornerShape(26.dp)
+    val shape = continuous(26)
     Column(
         Modifier.fillMaxWidth().clip(shape).background(glass.fill).border(1.dp, glass.rim, shape).padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -136,7 +137,7 @@ internal fun SmsLogCard(wallets: List<WalletWithBalance>, onLog: (type: Transact
     var failed by rememberSaveable { mutableStateOf(false) }
     val parsed: SmsParse? = parsedFor?.let(SmsParser::parse)
     // The new feature sits on the indigo container so it stands apart from the plain cards.
-    val shape = RoundedCornerShape(26.dp)
+    val shape = continuous(26)
     val dash = violet.copy(alpha = 0.45f)
     Column(
         Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.secondaryContainer).padding(18.dp),
@@ -174,7 +175,7 @@ internal fun SmsLogCard(wallets: List<WalletWithBalance>, onLog: (type: Transact
                 focusedBorderColor = violet,
                 unfocusedBorderColor = Color.Transparent,
             ),
-            shape = RoundedCornerShape(16.dp),
+            shape = continuous(16),
             textStyle = MaterialTheme.typography.bodyMedium,
         )
         if (parsed == null) {

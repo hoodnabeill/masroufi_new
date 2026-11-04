@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.masroufi.app.feature.plan
 
 import androidx.compose.animation.Crossfade
@@ -16,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.R
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.masroufi.app.feature.budgets.BudgetsScreen
 import com.masroufi.app.feature.goals.GoalsScreen
 import com.masroufi.app.ui.components.GlassIconButton
@@ -37,10 +40,12 @@ fun PlanScreen(
     onOpenGoal: (String) -> Unit,
 ) {
     var tab by rememberSaveable { mutableStateOf(if (initialTab == PLAN_GOALS) PLAN_GOALS else PLAN_BUDGETS) }
+    val largeTitle = androidx.compose.material3.TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
+        modifier = Modifier.nestedScroll(largeTitle.nestedScrollConnection),
         contentWindowInsets = TabInsets,
         topBar = {
-            MasroufiTopBar(stringResource(R.string.tab_plan)) {
+            MasroufiTopBar(stringResource(R.string.tab_plan), scrollBehavior = largeTitle) {
                 GlassIconButton(onClick = if (tab == PLAN_GOALS) onAddGoal else onAddBudget) {
                     Icon(MIcons.Plus, stringResource(if (tab == PLAN_GOALS) R.string.goal_add else R.string.budget_add))
                 }

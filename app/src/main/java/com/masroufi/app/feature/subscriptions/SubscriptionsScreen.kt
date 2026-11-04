@@ -35,6 +35,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import com.masroufi.app.ui.theme.continuousPercent
 import com.masroufi.app.data.model.RecurringRule
 import com.masroufi.app.data.model.TransactionType
 import com.masroufi.app.data.prefs.SettingsRepository
@@ -222,7 +223,7 @@ private fun OtherItem(modifier: Modifier, onClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         androidx.compose.foundation.layout.Box(
-            Modifier.width(56.dp).height(56.dp).glass(androidx.compose.foundation.shape.RoundedCornerShape(percent = 28)),
+            Modifier.width(56.dp).height(56.dp).glass(androidx.compose.foundation.shape.continuousPercent(23)),
             contentAlignment = Alignment.Center,
         ) { Icon(MIcons.Plus, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
         Spacer(Modifier.height(6.dp))

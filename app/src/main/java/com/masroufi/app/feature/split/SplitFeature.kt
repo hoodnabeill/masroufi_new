@@ -66,6 +66,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.theme.continuous
 import com.masroufi.app.ui.components.FitAmount
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.AnimatedVisibility
@@ -632,7 +633,7 @@ private fun BucketCard(
 ) {
     val glass = LocalGlass.current
     val money = LocalMoneyFormatter.current
-    val shape = RoundedCornerShape(20.dp)
+    val shape = continuous(20)
     Column(Modifier.fillMaxWidth().clip(shape).background(glass.fill).border(1.dp, glass.rim, shape)) {
         val turn by animateFloatAsState(if (expanded) 180f else 0f, Motion.spatial(LocalReduceMotion.current), label = "bucketChevron")
         Row(
@@ -748,10 +749,10 @@ private fun AddBucketButton(onClick: () -> Unit) {
     val violet = MaterialTheme.colorScheme.secondary
     Row(
         Modifier
-            .pressClick(RoundedCornerShape(20.dp), onClick = onClick)
+            .pressClick(continuous(20), onClick = onClick)
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .clip(continuous(20))
             .drawBehind {
                 drawRoundRect(
                     dash,
@@ -777,7 +778,7 @@ private fun MeansCard(form: SplitForm, result: SplitResult) {
     val money = LocalMoneyFormatter.current
     val finance = LocalFinanceColors.current
     val violet = MaterialTheme.colorScheme.secondary
-    val shape = RoundedCornerShape(20.dp)
+    val shape = continuous(20)
     Column(
         Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.secondaryContainer).padding(16.dp, 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -826,7 +827,7 @@ private fun MeansRow(label: String, value: @Composable () -> Unit) {
 @Composable
 private fun AutoCard(auto: Boolean, onChange: (Boolean) -> Unit) {
     val glass = LocalGlass.current
-    val shape = RoundedCornerShape(20.dp)
+    val shape = continuous(20)
     Row(
         Modifier
             .fillMaxWidth()

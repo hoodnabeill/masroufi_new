@@ -58,6 +58,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.R
+import com.masroufi.app.ui.theme.LocalGlass
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.shadow
 import com.masroufi.app.core.Money
 import java.time.Instant
 import java.time.LocalDate
@@ -193,7 +197,7 @@ fun <T> SegmentedChoice(
     label: @Composable (T) -> String,
     modifier: Modifier = Modifier,
 ) {
-    // A glass track with a thumb that glides (critically damped) to the chosen segment; offset mirrors in RTL.
+    // The iOS segmented control: a grey track and a raised thumb that glides (critically damped) to the choice.
     val reduce = LocalReduceMotion.current
     val haptics = rememberHaptics()
     val index = options.indexOf(selected).coerceAtLeast(0)
@@ -201,7 +205,7 @@ fun <T> SegmentedChoice(
     BoxWithConstraints(
         modifier
             .fillMaxWidth()
-            .height(46.dp)
+            .height(40.dp)
             .glassInset(CircleShape)
             .selectableGroup()
             .padding(4.dp),
@@ -212,8 +216,9 @@ fun <T> SegmentedChoice(
                 .offset { IntOffset((segment * position).roundToPx(), 0) }
                 .width(segment)
                 .fillMaxHeight()
+                .shadow(3.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.12f), spotColor = Color.Black.copy(alpha = 0.12f))
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.92f)),
+                .background(segmentThumb()),
         )
         Row(Modifier.fillMaxSize()) {
             options.forEachIndexed { i, option ->
@@ -232,14 +237,18 @@ fun <T> SegmentedChoice(
                     Text(
                         label(option),
                         maxLines = 1,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium),
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }
         }
     }
 }
+
+/** The segmented thumb: white on the light track, a lighter grey on the dark one (UISegmentedControl). */
+@Composable
+internal fun segmentThumb(): Color = if (LocalGlass.current.dark) Color(0xFF636366) else Color.White
 
 @Composable
 fun <T> ChipChoice(

@@ -65,6 +65,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.R
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
+import com.masroufi.app.ui.theme.continuous
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.core.Money
 import com.masroufi.app.data.model.Category
@@ -292,7 +297,7 @@ internal fun StreakCard(snapshot: ProgressSnapshot, onOpen: () -> Unit) {
                     stringResource(R.string.home_points, 10),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = 10.dp, vertical = 6.dp),
+                    modifier = Modifier.clip(continuous(12)).background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = 10.dp, vertical = 6.dp),
                 )
             }
         }
@@ -481,8 +486,15 @@ internal fun InsightsRow(state: HomeUiState, onOpenAll: () -> Unit, onMakeBudget
     val violet = MaterialTheme.colorScheme.secondary
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HomeSectionTitle(stringResource(R.string.home_insights_title), stringResource(R.string.home_insights_all, state.insights.size), onOpenAll)
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            state.insights.take(5).forEach { insight ->
+        val carousel = rememberLazyListState()
+        LazyRow(
+            Modifier.fillMaxWidth(),
+            state = carousel,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            // Cards settle one at a time where a throw would carry them, like an iOS paging carousel.
+            flingBehavior = rememberSnapFlingBehavior(carousel),
+        ) {
+            items(state.insights.take(5)) { insight ->
                 val (tone, tag, icon) = when (insight) {
                     is Insight.BudgetAlert, is Insight.CategoryRising, is Insight.MonthEndProjection ->
                         Triple(finance.over, R.string.insight_tag_alert, MIcons.Trending)
@@ -496,8 +508,7 @@ internal fun InsightsRow(state: HomeUiState, onOpenAll: () -> Unit, onMakeBudget
                         .width(300.dp)
                         .heightIn(min = 150.dp)
                         .clip(MaterialTheme.shapes.large)
-                        .background(tone.copy(alpha = 0.08f))
-                        .border(1.dp, tone.copy(alpha = 0.28f), MaterialTheme.shapes.large)
+                        .background(LocalGlass.current.fill)
                         .padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {

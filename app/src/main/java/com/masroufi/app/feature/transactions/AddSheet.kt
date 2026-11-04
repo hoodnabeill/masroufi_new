@@ -91,6 +91,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.shape.CornerSize
+import com.masroufi.app.ui.theme.ContinuousShape
+import com.masroufi.app.ui.theme.continuous
 import com.masroufi.app.core.Money
 import com.masroufi.app.data.model.TransactionType
 import com.masroufi.app.data.model.WalletWithBalance
@@ -223,7 +227,7 @@ fun AddSheet(
             enter = slideInVertically(Motion.spatial(reduce)) { it } + fadeIn(Motion.effects(reduce)),
             exit = slideOutVertically(Motion.snappy(reduce)) { it } + fadeOut(Motion.snappy(reduce)),
         ) {
-            val shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+            val shape = ContinuousShape(CornerSize(32.dp), CornerSize(32.dp), CornerSize(0.dp), CornerSize(0.dp))
             Column(
                 Modifier
                     .widthIn(max = 560.dp)
@@ -355,7 +359,7 @@ fun AddSheet(
                         Text(
                             stringResource(R.string.home_points, 10),
                             style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(Color.Black.copy(alpha = 0.12f)).padding(horizontal = 9.dp, vertical = 3.dp),
+                            modifier = Modifier.clip(continuous(10)).background(Color.Black.copy(alpha = 0.12f)).padding(horizontal = 9.dp, vertical = 3.dp),
                         )
                     }
                 }
@@ -370,11 +374,11 @@ private fun KindSwitch(selected: SheetKind, modifier: Modifier, onSelect: (Sheet
     val glass = LocalGlass.current
     val reduce = LocalReduceMotion.current
     val index = SheetKind.entries.indexOf(selected)
-    BoxWithConstraints(modifier.height(44.dp).clip(CircleShape).background(glass.base).padding(4.dp)) {
+    BoxWithConstraints(modifier.height(40.dp).clip(CircleShape).background(glass.fillStrong).padding(3.dp)) {
         val segment = maxWidth / SheetKind.entries.size
         // The thumb glides to the picked kind from wherever it is, so quick re-taps never jump.
         val x by animateDpAsState(segment * index, Motion.spatial(reduce), label = "kindThumb")
-        Box(Modifier.offset { IntOffset(x.roundToPx(), 0) }.size(segment, maxHeight).clip(CircleShape).background(glass.track))
+        Box(Modifier.offset { IntOffset(x.roundToPx(), 0) }.size(segment, maxHeight).shadow(3.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.12f), spotColor = Color.Black.copy(alpha = 0.12f)).clip(CircleShape).background(com.masroufi.app.ui.components.segmentThumb()))
         Row(Modifier.fillMaxSize()) {
             SheetKind.entries.forEach { kind ->
                 val on = kind == selected
@@ -504,7 +508,7 @@ private fun CategoryPill(label: String, icon: (@Composable () -> Unit)?, color: 
             .height(40.dp)
             .clip(CircleShape)
             .background(if (selected) color.copy(alpha = 0.18f) else glass.fillStrong)
-            .border(1.dp, if (selected) color else glass.strokeBottom, CircleShape)
+            .border(1.dp, if (selected) color else Color.Transparent, CircleShape)
             .clickable(role = Role.Checkbox, onClick = onClick)
             .semantics { this.selected = selected }
             .padding(start = 12.dp, end = 14.dp),

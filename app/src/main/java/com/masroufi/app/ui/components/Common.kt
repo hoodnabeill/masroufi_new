@@ -70,6 +70,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.R
+import androidx.compose.ui.draw.clipToBounds
 import com.masroufi.app.ui.theme.LocalFinanceColors
 import com.masroufi.app.ui.theme.LocalReduceMotion
 import com.masroufi.app.ui.theme.Motion
@@ -83,20 +84,7 @@ fun MasroufiTopBar(
     actions: @Composable () -> Unit = {},
 ) {
     if (onBack == null) {
-        // Tab roots get an Apple-style large title; actions sit in glass circles beside it.
-        Row(
-            Modifier.fillMaxWidth().statusBarsPadding().padding(start = 20.dp, end = 12.dp, top = 10.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                title,
-                style = MaterialTheme.typography.headlineLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f).semantics { heading() },
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { actions() }
-        }
+        LargeTitleBar(title, scrollBehavior, actions)
         return
     }
     CenterAlignedTopAppBar(
@@ -110,6 +98,71 @@ fun MasroufiTopBar(
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
     )
+}
+
+/**
+ * The iOS navigation bar for tab roots: a row for the actions, and under it the Large Title (34 bold) that scrolls
+ * away with the content. As it goes, the bar shrinks to the action row and the title reappears inline, centred, in
+ * the headline style. Driven by an exit-until-collapsed [scrollBehavior] (nested scroll from the screen's list);
+ * without one the title simply stays large.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LargeTitleBar(title: String, scrollBehavior: TopAppBarScrollBehavior?, actions: @Composable () -> Unit) {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val largeHeight = 52.dp
+    val limit = with(density) { -largeHeight.toPx() }
+    androidx.compose.runtime.SideEffect {
+        scrollBehavior?.state?.let { if (it.heightOffsetLimit != limit) it.heightOffsetLimit = limit }
+    }
+    val offset = scrollBehavior?.state?.heightOffset ?: 0f
+    val fraction = scrollBehavior?.state?.collapsedFraction ?: 0f
+    Column(Modifier.fillMaxWidth().statusBarsPadding()) {
+        Box(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 12.dp)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 64.dp)
+                    .graphicsLayer { alpha = ((fraction - 0.65f) / 0.35f).coerceIn(0f, 1f) },
+            )
+            Row(
+                Modifier.align(Alignment.CenterEnd),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) { actions() }
+        }
+        // The large title's slot shrinks by exactly what the list has scrolled, so the title travels with the content.
+        androidx.compose.foundation.layout.Layout(
+            content = {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.headlineLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .padding(start = 20.dp, end = 20.dp, bottom = 6.dp)
+                        .semantics { heading() }
+                        .graphicsLayer {
+                            alpha = (1f - fraction * 1.6f).coerceIn(0f, 1f)
+                            val s = 1f - 0.04f * fraction
+                            scaleX = s
+                            scaleY = s
+                            transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 1f)
+                        },
+                )
+            },
+            modifier = Modifier.fillMaxWidth().clipToBounds(),
+        ) { measurables, constraints ->
+            val full = largeHeight.roundToPx()
+            val height = (full + offset).toInt().coerceIn(0, full)
+            val placeable = measurables.first().measure(constraints.copy(minHeight = 0, maxHeight = androidx.compose.ui.unit.Constraints.Infinity))
+            layout(constraints.maxWidth, height) { placeable.placeRelative(0, height - placeable.height) }
+        }
+    }
 }
 
 /** A 44dp glass circle: the minimum comfortable touch target, with the press response starting on touch-down. */

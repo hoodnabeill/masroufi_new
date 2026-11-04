@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 
 package com.masroufi.app.feature.transactions
@@ -56,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.masroufi.app.ui.components.edgeFade
 import com.masroufi.app.ui.components.GlassIconButton
 import com.masroufi.app.ui.components.GlassSheet
@@ -133,10 +136,12 @@ fun TransactionsScreen(onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: T
     // Today's invitation only makes sense while browsing the current month with nothing filtered out.
     val inviteToday = !state.loading && !narrowed && state.month == YearMonth.from(today) && today !in grouped && state.wallets.isNotEmpty()
 
+    val largeTitle = androidx.compose.material3.TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
+        modifier = Modifier.nestedScroll(largeTitle.nestedScrollConnection),
         contentWindowInsets = TabInsets,
         topBar = {
-            MasroufiTopBar(stringResource(R.string.dock_transactions)) {
+            MasroufiTopBar(stringResource(R.string.dock_transactions), scrollBehavior = largeTitle) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     GlassIconButton(onClick = { searching = !searching }) {
                         Icon(MIcons.Search, contentDescription = stringResource(R.string.activity_search))
