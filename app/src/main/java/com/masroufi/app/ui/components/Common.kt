@@ -136,7 +136,7 @@ private fun LargeTitleBar(title: String, scrollBehavior: TopAppBarScrollBehavior
             ) { actions() }
         }
         // The large title's slot shrinks by exactly what the list has scrolled, so the title travels with the content.
-        androidx.compose.foundation.layout.Layout(
+        androidx.compose.ui.layout.Layout(
             content = {
                 Text(
                     title,

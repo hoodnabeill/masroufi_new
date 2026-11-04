@@ -1,5 +1,3 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.masroufi.app.feature.goals

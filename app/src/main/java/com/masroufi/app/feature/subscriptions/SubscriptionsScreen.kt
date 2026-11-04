@@ -223,7 +223,7 @@ private fun OtherItem(modifier: Modifier, onClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         androidx.compose.foundation.layout.Box(
-            Modifier.width(56.dp).height(56.dp).glass(androidx.compose.foundation.shape.continuousPercent(23)),
+            Modifier.width(56.dp).height(56.dp).glass(continuousPercent(23)),
             contentAlignment = Alignment.Center,
         ) { Icon(MIcons.Plus, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
         Spacer(Modifier.height(6.dp))
