@@ -21,6 +21,16 @@ android {
     }
 
     signingConfigs {
+        // A fixed key checked into the repo, so every CI build carries the same signature and installs over the
+        // previous one. Without it each runner generates a fresh debug key and Android refuses the update.
+        // It is public, so it is for test builds only; Play uploads use the private release key below.
+        getByName("debug") {
+            storeFile = file("signing/ci-debug.p12")
+            storeType = "pkcs12"
+            storePassword = "masroufi-debug"
+            keyAlias = "masroufi"
+            keyPassword = "masroufi-debug"
+        }
         create("release") {
             val storePath = System.getenv("MASROUFI_KEYSTORE_PATH")
             if (storePath != null) {
