@@ -1136,4 +1136,5 @@
     <string name="split_auto_off">هتقسّمه بنفسك من هنا</string>
     <string name="split_rule_name">اسم القاعدة</string>
     <string name="split_save_rule">احفظ القاعدة</string>
+    <string name="split_per_day_suffix">في اليوم</string>
 </resources>

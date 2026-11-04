@@ -1,5 +1,8 @@
 package com.masroufi.app.ui.components
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.semantics.Role
 import android.os.Build
 import android.view.View
 import androidx.compose.animation.core.Animatable
@@ -251,6 +254,21 @@ fun Modifier.liquidPress(interaction: InteractionSource, shape: Shape, scaleTo: 
                 }
             }
         }
+}
+
+/**
+ * A tap target with the app's press: [liquidPress] at [scaleTo] (1 = bloom only, for rows inside a card) over a
+ * ripple-free clickable. Put it first in the chain so the scale and bloom cover the background drawn after it.
+ */
+fun Modifier.pressClick(
+    shape: Shape,
+    scaleTo: Float = 0.97f,
+    role: Role = Role.Button,
+    label: String? = null,
+    onClick: () -> Unit,
+): Modifier = composed {
+    val interaction = remember { MutableInteractionSource() }
+    liquidPress(interaction, shape, scaleTo).clickable(interactionSource = interaction, indication = null, role = role, onClickLabel = label, onClick = onClick)
 }
 
 /** Content rises and settles into place the first time it appears, staggered by [index] (capped so long lists never wait). */

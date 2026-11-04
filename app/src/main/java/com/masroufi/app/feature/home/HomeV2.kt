@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.home
 
+import androidx.compose.material3.minimumInteractiveComponentSize
 import android.content.Intent
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -190,7 +191,7 @@ internal fun SafeHero(state: HomeUiState, spentToday: Long, hidden: Boolean, onT
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.home_safe_today), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
             Box(
-                Modifier.size(40.dp).clip(CircleShape).background(glass.fillStrong).clickable(role = Role.Button, onClick = onToggleHidden),
+                Modifier.minimumInteractiveComponentSize().size(40.dp).clip(CircleShape).background(glass.fillStrong).clickable(role = Role.Button, onClick = onToggleHidden),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(if (hidden) MIcons.EyeOff else MIcons.Eye, contentDescription = stringResource(R.string.home_privacy_toggle), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
@@ -468,7 +469,7 @@ private fun quickChips(lastSpends: List<LastSpend>, categories: Map<String, Cate
 @Composable
 private fun SmallRound(icon: ImageVector, description: String, background: Color, tint: Color, onClick: () -> Unit) {
     Box(
-        Modifier.size(40.dp).clip(CircleShape).background(background).clickable(role = Role.Button, onClick = onClick),
+        Modifier.minimumInteractiveComponentSize().size(40.dp).clip(CircleShape).background(background).clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Icon(icon, contentDescription = description, tint = tint, modifier = Modifier.size(18.dp)) }
 }

@@ -1073,4 +1073,5 @@
     <string name="split_auto_off">You split it yourself from here</string>
     <string name="split_rule_name">Rule name</string>
     <string name="split_save_rule">Save the rule</string>
+    <string name="split_per_day_suffix">a day</string>
 </resources>

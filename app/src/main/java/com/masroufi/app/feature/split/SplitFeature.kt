@@ -2,6 +2,25 @@
 
 package com.masroufi.app.feature.split
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.runtime.key
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
+import com.masroufi.app.ui.components.AnimatedAmount
+import com.masroufi.app.ui.components.liquidPress
+import com.masroufi.app.ui.components.pressClick
+import com.masroufi.app.ui.components.staggerIn
+import com.masroufi.app.ui.theme.LocalReduceMotion
+import com.masroufi.app.ui.theme.Motion
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -537,19 +556,33 @@ private fun PresetRow(items: List<SplitItemDraft>, onPick: (List<Int>) -> Unit) 
 @Composable
 private fun Pill(label: String, selected: Boolean, accent: Color, fill: Color, modifier: Modifier, ltr: Boolean = false, onClick: () -> Unit) {
     val glass = LocalGlass.current
+    val reduce = LocalReduceMotion.current
+    val interaction = remember { MutableInteractionSource() }
+    val bg by animateColorAsState(if (selected) fill else fill.copy(alpha = 0f), Motion.effects(reduce), label = "pillBg")
+    val rim by animateColorAsState(if (selected) accent else glass.strokeBottom, Motion.effects(reduce), label = "pillRim")
+    val ink by animateColorAsState(if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant, Motion.effects(reduce), label = "pillInk")
     Box(
         modifier
+            .liquidPress(interaction, CircleShape, scaleTo = 0.96f)
             .clip(CircleShape)
-            .background(if (selected) fill else Color.Transparent)
-            .border(if (ltr) 1.5.dp else 1.dp, if (selected) accent else glass.strokeBottom, CircleShape)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
+            .background(bg)
+            .border(if (ltr) 1.5.dp else 1.dp, rim, CircleShape)
+            .selectable(selected = selected, interactionSource = interaction, indication = null, role = Role.RadioButton, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         val text = @Composable {
-            Text(label, style = MaterialTheme.typography.labelLarge, color = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(label, style = MaterialTheme.typography.labelLarge, color = ink, maxLines = 1)
         }
         if (ltr) CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) { text() } else text()
     }
+}
+
+/** One share of the bar; its width glides to the new value (critically damped) and it vanishes at zero. */
+@Composable
+private fun RowScope.BarSegment(target: Float, color: Color) {
+    val reduce = LocalReduceMotion.current
+    val w by animateFloatAsState(target, Motion.spatial(reduce), label = "barSegment")
+    if (w > target * 0.001f + 0.5f) Box(Modifier.weight(w).fillMaxHeight().clip(RoundedCornerShape(7.dp)).background(color))
 }
 
 /** Every bucket's share as one 14 dp bar (track colour for what is left over), with the % total under it. */
@@ -563,10 +596,8 @@ private fun SplitBar(parsed: List<SplitItem?>, amounts: List<Long?>, colors: Lis
             if (total <= 0) {
                 Box(Modifier.fillMaxSize().clip(RoundedCornerShape(7.dp)).background(glass.track))
             } else {
-                amounts.forEachIndexed { i, a ->
-                    if (a != null && a > 0) Box(Modifier.weight(a.toFloat()).fillMaxHeight().clip(RoundedCornerShape(7.dp)).background(colors[i]))
-                }
-                if (unallocated > 0) Box(Modifier.weight(unallocated.toFloat()).fillMaxHeight().clip(RoundedCornerShape(7.dp)).background(glass.track))
+                amounts.forEachIndexed { i, a -> key(i) { BarSegment((a ?: 0).toFloat(), colors[i]) } }
+                key("gap") { BarSegment(unallocated.toFloat(), glass.track) }
             }
         }
         val percent = parsed.filterNotNull().filter { it.kind == SplitKind.PERCENT }
@@ -603,26 +634,38 @@ private fun BucketCard(
     val money = LocalMoneyFormatter.current
     val shape = RoundedCornerShape(20.dp)
     Column(Modifier.fillMaxWidth().clip(shape).background(glass.fill).border(1.dp, glass.rim, shape)) {
+        val turn by animateFloatAsState(if (expanded) 180f else 0f, Motion.spatial(LocalReduceMotion.current), label = "bucketChevron")
         Row(
-            Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onToggle).padding(14.dp, 12.dp),
+            Modifier.fillMaxWidth().pressClick(RectangleShape, scaleTo = 1f, onClick = onToggle).padding(14.dp, 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             IconBadge(icon, color, size = 40.dp)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(draft.label.ifBlank { stringResource(R.string.split_item_label) }, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(draft.label.ifBlank { stringResource(R.string.split_item_label) }, style = MaterialTheme.typography.titleSmall, maxLines = 1, modifier = Modifier.weight(1f, fill = false))
+                    Icon(MIcons.ChevronDown, contentDescription = null, tint = glass.textTertiary, modifier = Modifier.padding(start = 4.dp).size(14.dp).graphicsLayer { rotationZ = turn })
+                }
                 sub?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = glass.textTertiary, maxLines = 1) }
-                Text(amount?.let { money.format(it, currency) } ?: "—", style = MaterialTheme.typography.titleMedium, color = color)
+                if (amount != null) AnimatedAmount(amount, currency, style = MaterialTheme.typography.titleMedium, color = color)
+                else Text("—", style = MaterialTheme.typography.titleMedium, color = color)
             }
             if (draft.kind == SplitKind.PERCENT) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     StepButton(MIcons.Plus, stringResource(R.string.split_more)) { onStep(5) }
-                    Text(
-                        (Money.normalizeDigits(draft.value).ifBlank { "0" }) + "%",
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.width(42.dp),
-                    )
+                    val pct = Money.normalizeDigits(draft.value).ifBlank { "0" }
+                    AnimatedContent(
+                        targetState = pct,
+                        transitionSpec = {
+                            val up = (targetState.toBigDecimalOrNull() ?: BigDecimal.ZERO) >= (initialState.toBigDecimalOrNull() ?: BigDecimal.ZERO)
+                            (slideInVertically { h -> if (up) h else -h } + fadeIn()) togetherWith (slideOutVertically { h -> if (up) -h else h } + fadeOut())
+                        },
+                        modifier = Modifier.width(42.dp).clipToBounds(),
+                        contentAlignment = Alignment.Center,
+                        label = "bucketPercent",
+                    ) { value ->
+                        Text("$value%", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    }
                     StepButton(MIcons.Minus, stringResource(R.string.split_less)) { onStep(-5) }
                 }
             } else {
@@ -643,13 +686,15 @@ private fun BucketCard(
 @Composable
 private fun StepButton(icon: ImageVector, label: String, onClick: () -> Unit) {
     val glass = LocalGlass.current
+    // 34 dp to the eye (the handoff), 48 dp to the finger.
     Box(
         Modifier
+            .minimumInteractiveComponentSize()
+            .pressClick(CircleShape, scaleTo = 0.88f, label = label, onClick = onClick)
             .size(34.dp)
             .clip(CircleShape)
             .background(glass.fillStrong)
-            .border(1.dp, glass.strokeBottom, CircleShape)
-            .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
+            .border(1.dp, glass.strokeBottom, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = label, modifier = Modifier.size(14.dp))
@@ -703,6 +748,7 @@ private fun AddBucketButton(onClick: () -> Unit) {
     val violet = MaterialTheme.colorScheme.secondary
     Row(
         Modifier
+            .pressClick(RoundedCornerShape(20.dp), onClick = onClick)
             .fillMaxWidth()
             .height(48.dp)
             .clip(RoundedCornerShape(20.dp))
@@ -712,8 +758,7 @@ private fun AddBucketButton(onClick: () -> Unit) {
                     cornerRadius = CornerRadius(20.dp.toPx()),
                     style = Stroke(width = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))),
                 )
-            }
-            .clickable(role = Role.Button, onClick = onClick),
+            },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -742,11 +787,10 @@ private fun MeansCard(form: SplitForm, result: SplitResult) {
             is SplitResult.Ok -> {
                 val spendable = result.lines.filter { it.item.goalId == null }.sumOf { it.amountMinor } + result.unallocatedMinor
                 MeansRow(stringResource(R.string.split_daily_label)) {
-                    Text(
-                        stringResource(R.string.split_per_day, money.format(spendable / 30, form.currency)),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        AnimatedAmount(spendable / 30, form.currency, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                        Text(" " + stringResource(R.string.split_per_day_suffix), style = MaterialTheme.typography.bodySmall)
+                    }
                 }
                 result.lines.filter { it.item.goalId != null }.forEach { line ->
                     val goal = form.goals.firstOrNull { it.goal.id == line.item.goalId }?.goal ?: return@forEach

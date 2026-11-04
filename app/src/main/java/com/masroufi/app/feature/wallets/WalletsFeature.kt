@@ -1,5 +1,9 @@
 package com.masroufi.app.feature.wallets
 
+import com.masroufi.app.ui.components.pressClick
+import com.masroufi.app.ui.components.staggerIn
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -182,11 +186,11 @@ fun WalletsScreen(
             contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(key = "total") { WalletsTotal(list, currency) }
-            item(key = "list") { WalletGroup(active, activity, onOpen, presets, onAddPreset) }
+            item(key = "total") { Box(Modifier.staggerIn(0)) { WalletsTotal(list, currency) } }
+            item(key = "list") { Box(Modifier.staggerIn(1)) { WalletGroup(active, activity, onOpen, presets, onAddPreset) } }
             if (active.isNotEmpty()) {
                 item(key = "actions") {
-                    QuickActions(
+                    Box(Modifier.staggerIn(2)) { QuickActions(
                         onTransfer = onTransfer,
                         onReconcile = { if (active.size == 1) onReconcile(active.first().wallet.id) else picking = true },
                         onCashOut = {
@@ -195,10 +199,10 @@ fun WalletsScreen(
                                 ?: active.firstOrNull { it.wallet.type != WalletType.CASH }
                             onCashOut(from?.wallet?.id, cash?.wallet?.id, cashNote)
                         },
-                    )
+                    ) }
                 }
             }
-            item(key = "sms") { SmsLogCard(active, onLogSms) }
+            item(key = "sms") { Box(Modifier.staggerIn(3)) { SmsLogCard(active, onLogSms) } }
             if (archived.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.wallets_archived)) }
                 item(key = "archived") { WalletGroup(archived, activity, onOpen) }
@@ -252,7 +256,7 @@ private fun WalletRow(item: WalletWithBalance, lastAt: Long?, onOpen: (String) -
         Modifier
             .fillMaxWidth()
             .then(if (shared) Modifier.sharedContainer("wallet-${item.wallet.id}") else Modifier)
-            .clickable(role = Role.Button) { onOpen(item.wallet.id) }
+            .pressClick(RectangleShape, scaleTo = 1f) { onOpen(item.wallet.id) }
             .padding(16.dp, 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -289,6 +293,7 @@ private fun AddChip(label: String, modifier: Modifier = Modifier, onClick: () ->
     val dash = LocalGlass.current.track
     Row(
         modifier
+            .pressClick(MaterialTheme.shapes.extraSmall, onClick = onClick)
             .height(44.dp)
             .clip(MaterialTheme.shapes.extraSmall)
             .drawBehind {
@@ -297,8 +302,7 @@ private fun AddChip(label: String, modifier: Modifier = Modifier, onClick: () ->
                     cornerRadius = CornerRadius(14.dp.toPx()),
                     style = Stroke(width = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))),
                 )
-            }
-            .clickable(role = Role.Button, onClick = onClick),
+            },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -324,11 +328,11 @@ private fun ActionTile(icon: ImageVector, tint: Color, label: String, onClick: (
     val shape = MaterialTheme.shapes.small
     Column(
         modifier
+            .pressClick(shape, onClick = onClick)
             .height(76.dp)
             .clip(shape)
             .background(glass.fill)
-            .border(1.dp, glass.rim, shape)
-            .clickable(role = Role.Button, onClick = onClick),
+            .border(1.dp, glass.rim, shape),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
     ) {
