@@ -246,8 +246,8 @@ fun glassFieldColors(): TextFieldColors {
         disabledContainerColor = glass.fill,
         errorContainerColor = scheme.error.copy(alpha = 0.08f),
         focusedBorderColor = scheme.primary,
-        unfocusedBorderColor = glass.strokeTop.copy(alpha = if (glass.dark) 0.5f else 0.9f),
-        disabledBorderColor = glass.strokeTop.copy(alpha = 0.4f),
+        unfocusedBorderColor = glass.strokeBottom.copy(alpha = if (glass.dark) 0.8f else 0.9f),
+        disabledBorderColor = glass.strokeBottom.copy(alpha = 0.4f),
         // Pickers render as disabled read-only fields under a click overlay; keep them fully legible.
         disabledTextColor = scheme.onSurface,
         disabledLabelColor = scheme.onSurfaceVariant,

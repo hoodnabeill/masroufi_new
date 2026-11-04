@@ -248,7 +248,7 @@ private fun GoalHero(item: GoalWithSaved, monthly: Long?, today: LocalDate, onOp
             .sharedContainer("goal-${goal.id}")
             .clip(MaterialTheme.shapes.extraLarge)
             .background(glass.fill)
-            .border(1.dp, glass.strokeTop, MaterialTheme.shapes.extraLarge)
+            .border(1.dp, glass.rim, MaterialTheme.shapes.extraLarge)
             .clickable(role = Role.Button) { onOpen(goal.id) }
             .padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -374,7 +374,7 @@ private fun OtherGoals(others: List<GoalWithSaved>, onOpen: (String) -> Unit) {
     val glass = LocalGlass.current
     val money = LocalMoneyFormatter.current
     Column(
-        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.strokeTop, MaterialTheme.shapes.large).padding(vertical = 6.dp),
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(vertical = 6.dp),
     ) {
         others.forEach { item ->
             val color = categoryColor(item.goal.colorIndex)
@@ -706,7 +706,7 @@ fun GoalEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: GoalEdit
                                         .weight(1f)
                                         .clip(MaterialTheme.shapes.medium)
                                         .background(if (on) color.copy(alpha = 0.18f) else glass.fill)
-                                        .border(1.dp, if (on) color else glass.strokeTop, MaterialTheme.shapes.medium)
+                                        .border(1.dp, if (on) color else glass.strokeBottom, MaterialTheme.shapes.medium)
                                         .clickable(role = Role.RadioButton) {
                                             viewModel.update { it.copy(template = t.key, name = name, iconKey = t.icon, colorIndex = t.color) }
                                         }
@@ -738,7 +738,7 @@ fun GoalEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: GoalEdit
                             .heightIn(min = 40.dp)
                             .clip(CircleShape)
                             .background(if (on) lime.copy(alpha = 0.14f) else glass.fill)
-                            .border(1.dp, if (on) lime else glass.strokeTop, CircleShape)
+                            .border(1.dp, if (on) lime else glass.strokeBottom, CircleShape)
                             .clickable(role = Role.RadioButton) { viewModel.update { it.copy(targetDate = date) } }
                             .semantics { selected = on },
                         contentAlignment = Alignment.Center,
@@ -756,7 +756,7 @@ fun GoalEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: GoalEdit
 
             // Auto-save: at the start of each month the plan is earmarked for the goal automatically.
             Row(
-                Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.strokeTop, MaterialTheme.shapes.large).padding(16.dp),
+                Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconBadge(MIcons.Repeat, MaterialTheme.colorScheme.primary, size = 40.dp)

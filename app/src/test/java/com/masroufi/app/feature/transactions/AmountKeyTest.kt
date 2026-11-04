@@ -1,6 +1,7 @@
 package com.masroufi.app.feature.transactions
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AmountKeyTest {
@@ -37,6 +38,15 @@ class AmountKeyTest {
         assertEquals("1,105", groupTyped("1105"))
         assertEquals("1,234,567.5", groupTyped("1234567.5"))
         assertEquals("1,000.", groupTyped("1000."))
+    }
+
+    @Test fun sheetThrowProjectsAndEdgesResist() {
+        // A 1,000 px/s flick comes to rest 1 * 0.998 / 0.002 = 499 px further on.
+        assertEquals(499f, projectMomentum(1_000f), 0.5f)
+        assertEquals(0f, projectMomentum(0f), 0f)
+        // Pulling 400 px past the edge of an 800 px sheet moves it far less, and never more than the pull.
+        val pulled = rubberBand(-400f, 800f)
+        assertTrue(pulled < 0f && pulled > -400f * 0.55f)
     }
 
     @Test fun todayBudgetRoundsDownToWholePounds() {

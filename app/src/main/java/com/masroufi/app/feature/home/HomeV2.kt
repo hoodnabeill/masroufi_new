@@ -182,7 +182,7 @@ internal fun SafeHero(state: HomeUiState, spentToday: Long, hidden: Boolean, onT
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.extraLarge)
             .background(glass.fill)
-            .border(1.dp, glass.strokeTop, MaterialTheme.shapes.extraLarge)
+            .border(1.dp, glass.rim, MaterialTheme.shapes.extraLarge)
             .clickable(role = Role.Button, onClick = onOpenWallets)
             .padding(22.dp),
     ) {
@@ -219,7 +219,7 @@ internal fun SafeHero(state: HomeUiState, spentToday: Long, hidden: Boolean, onT
             Text(stringResource(R.string.home_limit, if (hidden) HIDDEN else formatter.format(safe, currency)), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
         }
         Spacer(Modifier.height(14.dp))
-        Box(Modifier.fillMaxWidth().height(1.dp).background(glass.strokeTop))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(glass.strokeBottom))
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth()) {
             HeroStat(stringResource(R.string.home_have), state.primaryBalance, currency, hidden, Modifier.weight(1f), divider = false)
@@ -235,7 +235,7 @@ private fun pow10(n: Int): Long = (1..n).fold(1L) { acc, _ -> acc * 10 }
 private fun HeroStat(label: String, minor: Long, currency: String, hidden: Boolean, modifier: Modifier, divider: Boolean = true) {
     val glass = LocalGlass.current
     Row(modifier) {
-        if (divider) Box(Modifier.width(1.dp).height(44.dp).background(glass.strokeTop))
+        if (divider) Box(Modifier.width(1.dp).height(44.dp).background(glass.strokeBottom))
         Column(Modifier.padding(start = if (divider) 12.dp else 0.dp)) {
             Text(label, style = MaterialTheme.typography.bodySmall, color = glass.textTertiary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(4.dp))
@@ -262,7 +262,7 @@ internal fun StreakCard(snapshot: ProgressSnapshot, onOpen: () -> Unit) {
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .background(glass.fill)
-            .border(1.dp, glass.strokeTop, MaterialTheme.shapes.large)
+            .border(1.dp, glass.rim, MaterialTheme.shapes.large)
             .clickable(role = Role.Button, onClick = onOpen)
             .padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -382,7 +382,7 @@ internal fun QuickLogSection(
                 .height(56.dp)
                 .clip(CircleShape)
                 .background(glass.fill)
-                .border(1.dp, glass.strokeTop, CircleShape)
+                .border(1.dp, glass.rim, CircleShape)
                 .padding(start = 16.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -426,7 +426,7 @@ internal fun QuickLogSection(
                         .liquidPress(interaction, MaterialTheme.shapes.small, scaleTo = 0.97f)
                         .clip(MaterialTheme.shapes.small)
                         .background(glass.fill)
-                        .border(1.dp, glass.strokeTop, MaterialTheme.shapes.small)
+                        .border(1.dp, glass.rim, MaterialTheme.shapes.small)
                         .clickable(interactionSource = interaction, indication = null, role = Role.Button) {
                             haptics.tick()
                             onLog(last?.let { Money.toPlainString(it.amountMinor, it.currency) }, category.id, null)
@@ -526,7 +526,7 @@ internal fun MonthSpendCard(state: HomeUiState, hidden: Boolean, onOpenDetails: 
     val today = remember { LocalDate.now() }
     val days = today.dayOfMonth
     Column(
-        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.strokeTop, MaterialTheme.shapes.large).padding(20.dp),
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         HomeSectionTitle(stringResource(R.string.home_month_spend, month), stringResource(R.string.home_details), onOpenDetails)
@@ -567,9 +567,9 @@ internal fun RecentByDay(rows: List<TransactionRow>, currency: String, onOpen: (
     val groups = rows.groupBy { java.time.Instant.ofEpochMilli(it.transaction.occurredAt).atZone(zone).toLocalDate() }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HomeSectionTitle(stringResource(R.string.home_recent), stringResource(R.string.action_see_all), onSeeAll)
-        Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.strokeTop, MaterialTheme.shapes.large).padding(vertical = 6.dp)) {
+        Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(vertical = 6.dp)) {
             groups.entries.forEachIndexed { index, (day, items) ->
-                if (index > 0) Box(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp).height(1.dp).background(glass.strokeTop))
+                if (index > 0) Box(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp).height(1.dp).background(glass.strokeBottom))
                 val label = when (day) {
                     today -> "$todayLabel · ${day.format(weekdayFormat)}"
                     today.minusDays(1) -> "$yesterdayLabel · ${day.format(weekdayFormat)}"

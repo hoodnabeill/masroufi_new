@@ -125,7 +125,6 @@ fun Modifier.glass(
     floating: Boolean = false,
 ): Modifier = composed {
     val glass = LocalGlass.current
-    val line = glass.strokeTop
     val front = if (onDrawFront != null) Modifier.drawWithContent { drawContent(); onDrawFront() } else Modifier
     val backdrop = LocalGlassBackdrop.current
     val live = floating && !LocalSolidGlass.current && backdrop != null &&
@@ -138,7 +137,7 @@ fun Modifier.glass(
             .clip(shape)
             .background(panel)
             .then(if (tint.isSpecified()) Modifier.background(tint.copy(alpha = (tint.alpha * 0.7f).coerceAtMost(0.9f))) else Modifier)
-            .border(1.dp, line, shape)
+            .border(1.dp, glass.rim, shape)
             .then(front)
     }
     // Floating chrome only (dock, quick-add, snackbars): real glass over the live content beneath.
@@ -170,7 +169,7 @@ fun Modifier.glassInset(shape: Shape, tint: Color = Color.Unspecified): Modifier
     this
         .clip(shape)
         .background(if (tint.isSpecified()) tint.copy(alpha = 0.12f) else glass.fillStrong)
-        .border(1.dp, glass.strokeTop, shape)
+        .border(1.dp, glass.rim, shape)
 }
 
 /**

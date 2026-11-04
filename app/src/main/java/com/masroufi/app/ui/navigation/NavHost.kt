@@ -167,7 +167,8 @@ private fun NavBackStackEntry.isTab(): Boolean = tabs.any { tab -> destination.h
 fun MasroufiNavHost() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
-    val destination = backStack?.destination
+    // The quick-add sheet floats over the screen it was opened from, so the dock stays put under it.
+    val destination = if (backStack?.destination?.hasRoute(AddSheetRoute::class) == true) nav.previousBackStackEntry?.destination else backStack?.destination
     val tabIndex = tabs.indexOfFirst { tab -> destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true }
     var lastTab by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(tabIndex) { if (tabIndex >= 0) lastTab = tabIndex }

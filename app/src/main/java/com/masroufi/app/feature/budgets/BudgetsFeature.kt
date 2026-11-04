@@ -271,7 +271,7 @@ private fun SuggestedPlan(state: BudgetsUiState, onActivate: (List<BudgetSuggest
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.extraLarge)
             .background(glass.fill)
-            .border(1.dp, glass.strokeTop, MaterialTheme.shapes.extraLarge)
+            .border(1.dp, glass.rim, MaterialTheme.shapes.extraLarge)
             .padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -325,7 +325,7 @@ private fun SuggestedPlan(state: BudgetsUiState, onActivate: (List<BudgetSuggest
                 }
             }
         }
-        HorizontalDivider(color = glass.strokeTop)
+        HorizontalDivider(color = glass.strokeBottom)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.plan_total), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
             Text(
@@ -358,7 +358,7 @@ private fun ChallengeCard(challenge: BadgeProgress) {
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .background(glass.fill)
-            .border(1.dp, glass.strokeTop, MaterialTheme.shapes.large)
+            .border(1.dp, glass.rim, MaterialTheme.shapes.large)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -614,7 +614,7 @@ private fun CategoryGrid(categories: List<Category>, selected: String?, onSelect
                             .weight(1f)
                             .clip(MaterialTheme.shapes.medium)
                             .background(if (on) color.copy(alpha = 0.18f) else glass.fill)
-                            .border(1.dp, if (on) color else glass.strokeTop, MaterialTheme.shapes.medium)
+                            .border(1.dp, if (on) color else glass.strokeBottom, MaterialTheme.shapes.medium)
                             .clickable(role = Role.RadioButton) { onSelect(category?.id) }
                             .semantics { this.selected = on }
                             .padding(vertical = 12.dp, horizontal = 4.dp),
@@ -680,7 +680,7 @@ private fun PresetPill(label: String, selected: Boolean, modifier: Modifier, onC
             .heightIn(min = 40.dp)
             .clip(CircleShape)
             .background(if (selected) lime.copy(alpha = 0.14f) else glass.fill)
-            .border(1.dp, if (selected) lime else glass.strokeTop, CircleShape)
+            .border(1.dp, if (selected) lime else glass.strokeBottom, CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
             .semantics { this.selected = selected },
         contentAlignment = Alignment.Center,
@@ -709,7 +709,7 @@ private fun DailyTranslation(form: BudgetForm, limitMinor: Long, spentMinor: Lon
         )
     }
     Column(
-        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.strokeTop, MaterialTheme.shapes.large).padding(16.dp),
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
@@ -728,7 +728,7 @@ private fun DailyTranslation(form: BudgetForm, limitMinor: Long, spentMinor: Lon
 private fun BudgetSettings(form: BudgetForm, viewModel: BudgetEditorViewModel) {
     val glass = LocalGlass.current
     Column(
-        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.strokeTop, MaterialTheme.shapes.large).padding(16.dp),
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.budget_repeat), style = MaterialTheme.typography.bodyMedium)
@@ -744,7 +744,7 @@ private fun BudgetSettings(form: BudgetForm, viewModel: BudgetEditorViewModel) {
                 DateChip(form.end, { d -> viewModel.update { it.copy(end = d) } }, label = stringResource(R.string.filter_to))
             }
         } else {
-            HorizontalDivider(color = glass.strokeTop)
+            HorizontalDivider(color = glass.strokeBottom)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.budget_rollover), style = MaterialTheme.typography.bodyMedium)
@@ -753,13 +753,13 @@ private fun BudgetSettings(form: BudgetForm, viewModel: BudgetEditorViewModel) {
                 GlassSwitch(form.rollover, { v -> viewModel.update { it.copy(rollover = v) } })
             }
         }
-        HorizontalDivider(color = glass.strokeTop)
+        HorizontalDivider(color = glass.strokeBottom)
         // The alert threshold is the app-wide 80% warning; the daily check notifies once per month when it is crossed.
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.budget_alert_at), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             Text("${BudgetProgress.WARNING_PERCENT}%", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        HorizontalDivider(color = glass.strokeTop)
+        HorizontalDivider(color = glass.strokeBottom)
         TextInput(form.name, { v -> viewModel.update { it.copy(name = v) } }, stringResource(R.string.field_name_optional))
     }
 }

@@ -252,7 +252,7 @@ private fun MonthCard(state: TransactionsUiState, today: LocalDate, onShift: (Lo
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .background(glass.fill)
-            .border(1.dp, glass.strokeTop, MaterialTheme.shapes.large)
+            .border(1.dp, glass.rim, MaterialTheme.shapes.large)
             .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -297,7 +297,7 @@ private fun MonthArrow(enabled: Boolean, back: Boolean, description: String, onC
 
 @Composable
 private fun MonthStat(label: String, minor: Long, currency: String, color: androidx.compose.ui.graphics.Color, modifier: Modifier, divider: Boolean = true) {
-    val line = LocalGlass.current.strokeTop
+    val line = LocalGlass.current.strokeBottom
     Column(
         modifier
             .then(
@@ -321,7 +321,7 @@ private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
             .height(40.dp)
             .clip(CircleShape)
             .background(if (selected) MaterialTheme.colorScheme.onSurface else glass.fill)
-            .then(if (selected) Modifier else Modifier.border(1.dp, glass.strokeTop, CircleShape))
+            .then(if (selected) Modifier else Modifier.border(1.dp, glass.rim, CircleShape))
             .clickable(role = Role.Tab, onClick = onClick)
             .semantics { this.selected = selected }
             .padding(horizontal = 16.dp),
@@ -363,7 +363,7 @@ private fun DayCard(rows: List<TransactionRow>, onOpen: (String) -> Unit) {
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .background(glass.fill)
-            .border(1.dp, glass.strokeTop, MaterialTheme.shapes.large)
+            .border(1.dp, glass.rim, MaterialTheme.shapes.large)
             .padding(vertical = 6.dp),
     ) {
         rows.forEach { row -> TransactionItem(row, onClick = { onOpen(row.transaction.id) }, showDate = false) }

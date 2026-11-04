@@ -1,6 +1,29 @@
 package com.masroufi.app.feature.transactions
 
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
+import com.masroufi.app.ui.components.BlurBehindWindow
+import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloatAsState
@@ -139,6 +162,59 @@ fun AddSheet(
     BackHandler(enabled = visible.targetState) { leave(onClose) }
     HandleEditorEffects(viewModel.effects.flow, snackbar) { leave { onSaved(state.type) } }
 
+    // The sheet is a real material: the app behind is frosted by the compositor and shows through the surface.
+    BlurBehindWindow()
+    val translucent = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+    // Drag to dismiss (handle, or pulling down once the content is scrolled to the top). The sheet follows the finger
+    // 1:1, rubber-bands upwards, and on release the throw is projected: far enough and it leaves at the finger's
+    // speed, otherwise it springs home carrying that velocity.
+    val scope = rememberCoroutineScope()
+    val drag = remember { Animatable(0f) }
+    var raw by remember { mutableFloatStateOf(0f) }
+    var sheetHeight by remember { mutableIntStateOf(1) }
+    fun follow(delta: Float) {
+        raw += delta
+        val shown = if (raw >= 0f) raw else rubberBand(raw, sheetHeight.toFloat())
+        scope.launch { drag.snapTo(shown) }
+    }
+    fun settle(velocity: Float) {
+        val projected = drag.value + projectMomentum(velocity)
+        scope.launch {
+            if (projected > sheetHeight * 0.45f) {
+                haptics.tick()
+                drag.animateTo(sheetHeight.toFloat(), spring(dampingRatio = 1f, stiffness = SHEET_STIFFNESS), initialVelocity = velocity.coerceAtLeast(0f))
+                onClose()
+            } else {
+                drag.animateTo(0f, spring(dampingRatio = 0.8f, stiffness = SHEET_STIFFNESS), initialVelocity = velocity)
+            }
+            raw = drag.value
+        }
+    }
+    val pullToDismiss = remember {
+        object : NestedScrollConnection {
+            // While the sheet is pulled down, scrolling back up first lifts the sheet, then scrolls the content.
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y >= 0f || drag.value <= 0f) return Offset.Zero
+                val used = maxOf(available.y, -drag.value)
+                follow(used)
+                return Offset(0f, used)
+            }
+
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (source != NestedScrollSource.UserInput || available.y <= 0f) return Offset.Zero
+                follow(available.y)
+                return Offset(0f, available.y)
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (drag.value <= 0f) return Velocity.Zero
+                settle(available.y)
+                return available
+            }
+        }
+    }
+
     Box(Modifier.fillMaxSize().statusBarsPadding()) {
         Box(Modifier.matchParentSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { leave(onClose) })
         AnimatedVisibility(
@@ -152,18 +228,34 @@ fun AddSheet(
                 Modifier
                     .widthIn(max = 560.dp)
                     .fillMaxWidth()
+                    .onSizeChanged { sheetHeight = it.height.coerceAtLeast(1) }
+                    .graphicsLayer { translationY = drag.value }
                     .clip(shape)
-                    .background(glass.fill)
-                    .border(1.dp, glass.strokeTop, shape)
+                    .background(glass.fill.copy(alpha = if (translucent) 0.86f else 1f))
+                    .border(1.dp, glass.rim, shape)
                     // Swallows taps so they don't reach the dismiss layer behind.
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
                     .navigationBarsPadding()
                     .imePadding()
+                    .nestedScroll(pullToDismiss)
                     .verticalScroll(rememberScrollState())
                     .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Box(Modifier.align(Alignment.CenterHorizontally).size(width = 40.dp, height = 5.dp).clip(CircleShape).background(glass.track))
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(22.dp)
+                        .draggable(
+                            rememberDraggableState { follow(it) },
+                            Orientation.Vertical,
+                            onDragStarted = { raw = drag.value },
+                            onDragStopped = { settle(it) },
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(Modifier.size(width = 40.dp, height = 5.dp).clip(CircleShape).background(glass.track))
+                }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     KindSwitch(kind, Modifier.weight(1f)) { picked ->
                         haptics.tick()
@@ -276,32 +368,46 @@ fun AddSheet(
 @Composable
 private fun KindSwitch(selected: SheetKind, modifier: Modifier, onSelect: (SheetKind) -> Unit) {
     val glass = LocalGlass.current
-    Row(
-        modifier.height(44.dp).clip(CircleShape).background(glass.base).padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        SheetKind.entries.forEach { kind ->
-            val on = kind == selected
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-                    .clip(CircleShape)
-                    .background(if (on) glass.track else Color.Transparent)
-                    .clickable(role = Role.Tab) { onSelect(kind) }
-                    .semantics { this.selected = on },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    stringResource(kind.label),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (on) MaterialTheme.colorScheme.onSurface else glass.textTertiary,
-                    maxLines = 1,
-                )
+    val reduce = LocalReduceMotion.current
+    val index = SheetKind.entries.indexOf(selected)
+    BoxWithConstraints(modifier.height(44.dp).clip(CircleShape).background(glass.base).padding(4.dp)) {
+        val segment = maxWidth / SheetKind.entries.size
+        // The thumb glides to the picked kind from wherever it is, so quick re-taps never jump.
+        val x by animateDpAsState(segment * index, Motion.spatial(reduce), label = "kindThumb")
+        Box(Modifier.offset { IntOffset(x.roundToPx(), 0) }.size(segment, maxHeight).clip(CircleShape).background(glass.track))
+        Row(Modifier.fillMaxSize()) {
+            SheetKind.entries.forEach { kind ->
+                val on = kind == selected
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(CircleShape)
+                        .clickable(role = Role.Tab) { onSelect(kind) }
+                        .semantics { this.selected = on },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        stringResource(kind.label),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (on) MaterialTheme.colorScheme.onSurface else glass.textTertiary,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
 }
+
+/** Apple's sheet spring (response 0.3 s): stiffness = (2π / response)². */
+private const val SHEET_STIFFNESS = 438.6f
+
+/** Where a throw at [velocity] px/s comes to rest, like scroll deceleration (Apple's projection, rate 0.998). */
+internal fun projectMomentum(velocity: Float, rate: Float = 0.998f): Float = velocity / 1000f * rate / (1f - rate)
+
+/** Progressive resistance past an edge: the further the overshoot, the less the surface follows. */
+internal fun rubberBand(overshoot: Float, dimension: Float, constant: Float = 0.55f): Float =
+    overshoot * dimension * constant / (dimension + constant * kotlin.math.abs(overshoot))
 
 /** Groups the typed integer part by thousands while keeping exactly what was typed after the point. */
 internal fun groupTyped(raw: String): String {
@@ -398,7 +504,7 @@ private fun CategoryPill(label: String, icon: (@Composable () -> Unit)?, color: 
             .height(40.dp)
             .clip(CircleShape)
             .background(if (selected) color.copy(alpha = 0.18f) else glass.fillStrong)
-            .border(1.dp, if (selected) color else glass.strokeTop, CircleShape)
+            .border(1.dp, if (selected) color else glass.strokeBottom, CircleShape)
             .clickable(role = Role.Checkbox, onClick = onClick)
             .semantics { this.selected = selected }
             .padding(start = 12.dp, end = 14.dp),

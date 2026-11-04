@@ -206,7 +206,7 @@ fun AchievementsScreen(onBack: () -> Unit, viewModel: AchievementsViewModel = hi
 private fun Panel(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val glass = LocalGlass.current
     val shape = MaterialTheme.shapes.large
-    Box(modifier.fillMaxWidth().clip(shape).background(glass.fill).border(1.dp, glass.strokeTop, shape).padding(18.dp)) { content() }
+    Box(modifier.fillMaxWidth().clip(shape).background(glass.fill).border(1.dp, glass.rim, shape).padding(18.dp)) { content() }
 }
 
 @Composable
@@ -342,7 +342,7 @@ private fun BadgeTile(progress: BadgeProgress, selected: Boolean, modifier: Modi
         modifier
             .clip(shape)
             .background(glass.fill)
-            .border(if (selected) 2.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else glass.strokeTop, shape)
+            .border(if (selected) 2.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else glass.strokeBottom, shape)
             .clickable(role = Role.Tab, onClick = onClick)
             .semantics(mergeDescendants = true) { this.selected = selected }
             .padding(vertical = 14.dp, horizontal = 6.dp),

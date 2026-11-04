@@ -22,6 +22,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -57,7 +58,13 @@ data class GlassTokens(
     /** Accent sequence for decorative art (onboarding cards and similar). */
     val aurora: List<Color>,
     val dark: Boolean,
-)
+) {
+    /**
+     * The liquid-glass rim: light catches the top edge of every surface and fades into the hairline by the middle,
+     * so flat cards still read as a material with depth.
+     */
+    val rim: Brush = Brush.verticalGradient(0f to strokeTop, 0.55f to strokeBottom)
+}
 
 // Design accents. Dark values are from the handoff; the light theme's darker variants are derived for 4.5:1 text
 // contrast on white, since the handoff is dark-only.
@@ -76,7 +83,7 @@ private val DarkGlass = GlassTokens(
     fill = Color(0xFF15131D),
     fillStrong = Color(0xFF1D1B28),
     track = Color(0xFF272435),
-    strokeTop = Color(0xFF2A2737),
+    strokeTop = Color(0xFF3E3A50),
     strokeBottom = Color(0xFF2A2737),
     shadow = Color.Black.copy(alpha = 0.5f),
     textSecondary = Color(0xFFB4AFC6),
@@ -90,7 +97,7 @@ private val LightGlass = GlassTokens(
     fill = Color(0xFFFFFFFF),
     fillStrong = Color(0xFFF0EDF6),
     track = Color(0xFFE4E0EE),
-    strokeTop = Color(0xFFE1DDEA),
+    strokeTop = Color(0xFFFFFFFF),
     strokeBottom = Color(0xFFE1DDEA),
     shadow = Color(0xFF15131D).copy(alpha = 0.08f),
     textSecondary = Color(0xFF4F4A62),

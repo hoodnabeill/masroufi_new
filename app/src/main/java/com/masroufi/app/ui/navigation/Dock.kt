@@ -122,7 +122,7 @@ private fun Modifier.dockGlass(): Modifier {
             .shadow(16.dp, shape, ambientColor = Color.Black, spotColor = Color.Black)
             .clip(shape)
             .background(tint)
-            .border(1.dp, glass.strokeTop, shape)
+            .border(1.dp, glass.rim, shape)
     }
     return drawBackdrop(
         backdrop = backdrop,
@@ -134,7 +134,7 @@ private fun Modifier.dockGlass(): Modifier {
         highlight = null,
         shadow = { Shadow(radius = 32.dp, color = Color.Black.copy(alpha = if (glass.dark) 0.55f else 0.14f)) },
         onDrawSurface = { drawRect(tint) },
-    ).border(1.dp, glass.strokeTop, shape)
+    ).border(1.dp, glass.rim, shape)
 }
 
 /**

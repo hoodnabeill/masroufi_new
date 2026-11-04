@@ -199,7 +199,7 @@ private fun Card(horizontal: Boolean = false, tint: Color? = null, content: @Com
         .fillMaxWidth()
         .clip(shape)
         .background(tint?.copy(alpha = 0.10f) ?: glass.fill)
-        .border(1.dp, tint?.copy(alpha = 0.25f) ?: glass.strokeTop, shape)
+        .then(if (tint != null) Modifier.border(1.dp, tint.copy(alpha = 0.25f), shape) else Modifier.border(1.dp, glass.rim, shape))
         .padding(18.dp)
     if (horizontal) {
         Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { content() }

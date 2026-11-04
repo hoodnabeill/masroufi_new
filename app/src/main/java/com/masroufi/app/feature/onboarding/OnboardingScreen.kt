@@ -612,7 +612,7 @@ private fun SetupPage(
 @Composable
 private fun LiquidDrop(pager: PagerState, modifier: Modifier) {
     val primary = MaterialTheme.colorScheme.primary
-    val track = LocalGlass.current.strokeTop
+    val track = LocalGlass.current.strokeBottom
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val dot = 8.dp
     val gap = 14.dp
