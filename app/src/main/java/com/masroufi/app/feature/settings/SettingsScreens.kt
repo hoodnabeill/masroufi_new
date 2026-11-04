@@ -122,6 +122,21 @@ fun SettingsScreen(onBack: () -> Unit, onPremium: () -> Unit = {}, viewModel: Se
                 { applyAppLanguage(it) },
                 { if (it == "ar") "العربية" else "English" },
             )
+            Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.titleSmall)
+            SegmentedChoice(
+                ThemeMode.entries.toList(),
+                s.themeMode,
+                { m -> viewModel.launch { setTheme(m) } },
+                {
+                    stringResource(
+                        when (it) {
+                            ThemeMode.SYSTEM -> R.string.theme_system
+                            ThemeMode.LIGHT -> R.string.theme_light
+                            ThemeMode.DARK -> R.string.theme_dark
+                        },
+                    )
+                },
+            )
             // Reading money SMS is opt-in: the switch asks for RECEIVE_SMS, and only turns on once it is granted.
             val smsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
                 viewModel.launch { setSmsAutoLog(granted) }

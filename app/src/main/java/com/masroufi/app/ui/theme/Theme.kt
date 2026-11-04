@@ -24,6 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -40,9 +42,10 @@ import com.masroufi.app.R
 import com.masroufi.app.data.prefs.ThemeMode
 
 /**
- * "Midnight Ledger" surface tokens (masroufi-v2-design/README.md §1). Field names are kept from the glass era so
- * every component reads the new values: [fill] is the card surface, [fillStrong] the raised layer (inputs, chips,
- * inner tiles), [strokeTop]/[strokeBottom] the 1 px line.
+ * Surface tokens, Apple's grouped-content model (DESIGN.md). Field names are kept from the glass era so every
+ * component reads the new values: [base] is systemGroupedBackground, [fill] the card/cell, [fillStrong] the tertiary
+ * fill (inputs, inner tiles), [track] progress tracks, [strokeBottom] the in-card separator. [strokeTop] is the
+ * specular edge floating glass catches; plain cards have no outline.
  */
 @Immutable
 data class GlassTokens(
@@ -59,76 +62,61 @@ data class GlassTokens(
     val aurora: List<Color>,
     val dark: Boolean,
 ) {
-    /**
-     * The liquid-glass rim: light catches the top edge of every surface and fades into the hairline by the middle,
-     * so flat cards still read as a material with depth.
-     */
-    val rim: Brush = Brush.verticalGradient(0f to strokeTop, 0.55f to strokeBottom)
+    /** Cards and cells carry no outline in the grouped idiom; the brush stays so call sites keep compiling. */
+    val rim: Brush = SolidColor(Color.Transparent)
 }
 
-// Design accents. Dark values are from the handoff; the light theme's darker variants are derived for 4.5:1 text
-// contrast on white, since the handoff is dark-only.
-private val Lime = Color(0xFFC8F169)
-private val Violet = Color(0xFFA99BFF)
-private val Amber = Color(0xFFFFB648)
-private val Coral = Color(0xFFFF8C73)
-private val Blue = Color(0xFF7DB4FF)
-private val Mint = Color(0xFF5EE3A1)
-private val Pink = Color(0xFFE7A6FF)
-private val Yellow = Color(0xFFFFD466)
-private val Orange = Color(0xFFFFA36B)
-
 private val DarkGlass = GlassTokens(
-    base = Color(0xFF0B0A10),
-    fill = Color(0xFF15131D),
-    fillStrong = Color(0xFF1D1B28),
-    track = Color(0xFF272435),
-    strokeTop = Color(0xFF3E3A50),
-    strokeBottom = Color(0xFF2A2737),
-    shadow = Color.Black.copy(alpha = 0.5f),
-    textSecondary = Color(0xFFB4AFC6),
-    textTertiary = Color(0xFF8E89A3),
-    aurora = listOf(Violet, Pink, Blue, Lime),
+    base = Color(0xFF000000),
+    fill = Color(0xFF1C1C1E),
+    fillStrong = Color(0xFF2C2C2E),
+    track = Color(0xFF38383A),
+    strokeTop = Color.White.copy(alpha = 0.18f),
+    strokeBottom = Color(0xFF38383A),
+    shadow = Color.Black.copy(alpha = 0.6f),
+    textSecondary = Color(0xFFAEAEB2),
+    textTertiary = Color(0xFF8D8D93),
+    aurora = listOf(Color(0xFF7D7AFF), Color(0xFFFF375F), Color(0xFF0A84FF), Color(0xFF30D158)),
     dark = true,
 )
 
 private val LightGlass = GlassTokens(
-    base = Color(0xFFF6F4FA),
+    base = Color(0xFFF2F2F7),
     fill = Color(0xFFFFFFFF),
-    fillStrong = Color(0xFFF0EDF6),
-    track = Color(0xFFE4E0EE),
-    strokeTop = Color(0xFFFFFFFF),
-    strokeBottom = Color(0xFFE1DDEA),
-    shadow = Color(0xFF15131D).copy(alpha = 0.08f),
-    textSecondary = Color(0xFF4F4A62),
-    textTertiary = Color(0xFF6C6782),
-    aurora = listOf(Color(0xFF6A5AE0), Color(0xFFB25ACF), Color(0xFF2F6FE0), Color(0xFF4A7A00)),
+    fillStrong = Color(0xFFE9E9EE),
+    track = Color(0xFFE3E3E8),
+    strokeTop = Color.White.copy(alpha = 0.9f),
+    strokeBottom = Color(0xFFC6C6C8),
+    shadow = Color.Black.copy(alpha = 0.12f),
+    textSecondary = Color(0xFF6C6C70),
+    textTertiary = Color(0xFF8A8A8E),
+    aurora = listOf(Color(0xFF5856D6), Color(0xFFFF2D55), Color(0xFF007AFF), Color(0xFF34C759)),
     dark = false,
 )
 
 val LocalGlass = staticCompositionLocalOf { DarkGlass }
 
 /**
- * Lime is money and the primary action, violet is brand and navigation, amber is streaks and "soon", coral is
- * over-pace, overdue and destructive. Background and surface stay transparent so the stage behind every screen
- * (and the floating glass that refracts it) shows through.
+ * Green is money and the primary action, indigo links and selection, orange "soon" and streaks, red over-pace and
+ * destructive. Light-mode accents use Apple's accessible (darker) variants so text on white stays at 4.5:1.
+ * Background and surface stay transparent so the stage behind every screen shows through.
  */
 private fun scheme(dark: Boolean, glass: GlassTokens): ColorScheme {
-    val text = if (dark) Color(0xFFF4F2FA) else Color(0xFF15131D)
+    val text = if (dark) Color.White else Color.Black
     val common = if (dark) darkColorScheme() else lightColorScheme()
     return common.copy(
-        primary = if (dark) Lime else Color(0xFF4A7A00),
-        onPrimary = if (dark) Color(0xFF12160A) else Color.White,
-        primaryContainer = if (dark) Color(0xFF24301A) else Color(0xFFE6F5C9),
-        onPrimaryContainer = if (dark) Lime else Color(0xFF2E4D00),
-        secondary = if (dark) Violet else Color(0xFF5B4BD6),
-        onSecondary = if (dark) Color(0xFF17132E) else Color.White,
-        secondaryContainer = if (dark) Color(0xFF262046) else Color(0xFFE7E3FF),
-        onSecondaryContainer = if (dark) Violet else Color(0xFF3A2E8C),
-        tertiary = if (dark) Amber else Color(0xFF8A5600),
-        onTertiary = Color(0xFF2A1A00),
-        tertiaryContainer = if (dark) Color(0xFF33260F) else Color(0xFFFFEBC7),
-        onTertiaryContainer = if (dark) Amber else Color(0xFF5A3800),
+        primary = if (dark) Color(0xFF30D158) else Color(0xFF248A3D),
+        onPrimary = if (dark) Color(0xFF00210B) else Color.White,
+        primaryContainer = if (dark) Color(0xFF0E3B1C) else Color(0xFFDDF5E3),
+        onPrimaryContainer = if (dark) Color(0xFF30D158) else Color(0xFF145A27),
+        secondary = if (dark) Color(0xFF7D7AFF) else Color(0xFF5856D6),
+        onSecondary = Color.White,
+        secondaryContainer = if (dark) Color(0xFF26254D) else Color(0xFFE6E5FA),
+        onSecondaryContainer = if (dark) Color(0xFFB9B7FF) else Color(0xFF3634A3),
+        tertiary = if (dark) Color(0xFFFF9F0A) else Color(0xFFC93400),
+        onTertiary = if (dark) Color(0xFF2A1700) else Color.White,
+        tertiaryContainer = if (dark) Color(0xFF3D2600) else Color(0xFFFFEAD2),
+        onTertiaryContainer = if (dark) Color(0xFFFF9F0A) else Color(0xFF7A2E00),
         background = Color.Transparent,
         onBackground = text,
         surface = Color.Transparent,
@@ -143,13 +131,13 @@ private fun scheme(dark: Boolean, glass: GlassTokens): ColorScheme {
         surfaceContainerHighest = glass.track,
         inverseSurface = text,
         inverseOnSurface = glass.base,
-        outline = glass.strokeTop,
-        outlineVariant = glass.strokeTop,
-        scrim = Color.Black.copy(alpha = 0.6f),
-        error = if (dark) Coral else Color(0xFFC2410C),
-        onError = if (dark) Color(0xFF2B0D06) else Color.White,
-        errorContainer = if (dark) Color(0xFF33201C) else Color(0xFFFFE4DC),
-        onErrorContainer = if (dark) Coral else Color(0xFF7A2A0A),
+        outline = glass.strokeBottom,
+        outlineVariant = glass.strokeBottom,
+        scrim = Color.Black.copy(alpha = if (dark) 0.5f else 0.3f),
+        error = if (dark) Color(0xFFFF453A) else Color(0xFFD70015),
+        onError = Color.White,
+        errorContainer = if (dark) Color(0xFF3D0F0C) else Color(0xFFFFE1DF),
+        onErrorContainer = if (dark) Color(0xFFFF453A) else Color(0xFF8A000E),
     )
 }
 
@@ -169,29 +157,30 @@ data class FinanceColors(
     val categories: List<Color>,
 )
 
+// The twelve iOS system hues (dark and accessible-light variants) in the order stored colour indices expect.
 private val DarkFinance = FinanceColors(
-    income = Lime,
-    expense = Color(0xFFF4F2FA),
-    transfer = Blue,
-    warning = Amber,
-    over = Coral,
-    streak = Amber,
+    income = Color(0xFF30D158),
+    expense = Color.White,
+    transfer = Color(0xFF0A84FF),
+    warning = Color(0xFFFF9F0A),
+    over = Color(0xFFFF453A),
+    streak = Color(0xFFFF9F0A),
     categories = listOf(
-        Coral, Blue, Mint, Pink, Yellow, Orange,
-        Lime, Violet, Amber, Color(0xFF5ED6E3), Color(0xFFFF9EBB), Color(0xFFD9C3A0),
+        Color(0xFFFF453A), Color(0xFF0A84FF), Color(0xFF63E6E2), Color(0xFFFF375F), Color(0xFFFFD60A), Color(0xFFFF9F0A),
+        Color(0xFF30D158), Color(0xFF5E5CE6), Color(0xFFE5A50A), Color(0xFF40C8E0), Color(0xFFBF5AF2), Color(0xFFAC8E68),
     ),
 )
 
 private val LightFinance = FinanceColors(
-    income = Color(0xFF4A7A00),
-    expense = Color(0xFF15131D),
-    transfer = Color(0xFF2F6FE0),
-    warning = Color(0xFF8A5600),
-    over = Color(0xFFC2410C),
-    streak = Color(0xFF8A5600),
+    income = Color(0xFF248A3D),
+    expense = Color.Black,
+    transfer = Color(0xFF0066CC),
+    warning = Color(0xFFC93400),
+    over = Color(0xFFD70015),
+    streak = Color(0xFFC93400),
     categories = listOf(
-        Color(0xFFD9542F), Color(0xFF2F6FE0), Color(0xFF0E9C6B), Color(0xFFA64BC9), Color(0xFFB58800), Color(0xFFD96A1F),
-        Color(0xFF4A7A00), Color(0xFF5B4BD6), Color(0xFF8A5600), Color(0xFF0F8C99), Color(0xFFD9467A), Color(0xFF8C7350),
+        Color(0xFFFF3B30), Color(0xFF007AFF), Color(0xFF00C7BE), Color(0xFFFF2D55), Color(0xFFFFCC00), Color(0xFFFF9500),
+        Color(0xFF34C759), Color(0xFF5856D6), Color(0xFFE08700), Color(0xFF32ADE6), Color(0xFFAF52DE), Color(0xFFA2845E),
     ),
 )
 
@@ -249,8 +238,9 @@ private val PlexArabic = FontFamily(
 )
 
 /**
- * Handoff scale: H1 28, H2 18, titles 15–17, body 15, caption 12. Large Latin display text gets slight negative
- * tracking; Arabic is a joined script, so it keeps zero tracking and ~18% taller leading for its ascenders.
+ * Apple's type ramp (DESIGN.md) in IBM Plex Sans Arabic; Readex Pro, a rounded face like SF Rounded, for big
+ * numbers. Latin tracking is size-specific (tighter as it grows); Arabic is a joined script, so it keeps zero
+ * tracking and ~18% taller leading for its ascenders.
  */
 private fun typography(arabic: Boolean): Typography {
     fun style(family: FontFamily, size: Int, line: Int, weight: FontWeight, tracking: Float = 0f): TextStyle = TextStyle(
@@ -263,19 +253,19 @@ private fun typography(arabic: Boolean): Typography {
     return Typography(
         displayLarge = style(Readex, 64, 68, FontWeight.Bold, -0.03f),
         displayMedium = style(Readex, 44, 50, FontWeight.Bold, -0.025f),
-        displaySmall = style(Readex, 28, 34, FontWeight.SemiBold, -0.015f),
-        headlineLarge = style(Readex, 24, 30, FontWeight.SemiBold, -0.01f),
-        headlineMedium = style(Readex, 20, 26, FontWeight.SemiBold),
-        headlineSmall = style(Readex, 18, 24, FontWeight.SemiBold),
-        titleLarge = style(PlexArabic, 17, 24, FontWeight.SemiBold),
-        titleMedium = style(PlexArabic, 16, 22, FontWeight.SemiBold),
-        titleSmall = style(PlexArabic, 15, 20, FontWeight.SemiBold),
-        bodyLarge = style(PlexArabic, 15, 22, FontWeight.Normal),
-        bodyMedium = style(PlexArabic, 14, 20, FontWeight.Normal),
-        bodySmall = style(PlexArabic, 12, 16, FontWeight.Normal),
-        labelLarge = style(PlexArabic, 14, 18, FontWeight.SemiBold),
+        displaySmall = style(Readex, 28, 34, FontWeight.Bold, -0.02f),
+        headlineLarge = style(PlexArabic, 34, 41, FontWeight.Bold, -0.02f),
+        headlineMedium = style(PlexArabic, 22, 28, FontWeight.Bold, -0.015f),
+        headlineSmall = style(PlexArabic, 20, 25, FontWeight.SemiBold, -0.012f),
+        titleLarge = style(PlexArabic, 17, 22, FontWeight.SemiBold, -0.01f),
+        titleMedium = style(PlexArabic, 17, 22, FontWeight.SemiBold, -0.01f),
+        titleSmall = style(PlexArabic, 15, 20, FontWeight.SemiBold, -0.008f),
+        bodyLarge = style(PlexArabic, 17, 22, FontWeight.Normal, -0.01f),
+        bodyMedium = style(PlexArabic, 15, 20, FontWeight.Normal, -0.008f),
+        bodySmall = style(PlexArabic, 13, 18, FontWeight.Normal),
+        labelLarge = style(PlexArabic, 17, 22, FontWeight.SemiBold, -0.01f),
         labelMedium = style(PlexArabic, 12, 16, FontWeight.Medium),
-        labelSmall = style(PlexArabic, 11, 14, FontWeight.Medium),
+        labelSmall = style(PlexArabic, 11, 13, FontWeight.Medium, 0.006f),
     )
 }
 
@@ -293,13 +283,13 @@ val AmountStyle: TextStyle
         fontFeatureSettings = "tnum",
     )
 
-/** Radii from the handoff: icon tile 14, tile 18, card 24, hero and sheets 28; chips and buttons are full pills. */
+/** Continuous corners (DESIGN.md): controls 12, tiles and cells 16, cards 22, sheets and hero 28. */
 private val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(14.dp),
-    small = RoundedCornerShape(18.dp),
-    medium = RoundedCornerShape(18.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    extraSmall = continuous(12),
+    small = continuous(16),
+    medium = continuous(16),
+    large = continuous(22),
+    extraLarge = continuous(28),
 )
 
 /** Spacing steps from the handoff (4/8/12/16/20/28) with the 16 dp screen gutter. */
@@ -314,12 +304,16 @@ object Spacing {
 }
 
 @Composable
-fun MasroufiTheme(solidGlass: Boolean = false, content: @Composable () -> Unit) {
-    // Midnight Ledger is a dark-only design (the handoff has no light theme): no system, light or dynamic variants.
-    val dark = true
+fun MasroufiTheme(solidGlass: Boolean = false, mode: ThemeMode = ThemeMode.SYSTEM, content: @Composable () -> Unit) {
+    // Light and dark are both first-class; the system decides unless Settings forces one.
+    val dark = when (mode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
     val context = LocalContext.current
-    val glass = DarkGlass
-    val colors = scheme(dark, glass)
+    val glass = if (dark) DarkGlass else LightGlass
+    val colors = remember(dark) { scheme(dark, glass) }
     val reduceMotion = remember(context) {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
     }
@@ -331,6 +325,8 @@ fun MasroufiTheme(solidGlass: Boolean = false, content: @Composable () -> Unit) 
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
+            // The window behind Compose matches the screen colour, so a theme switch or a slow frame never flashes.
+            window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(glass.base.toArgb()))
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = !dark
                 isAppearanceLightNavigationBars = !dark

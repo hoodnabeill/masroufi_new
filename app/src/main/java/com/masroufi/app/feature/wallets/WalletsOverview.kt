@@ -135,11 +135,11 @@ internal fun SmsLogCard(wallets: List<WalletWithBalance>, onLog: (type: Transact
     var parsedFor by rememberSaveable { mutableStateOf<String?>(null) }
     var failed by rememberSaveable { mutableStateOf(false) }
     val parsed: SmsParse? = parsedFor?.let(SmsParser::parse)
-    // The handoff tints this card violet (#1B1830 on #332C55) so the "new" feature stands apart from the plain cards.
+    // The new feature sits on the indigo container so it stands apart from the plain cards.
     val shape = RoundedCornerShape(26.dp)
-    val dash = Color(0xFF4A3F8F)
+    val dash = violet.copy(alpha = 0.45f)
     Column(
-        Modifier.fillMaxWidth().clip(shape).background(Color(0xFF1B1830)).border(1.dp, Color(0xFF332C55), shape).padding(18.dp),
+        Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.secondaryContainer).padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -187,7 +187,7 @@ internal fun SmsLogCard(wallets: List<WalletWithBalance>, onLog: (type: Transact
                     modifier = Modifier.weight(1f),
                     enabled = text.isNotBlank(),
                     tint = violet,
-                    contentColor = Color(0xFF17132E),
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
                 ) { Text(stringResource(R.string.sms_read)) }
             }
             if (failed) Text(stringResource(R.string.sms_failed), style = MaterialTheme.typography.bodySmall, color = LocalFinanceColors.current.warning)

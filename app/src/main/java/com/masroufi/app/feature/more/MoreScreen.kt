@@ -309,7 +309,7 @@ private fun BackupNudge(onBackup: () -> Unit) {
         Text(
             stringResource(R.string.more_backup_cta),
             style = MaterialTheme.typography.labelLarge,
-            color = Color(0xFF1E0D09),
+            color = Color.White,
             modifier = Modifier.heightIn(min = 40.dp).clip(CircleShape).background(coral).clickable(role = Role.Button, onClick = onBackup).padding(horizontal = 16.dp, vertical = 10.dp),
         )
     }

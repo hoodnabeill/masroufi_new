@@ -140,7 +140,6 @@ fun Modifier.glass(
             .clip(shape)
             .background(panel)
             .then(if (tint.isSpecified()) Modifier.background(tint.copy(alpha = (tint.alpha * 0.7f).coerceAtMost(0.9f))) else Modifier)
-            .border(1.dp, glass.rim, shape)
             .then(front)
     }
     // Floating chrome only (dock, quick-add, snackbars): real glass over the live content beneath.
@@ -156,7 +155,7 @@ fun Modifier.glass(
             // The lens shader needs corner radii; every app shape is corner-based, anything else just skips it.
             if (shape is CornerBasedShape) lens(refractionHeight = 14.dp.toPx(), refractionAmount = 22.dp.toPx(), chromaticAberration = true)
         },
-        highlight = { Highlight(width = 1.dp, style = HighlightStyle.Default(intensity = if (dark) 0.35f else 0.6f)) },
+        highlight = { Highlight(width = 0.75.dp, style = HighlightStyle.Default(intensity = if (dark) 0.45f else 0.8f)) },
         shadow = if (dark) null else ({ Shadow(radius = 22.dp, color = shade) }),
         onDrawSurface = { drawRect(surface) },
         onDrawFront = onDrawFront,
@@ -172,7 +171,6 @@ fun Modifier.glassInset(shape: Shape, tint: Color = Color.Unspecified): Modifier
     this
         .clip(shape)
         .background(if (tint.isSpecified()) tint.copy(alpha = 0.12f) else glass.fillStrong)
-        .border(1.dp, glass.rim, shape)
 }
 
 /**

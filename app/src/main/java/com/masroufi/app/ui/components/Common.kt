@@ -1,5 +1,6 @@
 package com.masroufi.app.ui.components
 
+import com.masroufi.app.ui.theme.continuousPercent
 import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
@@ -84,12 +85,12 @@ fun MasroufiTopBar(
     if (onBack == null) {
         // Tab roots get an Apple-style large title; actions sit in glass circles beside it.
         Row(
-            Modifier.fillMaxWidth().statusBarsPadding().padding(start = 20.dp, end = 12.dp, top = 14.dp, bottom = 6.dp),
+            Modifier.fillMaxWidth().statusBarsPadding().padding(start = 20.dp, end = 12.dp, top = 10.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 title,
-                style = MaterialTheme.typography.displaySmall,
+                style = MaterialTheme.typography.headlineLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f).semantics { heading() },
@@ -118,7 +119,7 @@ fun GlassIconButton(onClick: () -> Unit, modifier: Modifier = Modifier, content:
     Box(
         modifier
             .size(48.dp)
-            .liquidPress(interaction, CircleShape, scaleTo = 1.12f)
+            .liquidPress(interaction, CircleShape, scaleTo = 1.1f)
             .glass(CircleShape)
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -141,13 +142,13 @@ fun PressableCard(
     val shape = MaterialTheme.shapes.large
     Column(
         modifier
-            .then(if (onClick != null) Modifier.liquidPress(interaction, shape, scaleTo = 0.975f) else Modifier)
+            .then(if (onClick != null) Modifier.liquidPress(interaction, shape, scaleTo = 0.98f) else Modifier)
             // Decorations draw inside the glass, so they are clipped and scale with the press like the card itself.
             .glass(shape, tint = color, onDrawFront = decoration)
             .then(
                 if (onClick != null) Modifier.clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick) else Modifier,
             )
-            .padding(18.dp),
+            .padding(16.dp),
         content = content,
     )
 }
@@ -155,26 +156,31 @@ fun PressableCard(
 @Composable
 fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? = null, onAction: (() -> Unit)? = null) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
+        modifier = modifier.fillMaxWidth().padding(start = 16.dp, top = 14.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).semantics { heading() })
+        Text(
+            title,
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f).semantics { heading() },
+        )
         if (action != null && onAction != null) TextButton(onClick = onAction) { Text(action) }
     }
 }
 
 @Composable
 fun IconBadge(icon: ImageVector, tint: Color, modifier: Modifier = Modifier, size: Dp = 44.dp) {
-    // Handoff icon tile: the category colour at ~18% on the card, radius ~30% of the size (14 dp at 46 dp).
-    val shape = RoundedCornerShape(percent = 30)
+    // The Settings-app tile: solid colour, white glyph, continuous corners at app-icon proportion (22.5%).
+    val shape = continuousPercent(23)
     Box(
         modifier = modifier
             .size(size)
             .clip(shape)
-            .background(tint.copy(alpha = 0.18f)),
+            .background(tint),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.54f))
+        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(size * 0.56f))
     }
 }
 
@@ -193,31 +199,14 @@ fun EmptyState(
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
 ) {
-    val reduce = LocalReduceMotion.current
-    val primary = MaterialTheme.colorScheme.primary
-    val float = if (reduce) null else rememberInfiniteTransition(label = "emptyFloat").animateFloat(
-        0f, (2 * PI).toFloat(), infiniteRepeatable(tween(6_000, easing = LinearEasing), RepeatMode.Restart), label = "t",
-    )
     Column(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 40.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // The empty state's icon floats in a glass orb with a soft halo, so an empty screen still feels designed.
-        Box(
-            Modifier
-                .size(132.dp)
-                .graphicsLayer { translationY = sin(float?.value ?: 0f) * 6.dp.toPx() }
-                .drawBehind {
-                    drawCircle(Brush.radialGradient(listOf(primary.copy(alpha = 0.28f), Color.Transparent)), size.minDimension / 2)
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(Modifier.size(92.dp).glass(CircleShape, tint = primary.copy(alpha = 0.18f), strong = true), contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = null, tint = primary, modifier = Modifier.size(40.dp))
-            }
-        }
-        Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.semantics { heading() })
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(56.dp))
+        Spacer(Modifier.height(6.dp))
+        Text(title, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center, modifier = Modifier.semantics { heading() })
         Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         if (actionLabel != null && onAction != null) {
             Spacer(Modifier.height(6.dp))

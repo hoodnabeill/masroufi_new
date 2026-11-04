@@ -511,7 +511,7 @@ internal fun InsightsRow(state: HomeUiState, onOpenAll: () -> Unit, onMakeBudget
                         Text(
                             stringResource(R.string.insight_cta_budget),
                             style = MaterialTheme.typography.labelLarge,
-                            color = Color(0xFF1E0D09),
+                            color = Color.White,
                             modifier = Modifier.clip(CircleShape).background(tone).clickable(role = Role.Button, onClick = onMakeBudget).padding(horizontal = 18.dp, vertical = 10.dp),
                         )
                     }

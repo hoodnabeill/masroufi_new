@@ -77,29 +77,33 @@ internal fun LiquidButton(
 ) {
     val interaction = remember { MutableInteractionSource() }
     val reduce = LocalReduceMotion.current
-    val fade by animateFloatAsState(if (enabled) 1f else 0.42f, Motion.effects(reduce), label = "buttonEnabled")
+    val pressed by interaction.collectIsPressedAsState()
+    val fade by animateFloatAsState(if (enabled) 1f else 0.38f, Motion.effects(reduce), label = "buttonEnabled")
+    // UIKit highlights a pressed button by dimming it at once and easing back on release.
+    val dim by animateFloatAsState(if (pressed && !reduce) 0.72f else 1f, if (pressed) snap() else Motion.effects(reduce), label = "buttonDim")
     Row(
         modifier
-            .defaultMinSize(minHeight = 56.dp)
-            .graphicsLayer { alpha = fade }
-            .liquidPress(interaction, CircleShape, scaleTo = 1.04f)
-            .then(if (tint != Color.Unspecified) Modifier.clip(CircleShape).background(tint) else Modifier.glass(CircleShape, strong = true))
+            .defaultMinSize(minHeight = 52.dp)
+            .graphicsLayer { alpha = fade * dim }
+            .liquidPress(interaction, CircleShape, scaleTo = 0.97f)
+            .clip(CircleShape)
+            .background(if (tint != Color.Unspecified) tint else contentColor.copy(alpha = 0.14f))
             .clickable(interactionSource = interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 22.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CompositionLocalProvider(LocalContentColor provides contentColor, LocalTextStyle provides MaterialTheme.typography.titleSmall) { content() }
+        CompositionLocalProvider(LocalContentColor provides contentColor, LocalTextStyle provides MaterialTheme.typography.labelLarge) { content() }
     }
 }
 
-/** The primary action: a tinted drop of liquid glass that swells under the finger. */
+/** The primary action: a filled capsule in the app tint (Apple's "prominent" button). */
 @Composable
 fun GlassButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
     LiquidButton(onClick, modifier, enabled, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, content)
 }
 
-/** Secondary action: clear glass with accent-coloured label, so it ranks below [GlassButton] without a new style. */
+/** Secondary action: a tinted capsule, the accent at 14% behind an accent label (Apple's "tinted" button). */
 @Composable
 fun GlassSecondaryButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
     LiquidButton(onClick, modifier, enabled, Color.Unspecified, MaterialTheme.colorScheme.primary, content)
@@ -117,13 +121,12 @@ fun GlassSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifie
     val pressed by interaction.collectIsPressedAsState()
     val position by animateFloatAsState(
         if (checked) 1f else 0f,
-        if (reduce) snap<Float>() else spring<Float>(dampingRatio = 0.68f, stiffness = 520f),
+        if (reduce) snap<Float>() else spring<Float>(dampingRatio = 0.86f, stiffness = 520f),
         label = "switch",
     )
     val squash by animateFloatAsState(if (pressed && !reduce) 1f else 0f, spring(dampingRatio = 0.7f, stiffness = 600f), label = "switchPress")
     val primary = MaterialTheme.colorScheme.primary
-    val dark = LocalGlass.current.dark
-    val off = MaterialTheme.colorScheme.onSurface.copy(alpha = if (dark) 0.18f else 0.14f)
+    val off = LocalGlass.current.track
     val toggle = if (onCheckedChange != null) {
         Modifier.toggleable(value = checked, interactionSource = interaction, indication = null, enabled = enabled, role = Role.Switch) {
             haptics.tick()
@@ -137,19 +140,19 @@ fun GlassSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifie
             .minimumInteractiveComponentSize()
             .then(toggle)
             .graphicsLayer { alpha = if (enabled) 1f else 0.4f }
-            .size(52.dp, 32.dp)
+            .size(51.dp, 31.dp)
             .drawBehind {
                 val p = position.coerceIn(0f, 1f)
                 val radius = CornerRadius(size.height / 2)
                 drawRoundRect(lerp(off, primary, p), cornerRadius = radius)
-                drawRoundRect(Color.White.copy(alpha = if (dark) 0.10f else 0.45f), cornerRadius = radius, style = Stroke(1.dp.toPx()))
-                val inset = 3.dp.toPx()
+                val inset = 2.dp.toPx()
                 val knob = size.height - inset * 2
-                val width = knob + (sin(PI.toFloat() * p) * 0.4f + squash * 0.22f) * knob
+                val width = knob + squash * 0.26f * knob
                 val travel = size.width - inset * 2 - width
                 var x = inset + travel * position
                 if (layoutDirection == LayoutDirection.Rtl) x = size.width - x - width
-                drawRoundRect(Color.Black.copy(alpha = 0.16f), Offset(x, inset + 1.5.dp.toPx()), Size(width, knob), CornerRadius(knob / 2))
+                drawRoundRect(Color.Black.copy(alpha = 0.06f), Offset(x - 0.5.dp.toPx(), inset + 0.5.dp.toPx()), Size(width + 1.dp.toPx(), knob + 1.dp.toPx()), CornerRadius(knob / 2))
+                drawRoundRect(Color.Black.copy(alpha = 0.14f), Offset(x, inset + 2.dp.toPx()), Size(width, knob), CornerRadius(knob / 2))
                 drawRoundRect(Color.White, Offset(x, inset), Size(width, knob), CornerRadius(knob / 2))
             },
     )
@@ -171,14 +174,14 @@ fun GlassSheet(
         shape = top.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)),
         containerColor = paneColor(),
         tonalElevation = 0.dp,
-        scrimColor = Color.Black.copy(alpha = 0.3f),
+        scrimColor = MaterialTheme.colorScheme.scrim,
         dragHandle = {
             Box(
                 Modifier
-                    .padding(top = 10.dp, bottom = 8.dp)
-                    .size(38.dp, 5.dp)
+                    .padding(top = 6.dp, bottom = 10.dp)
+                    .size(36.dp, 5.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f)),
+                    .background(LocalGlass.current.textTertiary.copy(alpha = 0.5f)),
             )
         },
     ) {
@@ -241,13 +244,14 @@ fun glassFieldColors(): TextFieldColors {
     val glass = LocalGlass.current
     val scheme = MaterialTheme.colorScheme
     return OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = glass.fillStrong,
+        focusedContainerColor = glass.fill,
         unfocusedContainerColor = glass.fill,
         disabledContainerColor = glass.fill,
         errorContainerColor = scheme.error.copy(alpha = 0.08f),
-        focusedBorderColor = scheme.primary,
-        unfocusedBorderColor = glass.strokeBottom.copy(alpha = if (glass.dark) 0.8f else 0.9f),
-        disabledBorderColor = glass.strokeBottom.copy(alpha = 0.4f),
+        focusedBorderColor = scheme.secondary.copy(alpha = 0.7f),
+        unfocusedBorderColor = Color.Transparent,
+        disabledBorderColor = Color.Transparent,
+        cursorColor = scheme.secondary,
         // Pickers render as disabled read-only fields under a click overlay; keep them fully legible.
         disabledTextColor = scheme.onSurface,
         disabledLabelColor = scheme.onSurfaceVariant,
@@ -263,9 +267,9 @@ fun glassChipColors(): SelectableChipColors {
     val scheme = MaterialTheme.colorScheme
     return FilterChipDefaults.filterChipColors(
         containerColor = glass.fill,
-        selectedContainerColor = scheme.primary.copy(alpha = if (glass.dark) 0.26f else 0.16f),
-        selectedLabelColor = scheme.onSurface,
-        selectedLeadingIconColor = scheme.primary,
+        selectedContainerColor = scheme.secondary,
+        selectedLabelColor = scheme.onSecondary,
+        selectedLeadingIconColor = scheme.onSecondary,
     )
 }
 

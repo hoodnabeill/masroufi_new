@@ -779,7 +779,7 @@ private fun MeansCard(form: SplitForm, result: SplitResult) {
     val violet = MaterialTheme.colorScheme.secondary
     val shape = RoundedCornerShape(20.dp)
     Column(
-        Modifier.fillMaxWidth().clip(shape).background(Color(0xFF1B1830)).border(1.dp, Color(0xFF332C55), shape).padding(16.dp, 14.dp),
+        Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.secondaryContainer).padding(16.dp, 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(stringResource(R.string.split_means), style = MaterialTheme.typography.labelLarge, color = violet)

@@ -154,13 +154,13 @@ class RecapViewModel @Inject constructor(
 private const val SLIDES = 5
 private const val SLIDE_MILLIS = 4_600
 
-/** Each slide's colour and ink, from the handoff (violet, ink, coral, amber, lime). */
+/** Each slide's colour and ink: iOS system indigo, black, red, orange and green, each with its legible ink. */
 private val looks = listOf(
-    Color(0xFFA99BFF) to Color(0xFF17132E),
-    Color(0xFF0B0A10) to Color(0xFFF4F2FA),
-    Color(0xFFFF8C73) to Color(0xFF1E0D09),
-    Color(0xFFFFB648) to Color(0xFF1A1206),
-    Color(0xFFC8F169) to Color(0xFF12160A),
+    Color(0xFF5E5CE6) to Color.White,
+    Color(0xFF000000) to Color.White,
+    Color(0xFFFF453A) to Color.White,
+    Color(0xFFFF9F0A) to Color(0xFF2A1700),
+    Color(0xFF30D158) to Color(0xFF00210B),
 )
 
 /** The monthly story: five slides that advance on their own (or on a tap), ending in a shareable summary. */
