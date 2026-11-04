@@ -548,7 +548,7 @@ private fun WalletChip(wallets: List<WalletWithBalance>, current: WalletWithBala
 
 /** Phone-style pad, always LTR as on every dial pad: flat keys that light up while pressed. Long-press ⌫ clears. */
 @Composable
-private fun SheetKeypad(allowDecimal: Boolean, onKey: (Char) -> Unit, onClear: () -> Unit) {
+internal fun SheetKeypad(allowDecimal: Boolean, onKey: (Char) -> Unit, onClear: () -> Unit) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("123", "456", "789", ".0<").forEach { row ->

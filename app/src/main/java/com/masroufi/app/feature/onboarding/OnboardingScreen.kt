@@ -1,51 +1,42 @@
 package com.masroufi.app.feature.onboarding
 
+import android.Manifest
 import android.os.Build
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.text
-import androidx.compose.ui.text.AnnotatedString
-import com.masroufi.app.ui.components.FitAmount
-import com.masroufi.app.ui.components.glassInset
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -54,588 +45,622 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlurEffect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
-import com.masroufi.app.core.applyAppLanguage
-import com.masroufi.app.ui.components.CategoryIcons
-import com.masroufi.app.ui.components.DropdownField
-import com.masroufi.app.ui.components.glassChipColors
-import androidx.compose.material3.FilterChip
-import androidx.compose.runtime.mutableIntStateOf
 import com.masroufi.app.core.Money
+import com.masroufi.app.core.applyAppLanguage
 import com.masroufi.app.core.newId
+import com.masroufi.app.data.model.Transaction
+import com.masroufi.app.data.model.TransactionType
 import com.masroufi.app.data.model.Wallet
 import com.masroufi.app.data.model.WalletType
 import com.masroufi.app.data.prefs.SettingsRepository
+import com.masroufi.app.data.repo.TransactionRepository
 import com.masroufi.app.data.repo.WalletRepository
-import com.masroufi.app.ui.components.AmountField
-import com.masroufi.app.ui.components.AnimatedAmount
-import com.masroufi.app.ui.components.CurrencyField
+import com.masroufi.app.domain.PayCycle
+import com.masroufi.app.feature.transactions.SheetKeypad
+import com.masroufi.app.feature.transactions.applyAmountKey
+import com.masroufi.app.feature.transactions.groupTyped
 import com.masroufi.app.ui.components.GlassButton
 import com.masroufi.app.ui.components.GlassStage
-import com.masroufi.app.ui.components.IconBadge
+import com.masroufi.app.ui.components.LocalMoneyFormatter
 import com.masroufi.app.ui.components.MIcons
-import com.masroufi.app.ui.components.PressableCard
-import com.masroufi.app.ui.components.SegmentedChoice
-import com.masroufi.app.ui.components.categoryColor
-import com.masroufi.app.ui.components.glass
+import com.masroufi.app.ui.components.PocketMark
 import com.masroufi.app.ui.components.rememberHaptics
+import com.masroufi.app.ui.navigation.StartRequest
 import com.masroufi.app.ui.theme.LocalFinanceColors
 import com.masroufi.app.ui.theme.LocalGlass
 import com.masroufi.app.ui.theme.LocalReduceMotion
+import com.masroufi.app.ui.theme.Motion
+import com.masroufi.app.work.LogReminderWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import kotlin.math.PI
-import kotlin.math.absoluteValue
-import kotlin.math.cos
-import kotlin.math.floor
-import kotlin.math.roundToInt
-import kotlin.math.sin
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
+    @ApplicationContext private val context: android.content.Context,
     private val settings: SettingsRepository,
     private val wallets: WalletRepository,
+    private val transactions: TransactionRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    /** [extra] are the other places the user keeps money (mobile wallets, bank), created empty beside cash. */
-    fun finish(currency: String, cashName: String, openingMinor: Long, paydayDay: Int, extra: List<Pair<String, WalletType>>) {
+    private var firstWalletId: String? = null
+
+    /** Creates the wallets (the balance goes into the first) and the payday, once; safe to call again. */
+    fun setup(currency: String, places: List<Pair<String, WalletType>>, openingMinor: Long, paydayDay: Int) {
         viewModelScope.launch {
             if (!wallets.hasAnyWallet()) {
                 val now = clock.millis()
-                wallets.save(Wallet(newId(), cashName, WalletType.CASH, currency, openingMinor, createdAt = now, updatedAt = now))
-                extra.forEach { (name, type) -> wallets.save(Wallet(newId(), name, type, currency, 0L, createdAt = now, updatedAt = now)) }
+                places.forEachIndexed { i, (name, type) ->
+                    val id = newId()
+                    if (i == 0) firstWalletId = id
+                    wallets.save(Wallet(id, name, type, currency, if (i == 0) openingMinor else 0L, createdAt = now, updatedAt = now))
+                }
             }
             settings.setPayday(paydayDay)
+        }
+    }
+
+    /** The first entry, logged for real so the streak and points start today. */
+    fun logFirst(categoryId: String, amountMinor: Long, currency: String) {
+        val wallet = firstWalletId ?: return
+        viewModelScope.launch {
+            val now = clock.millis()
+            runCatching {
+                transactions.save(
+                    Transaction(
+                        id = newId(), type = TransactionType.EXPENSE, amountMinor = amountMinor, currency = currency,
+                        walletId = wallet, categoryId = categoryId, occurredAt = now, createdAt = now, updatedAt = now,
+                    ),
+                )
+            }
+        }
+    }
+
+    /** [reminderHour] is the daily nudge's hour, or null to skip it. Marks onboarding done, which opens the app. */
+    fun complete(currency: String, reminderHour: Int?) {
+        viewModelScope.launch {
+            val hour = reminderHour ?: -1
+            settings.setLogReminderHour(hour)
+            LogReminderWorker.schedule(context, hour)
             settings.setOnboardingDone(currency)
         }
     }
 }
 
-private const val PAGES = 4
+private const val STEPS = 8
 
-/** Example balance the hero card rolls up to. It is decoration only and never saved. */
-private const val DEMO_BALANCE_MINOR = 1_245_000L
+/** The ways people get paid, mapped onto the payday setting (0 = no fixed day: the month's end). */
+private enum class PayKind(val label: Int, val sub: Int, val day: Int) {
+    FIRST(R.string.ob_pay_first, R.string.ob_pay_first_sub, 1),
+    TWENTY_FIFTH(R.string.ob_pay_25, R.string.ob_pay_25_sub, 25),
+    WEEKLY(R.string.ob_pay_weekly, R.string.ob_pay_weekly_sub, 0),
+    IRREGULAR(R.string.ob_pay_irregular, R.string.ob_pay_irregular_sub, 0),
+}
+
+private data class Place(val key: String, val label: Int, val type: WalletType)
+
+private val places = listOf(
+    Place("cash", R.string.wallet_default_cash, WalletType.CASH),
+    Place("vodafone", R.string.wallet_preset_vodafone, WalletType.DIGITAL),
+    Place("instapay", R.string.wallet_preset_instapay, WalletType.DIGITAL),
+    Place("bank", R.string.wallet_preset_bank, WalletType.BANK),
+)
+
+private val goals = listOf(R.string.ob_goal_where, R.string.ob_goal_month, R.string.ob_goal_save, R.string.ob_goal_stop, R.string.ob_goal_gameya)
+
+/** First-log choices: label and the system category each logs to. */
+private val firstLogs = listOf(R.string.cat_transport to "sys_transport", R.string.ob_log_coffee to "sys_food", R.string.cat_food to "sys_food", R.string.cat_groceries to "sys_groceries")
+private val firstAmounts = listOf(15L, 25L, 50L, 100L)
+
+/** Reminder times: the hour and its label (بعد الشغل، بالليل، قبل النوم). */
+private val reminders = listOf(18 to R.string.ob_remind_after_work, 21 to R.string.ob_remind_evening, 23 to R.string.ob_remind_bed)
 
 /**
- * Onboarding is staged like a title sequence: glass cards are dealt out of the light, the balance rolls up on its
- * odometer, titles rise word by word, and only then do the controls arrive. Swiping drives every layer with
- * parallax, the page indicator is a single liquid drop, and each settled page ticks a haptic.
+ * Eight short steps that end with the user's first real entry (README: welcome → goals → balance → next income →
+ * daily number reveal → first log → reminder → done). Each step slides in from the reading direction.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
-    val pager = rememberPagerState { PAGES }
-    val scope = rememberCoroutineScope()
     val haptics = rememberHaptics()
     val reduce = LocalReduceMotion.current
-    var currency by rememberSaveable { mutableStateOf(Money.DEFAULT_CURRENCY) }
-    var opening by rememberSaveable { mutableStateOf("") }
-    var payday by rememberSaveable { mutableIntStateOf(0) }
-    var picked by rememberSaveable { mutableStateOf(listOf<String>()) }
-    val presetNames = WalletPresets.associateWith { stringResource(it.label) }
-    val cashName = stringResource(R.string.wallet_default_cash)
-    val last = pager.currentPage == PAGES - 1
+    val glass = LocalGlass.current
+    val money = LocalMoneyFormatter.current
+    val currency = Money.DEFAULT_CURRENCY
+    val unit = Money.unit(currency)
+    val today = remember { LocalDate.now() }
     val uiLanguage = LocalConfiguration.current.locales[0].language
-    val chrome = remember { Animatable(if (reduce) 1f else 0f) }
-    LaunchedEffect(Unit) {
-        delay(1_050)
-        chrome.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = 180f))
-    }
-    LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.drop(1).collect { haptics.tick() } }
+    val locale = LocalConfiguration.current.locales[0]
+    val dayMonth = remember(locale) { DateTimeFormatter.ofPattern("d MMMM", locale) }
 
-    GlassStage(layout = pager.currentPage + 1) {
-        Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
-            Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 12.dp)) {
-                // Qualified so the outer ColumnScope overload is not picked up inside this Box.
-                androidx.compose.animation.AnimatedVisibility(!last, Modifier.align(Alignment.CenterEnd), enter = fadeIn(), exit = fadeOut()) {
-                    TextButton(
-                        onClick = { scope.launch { pager.animateScrollToPage(PAGES - 1) } },
-                        modifier = Modifier.graphicsLayer { alpha = chrome.value },
-                    ) { Text(stringResource(R.string.onboarding_skip)) }
-                }
-            }
-            HorizontalPager(state = pager, modifier = Modifier.weight(1f)) { page ->
-                val offset = { pager.currentPage - page + pager.currentPageOffsetFraction }
-                val active = pager.currentPage == page
-                when (page) {
-                    0 -> StoryPage(offset, active, firstDelay = 700, stringResource(R.string.onboarding_title), stringResource(R.string.onboarding_body)) {
-                        WalletStack(offset)
-                    }
-                    1 -> StoryPage(offset, active, firstDelay = 0, stringResource(R.string.onboarding_plan_title), stringResource(R.string.onboarding_plan_body)) {
-                        PlanOrbit(active)
-                    }
-                    2 -> StoryPage(offset, active, firstDelay = 0, stringResource(R.string.onboarding_page2_title), stringResource(R.string.onboarding_privacy)) {
-                        PrivacySeal(active)
-                    }
-                    else -> SetupPage(
-                        offset, active, currency, { currency = it }, opening, { opening = it },
-                        payday = payday,
-                        onPayday = { payday = it },
-                        picked = picked,
-                        onToggle = { key -> picked = if (key in picked) picked - key else picked + key },
-                    )
-                }
-            }
-            LiquidDrop(pager, Modifier.align(Alignment.CenterHorizontally).graphicsLayer { alpha = chrome.value })
-            Spacer(Modifier.height(18.dp))
-            GlassButton(
-                onClick = {
-                    haptics.confirm()
-                    if (last) {
-                        // Pin the language the user saw, so Arabic gets Latin digits even when it came from the system locale.
-                        if (AppCompatDelegate.getApplicationLocales().isEmpty) applyAppLanguage(uiLanguage)
-                        viewModel.finish(
-                            currency, cashName, Money.parse(opening, currency) ?: 0L, payday,
-                            WalletPresets.filter { it.key in picked }.map { presetNames.getValue(it) to it.type },
+    var step by rememberSaveable { mutableIntStateOf(0) }
+    var forward by remember { mutableStateOf(true) }
+    var chosenGoals by rememberSaveable { mutableStateOf(listOf<Int>()) }
+    var amount by rememberSaveable { mutableStateOf("") }
+    var chosenPlaces by rememberSaveable { mutableStateOf(listOf("cash")) }
+    var pay by rememberSaveable { mutableStateOf(PayKind.FIRST) }
+    var logCat by rememberSaveable { mutableIntStateOf(0) }
+    var logAmount by rememberSaveable { mutableStateOf(firstAmounts[1]) }
+    var logged by rememberSaveable { mutableStateOf(false) }
+    var reminder by rememberSaveable { mutableIntStateOf(1) }
+    var reminderOn by rememberSaveable { mutableStateOf(false) }
+
+    val balanceMinor = Money.parse(amount, currency) ?: 0L
+    val days = PayCycle.daysUntilNextIncome(today, pay.day)
+    val payDate = today.plusDays(days.toLong())
+    val daily = balanceMinor / days.coerceAtLeast(1) / unit * unit
+    val placeNames = places.associate { it.key to stringResource(it.label) }
+
+    fun go(to: Int) {
+        forward = to > step
+        haptics.tick()
+        step = to.coerceIn(0, STEPS - 1)
+    }
+    BackHandler(enabled = step in 1..6) { go(step - 1) }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { go(7) }
+
+    fun finish() {
+        // Pin the language the user saw, so Arabic gets Latin digits even when it came from the system locale.
+        if (AppCompatDelegate.getApplicationLocales().isEmpty) applyAppLanguage(uiLanguage)
+        viewModel.complete(currency, reminders[reminder].first.takeIf { reminderOn })
+    }
+
+    GlassStage(layout = step + 1) {
+        Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp)) {
+            TopBar(step, onBack = { go(step - 1) }, onLanguage = { applyAppLanguage(if (uiLanguage == "ar") "en" else "ar") }, arabic = uiLanguage == "ar")
+            AnimatedContent(
+                targetState = step,
+                transitionSpec = {
+                    val dir = if (forward) 1 else -1
+                    (slideInHorizontally(Motion.spatial(reduce)) { it / 3 * dir } + fadeIn(Motion.effects(reduce))) togetherWith
+                        (slideOutHorizontally(Motion.spatial(reduce)) { -it / 3 * dir } + fadeOut(Motion.snappy(reduce)))
+                },
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                label = "onboardingStep",
+            ) { s ->
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    when (s) {
+                        0 -> Welcome()
+                        1 -> {
+                            Title(R.string.ob_goals_title, R.string.ob_goals_body)
+                            goals.forEach { g ->
+                                val on = g in chosenGoals
+                                CheckRow(stringResource(g), on) { chosenGoals = if (on) chosenGoals - g else chosenGoals + g }
+                            }
+                            Text(
+                                when (chosenGoals.size) {
+                                    0 -> stringResource(R.string.ob_goals_hint_none)
+                                    1 -> stringResource(R.string.ob_goals_hint_one)
+                                    else -> stringResource(R.string.ob_goals_hint_many, chosenGoals.size)
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = glass.textTertiary,
+                            )
+                        }
+                        2 -> {
+                            Title(R.string.ob_balance_title, R.string.ob_balance_body)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Bottom) {
+                                Text(groupTyped(amount), style = MaterialTheme.typography.displayLarge, color = if (amount.isEmpty()) glass.textTertiary else MaterialTheme.colorScheme.onSurface)
+                                Spacer(Modifier.width(8.dp))
+                                Text(money.symbol(currency), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
+                            }
+                            Text(stringResource(R.string.ob_where), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                places.forEach { p ->
+                                    val on = p.key in chosenPlaces
+                                    Pill(stringResource(p.label), on) {
+                                        chosenPlaces = if (on) (chosenPlaces - p.key).ifEmpty { chosenPlaces } else chosenPlaces + p.key
+                                    }
+                                }
+                            }
+                            SheetKeypad(allowDecimal = false, onKey = { k -> haptics.tick(); amount = applyAmountKey(amount, k, currency) }, onClear = { amount = "" })
+                        }
+                        3 -> {
+                            Title(R.string.ob_pay_title, R.string.ob_pay_body)
+                            PayKind.entries.forEach { k -> RadioRow(stringResource(k.label), stringResource(k.sub), k == pay) { pay = k } }
+                            Timeline(days, today.format(dayMonth), payDate.format(dayMonth))
+                        }
+                        4 -> Reveal(daily, balanceMinor, days, currency, payDate.format(dayMonth))
+                        5 -> FirstLog(
+                            daily = daily, currency = currency, cat = logCat, onCat = { logCat = it }, amount = logAmount, onAmount = { logAmount = it }, logged = logged,
                         )
-                    } else {
-                        scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .height(58.dp)
-                    .graphicsLayer {
-                        alpha = chrome.value
-                        translationY = (1f - chrome.value) * 40.dp.toPx()
-                    },
-            ) {
-                AnimatedContent(
-                    targetState = last,
-                    transitionSpec = {
-                        (fadeIn() + slideInVertically { it / 2 }) togetherWith (fadeOut() + slideOutVertically { -it / 2 })
-                    },
-                    label = "cta",
-                ) { isLast ->
-                    Text(stringResource(if (isLast) R.string.onboarding_start else R.string.onboarding_continue), style = MaterialTheme.typography.titleMedium)
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-private fun StoryPage(offset: () -> Float, active: Boolean, firstDelay: Long, title: String, body: String, art: @Composable () -> Unit) {
-    // The art is designed at 300dp and scaled down to fit short screens (landscape, large fonts); the page scrolls
-    // if the text still does not fit.
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val artSize = minOf(300.dp, maxHeight * 0.46f, maxWidth * 0.86f)
-        val artScale = artSize / 300.dp
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .heightIn(min = maxHeight)
-                .padding(horizontal = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Box(
-                Modifier.size(artSize).graphicsLayer {
-                    val o = offset()
-                    translationX = o * size.width * 0.55f
-                    alpha = 1f - o.absoluteValue.coerceAtMost(1f)
-                    val s = 1f - 0.18f * o.absoluteValue.coerceAtMost(1f)
-                    scaleX = s
-                    scaleY = s
-                },
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    Modifier.requiredSize(300.dp).graphicsLayer {
-                        scaleX = artScale
-                        scaleY = artScale
-                    },
-                    contentAlignment = Alignment.Center,
-                ) { art() }
-            }
-            Spacer(Modifier.height(28.dp))
-            Column(
-                Modifier.graphicsLayer {
-                    val o = offset()
-                    translationX = o * size.width * 0.22f
-                    alpha = 1f - o.absoluteValue.coerceAtMost(1f)
-                },
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                KineticText(title, active, firstDelay, MaterialTheme.typography.displaySmall, heading = true)
-                Spacer(Modifier.height(14.dp))
-                KineticText(body, active, firstDelay + 260, MaterialTheme.typography.bodyLarge, MaterialTheme.colorScheme.onSurfaceVariant, stagger = 14)
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-    }
-}
-
-/**
- * Text that rises into place word by word, each word coming out of a soft blur (Android 12+). Words keep their
- * own shaping, so Arabic stays joined; the flow follows the layout direction. Plays once, the first time its page
- * becomes current.
- */
-@Composable
-private fun KineticText(
-    text: String,
-    active: Boolean,
-    startDelay: Long,
-    style: androidx.compose.ui.text.TextStyle,
-    color: Color = Color.Unspecified,
-    stagger: Long = 55,
-    heading: Boolean = false,
-) {
-    val reduce = LocalReduceMotion.current
-    val words = remember(text) { text.split(' ').filter { it.isNotEmpty() } }
-    val progress = remember(text) { words.map { Animatable(if (reduce) 1f else 0f) } }
-    var played by remember(text) { mutableStateOf(reduce) }
-    LaunchedEffect(active, text) {
-        if (active && !played) {
-            played = true
-            delay(startDelay)
-            progress.forEachIndexed { i, anim ->
-                launch {
-                    delay(i * stagger)
-                    anim.animateTo(1f, spring(dampingRatio = 0.75f, stiffness = 170f))
-                }
-            }
-        }
-    }
-    // Screen readers get the sentence once, whole, not word by word.
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
-        modifier = Modifier.clearAndSetSemantics {
-            this.text = AnnotatedString(text)
-            if (heading) heading()
-        },
-    ) {
-        words.forEachIndexed { i, word ->
-            Text(
-                if (i < words.lastIndex) "$word " else word,
-                style = style,
-                color = color,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.graphicsLayer {
-                    val p = progress[i].value
-                    alpha = p.coerceIn(0f, 1f)
-                    translationY = (1f - p) * 26.dp.toPx()
-                    val blur = (1f - p.coerceIn(0f, 1f)) * 14.dp.toPx()
-                    renderEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blur > 0.5f) BlurEffect(blur, blur, TileMode.Decal) else null
-                },
-            )
-        }
-    }
-}
-
-/** Three glass wallet cards dealt out of the light, floating in 3D and tilting with the swipe. */
-@Composable
-private fun WalletStack(offset: () -> Float) {
-    val reduce = LocalReduceMotion.current
-    val finance = LocalFinanceColors.current
-    val aurora = LocalGlass.current.aurora
-    val primary = MaterialTheme.colorScheme.primary
-    val deal = remember { List(3) { Animatable(if (reduce) 1f else 0f) } }
-    var balance by remember { mutableLongStateOf(if (reduce) DEMO_BALANCE_MINOR else 0L) }
-    LaunchedEffect(Unit) {
-        deal.forEachIndexed { i, anim ->
-            launch {
-                delay(180L + i * 120L)
-                anim.animateTo(1f, spring(dampingRatio = 0.62f, stiffness = 140f))
-            }
-        }
-        delay(900)
-        balance = DEMO_BALANCE_MINOR
-    }
-    val float = if (reduce) null else rememberInfiniteTransition(label = "float").animateFloat(
-        0f, (2 * PI).toFloat(), infiniteRepeatable(tween(7_000, easing = LinearEasing), RepeatMode.Restart), label = "t",
-    )
-    // Back to front: resting offset (dp), resting tilt (degrees), glass tint, icon.
-    val cards = listOf(
-        Triple(Offset(-28f, -54f), -11f, aurora[2]) to MIcons.Bank,
-        Triple(Offset(26f, -20f), 8f, finance.transfer) to MIcons.Cash,
-        Triple(Offset(0f, 34f), -3f, primary) to MIcons.Wallet,
-    )
-    val shape = MaterialTheme.shapes.large
-    // Dark glass carries white text; light glass is pale, so it carries the normal ink colour instead.
-    val ink = if (LocalGlass.current.dark) Color.White else MaterialTheme.colorScheme.onSurface
-    // Decorative example only: hidden from screen readers so the demo balance is never announced as real money.
-    Box(Modifier.fillMaxSize().clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
-        cards.forEachIndexed { i, (pose, icon) ->
-            val (rest, tilt, tint) = pose
-            val depth = i + 1
-            Box(
-                Modifier
-                    .offset(rest.x.dp, rest.y.dp)
-                    .size(220.dp, 138.dp)
-                    .graphicsLayer {
-                        val d = deal[i].value
-                        val t = float?.value ?: 0f
-                        val o = offset()
-                        alpha = d.coerceIn(0f, 1f)
-                        translationY = (1f - d) * 420.dp.toPx() + sin(t + i * 1.3f) * 5.dp.toPx()
-                        translationX = -o * depth * 18.dp.toPx()
-                        rotationZ = tilt * d + (1f - d) * 24f * (if (i % 2 == 0) -1 else 1)
-                        rotationY = sin(t + i) * 7f + o * 26f
-                        rotationX = cos(t * 0.8f + i) * 5f
-                        cameraDistance = 14f * density
-                    }
-                    .glass(shape, tint = tint.copy(alpha = 0.34f), strong = i == 2)
-                    .padding(18.dp),
-            ) {
-                Icon(icon, contentDescription = null, tint = ink.copy(alpha = 0.92f), modifier = Modifier.size(26.dp))
-                if (i == 2) {
-                    Text(
-                        stringResource(R.string.onboarding_example),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = ink.copy(alpha = 0.85f),
-                        modifier = Modifier.align(Alignment.TopEnd).glassInset(CircleShape).padding(horizontal = 10.dp, vertical = 4.dp),
-                    )
-                    Column(Modifier.align(Alignment.BottomStart)) {
-                        Text(stringResource(R.string.onboarding_demo_wallet), style = MaterialTheme.typography.labelLarge, color = ink.copy(alpha = 0.78f))
-                        FitAmount(balance, Money.DEFAULT_CURRENCY, style = MaterialTheme.typography.headlineSmall, color = ink)
+                        6 -> {
+                            Title(R.string.ob_remind_title, R.string.ob_remind_body)
+                            reminders.forEachIndexed { i, (hour, label) ->
+                                RadioRow(stringResource(R.string.ob_remind_time, if (hour > 12) hour - 12 else hour), stringResource(label), i == reminder) { reminder = i }
+                            }
+                            NotificationPreview(
+                                if (logged) stringResource(R.string.remind_log_title, money.format((daily - logAmount * unit).coerceAtLeast(0), currency))
+                                else stringResource(R.string.remind_log_title, money.format(daily, currency)),
+                                stringResource(if (logged) R.string.ob_notif_body_logged else R.string.remind_log_body_start),
+                            )
+                            InfoCard(MIcons.Flame, R.string.ob_freeze_title, R.string.ob_freeze_body)
+                        }
+                        else -> Done(
+                            daily = money.format(daily, currency),
+                            reminder = if (reminderOn) stringResource(R.string.ob_remind_time, reminders[reminder].first - 12) + " · " + stringResource(reminders[reminder].second) else stringResource(R.string.ob_remind_off),
+                            goal = chosenGoals.firstOrNull()?.let { stringResource(it) } ?: "—",
+                            logged = logged,
+                        )
                     }
                 }
             }
-        }
-    }
-}
-
-/** A glass orb whose ring of spending fills in, circled by category gems drifting on a tilted orbit. */
-@Composable
-private fun PlanOrbit(active: Boolean) {
-    val reduce = LocalReduceMotion.current
-    val finance = LocalFinanceColors.current
-    val primary = MaterialTheme.colorScheme.primary
-    val fill = remember { Animatable(if (reduce) 1f else 0f) }
-    LaunchedEffect(active) {
-        if (active && fill.value < 1f) fill.animateTo(1f, spring(dampingRatio = 0.9f, stiffness = 40f))
-    }
-    val spin = if (reduce) null else rememberInfiniteTransition(label = "orbit").animateFloat(
-        0f, (2 * PI).toFloat(), infiniteRepeatable(tween(26_000, easing = LinearEasing), RepeatMode.Restart), label = "a",
-    )
-    val gems = listOf(MIcons.Food, MIcons.Cart, MIcons.Savings, MIcons.Car, MIcons.Gift, MIcons.Cafe)
-    val slices = listOf(0.42f to primary, 0.27f to finance.transfer, 0.19f to finance.expense, 0.12f to MaterialTheme.colorScheme.tertiary)
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Box(Modifier.size(150.dp).glass(CircleShape, strong = true), contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(104.dp)) {
-                val stroke = 14.dp.toPx()
-                val inset = stroke / 2
-                val arcSize = Size(size.width - stroke, size.height - stroke)
-                var start = -90f
-                slices.forEach { (share, color) ->
-                    val sweep = 360f * share * fill.value
-                    drawArc(color.copy(alpha = 0.22f), start, sweep, false, Offset(inset, inset), arcSize, style = Stroke(stroke * 1.8f, cap = StrokeCap.Round))
-                    drawArc(color, start, (sweep - 6f).coerceAtLeast(0f), false, Offset(inset, inset), arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
-                    start += 360f * share
+            // The step's action, pinned at the bottom.
+            val primary: Pair<Int, () -> Unit> = when (step) {
+                0 -> R.string.ob_start to { go(1) }
+                1 -> R.string.onboarding_continue to { go(2) }
+                2 -> R.string.onboarding_continue to { go(3) }
+                3 -> R.string.ob_calc to {
+                    viewModel.setup(currency, places.filter { it.key in chosenPlaces }.map { placeNames.getValue(it.key) to it.type }, balanceMinor, pay.day)
+                    go(4)
+                }
+                4 -> R.string.ob_try to { go(5) }
+                5 -> R.string.ob_log to {
+                    if (!logged) {
+                        haptics.confirm()
+                        viewModel.logFirst(firstLogs[logCat].second, logAmount * unit, currency)
+                        logged = true
+                    }
+                }
+                6 -> R.string.ob_remind_on to {
+                    reminderOn = true
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS) else go(7)
+                }
+                else -> R.string.ob_done to { haptics.confirm(); finish() }
+            }
+            // After the first log, the streak burst plays briefly and the flow moves on by itself.
+            if (step == 5 && logged) LaunchedEffect(Unit) { delay(1_400); go(6) }
+            GlassButton(
+                onClick = primary.second,
+                enabled = when (step) {
+                    1 -> chosenGoals.isNotEmpty()
+                    2 -> balanceMinor > 0
+                    5 -> !logged
+                    else -> true
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+            ) {
+                Text(stringResource(primary.first), style = MaterialTheme.typography.titleMedium)
+                if (step == 5) {
+                    Spacer(Modifier.width(10.dp))
+                    Text(stringResource(R.string.home_points, 10), style = MaterialTheme.typography.labelMedium)
                 }
             }
-        }
-        gems.forEachIndexed { i, icon ->
-            Box(
-                Modifier.offset {
-                    val a = (spin?.value ?: 0f) + i * (2 * PI / gems.size).toFloat()
-                    IntOffset((cos(a) * 128.dp.toPx()).roundToInt(), (sin(a) * 104.dp.toPx()).roundToInt())
-                }.graphicsLayer {
-                    // Gems on the far side of the orbit shrink and dim, which sells the depth.
-                    val a = (spin?.value ?: 0f) + i * (2 * PI / gems.size).toFloat()
-                    val near = (sin(a) + 1f) / 2f
-                    val s = (0.78f + 0.3f * near) * fill.value.coerceIn(0f, 1f)
-                    scaleX = s
-                    scaleY = s
-                    alpha = 0.55f + 0.45f * near
-                },
-            ) {
-                IconBadge(icon, categoryColor(i), size = 46.dp, modifier = Modifier.glass(RoundedCornerShape(percent = 34)))
+            val secondary: Pair<Int, () -> Unit>? = when (step) {
+                0 -> R.string.ob_have_backup to { StartRequest.backup = true; finish() }
+                5 -> R.string.ob_later to { go(6) }
+                6 -> R.string.ob_not_now to { reminderOn = false; go(7) }
+                else -> null
+            }
+            Box(Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
+                secondary?.let { (label, action) -> TextButton(onClick = action) { Text(stringResource(label), color = MaterialTheme.colorScheme.secondary) } }
             }
         }
     }
 }
 
-/** A lock seals shut with a bounce when its page arrives, sending soft ripples outwards. */
 @Composable
-private fun PrivacySeal(active: Boolean) {
+private fun TopBar(step: Int, onBack: () -> Unit, onLanguage: () -> Unit, arabic: Boolean) {
+    val glass = LocalGlass.current
+    Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (step in 1..6) {
+            Box(Modifier.size(44.dp).clip(CircleShape).background(glass.fill).clickable(role = Role.Button, onClick = onBack), contentAlignment = Alignment.Center) {
+                Icon(MIcons.Back, contentDescription = stringResource(R.string.action_back), modifier = Modifier.size(20.dp))
+            }
+            Spacer(Modifier.width(12.dp))
+            // Six segments for the six middle steps; welcome and done stand on their own.
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                repeat(6) { i ->
+                    Box(Modifier.weight(1f).height(4.dp).clip(CircleShape).background(if (i < step) MaterialTheme.colorScheme.primary else glass.track))
+                }
+            }
+            Spacer(Modifier.width(56.dp))
+        } else if (step == 0) {
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = onLanguage) { Text(if (arabic) "English" else "العربية") }
+        }
+    }
+}
+
+@Composable
+private fun Title(title: Int, body: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 8.dp)) {
+        Text(stringResource(title), style = MaterialTheme.typography.displaySmall)
+        Text(stringResource(body), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** فلوسك في إيدك: the coin drops into the pocket, then the promise and three plain facts. */
+@Composable
+private fun Welcome() {
     val reduce = LocalReduceMotion.current
-    val haptics = rememberHaptics()
-    val primary = MaterialTheme.colorScheme.primary
-    val onPrimary = MaterialTheme.colorScheme.onPrimary
-    val shut = remember { Animatable(if (reduce) 1f else 0f) }
-    LaunchedEffect(active) {
-        if (active && shut.value < 1f) {
-            delay(380)
-            shut.animateTo(1f, spring(dampingRatio = 0.42f, stiffness = 380f))
-            haptics.confirm()
-        }
-    }
-    val ripple = if (reduce) null else rememberInfiniteTransition(label = "ripple").animateFloat(
-        0f, 1f, infiniteRepeatable(tween(3_200, easing = LinearEasing), RepeatMode.Restart), label = "p",
-    )
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
-            val maxR = size.minDimension / 2
-            repeat(3) { i ->
-                val p = ((ripple?.value ?: 0.5f) + i / 3f) % 1f
-                drawCircle(primary.copy(alpha = (1f - p) * 0.45f * shut.value.coerceIn(0f, 1f)), maxR * (0.36f + 0.64f * p), style = Stroke(width = 2.dp.toPx()))
-            }
-            drawCircle(Brush.radialGradient(listOf(primary.copy(alpha = 0.4f), Color.Transparent)), maxR * 0.62f)
-        }
-        Box(Modifier.size(124.dp).glass(CircleShape, tint = primary.copy(alpha = 0.7f), strong = true), contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(56.dp)) {
-                val u = size.minDimension / 24f
-                val stroke = Stroke(width = 2.2f * u, cap = StrokeCap.Round)
-                // Shackle drops 5 units into the body as the lock closes.
-                val drop = (1f - shut.value) * -5f * u
-                drawArc(
-                    color = onPrimary,
-                    startAngle = 180f,
-                    sweepAngle = 180f,
-                    useCenter = false,
-                    topLeft = Offset(7f * u, 3.5f * u + drop),
-                    size = Size(10f * u, 10f * u),
-                    style = stroke,
-                )
-                drawLine(onPrimary, Offset(7f * u, 8.5f * u + drop), Offset(7f * u, 11f * u), stroke.width, StrokeCap.Round)
-                drawLine(onPrimary, Offset(17f * u, 8.5f * u + drop), Offset(17f * u, 11f * u + drop.coerceAtMost(0f) * 0.6f), stroke.width, StrokeCap.Round)
-                drawRoundRect(onPrimary, Offset(4.5f * u, 10.5f * u), Size(15f * u, 11f * u), CornerRadius(3f * u))
-                drawCircle(primary, 1.6f * u, Offset(12f * u, 15.5f * u))
+    val drop = remember { Animatable(if (reduce) 0f else 60f) }
+    LaunchedEffect(Unit) { drop.animateTo(0f, spring(dampingRatio = 0.55f, stiffness = 140f)) }
+    val glass = LocalGlass.current
+    Column(Modifier.fillMaxWidth().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        PocketMark(Modifier.size(160.dp), coinDrop = { drop.value })
+        Text(stringResource(R.string.ob_welcome_title), style = MaterialTheme.typography.displaySmall, textAlign = TextAlign.Center)
+        Text(stringResource(R.string.ob_welcome_body), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(8.dp))
+        listOf(MIcons.Check to R.string.ob_fact_no_math, MIcons.Cloud to R.string.ob_fact_offline, MIcons.Lock to R.string.ob_fact_yours).forEach { (icon, text) ->
+            Row(
+                Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.medium).padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(12.dp))
+                Text(stringResource(text), style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
 }
 
 @Composable
-private fun SetupPage(
-    offset: () -> Float,
-    active: Boolean,
-    currency: String,
-    onCurrency: (String) -> Unit,
-    opening: String,
-    onOpening: (String) -> Unit,
-    payday: Int,
-    onPayday: (Int) -> Unit,
-    picked: List<String>,
-    onToggle: (String) -> Unit,
-) {
-    val language = LocalConfiguration.current.locales[0].language
-    Column(
+private fun CheckRow(label: String, on: Boolean, onClick: () -> Unit) {
+    val glass = LocalGlass.current
+    val lime = MaterialTheme.colorScheme.primary
+    Row(
         Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
-            .graphicsLayer {
-                val o = offset()
-                translationX = o * size.width * 0.3f
-                alpha = 1f - o.absoluteValue.coerceAtMost(1f)
-            },
-        verticalArrangement = Arrangement.Center,
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .background(if (on) lime.copy(alpha = 0.10f) else glass.fill)
+            .border(1.dp, if (on) lime else glass.strokeBottom, MaterialTheme.shapes.medium)
+            .clickable(role = Role.Checkbox, onClick = onClick)
+            .semantics { selected = on }
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Spacer(Modifier.height(32.dp))
-        KineticText(stringResource(R.string.onboarding_setup_title), active, 0, MaterialTheme.typography.displaySmall, heading = true)
-        Spacer(Modifier.height(24.dp))
-        PressableCard(onClick = null) {
-            Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleSmall)
-            Spacer(Modifier.height(10.dp))
-            SegmentedChoice(
-                options = listOf("ar", "en"),
-                selected = if (language == "ar") "ar" else "en",
-                onSelect = { applyAppLanguage(it) },
-                label = { if (it == "ar") "العربية" else "English" },
-            )
-            Spacer(Modifier.height(16.dp))
-            CurrencyField(selected = currency, onSelect = onCurrency)
-            Spacer(Modifier.height(12.dp))
-            AmountField(value = opening, onValueChange = onOpening, currency = currency, label = stringResource(R.string.onboarding_cash_label))
-            Spacer(Modifier.height(18.dp))
-            Text(stringResource(R.string.onboarding_wallets_title), style = MaterialTheme.typography.titleSmall)
-            Spacer(Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WalletPresets.forEach { preset ->
-                    FilterChip(
-                        colors = glassChipColors(),
-                        selected = preset.key in picked,
-                        onClick = { onToggle(preset.key) },
-                        label = { Text(stringResource(preset.label)) },
-                        leadingIcon = { Icon(CategoryIcons.wallet(preset.type), contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        shape = CircleShape,
-                    )
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-            DropdownField(
-                label = stringResource(R.string.settings_payday),
-                options = (0..31).toList(),
-                selected = payday,
-                onSelect = onPayday,
-                optionLabel = { d -> if (d == 0) stringResource(R.string.payday_none) else d.toString() },
-            )
+        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Box(Modifier.size(24.dp).clip(CircleShape).background(if (on) lime else Color.Transparent).border(1.5.dp, if (on) lime else glass.textTertiary, CircleShape), contentAlignment = Alignment.Center) {
+            if (on) Icon(MIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
         }
-        Spacer(Modifier.height(14.dp))
-        Text(stringResource(R.string.onboarding_privacy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
-/**
- * Page indicator as one liquid drop sliding over the dots. It follows the swipe continuously and stretches
- * mid-way between pages, like a droplet pulled across glass. Pager state is read only while drawing.
- */
 @Composable
-private fun LiquidDrop(pager: PagerState, modifier: Modifier) {
-    val primary = MaterialTheme.colorScheme.primary
-    val track = LocalGlass.current.strokeBottom
-    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val dot = 8.dp
-    val gap = 14.dp
-    val drop = 24.dp
-    Canvas(modifier.width(drop + (dot + gap) * (PAGES - 1)).height(dot)) {
-        val step = (dot + gap).toPx()
-        val half = drop.toPx() / 2
-        val r = dot.toPx() / 2
-        fun x(at: Float) = if (rtl) size.width - (half + at * step) else half + at * step
-        repeat(PAGES) { i -> drawCircle(track, r, Offset(x(i.toFloat()), r)) }
-        val position = (pager.currentPage + pager.currentPageOffsetFraction).coerceIn(0f, PAGES - 1f)
-        val stretch = sin(PI.toFloat() * (position - floor(position)))
-        val width = drop.toPx() + step * 0.7f * stretch
-        val center = x(position)
-        drawRoundRect(primary, Offset(center - width / 2, 0f), Size(width, dot.toPx()), CornerRadius(r))
+private fun RadioRow(label: String, sub: String, on: Boolean, onClick: () -> Unit) {
+    val glass = LocalGlass.current
+    val lime = MaterialTheme.colorScheme.primary
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(if (on) lime.copy(alpha = 0.10f) else glass.fill)
+            .border(1.dp, if (on) lime else glass.strokeBottom, MaterialTheme.shapes.medium)
+            .clickable(role = Role.RadioButton, onClick = onClick)
+            .semantics { selected = on }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.titleSmall)
+            Text(sub, style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+        }
+        Box(Modifier.size(22.dp).clip(CircleShape).border(2.dp, if (on) lime else glass.textTertiary, CircleShape), contentAlignment = Alignment.Center) {
+            if (on) Box(Modifier.size(10.dp).clip(CircleShape).background(lime))
+        }
     }
 }
 
-/** Places Egyptians commonly keep money besides cash; picked ones are created as empty wallets at setup. */
-private data class WalletPreset(val key: String, val label: Int, val type: WalletType)
+@Composable
+private fun Pill(label: String, on: Boolean, onClick: () -> Unit) {
+    val glass = LocalGlass.current
+    val lime = MaterialTheme.colorScheme.primary
+    Text(
+        label,
+        style = MaterialTheme.typography.labelLarge,
+        color = if (on) lime else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .heightIn(min = 40.dp)
+            .clip(CircleShape)
+            .background(if (on) lime.copy(alpha = 0.12f) else glass.fill)
+            .border(1.dp, if (on) lime else glass.strokeBottom, CircleShape)
+            .clickable(role = Role.Checkbox, onClick = onClick)
+            .semantics { selected = on }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+    )
+}
 
-private val WalletPresets = listOf(
-    WalletPreset("vodafone", R.string.wallet_preset_vodafone, WalletType.DIGITAL),
-    WalletPreset("instapay", R.string.wallet_preset_instapay, WalletType.DIGITAL),
-    WalletPreset("bank", R.string.wallet_preset_bank, WalletType.BANK),
-)
+/** Today to the next money, as a bar with the day count in the middle. */
+@Composable
+private fun Timeline(days: Int, todayLabel: String, payLabel: String) {
+    val glass = LocalGlass.current
+    Column(
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(10.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
+            Box(Modifier.weight(1f).height(3.dp).padding(horizontal = 6.dp).background(glass.track))
+            Text(stringResource(R.string.ob_days_count, days), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Box(Modifier.weight(1f).height(3.dp).padding(horizontal = 6.dp).background(glass.track))
+            Box(Modifier.size(10.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondary))
+        }
+        Row {
+            Text(stringResource(R.string.ob_today_label, todayLabel), style = MaterialTheme.typography.labelSmall, color = glass.textTertiary, modifier = Modifier.weight(1f))
+            Text(payLabel, style = MaterialTheme.typography.labelSmall, color = glass.textTertiary)
+        }
+    }
+}
+
+/** رقمك اليومي جاهز: the ring fills while the number counts up, then the sum that made it. */
+@Composable
+private fun Reveal(daily: Long, balance: Long, days: Int, currency: String, payDate: String) {
+    val money = LocalMoneyFormatter.current
+    val glass = LocalGlass.current
+    val lime = MaterialTheme.colorScheme.primary
+    val reduce = LocalReduceMotion.current
+    val t = remember { Animatable(if (reduce) 1f else 0f) }
+    LaunchedEffect(Unit) { t.animateTo(1f, tween(1_400, easing = FastOutSlowInEasing)) }
+    val track = glass.fillStrong
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text(stringResource(R.string.ob_reveal_label), style = MaterialTheme.typography.labelLarge, color = lime)
+        Box(Modifier.size(220.dp), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.fillMaxSize()) {
+                val stroke = 14.dp.toPx()
+                val arc = Size(size.width - stroke, size.height - stroke)
+                drawArc(track, -90f, 360f, false, Offset(stroke / 2, stroke / 2), arc, style = Stroke(stroke))
+                drawArc(lime, -90f, 360f * t.value, false, Offset(stroke / 2, stroke / 2), arc, style = Stroke(stroke, cap = StrokeCap.Round))
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(money.formatCompact((daily * t.value).toLong(), currency), style = MaterialTheme.typography.displayLarge, color = lime)
+                Text(stringResource(R.string.ob_reveal_caption, money.symbol(currency)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Text(
+            "${money.format(balance, currency)} ÷ ${stringResource(R.string.ob_days_count, days)} = ${money.format(daily, currency)}",
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.graphicsLayer { alpha = t.value },
+        )
+        Text(stringResource(R.string.ob_until, payDate), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+        Text(stringResource(R.string.ob_reveal_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FirstLog(daily: Long, currency: String, cat: Int, onCat: (Int) -> Unit, amount: Long, onAmount: (Long) -> Unit, logged: Boolean) {
+    val money = LocalMoneyFormatter.current
+    val glass = LocalGlass.current
+    val unit = Money.unit(currency)
+    val streak = LocalFinanceColors.current.streak
+    Title(R.string.ob_log_title, R.string.ob_log_body)
+    Column(
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(stringResource(R.string.ob_log_preview), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+        Text(money.format((daily - amount * unit).coerceAtLeast(0), currency), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+        Text(money.format(daily, currency), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+    }
+    Text(stringResource(R.string.add_on_what), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        firstLogs.forEachIndexed { i, (label, _) -> Pill(stringResource(label), i == cat) { onCat(i) } }
+    }
+    Text(stringResource(R.string.ob_how_much), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        firstAmounts.forEach { a -> Pill(money.formatCompact(a * unit, currency), a == amount) { onAmount(a) } }
+    }
+    if (logged) {
+        // Streak burst: the flame pops and day 1 lands.
+        val pop = remember { Animatable(0.4f) }
+        LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = 300f)) }
+        Row(
+            Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(streak.copy(alpha = 0.14f)).padding(16.dp).graphicsLayer { scaleX = pop.value; scaleY = pop.value },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(MIcons.Flame, contentDescription = null, tint = streak, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(12.dp))
+            Text(stringResource(R.string.ob_streak_started), style = MaterialTheme.typography.titleMedium, color = streak)
+        }
+    }
+}
+
+/** How tonight's reminder will look, in the shape of a notification. */
+@Composable
+private fun NotificationPreview(title: String, body: String) {
+    val glass = LocalGlass.current
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(R.string.ob_notif_preview), style = MaterialTheme.typography.labelSmall, color = glass.textTertiary)
+        Row(
+            Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fillStrong).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PocketMark(Modifier.size(32.dp))
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.labelSmall, color = glass.textTertiary)
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: Int, body: Int) {
+    val glass = LocalGlass.current
+    val blue = LocalFinanceColors.current.transfer
+    Row(
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(blue.copy(alpha = 0.10f)).padding(16.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(icon, contentDescription = null, tint = blue, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(body), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+        }
+    }
+}
+
+/** جاهز: what was set up, the points earned and, after a first log, the first badge. */
+@Composable
+private fun Done(daily: String, reminder: String, goal: String, logged: Boolean) {
+    val glass = LocalGlass.current
+    val lime = MaterialTheme.colorScheme.primary
+    val reduce = LocalReduceMotion.current
+    val pop = remember { Animatable(if (reduce) 1f else 0.6f) }
+    LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 220f)) }
+    Column(Modifier.fillMaxWidth().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(Modifier.size(120.dp).graphicsLayer { scaleX = pop.value; scaleY = pop.value }.clip(CircleShape).background(lime.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+            Icon(if (logged) MIcons.Trophy else MIcons.Check, contentDescription = null, tint = lime, modifier = Modifier.size(52.dp))
+        }
+        Text(stringResource(R.string.ob_done_title), style = MaterialTheme.typography.displaySmall)
+        Text(stringResource(R.string.ob_done_body), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(
+            Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            SummaryRow(stringResource(R.string.ob_sum_daily), daily)
+            SummaryRow(stringResource(R.string.ob_sum_reminder), reminder)
+            SummaryRow(stringResource(R.string.ob_sum_goal), goal)
+            SummaryRow(stringResource(R.string.ob_sum_streak), stringResource(if (logged) R.string.ob_sum_streak_day1 else R.string.ob_sum_streak_start))
+        }
+        Text(
+            stringResource(R.string.home_points, if (logged) 30 else 20) + if (logged) " · " + stringResource(R.string.ob_badge_first) else "",
+            style = MaterialTheme.typography.titleSmall,
+            color = lime,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun SummaryRow(label: String, value: String) {
+    Row {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalGlass.current.textTertiary, modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}

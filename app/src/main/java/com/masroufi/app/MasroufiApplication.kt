@@ -43,6 +43,7 @@ class MasroufiApplication : Application(), Configuration.Provider {
             if (db.categoryDao().all().isEmpty()) db.categoryDao().upsertAll(DefaultCategories.build(clock.millis()))
             recurring.processDue()
             if (settings.currentSync().isConfigured) SyncWorker.schedule(this@MasroufiApplication)
+            settings.current().logReminderHour.takeIf { it >= 0 }?.let { com.masroufi.app.work.LogReminderWorker.schedule(this@MasroufiApplication, it) }
         }
     }
 }

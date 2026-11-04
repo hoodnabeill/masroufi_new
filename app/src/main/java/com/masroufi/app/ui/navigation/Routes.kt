@@ -60,3 +60,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object BackupRoute
 @Serializable data object PremiumRoute
 @Serializable data object CategoriesRoute
+
+/** One-shot requests from outside the nav graph: onboarding's "I have a backup" opens Backup once the app starts. */
+object StartRequest {
+    @Volatile var backup: Boolean = false
+}

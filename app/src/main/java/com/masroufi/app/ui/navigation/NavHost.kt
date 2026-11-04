@@ -175,6 +175,12 @@ fun MasroufiNavHost() {
     val scene = rememberLayerBackdrop()
     val reduce = LocalReduceMotion.current
     val dockTabs = remember { tabs.map { DockTab(it.label, it.glyph) } }
+    LaunchedEffect(Unit) {
+        if (StartRequest.backup) {
+            StartRequest.backup = false
+            nav.navigate(BackupRoute)
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         // The whole scene (light + screens) is recorded once so the floating chrome above can refract it; glass
