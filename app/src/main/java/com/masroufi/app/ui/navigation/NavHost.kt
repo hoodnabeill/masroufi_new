@@ -310,8 +310,11 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
         WalletsScreen(
             onBack = back,
             onAdd = { nav.navigate(WalletEditorRoute()) },
+            onAddPreset = { name, type -> nav.navigate(WalletEditorRoute(name = name, type = type.name)) },
             onOpen = { nav.navigate(WalletDetailRoute(it)) },
             onTransfer = { nav.navigate(AddSheetRoute(type = "TRANSFER")) },
+            onReconcile = { nav.navigate(WalletDetailRoute(it, reconcile = true)) },
+            onCashOut = { from, to, note -> nav.navigate(AddSheetRoute(type = "TRANSFER", walletId = from, toWalletId = to, note = note)) },
             onLogSms = { type, walletId, amount, note -> nav.navigate(AddSheetRoute(type = type.name, walletId = walletId, amount = amount, note = note)) },
         )
     }
@@ -335,7 +338,17 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
             onAdd = { key -> nav.navigate(RecurringEditorRoute(serviceKey = key)) },
         )
     }
-    screen<RecurringRoute> { RecurringScreen(onBack = back, onAdd = { nav.navigate(RecurringEditorRoute()) }, onEdit = { nav.navigate(RecurringEditorRoute(it)) }) }
+    screen<RecurringRoute> {
+        RecurringScreen(
+            onBack = back,
+            onAdd = { nav.navigate(RecurringEditorRoute()) },
+            onEdit = { nav.navigate(RecurringEditorRoute(it)) },
+            onAddService = { nav.navigate(RecurringEditorRoute(serviceKey = it)) },
+            onAddIncome = { nav.navigate(RecurringEditorRoute(type = "INCOME")) },
+            onAddNamed = { nav.navigate(RecurringEditorRoute(note = it)) },
+            onSubscriptions = { nav.navigate(SubscriptionsRoute) },
+        )
+    }
     screen<RecurringEditorRoute> { RecurringEditorScreen(onDone = back, onBack = back) }
     screen<DebtsRoute> { DebtsScreen(onBack = back, onAdd = { nav.navigate(DebtEditorRoute()) }, onOpen = { nav.navigate(DebtDetailRoute(it)) }) }
     screen<DebtDetailRoute> { DebtDetailScreen(onBack = back, onEdit = { nav.navigate(DebtEditorRoute(it)) }) }

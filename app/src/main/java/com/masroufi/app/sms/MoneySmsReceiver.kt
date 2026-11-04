@@ -42,8 +42,13 @@ interface SmsEntryPoint {
 class MoneySmsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
+        val parts = Telephony.Sms.Intents.getMessagesFromIntent(intent).orEmpty()
+        // Wallets and banks send from short codes or named senders (VF-Cash, CIB); a message from a personal mobile
+        // number is someone texting, and could be a spoofed "you were charged" scam, so it is never offered.
+        val sender = parts.firstOrNull()?.displayOriginatingAddress.orEmpty().filter { it.isDigit() }
+        if (sender.length >= 10) return
         // Multi-part messages arrive as pieces of one body.
-        val body = Telephony.Sms.Intents.getMessagesFromIntent(intent).orEmpty().joinToString("") { it.messageBody.orEmpty() }
+        val body = parts.joinToString("") { it.messageBody.orEmpty() }
         val parsed = SmsParser.parse(body)?.takeIf { it.source != null } ?: return
         val entry = EntryPointAccessors.fromApplication(context.applicationContext, SmsEntryPoint::class.java)
         val pending = goAsync()

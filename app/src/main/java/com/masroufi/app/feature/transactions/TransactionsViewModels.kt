@@ -22,6 +22,7 @@ import com.masroufi.app.data.repo.TransactionFilter
 import com.masroufi.app.data.repo.TodayBudget
 import com.masroufi.app.data.repo.TodayRepository
 import com.masroufi.app.data.repo.TransactionRepository
+import com.masroufi.app.data.repo.SplitRepository
 import com.masroufi.app.data.repo.WalletRepository
 import com.masroufi.app.receipts.ReceiptStore
 import com.masroufi.app.ui.components.EditorEffect
@@ -163,6 +164,7 @@ class TransactionEditorViewModel @Inject constructor(
     private val categoriesRepo: CategoryRepository,
     private val settings: SettingsRepository,
     private val receipts: ReceiptStore,
+    private val split: SplitRepository,
     todayRepo: TodayRepository,
     private val clock: Clock,
 ) : ViewModel() {
@@ -182,7 +184,7 @@ class TransactionEditorViewModel @Inject constructor(
             val wallets = walletsRepo.observeWallets().first().filter { !it.wallet.archived }
             val existing = route.id?.let { transactions.get(it) }
             original = existing
-            val defaultWallet = route.walletId
+            val defaultWallet = route.walletId?.takeIf { id -> wallets.any { it.wallet.id == id } }
                 ?: settings.lastWalletId()?.takeIf { id -> wallets.any { it.wallet.id == id } }
                 ?: wallets.firstOrNull()?.wallet?.id
             _state.update { s ->
@@ -206,10 +208,14 @@ class TransactionEditorViewModel @Inject constructor(
                     s.copy(
                         type = type,
                         walletId = defaultWallet,
-                        toWalletId = if (type == TransactionType.TRANSFER) wallets.firstOrNull { it.wallet.id != defaultWallet }?.wallet?.id else null,
+                        toWalletId = if (type == TransactionType.TRANSFER) {
+                            route.toWalletId?.takeIf { id -> id != defaultWallet && wallets.any { it.wallet.id == id } }
+                                ?: wallets.firstOrNull { it.wallet.id != defaultWallet }?.wallet?.id
+                        } else null,
                         categoryId = route.categoryId,
-                        amount = route.amount.orEmpty(),
-                        note = route.note.orEmpty(),
+                        // The masroufi://add link can come from any app, so its text is trimmed to sane lengths.
+                        amount = route.amount.orEmpty().take(20),
+                        note = route.note.orEmpty().take(120),
                         wallets = wallets,
                     )
                 }
@@ -271,8 +277,7 @@ class TransactionEditorViewModel @Inject constructor(
                 // Keep the original time of day when only the date changes; new entries use the current time.
                 val time = original?.occurredAt?.let { java.time.Instant.ofEpochMilli(it).atZone(clock.zone).toLocalTime() } ?: LocalTime.now(clock)
                 val occurredAt = s.date.atTime(time).atZone(clock.zone).toInstant().toEpochMilli()
-                transactions.save(
-                    Transaction(
+                val entry = Transaction(
                         id = original?.id ?: newId(),
                         type = s.type,
                         amountMinor = Money.parse(s.amount, s.currency) ?: 0,
@@ -289,8 +294,11 @@ class TransactionEditorViewModel @Inject constructor(
                         occurrenceKey = original?.occurrenceKey,
                         createdAt = original?.createdAt ?: now,
                         updatedAt = now,
-                    ),
-                )
+                    )
+                transactions.save(entry)
+                if (original == null && entry.type == TransactionType.INCOME) {
+                    settings.current().autoSplitRuleId?.let { rule -> runCatching { split.autoApply(entry.id, entry.amountMinor, entry.currency, rule) } }
+                }
                 saved = true
                 s.walletId?.let { settings.setLastWalletId(it) }
             }

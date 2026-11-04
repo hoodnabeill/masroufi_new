@@ -16,6 +16,7 @@ import kotlinx.serialization.Serializable
     /** Prefilled by Home quick-log (typed or spoken) and quick chips. */
     val amount: String? = null,
     val note: String? = null,
+    val toWalletId: String? = null,
 )
 /**
  * The quick-add bottom sheet for new entries. Its arguments mirror [TransactionEditorRoute] (minus the id) so the
@@ -27,20 +28,22 @@ import kotlinx.serialization.Serializable
     val categoryId: String? = null,
     val amount: String? = null,
     val note: String? = null,
+    val toWalletId: String? = null,
 )
 /** Shown after the sheet saves; [type] is the saved entry's type. */
 @Serializable data class RewardRoute(val type: String = "EXPENSE")
 @Serializable data class TransactionDetailRoute(val id: String)
 @Serializable data object WalletsRoute
-@Serializable data class WalletDetailRoute(val id: String)
-@Serializable data class WalletEditorRoute(val id: String? = null)
+@Serializable data class WalletDetailRoute(val id: String, val reconcile: Boolean = false)
+@Serializable data class WalletEditorRoute(val id: String? = null, val name: String? = null, val type: String? = null)
 @Serializable data class BudgetEditorRoute(val id: String? = null)
 @Serializable data class GoalDetailRoute(val id: String)
 @Serializable data class GoalEditorRoute(val id: String? = null)
 @Serializable data object RecurringRoute
 @Serializable data object SubscriptionsRoute
 @Serializable data object AchievementsRoute
-@Serializable data class RecurringEditorRoute(val id: String? = null, val serviceKey: String? = null)
+/** [type] and [note] prefill a new rule (recurring income, a named quick add). */
+@Serializable data class RecurringEditorRoute(val id: String? = null, val serviceKey: String? = null, val type: String? = null, val note: String? = null)
 @Serializable data object DebtsRoute
 @Serializable data class DebtDetailRoute(val id: String)
 /** [amount] is prefilled when a سلفة starts from the quick-add sheet. */

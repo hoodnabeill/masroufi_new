@@ -13,6 +13,7 @@ import com.masroufi.app.data.model.TypeTotal
 import com.masroufi.app.data.model.RepeatSpend
 import com.masroufi.app.data.model.DayTotal
 import com.masroufi.app.data.model.LastSpend
+import com.masroufi.app.data.model.WalletActivity
 import kotlinx.coroutines.flow.Flow
 
 private const val ROW_SELECT = """
@@ -168,6 +169,18 @@ interface TransactionDao {
         """,
     )
     suspend fun spent(categoryId: String?, currency: String, fromMillis: Long, toMillis: Long): Long
+
+    @Query(
+        """
+        SELECT walletId, MAX(lastAt) AS lastAt FROM (
+            SELECT walletId, occurredAt AS lastAt FROM transactions WHERE deleted = 0
+            UNION ALL
+            SELECT toWalletId AS walletId, occurredAt AS lastAt FROM transactions WHERE deleted = 0 AND toWalletId IS NOT NULL
+        )
+        GROUP BY walletId
+        """,
+    )
+    fun observeWalletActivity(): Flow<List<WalletActivity>>
 
     @Query("SELECT MIN(occurredAt) FROM transactions WHERE deleted = 0")
     fun observeFirstOccurredAt(): Flow<Long?>

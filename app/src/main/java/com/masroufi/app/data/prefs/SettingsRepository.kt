@@ -46,6 +46,8 @@ data class AppSettings(
     val hideInRecents: Boolean = true,
     val notificationsEnabled: Boolean = true,
     val lastBackupAt: Long? = null,
+    /** The split rule applied to every new income as soon as it is logged, or null to split by hand. */
+    val autoSplitRuleId: String? = null,
 )
 
 data class PinRecord(val hash: String, val salt: String)
@@ -88,6 +90,7 @@ class SettingsRepository @Inject constructor(
         val hideRecents = booleanPreferencesKey("hide_recents")
         val notifications = booleanPreferencesKey("notifications")
         val lastBackup = longPreferencesKey("last_backup")
+        val autoSplit = stringPreferencesKey("auto_split_rule")
         val pinHash = stringPreferencesKey("pin_hash")
         val pinSalt = stringPreferencesKey("pin_salt")
         val pinFailures = intPreferencesKey("pin_failures")
@@ -126,6 +129,7 @@ class SettingsRepository @Inject constructor(
             hideInRecents = p[Keys.hideRecents] ?: true,
             notificationsEnabled = p[Keys.notifications] ?: true,
             lastBackupAt = p[Keys.lastBackup],
+            autoSplitRuleId = p[Keys.autoSplit],
         )
     }
 
@@ -172,6 +176,7 @@ class SettingsRepository @Inject constructor(
     suspend fun setLogReminderHour(hour: Int) = store.edit { it[Keys.logReminderHour] = hour }
     suspend fun setPayday(day: Int) = store.edit { it[Keys.payday] = day.coerceIn(0, 31) }
     suspend fun setHideAmounts(hide: Boolean) = store.edit { it[Keys.hideAmounts] = hide }
+    suspend fun setAutoSplitRule(id: String?) = store.edit { if (id == null) it.remove(Keys.autoSplit) else it[Keys.autoSplit] = id }
     suspend fun setPrimaryCurrency(currency: String) = store.edit { it[Keys.currency] = currency }
     suspend fun setHiddenSections(sections: Set<DashboardSection>) = store.edit { p -> p[Keys.hidden] = sections.map { it.name }.toSet() }
     suspend fun setNotifications(enabled: Boolean) = store.edit { it[Keys.notifications] = enabled }

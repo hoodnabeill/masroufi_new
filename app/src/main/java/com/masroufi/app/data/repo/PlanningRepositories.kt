@@ -13,6 +13,7 @@ import com.masroufi.app.data.model.GoalWithSaved
 import com.masroufi.app.data.model.SplitItem
 import com.masroufi.app.data.model.SplitRule
 import com.masroufi.app.domain.BudgetProgress
+import com.masroufi.app.domain.SplitCalculator
 import com.masroufi.app.domain.SplitResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -154,6 +155,16 @@ class SplitRepository @Inject constructor(
     suspend fun delete(id: String) {
         val rule = dao.get(id) ?: return
         dao.upsert(rule.copy(deleted = true, updatedAt = clock.millis()))
+    }
+
+    /**
+     * Splits a just-logged income with the rule set to run on its own. The allocation id is tied to the entry, so
+     * saving the same entry again rewrites that split instead of adding a second one. Other currencies are skipped.
+     */
+    suspend fun autoApply(transactionId: String, incomeMinor: Long, currency: String, ruleId: String) {
+        val rule = dao.get(ruleId)?.takeIf { !it.deleted && it.currency == currency } ?: return
+        val result = SplitCalculator.calculate(incomeMinor, items(rule)) as? SplitResult.Ok ?: return
+        apply("auto:$transactionId", rule, incomeMinor, result)
     }
 
     /**

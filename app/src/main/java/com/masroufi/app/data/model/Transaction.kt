@@ -67,4 +67,6 @@ data class RepeatSpend(val categoryId: String, val amountMinor: Long, val curren
 data class DayTotal(val day: String, val currency: String, val total: Long)
 
 /** The most recent expense in a category, for Home quick chips ("آخر مرة 205"). */
+data class WalletActivity(val walletId: String, val lastAt: Long)
+
 data class LastSpend(val categoryId: String, val amountMinor: Long, val currency: String, val lastAt: Long)

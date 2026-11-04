@@ -66,7 +66,7 @@ class MasroufiWidget : GlanceAppWidget() {
         val currency = settings.primaryCurrency
         val balance = wallets.filter { !it.wallet.archived && it.wallet.currency == currency }.sumOf { it.balanceMinor }
         val resources = context.resources
-        val amount = if (settings.lockEnabled) "••••••" else MoneyFormatter(resources.configuration.locales[0]).format(balance, currency)
+        val amount = if (settings.lockEnabled || settings.hideAmounts) "••••••" else MoneyFormatter(resources.configuration.locales[0]).format(balance, currency)
         val payday = settings.paydayDay.takeIf { PayCycle.isSet(it) }?.let { day ->
             val left = PayCycle.daysUntilPayday(LocalDate.now(), day)
             resources.getQuantityString(R.plurals.home_days_to_payday, left, left)

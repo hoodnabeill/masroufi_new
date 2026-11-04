@@ -1,5 +1,25 @@
 package com.masroufi.app.feature.recurring
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.Role
+import com.masroufi.app.ui.components.CategoryIcons
+import com.masroufi.app.ui.components.GlassSecondaryButton
+import com.masroufi.app.ui.components.IconBadge
+import com.masroufi.app.ui.components.ServiceTile
+import com.masroufi.app.ui.components.categoryColor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -109,76 +129,255 @@ fun frequencyLabel(frequency: Frequency, interval: Int): String = when (frequenc
     Frequency.YEARLY -> pluralStringResource(R.plurals.every_years, interval, interval)
 }
 
-data class RecurringListState(val loading: Boolean = true, val rules: List<RecurringRule> = emptyList(), val wallets: Map<String, String> = emptyMap())
+data class RecurringListState(
+    val loading: Boolean = true,
+    val rules: List<RecurringRule> = emptyList(),
+    val wallets: Map<String, String> = emptyMap(),
+    val categories: Map<String, Category> = emptyMap(),
+    val currency: String = Money.DEFAULT_CURRENCY,
+    val balanceMinor: Long = 0,
+)
 
 @HiltViewModel
-class RecurringViewModel @Inject constructor(private val recurring: RecurringRepository, wallets: WalletRepository) : ViewModel() {
-    val state: StateFlow<RecurringListState> = combine(recurring.observeAll(), wallets.observeWallets()) { r, w ->
-        RecurringListState(false, r, w.associate { it.wallet.id to it.wallet.name })
+class RecurringViewModel @Inject constructor(
+    private val recurring: RecurringRepository,
+    wallets: WalletRepository,
+    categories: CategoryRepository,
+    settings: com.masroufi.app.data.prefs.SettingsRepository,
+) : ViewModel() {
+    val state: StateFlow<RecurringListState> = combine(recurring.observeAll(), wallets.observeWallets(), categories.observeAll(), settings.settings) { r, w, c, s ->
+        RecurringListState(
+            loading = false,
+            rules = r,
+            wallets = w.associate { it.wallet.id to it.wallet.name },
+            categories = c.associateBy { it.id },
+            currency = s.primaryCurrency,
+            balanceMinor = w.filter { !it.wallet.archived && it.wallet.currency == s.primaryCurrency }.sumOf { it.balanceMinor },
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecurringListState())
 
-    fun setActive(id: String, active: Boolean) {
-        viewModelScope.launch { recurring.setActive(id, active) }
+    fun setRemind(rule: RecurringRule, remind: Boolean) {
+        viewModelScope.launch { runCatching { recurring.save(rule.copy(remind = remind)) } }
     }
 }
 
+/** Common things people forget to set up: a catalogue service to start from, or a plain name. */
+private val quickAdds = listOf("netflix" to null, "shahid" to null, "youtube" to null, "gym" to null, "we" to null, null to R.string.recurring_quick_rent)
+
+/**
+ * المتكررة (handoff Recurring.dc.html): what leaves every month and its share of your money, the next 30 days on a
+ * line, each upcoming item with its reminder, instalments, recurring income, and the usual subscriptions to add.
+ */
 @Composable
-fun RecurringScreen(onBack: () -> Unit, onAdd: () -> Unit, onEdit: (String) -> Unit, viewModel: RecurringViewModel = hiltViewModel()) {
+fun RecurringScreen(
+    onBack: () -> Unit,
+    onAdd: () -> Unit,
+    onEdit: (String) -> Unit,
+    onAddService: (String) -> Unit = {},
+    onAddIncome: () -> Unit = {},
+    onAddNamed: (String) -> Unit = {},
+    onSubscriptions: () -> Unit = {},
+    viewModel: RecurringViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val dates = rememberDateFormatter()
+    val glass = LocalGlass.current
+    val money = LocalMoneyFormatter.current
+    val today = remember { LocalDate.now() }
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.recurring_title), onBack = onBack) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.recurring_add)) } } },
     ) { padding ->
         if (state.loading) return@Scaffold
-        if (state.rules.isEmpty()) {
-            EmptyState(MIcons.Repeat, stringResource(R.string.recurring_empty_title), stringResource(R.string.recurring_empty_body), Modifier.padding(padding), stringResource(R.string.recurring_add), onAdd)
-            return@Scaffold
-        }
+        val active = state.rules.filter { it.active && it.nextEpochDay != null }
+        val upcoming = active.sortedBy { it.nextEpochDay }
+        val monthly = active.filter { it.type == TransactionType.EXPENSE && it.currency == state.currency }.sumOf { Schedule.monthlyMinor(it.amountMinor, it.frequency, it.interval) }
+        val share = if (state.balanceMinor > 0) (monthly * 100 / state.balanceMinor).toInt() else 0
+        val hasIncome = active.any { it.type == TransactionType.INCOME }
         LazyColumn(
             Modifier.fillMaxSize().padding(padding).edgeFade(),
             contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 32.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(key = "total") { MonthlyFixed(state.rules) }
-            items(state.rules, key = { it.id }) { rule ->
-                PressableCard(onClick = { onEdit(rule.id) }, modifier = Modifier.animateItem()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(rule.note.ifBlank { typeLabel(rule.type) }, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                            Text(
-                                frequencyLabel(rule.frequency, rule.interval) + " · " + state.wallets[rule.walletId].orEmpty(),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Text(
-                                when {
-                                    !rule.active -> stringResource(R.string.recurring_paused)
-                                    rule.nextEpochDay != null -> stringResource(R.string.recurring_next, LocalDate.ofEpochDay(rule.nextEpochDay).format(dates))
-                                    else -> stringResource(R.string.recurring_finished)
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                        MoneyText(rule.amountMinor, rule.currency, style = MaterialTheme.typography.titleMedium, color = typeColor(rule.type))
-                        IconButton(onClick = { viewModel.setActive(rule.id, !rule.active) }) {
-                            Icon(
-                                if (rule.active) MIcons.Pause else MIcons.Play,
-                                stringResource(if (rule.active) R.string.action_pause else R.string.action_resume),
-                            )
-                        }
-                    }
-                    rule.endEpochDay?.let { endDay ->
-                        val start = LocalDate.ofEpochDay(rule.startEpochDay)
-                        val total = Schedule.countThrough(start, LocalDate.ofEpochDay(endDay), rule.frequency, rule.interval)
-                        val paid = rule.lastGeneratedEpochDay?.let { Schedule.countThrough(start, LocalDate.ofEpochDay(it), rule.frequency, rule.interval) } ?: 0
+            item(key = "hero") {
+                Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraLarge).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.extraLarge).padding(20.dp)) {
+                    Text(stringResource(R.string.recurring_hero_label), style = MaterialTheme.typography.bodyMedium, color = glass.textSecondary)
+                    MoneyText(monthly, state.currency, style = MaterialTheme.typography.displaySmall)
+                    Text(
+                        pluralStringResource(R.plurals.recurring_hero_sub, active.size, share, active.size),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = glass.textTertiary,
+                    )
+                    val soon = upcoming.filter { LocalDate.ofEpochDay(it.nextEpochDay!!) <= today.plusDays(30) }
+                    if (soon.isNotEmpty()) {
+                        Spacer(Modifier.height(18.dp))
+                        Text(stringResource(R.string.recurring_next_30), style = MaterialTheme.typography.labelMedium, color = glass.textTertiary)
                         Spacer(Modifier.height(10.dp))
-                        AnimatedProgressBar(if (total > 0) paid.toFloat() / total else 0f, MaterialTheme.colorScheme.secondary, height = 6.dp)
-                        Spacer(Modifier.height(6.dp))
-                        Text(stringResource(R.string.recurring_instalment_of, paid.coerceAtMost(total), total), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Timeline(soon, today)
                     }
                 }
             }
+            if (upcoming.isNotEmpty()) {
+                item(key = "list-h") { Text(stringResource(R.string.recurring_upcoming), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp, start = 4.dp)) }
+                item(key = "list") {
+                    Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large)) {
+                        upcoming.forEachIndexed { i, rule ->
+                            if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = glass.strokeBottom)
+                            UpcomingRow(rule, state, today, onClick = { onEdit(rule.id) }, onRemind = { viewModel.setRemind(rule, !rule.remind) })
+                        }
+                    }
+                }
+            }
+            val paused = state.rules.filter { !it.active || it.nextEpochDay == null }
+            if (paused.isNotEmpty()) {
+                item(key = "paused") {
+                    Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large)) {
+                        paused.forEachIndexed { i, rule ->
+                            if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = glass.strokeBottom)
+                            Row(Modifier.fillMaxWidth().clickable(role = Role.Button) { onEdit(rule.id) }.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(rule.note.ifBlank { typeLabel(rule.type) }, style = MaterialTheme.typography.titleSmall, color = glass.textTertiary, modifier = Modifier.weight(1f))
+                                Text(stringResource(if (!rule.active) R.string.recurring_paused else R.string.recurring_finished), style = MaterialTheme.typography.labelMedium, color = glass.textTertiary)
+                            }
+                        }
+                    }
+                }
+            }
+            item(key = "instalments") {
+                PromptCard(MIcons.Calendar, MaterialTheme.colorScheme.secondary, R.string.recurring_inst_title, R.string.recurring_inst_body, R.string.recurring_inst_cta, onAdd) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        repeat(12) { i -> Box(Modifier.weight(1f).height(6.dp).clip(CircleShape).background(if (i < 4) MaterialTheme.colorScheme.secondary else glass.track)) }
+                    }
+                }
+            }
+            if (!hasIncome) {
+                item(key = "income") { PromptCard(MIcons.Trending, MaterialTheme.colorScheme.primary, R.string.recurring_income_title, R.string.recurring_income_body, R.string.recurring_income_cta, onAddIncome) }
+            }
+            item(key = "quick") {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 8.dp)) {
+                    Text(stringResource(R.string.recurring_quick_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 4.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        quickAdds.forEach { (key, label) ->
+                            val service = key?.let { Services.of(it) }
+                            val text = service?.title ?: label?.let { stringResource(it) }.orEmpty()
+                            Row(
+                                Modifier.heightIn(min = 44.dp).clip(CircleShape).background(glass.fill).border(1.dp, glass.strokeBottom, CircleShape)
+                                    .clickable(role = Role.Button) { if (key != null) onAddService(key) else onAddNamed(text) }
+                                    .padding(start = 6.dp, end = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (service != null) ServiceTile(service, size = 30.dp) else Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) { Icon(MIcons.Plus, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                                Spacer(Modifier.width(8.dp))
+                                Text(text, style = MaterialTheme.typography.labelLarge)
+                            }
+                        }
+                    }
+                    TextButton(onClick = onSubscriptions) { Text(stringResource(R.string.recurring_all_subs), color = MaterialTheme.colorScheme.secondary) }
+                }
+            }
+            item { Text(stringResource(R.string.recurring_explainer), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary, modifier = Modifier.padding(horizontal = 4.dp)) }
         }
+    }
+}
+
+/** Today on one end, 30 days on the other, each upcoming payment a dot with its amount and date. */
+@Composable
+private fun Timeline(rules: List<RecurringRule>, today: LocalDate) {
+    val glass = LocalGlass.current
+    val money = LocalMoneyFormatter.current
+    val locale = LocalConfiguration.current.locales[0]
+    val dates = remember(locale) { java.time.format.DateTimeFormatter.ofPattern("d MMMM", locale) }
+    BoxWithConstraints(Modifier.fillMaxWidth().height(86.dp)) {
+        val w = maxWidth
+        Box(Modifier.align(Alignment.TopStart).padding(top = 40.dp).fillMaxWidth().height(3.dp).clip(CircleShape).background(glass.track))
+        rules.take(5).forEach { r ->
+            val day = LocalDate.ofEpochDay(r.nextEpochDay!!)
+            val f = (java.time.temporal.ChronoUnit.DAYS.between(today, day).toFloat() / 30f).coerceIn(0f, 1f)
+            // Start-aligned offset mirrors on its own in RTL, so "today" sits at the reading start.
+            Column(Modifier.offset(x = (w - 72.dp) * f).width(72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(money.formatCompact(r.amountMinor, r.currency), style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                Spacer(Modifier.height(6.dp))
+                Box(Modifier.size(14.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondary))
+                Spacer(Modifier.height(6.dp))
+                Text(day.format(dates), style = MaterialTheme.typography.labelSmall, color = glass.textTertiary, maxLines = 1)
+            }
+        }
+    }
+    Row(Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.day_today), style = MaterialTheme.typography.labelSmall, color = glass.textTertiary, modifier = Modifier.weight(1f))
+        Text(today.plusDays(30).format(dates), style = MaterialTheme.typography.labelSmall, color = glass.textTertiary)
+    }
+}
+
+@Composable
+private fun UpcomingRow(rule: RecurringRule, state: RecurringListState, today: LocalDate, onClick: () -> Unit, onRemind: () -> Unit) {
+    val glass = LocalGlass.current
+    val lime = MaterialTheme.colorScheme.primary
+    val category = rule.categoryId?.let { state.categories[it] }
+    val service = Services.of(rule.serviceKey)
+    val days = java.time.temporal.ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(rule.nextEpochDay!!)).toInt()
+    Column(Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (service != null) ServiceTile(service, size = 44.dp)
+            else IconBadge(CategoryIcons.of(category?.iconKey), categoryColor(category?.colorIndex), size = 44.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row {
+                    Text(rule.note.ifBlank { category?.let { categoryLabel(it) } ?: typeLabel(rule.type) }, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f), maxLines = 1)
+                    MoneyText(rule.amountMinor, rule.currency, style = MaterialTheme.typography.titleSmall, color = typeColor(rule.type))
+                }
+                Text(
+                    listOfNotNull(category?.let { categoryLabel(it) }, frequencyLabel(rule.frequency, rule.interval), state.wallets[rule.walletId]).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = glass.textTertiary,
+                    maxLines = 1,
+                )
+            }
+        }
+        rule.endEpochDay?.let { endDay ->
+            val start = LocalDate.ofEpochDay(rule.startEpochDay)
+            val total = Schedule.countThrough(start, LocalDate.ofEpochDay(endDay), rule.frequency, rule.interval)
+            val paid = rule.lastGeneratedEpochDay?.let { Schedule.countThrough(start, LocalDate.ofEpochDay(it), rule.frequency, rule.interval) } ?: 0
+            AnimatedProgressBar(if (total > 0) paid.toFloat() / total else 0f, MaterialTheme.colorScheme.secondary, height = 6.dp)
+            Text(stringResource(R.string.recurring_instalment_of, paid.coerceAtMost(total), total), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (days <= 0) stringResource(R.string.day_today) else pluralStringResource(R.plurals.home_in_days, days, days),
+                style = MaterialTheme.typography.labelMedium,
+                color = glass.textSecondary,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                stringResource(if (rule.remind) R.string.recurring_remind_on else R.string.recurring_remind_off),
+                style = MaterialTheme.typography.labelMedium,
+                color = if (rule.remind) lime else glass.textTertiary,
+                modifier = Modifier
+                    .heightIn(min = 36.dp)
+                    .clip(CircleShape)
+                    .background(if (rule.remind) lime.copy(alpha = 0.10f) else Color.Transparent)
+                    .border(1.dp, if (rule.remind) lime.copy(alpha = 0.3f) else glass.strokeBottom, CircleShape)
+                    .clickable(role = Role.Switch, onClick = onRemind)
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PromptCard(icon: ImageVector, color: Color, title: Int, body: Int, cta: Int, onClick: () -> Unit, extra: (@Composable () -> Unit)? = null) {
+    val glass = LocalGlass.current
+    Column(
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.large).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBadge(icon, color, size = 40.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(body), style = MaterialTheme.typography.bodySmall, color = glass.textSecondary)
+            }
+        }
+        extra?.invoke()
+        GlassSecondaryButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text(stringResource(cta)) }
     }
 }
 
@@ -236,7 +435,8 @@ class RecurringEditorViewModel @Inject constructor(
                 val service = Services.of(route.serviceKey)
                 RecurringForm(
                     loaded = true, walletId = w.firstOrNull()?.wallet?.id, start = LocalDate.now(clock), wallets = w, categories = c,
-                    note = service?.title.orEmpty(), serviceKey = service?.key,
+                    type = route.type?.let { t -> runCatching { TransactionType.valueOf(t) }.getOrNull() } ?: TransactionType.EXPENSE,
+                    note = route.note ?: service?.title.orEmpty(), serviceKey = service?.key,
                     categoryId = service?.category?.categoryId?.takeIf { cid -> c.any { it.id == cid } },
                 )
             }
@@ -281,6 +481,14 @@ class RecurringEditorViewModel @Inject constructor(
         val id = original?.id ?: return
         viewModelScope.launch { effects.attempt { recurring.delete(id) } }
     }
+
+    /** Pauses a running rule or resumes a paused one (the list no longer has its own pause button). */
+    val isActive: Boolean get() = original?.active ?: true
+
+    fun toggleActive() {
+        val rule = original ?: return
+        viewModelScope.launch { effects.attempt { recurring.setActive(rule.id, !rule.active) } }
+    }
 }
 
 @Composable
@@ -292,7 +500,12 @@ fun RecurringEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Rec
     Scaffold(
         topBar = {
             MasroufiTopBar(stringResource(if (form.isNew) R.string.recurring_add else R.string.recurring_edit), onBack = onBack) {
-                if (!form.isNew) GlassIconButton(onClick = { confirmDelete = true }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
+                if (!form.isNew) {
+                    GlassIconButton(onClick = viewModel::toggleActive) {
+                        Icon(if (viewModel.isActive) MIcons.Pause else MIcons.Play, stringResource(if (viewModel.isActive) R.string.action_pause else R.string.action_resume))
+                    }
+                    GlassIconButton(onClick = { confirmDelete = true }) { Icon(MIcons.Trash, stringResource(R.string.action_delete)) }
+                }
             }
         },
         snackbarHost = { GlassSnackbarHost(snackbar) },
@@ -363,24 +576,3 @@ fun RecurringEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Rec
     }
 }
 
-/** "الثابت كل شهر": what active recurring spending costs per month, each currency on its own, and fixed income. */
-@Composable
-private fun MonthlyFixed(rules: List<RecurringRule>) {
-    val glass = LocalGlass.current
-    val money = LocalMoneyFormatter.current
-    val active = rules.filter { it.active && it.nextEpochDay != null }
-    fun total(type: TransactionType) = active.filter { it.type == type }.groupBy { it.currency }
-        .map { (currency, list) -> money.format(list.sumOf { Schedule.monthlyMinor(it.amountMinor, it.frequency, it.interval) }, currency) }
-    val out = total(TransactionType.EXPENSE)
-    val incoming = total(TransactionType.INCOME)
-    Column(
-        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraLarge).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.extraLarge).padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(stringResource(R.string.recurring_monthly_fixed), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(out.ifEmpty { listOf("0") }.joinToString(" · "), style = MaterialTheme.typography.displaySmall)
-        if (incoming.isNotEmpty()) {
-            Text(stringResource(R.string.recurring_monthly_income, incoming.joinToString(" · ")), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-        }
-    }
-}

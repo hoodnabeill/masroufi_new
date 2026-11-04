@@ -74,6 +74,7 @@ object MIcons {
         }
     }
     val Plus by lazy { duo("plus") { line { moveTo(12f, 5f); lineTo(12f, 19f); moveTo(5f, 12f); lineTo(19f, 12f) } } }
+    val Minus by lazy { duo("minus") { line { moveTo(5f, 12f); lineTo(19f, 12f) } } }
 
     val Wallet by lazy {
         duo("wallet") {

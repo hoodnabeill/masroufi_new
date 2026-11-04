@@ -67,7 +67,7 @@ import kotlin.math.sin
 private fun paneColor(): Color = LocalGlass.current.fill.copy(alpha = 0.94f)
 
 @Composable
-private fun LiquidButton(
+internal fun LiquidButton(
     onClick: () -> Unit,
     modifier: Modifier,
     enabled: Boolean,

@@ -36,6 +36,28 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.Role
+import com.masroufi.app.ui.components.GlassSheet
+import com.masroufi.app.ui.components.ServiceTile
+import com.masroufi.app.ui.components.Services
+import com.masroufi.app.ui.theme.LocalGlass
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import com.masroufi.app.data.model.Transaction
 import com.masroufi.app.ui.components.GlassSecondaryButton
 import com.masroufi.app.data.model.TransactionType
 import androidx.compose.foundation.layout.width
@@ -106,26 +128,39 @@ fun walletTypeLabel(type: WalletType): String = stringResource(
 )
 
 @HiltViewModel
-class WalletsViewModel @Inject constructor(wallets: WalletRepository, settings: SettingsRepository) : ViewModel() {
+class WalletsViewModel @Inject constructor(wallets: WalletRepository, transactions: TransactionRepository, settings: SettingsRepository) : ViewModel() {
     val wallets: StateFlow<List<WalletWithBalance>?> = wallets.observeWallets()
         .map<List<WalletWithBalance>, List<WalletWithBalance>?> { it }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
     val currency: StateFlow<String> = settings.settings.map { it.primaryCurrency }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Money.DEFAULT_CURRENCY)
+
+    /** When money last moved in or out of each wallet, for the "آخر حركة" line. */
+    val lastActivity: StateFlow<Map<String, Long>> = transactions.observeWalletActivity()
+        .map { list -> list.associate { it.walletId to it.lastAt } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 }
 
-/** المحافظ: the total and how it is split, every wallet, moving money between them, and logging from a pasted SMS. */
+/**
+ * المحافظ: the total and how it is split, every wallet in one list with when it last moved, the kinds people usually
+ * add next, the three everyday actions (move money, fix a balance, a cash withdrawal) and logging from a pasted SMS.
+ */
 @Composable
 fun WalletsScreen(
     onBack: () -> Unit,
     onAdd: () -> Unit,
+    onAddPreset: (name: String, type: WalletType) -> Unit,
     onOpen: (String) -> Unit,
     onTransfer: () -> Unit,
+    onReconcile: (String) -> Unit,
+    onCashOut: (fromId: String?, toId: String?, note: String) -> Unit,
     onLogSms: (type: TransactionType, walletId: String?, amount: String, note: String?) -> Unit,
     viewModel: WalletsViewModel = hiltViewModel(),
 ) {
     val wallets by viewModel.wallets.collectAsStateWithLifecycle()
     val currency by viewModel.currency.collectAsStateWithLifecycle()
+    val activity by viewModel.lastActivity.collectAsStateWithLifecycle()
+    var picking by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.wallets_title), onBack = onBack) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.wallet_add)) } } },
     ) { padding ->
@@ -135,44 +170,170 @@ fun WalletsScreen(
             return@Scaffold
         }
         val (archived, active) = list.partition { it.wallet.archived }
+        val cashNote = stringResource(R.string.wallets_cash_note)
+        val instaName = stringResource(R.string.wallet_preset_instapay)
+        val bankName = stringResource(R.string.wallet_preset_bank)
+        val presets = buildList {
+            if (active.none { Services.forWallet(it.wallet.name)?.key == "w_instapay" }) add(instaName to WalletType.DIGITAL)
+            if (active.none { it.wallet.type == WalletType.BANK }) add(bankName to WalletType.BANK)
+        }
         LazyColumn(
             Modifier.fillMaxSize().padding(padding).edgeFade(),
-            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 32.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "total") { WalletsTotal(list, currency) }
-            items(active, key = { it.wallet.id }) { WalletCard(it, onOpen) }
-            if (active.size > 1) {
-                item(key = "transfer") {
-                    GlassSecondaryButton(onClick = onTransfer, modifier = Modifier.fillMaxWidth()) {
-                        Icon(MIcons.Transfer, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.wallets_transfer))
-                    }
+            item(key = "list") { WalletGroup(active, activity, onOpen, presets, onAddPreset) }
+            if (active.isNotEmpty()) {
+                item(key = "actions") {
+                    QuickActions(
+                        onTransfer = onTransfer,
+                        onReconcile = { if (active.size == 1) onReconcile(active.first().wallet.id) else picking = true },
+                        onCashOut = {
+                            val cash = active.firstOrNull { it.wallet.type == WalletType.CASH }
+                            val from = active.firstOrNull { it.wallet.type == WalletType.BANK }
+                                ?: active.firstOrNull { it.wallet.type != WalletType.CASH }
+                            onCashOut(from?.wallet?.id, cash?.wallet?.id, cashNote)
+                        },
+                    )
                 }
             }
             item(key = "sms") { SmsLogCard(active, onLogSms) }
             if (archived.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.wallets_archived)) }
-                items(archived, key = { it.wallet.id }) { WalletCard(it, onOpen) }
+                item(key = "archived") { WalletGroup(archived, activity, onOpen) }
+            }
+        }
+        if (picking) {
+            GlassSheet(onDismissRequest = { picking = false }) {
+                Text(
+                    stringResource(R.string.wallets_reconcile_pick),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                )
+                Column(Modifier.padding(16.dp, 4.dp, 16.dp, 28.dp)) {
+                    WalletGroup(active, activity, onOpen = { picking = false; onReconcile(it) }, shared = false)
+                }
+            }
+        }
+    }
+}
+
+/** One card holding every wallet as a row (divided by the 1 px stroke), with dashed "add" chips under them. */
+@Composable
+private fun WalletGroup(
+    wallets: List<WalletWithBalance>,
+    activity: Map<String, Long>,
+    onOpen: (String) -> Unit,
+    presets: List<Pair<String, WalletType>> = emptyList(),
+    onAddPreset: (String, WalletType) -> Unit = { _, _ -> },
+    shared: Boolean = true,
+) {
+    val glass = LocalGlass.current
+    val shape = MaterialTheme.shapes.large
+    Column(Modifier.fillMaxWidth().clip(shape).background(glass.fill).border(1.dp, glass.rim, shape)) {
+        wallets.forEachIndexed { i, item ->
+            if (i > 0) HorizontalDivider(color = glass.strokeBottom)
+            WalletRow(item, activity[item.wallet.id], onOpen, shared)
+        }
+        if (presets.isNotEmpty()) {
+            if (wallets.isNotEmpty()) HorizontalDivider(color = glass.strokeBottom)
+            Row(Modifier.fillMaxWidth().padding(16.dp, 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                presets.forEach { (name, type) -> AddChip(name, Modifier.weight(1f)) { onAddPreset(name, type) } }
             }
         }
     }
 }
 
 @Composable
-private fun WalletCard(item: WalletWithBalance, onOpen: (String) -> Unit) {
-    PressableCard(onClick = { onOpen(item.wallet.id) }, modifier = Modifier.sharedContainer("wallet-${item.wallet.id}")) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val brand = com.masroufi.app.ui.components.Services.forWallet(item.wallet.name)
-            if (brand != null) com.masroufi.app.ui.components.ServiceTile(brand, size = 44.dp)
-            else IconBadge(CategoryIcons.wallet(item.wallet.type), categoryColor(item.wallet.colorIndex))
-            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(item.wallet.name, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                Text(walletTypeLabel(item.wallet.type), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            AnimatedAmount(item.balanceMinor, item.wallet.currency, style = MaterialTheme.typography.titleMedium)
+private fun WalletRow(item: WalletWithBalance, lastAt: Long?, onOpen: (String) -> Unit, shared: Boolean) {
+    val glass = LocalGlass.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(if (shared) Modifier.sharedContainer("wallet-${item.wallet.id}") else Modifier)
+            .clickable(role = Role.Button) { onOpen(item.wallet.id) }
+            .padding(16.dp, 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val brand = Services.forWallet(item.wallet.name)
+        if (brand != null) ServiceTile(brand, size = 44.dp)
+        else IconBadge(CategoryIcons.wallet(item.wallet.type), categoryColor(item.wallet.colorIndex))
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(item.wallet.name, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+            Text(lastActivityLabel(lastAt), style = MaterialTheme.typography.bodySmall, color = glass.textTertiary, maxLines = 1)
         }
+        AnimatedAmount(item.balanceMinor, item.wallet.currency, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+/** "آخر حركة النهارده / امبارح / 23 أكتوبر", or "مفيش حركة لسه" for a wallet nothing was logged in. */
+@Composable
+private fun lastActivityLabel(lastAt: Long?): String {
+    if (lastAt == null) return stringResource(R.string.wallet_no_activity)
+    val locale = LocalConfiguration.current.locales[0]
+    val zone = ZoneId.systemDefault()
+    val day = Instant.ofEpochMilli(lastAt).atZone(zone).toLocalDate()
+    val today = LocalDate.now(zone)
+    val format = remember(locale) { DateTimeFormatter.ofPattern("d MMMM", locale) }
+    val whenText = when (day) {
+        today -> stringResource(R.string.day_today).lowercase(locale)
+        today.minusDays(1) -> stringResource(R.string.day_yesterday).lowercase(locale)
+        else -> day.format(format)
+    }
+    return stringResource(R.string.wallet_last_activity, whenText)
+}
+
+@Composable
+private fun AddChip(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val dash = LocalGlass.current.track
+    Row(
+        modifier
+            .height(44.dp)
+            .clip(MaterialTheme.shapes.extraSmall)
+            .drawBehind {
+                drawRoundRect(
+                    dash,
+                    cornerRadius = CornerRadius(14.dp.toPx()),
+                    style = Stroke(width = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))),
+                )
+            }
+            .clickable(role = Role.Button, onClick = onClick),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(MIcons.Plus, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+    }
+}
+
+/** حوّل بينهم · سوّي الرصيد · سحبت كاش, three equal tiles. */
+@Composable
+private fun QuickActions(onTransfer: () -> Unit, onReconcile: () -> Unit, onCashOut: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ActionTile(MIcons.Transfer, categoryColor(1), stringResource(R.string.wallets_qa_transfer), onTransfer, Modifier.weight(1f))
+        ActionTile(MIcons.Repeat, categoryColor(8), stringResource(R.string.wallets_qa_reconcile), onReconcile, Modifier.weight(1f))
+        ActionTile(MIcons.Cash, categoryColor(2), stringResource(R.string.wallets_qa_cash), onCashOut, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun ActionTile(icon: ImageVector, tint: Color, label: String, onClick: () -> Unit, modifier: Modifier) {
+    val glass = LocalGlass.current
+    val shape = MaterialTheme.shapes.small
+    Column(
+        modifier
+            .height(76.dp)
+            .clip(shape)
+            .background(glass.fill)
+            .border(1.dp, glass.rim, shape)
+            .clickable(role = Role.Button, onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+    ) {
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
     }
 }
 
@@ -182,9 +343,12 @@ data class WalletDetailState(val wallet: WalletWithBalance? = null, val rows: Li
 class WalletDetailViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val wallets: WalletRepository,
-    transactions: TransactionRepository,
+    private val transactions: TransactionRepository,
+    private val clock: Clock,
 ) : ViewModel() {
-    val id = savedState.toRoute<WalletDetailRoute>().id
+    private val route = savedState.toRoute<WalletDetailRoute>()
+    val id = route.id
+    val startReconcile = route.reconcile
     val state: StateFlow<WalletDetailState> = combine(
         wallets.observeWallets(),
         transactions.observeRows(TransactionFilter(walletId = id, limit = 200)),
@@ -199,6 +363,31 @@ class WalletDetailViewModel @Inject constructor(
     fun delete() {
         viewModelScope.launch { effects.attempt { wallets.delete(id) } }
     }
+
+    val reconcileEffects = EffectChannel<EditorEffect>()
+
+    /**
+     * سوّي الرصيد: the user types what the wallet really holds; the difference is logged as one adjustment entry
+     * (uncategorised, noted "تسوية الرصيد"), keeping history intact instead of rewriting the opening balance.
+     */
+    fun reconcile(actualMinor: Long, note: String) {
+        val w = state.value.wallet ?: return
+        val diff = actualMinor - w.balanceMinor
+        viewModelScope.launch {
+            reconcileEffects.attempt {
+                if (diff != 0L) {
+                    val now = clock.millis()
+                    transactions.save(
+                        Transaction(
+                            id = newId(), type = if (diff > 0) TransactionType.INCOME else TransactionType.EXPENSE,
+                            amountMinor = kotlin.math.abs(diff), currency = w.wallet.currency, walletId = w.wallet.id,
+                            note = note, occurredAt = now, createdAt = now, updatedAt = now,
+                        ),
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -212,14 +401,29 @@ fun WalletDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    var reconciling by rememberSaveable { mutableStateOf(viewModel.startReconcile) }
     HandleEditorEffects(viewModel.effects.flow, snackbar, onDone = onBack)
+    HandleEditorEffects(viewModel.reconcileEffects.flow, snackbar, onDone = { reconciling = false })
+    val reconcileNote = stringResource(R.string.wallet_reconcile_note)
     val item = state.wallet
+    if (reconciling && item != null) {
+        com.masroufi.app.feature.goals.AmountSheet(
+            title = stringResource(R.string.wallet_reconcile_title),
+            currency = item.wallet.currency,
+            onDismiss = { reconciling = false },
+            onConfirm = { amount, _ -> viewModel.reconcile(amount, reconcileNote) },
+            initial = Money.toPlainString(item.balanceMinor.coerceAtLeast(0), item.wallet.currency),
+        )
+    }
     Scaffold(
         topBar = {
             MasroufiTopBar(item?.wallet?.name.orEmpty(), onBack = onBack) {
                 if (item != null) {
                     if (!item.wallet.archived) {
                         GlassIconButton(onClick = { onAddTransaction(item.wallet.id) }) { Icon(MIcons.Plus, stringResource(R.string.transaction_new)) }
+                    }
+                    if (!item.wallet.archived) {
+                        GlassIconButton(onClick = { reconciling = true }) { Icon(MIcons.Check, stringResource(R.string.wallet_reconcile)) }
                     }
                     GlassIconButton(onClick = { onEdit(item.wallet.id) }) { Icon(MIcons.Pencil, stringResource(R.string.action_edit)) }
                     GlassIconButton(onClick = { viewModel.setArchived(!item.wallet.archived) }) {
@@ -281,7 +485,8 @@ class WalletEditorViewModel @Inject constructor(
     settings: SettingsRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val id = savedState.toRoute<WalletEditorRoute>().id
+    private val route = savedState.toRoute<WalletEditorRoute>()
+    private val id = route.id
     private var original: Wallet? = null
     private val _form = MutableStateFlow(WalletForm())
     val form: StateFlow<WalletForm> = _form.asStateFlow()
@@ -295,7 +500,12 @@ class WalletEditorViewModel @Inject constructor(
             _form.value = if (existing != null) {
                 WalletForm(true, false, existing.name, existing.type, existing.currency, Money.toPlainString(existing.initialBalanceMinor, existing.currency), existing.colorIndex)
             } else {
-                WalletForm(loaded = true, currency = primary)
+                WalletForm(
+                    loaded = true,
+                    currency = primary,
+                    name = route.name.orEmpty().take(40),
+                    type = route.type?.let { t -> WalletType.entries.firstOrNull { it.name == t } } ?: WalletType.CASH,
+                )
             }
         }
     }
