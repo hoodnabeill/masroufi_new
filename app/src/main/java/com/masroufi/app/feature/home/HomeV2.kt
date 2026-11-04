@@ -64,6 +64,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.R
+import androidx.compose.ui.unit.sp
 import com.masroufi.app.core.Money
 import com.masroufi.app.data.model.Category
 import com.masroufi.app.data.model.LastSpend
@@ -196,9 +197,9 @@ internal fun SafeHero(state: HomeUiState, spentToday: Long, hidden: Boolean, onT
             }
         }
         if (hidden) {
-            Text(HIDDEN, style = MaterialTheme.typography.displayLarge, color = lime)
+            Text(HIDDEN, style = HeroType, color = lime)
         } else {
-            FitAmount(safe, currency, style = MaterialTheme.typography.displayLarge.copy(fontFeatureSettings = "tnum"), color = if (safe > 0) lime else over)
+            FitAmount(safe, currency, style = HeroType.copy(fontFeatureSettings = "tnum"), color = if (safe > 0) lime else over)
         }
         Text(
             stringResource(if (cycle) R.string.home_safe_caption_payday else R.string.home_safe_caption_month) + " · " +
@@ -228,6 +229,10 @@ internal fun SafeHero(state: HomeUiState, spentToday: Long, hidden: Boolean, onT
         }
     }
 }
+
+/** The handoff hero number: 68 sp bold, line height 1.05, -2 px tracking (a notch above displayLarge). */
+private val HeroType: androidx.compose.ui.text.TextStyle
+    @Composable get() = MaterialTheme.typography.displayLarge.copy(fontSize = 68.sp, lineHeight = 72.sp)
 
 private fun pow10(n: Int): Long = (1..n).fold(1L) { acc, _ -> acc * 10 }
 

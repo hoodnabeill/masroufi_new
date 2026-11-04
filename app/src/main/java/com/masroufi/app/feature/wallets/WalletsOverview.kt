@@ -48,6 +48,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.FitAmount
+import androidx.compose.ui.unit.sp
 import com.masroufi.app.core.Money
 import com.masroufi.app.data.model.TransactionType
 import com.masroufi.app.data.model.WalletType
@@ -81,7 +83,7 @@ internal fun WalletsTotal(wallets: List<WalletWithBalance>, currency: String) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.wallets_total), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        AnimatedAmount(total, currency, style = MaterialTheme.typography.displaySmall)
+        FitAmount(total, currency, style = MaterialTheme.typography.displayMedium.copy(fontSize = 40.sp, lineHeight = 44.sp))
         if (positive.size > 1) {
             Row(Modifier.fillMaxWidth().height(10.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 positive.forEach { w ->

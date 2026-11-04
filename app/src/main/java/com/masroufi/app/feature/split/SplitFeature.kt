@@ -47,6 +47,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.FitAmount
+import androidx.compose.ui.unit.sp
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -511,7 +513,7 @@ private fun IncomeCard(income: Long, currency: String, onPick: (Long) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(stringResource(R.string.split_when_income), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(money.format(income * unit, currency), style = MaterialTheme.typography.displaySmall)
+        FitAmount(income * unit, currency, style = MaterialTheme.typography.displayMedium.copy(fontSize = 36.sp, lineHeight = 40.sp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             sampleIncomes.forEach { v ->
                 Pill(money.formatCompact(v * unit, currency), v == income, lime, lime.copy(alpha = 0.1f), Modifier.weight(1f).height(38.dp)) { onPick(v) }
