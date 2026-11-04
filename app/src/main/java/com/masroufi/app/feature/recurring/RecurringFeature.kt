@@ -88,6 +88,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import com.masroufi.app.domain.Schedule
+import com.masroufi.app.ui.components.AnimatedProgressBar
+import com.masroufi.app.ui.components.LocalMoneyFormatter
+import com.masroufi.app.ui.theme.LocalGlass
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
@@ -131,6 +139,7 @@ fun RecurringScreen(onBack: () -> Unit, onAdd: () -> Unit, onEdit: (String) -> U
             contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 32.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            item(key = "total") { MonthlyFixed(state.rules) }
             items(state.rules, key = { it.id }) { rule ->
                 PressableCard(onClick = { onEdit(rule.id) }, modifier = Modifier.animateItem()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -157,6 +166,15 @@ fun RecurringScreen(onBack: () -> Unit, onAdd: () -> Unit, onEdit: (String) -> U
                                 stringResource(if (rule.active) R.string.action_pause else R.string.action_resume),
                             )
                         }
+                    }
+                    rule.endEpochDay?.let { endDay ->
+                        val start = LocalDate.ofEpochDay(rule.startEpochDay)
+                        val total = Schedule.countThrough(start, LocalDate.ofEpochDay(endDay), rule.frequency, rule.interval)
+                        val paid = rule.lastGeneratedEpochDay?.let { Schedule.countThrough(start, LocalDate.ofEpochDay(it), rule.frequency, rule.interval) } ?: 0
+                        Spacer(Modifier.height(10.dp))
+                        AnimatedProgressBar(if (total > 0) paid.toFloat() / total else 0f, MaterialTheme.colorScheme.secondary, height = 6.dp)
+                        Spacer(Modifier.height(6.dp))
+                        Text(stringResource(R.string.recurring_instalment_of, paid.coerceAtMost(total), total), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -320,6 +338,18 @@ fun RecurringEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Rec
                 DateChip(form.start, { d -> viewModel.update { it.copy(start = d) } }, label = stringResource(R.string.field_starts))
             }
             OptionalDateChip(form.end, { d -> viewModel.update { it.copy(end = d) } }, stringResource(R.string.field_ends_optional))
+            // Instalments: a count is just another way to say when the rule ends.
+            val every = form.interval.toIntOrNull()?.coerceAtLeast(1) ?: 1
+            TextInput(
+                form.end?.let { Schedule.countThrough(form.start, it, form.frequency, every).toString() }.orEmpty(),
+                { v ->
+                    val count = v.filter(Char::isDigit).take(3).toIntOrNull()
+                    viewModel.update { it.copy(end = count?.takeIf { n -> n > 0 }?.let { n -> Schedule.endFor(it.start, n, it.frequency, every) }) }
+                },
+                stringResource(R.string.recurring_instalments),
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                supportingText = stringResource(R.string.recurring_instalments_hint),
+            )
             ListItem(
                 headlineContent = { Text(stringResource(R.string.recurring_remind)) },
                 trailingContent = { GlassSwitch(form.remind, { v -> viewModel.update { it.copy(remind = v) } }) },
@@ -330,5 +360,27 @@ fun RecurringEditorScreen(onDone: () -> Unit, onBack: () -> Unit, viewModel: Rec
     }
     if (confirmDelete) {
         ConfirmDialog(stringResource(R.string.recurring_delete_title), stringResource(R.string.recurring_delete_body), stringResource(R.string.action_delete), viewModel::delete, { confirmDelete = false })
+    }
+}
+
+/** "الثابت كل شهر": what active recurring spending costs per month, each currency on its own, and fixed income. */
+@Composable
+private fun MonthlyFixed(rules: List<RecurringRule>) {
+    val glass = LocalGlass.current
+    val money = LocalMoneyFormatter.current
+    val active = rules.filter { it.active && it.nextEpochDay != null }
+    fun total(type: TransactionType) = active.filter { it.type == type }.groupBy { it.currency }
+        .map { (currency, list) -> money.format(list.sumOf { Schedule.monthlyMinor(it.amountMinor, it.frequency, it.interval) }, currency) }
+    val out = total(TransactionType.EXPENSE)
+    val incoming = total(TransactionType.INCOME)
+    Column(
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraLarge).background(glass.fill).border(1.dp, glass.rim, MaterialTheme.shapes.extraLarge).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(stringResource(R.string.recurring_monthly_fixed), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(out.ifEmpty { listOf("0") }.joinToString(" · "), style = MaterialTheme.typography.displaySmall)
+        if (incoming.isNotEmpty()) {
+            Text(stringResource(R.string.recurring_monthly_income, incoming.joinToString(" · ")), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        }
     }
 }

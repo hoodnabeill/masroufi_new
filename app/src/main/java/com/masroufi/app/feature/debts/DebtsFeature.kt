@@ -117,56 +117,6 @@ class DebtsViewModel @Inject constructor(debts: DebtRepository, private val cloc
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }
 
-@Composable
-fun DebtsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: DebtsViewModel = hiltViewModel()) {
-    val debts by viewModel.debts.collectAsStateWithLifecycle()
-    var direction by rememberSaveable { mutableStateOf(DebtDirection.I_OWE) }
-    Scaffold(
-        topBar = { MasroufiTopBar(stringResource(R.string.debts_title), onBack = onBack) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.debt_add)) } } },
-    ) { padding ->
-        val list = debts ?: return@Scaffold
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            SegmentedChoice(
-                DebtDirection.entries.toList(), direction, { direction = it }, { stringResource(debtLabel(it)) },
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-            val visible = list.filter { it.debt.direction == direction }
-            if (visible.isEmpty()) {
-                EmptyState(MIcons.Handshake, stringResource(R.string.debts_empty_title), stringResource(R.string.debts_empty_body), actionLabel = stringResource(R.string.debt_add), onAction = onAdd)
-            } else {
-                val (settled, open) = visible.partition { it.paidMinor >= it.debt.originalMinor }
-                LazyColumn(contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(open, key = { it.debt.id }) { DebtCard(it, viewModel.today, onOpen, Modifier.animateItem()) }
-                    if (settled.isNotEmpty()) {
-                        item { SectionHeader(stringResource(R.string.debt_status_settled)) }
-                        items(settled, key = { it.debt.id }) { DebtCard(it, viewModel.today, onOpen, Modifier.animateItem()) }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DebtCard(item: DebtWithPaid, today: LocalDate, onOpen: (String) -> Unit, modifier: Modifier) {
-    val dates = rememberDateFormatter()
-    val status = DebtMath.status(item.debt.originalMinor, item.paidMinor, item.debt.dueEpochDay, today)
-    PressableCard(onClick = { onOpen(item.debt.id) }, modifier = modifier) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(item.debt.personName, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                item.debt.dueEpochDay?.let {
-                    Text(stringResource(R.string.debt_due, LocalDate.ofEpochDay(it).format(dates)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            MoneyText(DebtMath.remaining(item.debt.originalMinor, item.paidMinor), item.debt.currency, style = MaterialTheme.typography.titleMedium)
-        }
-        Spacer(Modifier.height(8.dp))
-        AnimatedProgressBar(if (item.debt.originalMinor > 0) item.paidMinor.toFloat() / item.debt.originalMinor else 0f, MaterialTheme.colorScheme.primary)
-        Row(verticalAlignment = Alignment.CenterVertically) { StatusChip(status) }
-    }
-}
-
 data class DebtDetailState(val debt: DebtWithPaid? = null, val payments: List<DebtPayment> = emptyList())
 
 @HiltViewModel

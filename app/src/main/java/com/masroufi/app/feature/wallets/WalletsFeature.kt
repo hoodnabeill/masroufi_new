@@ -36,6 +36,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.GlassSecondaryButton
+import com.masroufi.app.data.model.TransactionType
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import com.masroufi.app.ui.components.FormSection
 import com.masroufi.app.ui.components.EditorSaveBar
@@ -102,15 +106,26 @@ fun walletTypeLabel(type: WalletType): String = stringResource(
 )
 
 @HiltViewModel
-class WalletsViewModel @Inject constructor(wallets: WalletRepository) : ViewModel() {
+class WalletsViewModel @Inject constructor(wallets: WalletRepository, settings: SettingsRepository) : ViewModel() {
     val wallets: StateFlow<List<WalletWithBalance>?> = wallets.observeWallets()
         .map<List<WalletWithBalance>, List<WalletWithBalance>?> { it }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val currency: StateFlow<String> = settings.settings.map { it.primaryCurrency }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Money.DEFAULT_CURRENCY)
 }
 
+/** المحافظ: the total and how it is split, every wallet, moving money between them, and logging from a pasted SMS. */
 @Composable
-fun WalletsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Unit, viewModel: WalletsViewModel = hiltViewModel()) {
+fun WalletsScreen(
+    onBack: () -> Unit,
+    onAdd: () -> Unit,
+    onOpen: (String) -> Unit,
+    onTransfer: () -> Unit,
+    onLogSms: (type: TransactionType, walletId: String?, amount: String, note: String?) -> Unit,
+    viewModel: WalletsViewModel = hiltViewModel(),
+) {
     val wallets by viewModel.wallets.collectAsStateWithLifecycle()
+    val currency by viewModel.currency.collectAsStateWithLifecycle()
     Scaffold(
         topBar = { MasroufiTopBar(stringResource(R.string.wallets_title), onBack = onBack) { GlassIconButton(onClick = onAdd) { Icon(MIcons.Plus, stringResource(R.string.wallet_add)) } } },
     ) { padding ->
@@ -125,7 +140,18 @@ fun WalletsScreen(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (String) -> Uni
             contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 32.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            item(key = "total") { WalletsTotal(list, currency) }
             items(active, key = { it.wallet.id }) { WalletCard(it, onOpen) }
+            if (active.size > 1) {
+                item(key = "transfer") {
+                    GlassSecondaryButton(onClick = onTransfer, modifier = Modifier.fillMaxWidth()) {
+                        Icon(MIcons.Transfer, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.wallets_transfer))
+                    }
+                }
+            }
+            item(key = "sms") { SmsLogCard(active, onLogSms) }
             if (archived.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.wallets_archived)) }
                 items(archived, key = { it.wallet.id }) { WalletCard(it, onOpen) }

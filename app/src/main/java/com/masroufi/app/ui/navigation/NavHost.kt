@@ -300,7 +300,13 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
         )
     }
     screen<WalletsRoute> {
-        WalletsScreen(onBack = back, onAdd = { nav.navigate(WalletEditorRoute()) }, onOpen = { nav.navigate(WalletDetailRoute(it)) })
+        WalletsScreen(
+            onBack = back,
+            onAdd = { nav.navigate(WalletEditorRoute()) },
+            onOpen = { nav.navigate(WalletDetailRoute(it)) },
+            onTransfer = { nav.navigate(AddSheetRoute(type = "TRANSFER")) },
+            onLogSms = { type, walletId, amount, note -> nav.navigate(AddSheetRoute(type = type.name, walletId = walletId, amount = amount, note = note)) },
+        )
     }
     screen<WalletDetailRoute> {
         WalletDetailScreen(
