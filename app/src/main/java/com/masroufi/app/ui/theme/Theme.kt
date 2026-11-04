@@ -314,22 +314,12 @@ object Spacing {
 }
 
 @Composable
-fun MasroufiTheme(mode: ThemeMode, dynamicColor: Boolean, solidGlass: Boolean = false, content: @Composable () -> Unit) {
-    val dark = when (mode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
+fun MasroufiTheme(solidGlass: Boolean = false, content: @Composable () -> Unit) {
+    // Midnight Ledger is a dark-only design (the handoff has no light theme): no system, light or dynamic variants.
+    val dark = true
     val context = LocalContext.current
-    val glass = if (dark) DarkGlass else LightGlass
-    val base = scheme(dark, glass)
-    // Dynamic colour only re-tints the accents; the glass surfaces stay ours.
-    val colors = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val dynamic = if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        base.copy(primary = dynamic.primary, onPrimary = dynamic.onPrimary, secondary = dynamic.secondary, tertiary = dynamic.tertiary)
-    } else {
-        base
-    }
+    val glass = DarkGlass
+    val colors = scheme(dark, glass)
     val reduceMotion = remember(context) {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
     }

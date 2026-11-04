@@ -39,6 +39,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.R
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.clickable
 import com.masroufi.app.core.applyAppLanguage
 import com.masroufi.app.ui.components.DropdownField
 import com.masroufi.app.ui.components.edgeFade
@@ -94,7 +96,7 @@ class SettingsViewModel @Inject constructor(
 }
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreen(onBack: () -> Unit, onPremium: () -> Unit = {}, viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val s = settings ?: return
     val language = LocalConfiguration.current.locales[0].language
@@ -106,6 +108,13 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             Modifier.fillMaxSize().padding(padding).edgeFade().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            ListItem(
+                modifier = Modifier.clickable(onClick = onPremium),
+                leadingContent = { Icon(MIcons.Crown, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
+                headlineContent = { Text(stringResource(R.string.premium_title)) },
+                supportingContent = { Text(stringResource(R.string.more_premium_sub)) },
+                trailingContent = { Icon(MIcons.ChevronForward, contentDescription = null) },
+            )
             Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleSmall)
             SegmentedChoice(
                 listOf("ar", "en"),
@@ -113,26 +122,6 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 { applyAppLanguage(it) },
                 { if (it == "ar") "العربية" else "English" },
             )
-            Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.titleSmall)
-            SegmentedChoice(
-                ThemeMode.entries.toList(), s.themeMode, { m -> viewModel.launch { setTheme(m) } },
-                {
-                    stringResource(
-                        when (it) {
-                            ThemeMode.SYSTEM -> R.string.theme_system
-                            ThemeMode.LIGHT -> R.string.theme_light
-                            ThemeMode.DARK -> R.string.theme_dark
-                        },
-                    )
-                },
-            )
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.settings_dynamic_color)) },
-                    supportingContent = { Text(stringResource(R.string.settings_dynamic_color_sub)) },
-                    trailingContent = { GlassSwitch(s.dynamicColor, { v -> viewModel.launch { setDynamicColor(v) } }) },
-                )
-            }
             // Reading money SMS is opt-in: the switch asks for RECEIVE_SMS, and only turns on once it is granted.
             val smsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
                 viewModel.launch { setSmsAutoLog(granted) }

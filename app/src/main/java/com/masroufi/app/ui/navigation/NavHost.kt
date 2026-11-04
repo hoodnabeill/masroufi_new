@@ -260,7 +260,6 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     screen<MoreRoute> {
         MoreScreen(
             onWallets = { nav.navigate(WalletsRoute) },
-            onSubscriptions = { nav.navigate(SubscriptionsRoute) },
             onRecurring = { nav.navigate(RecurringRoute) },
             onGameya = { nav.navigate(GameyaListRoute) },
             onDebts = { nav.navigate(DebtsRoute) },
@@ -270,8 +269,8 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
             onBackup = { nav.navigate(BackupRoute) },
             onSecurity = { nav.navigate(SecurityRoute) },
             onSettings = { nav.navigate(SettingsRoute) },
-            onPremium = { nav.navigate(PremiumRoute) },
             onRecap = { nav.navigate(RecapRoute) },
+            onAchievements = { nav.navigate(AchievementsRoute) },
             onLegal = { nav.navigate(LegalRoute(it)) },
         )
     }
@@ -357,7 +356,7 @@ private fun NavGraphBuilder.graph(nav: NavHostController) {
     }
     screen<RecapRoute> { com.masroufi.app.feature.recap.RecapScreen(onClose = back) }
     screen<LegalRoute> { entry -> com.masroufi.app.feature.legal.LegalScreen(entry.toRoute<LegalRoute>().doc, onBack = back) }
-    screen<SettingsRoute> { SettingsScreen(onBack = back) }
+    screen<SettingsRoute> { SettingsScreen(onBack = back, onPremium = { nav.navigate(PremiumRoute) }) }
     screen<SecurityRoute> { SecurityScreen(onBack = back) }
     screen<BackupRoute> { BackupScreen(onBack = back, onPremium = { nav.navigate(PremiumRoute) }) }
     screen<PremiumRoute> { PremiumScreen(onBack = back) }

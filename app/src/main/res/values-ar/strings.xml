@@ -1038,4 +1038,30 @@
     <string name="remind_log_title">فاضلك %1$s النهارده</string>
     <string name="remind_log_body_start">سجّل أول مصروف وابدأ سلسلتك</string>
     <string name="remind_log_body_streak">سجّل مصاريف النهارده عشان سلسلتك توصل يوم %1$d</string>
+    <string name="more_profile">ملفك</string>
+    <string name="more_level_line">مستوى %1$d · %2$s · %3$d من %4$d</string>
+    <string name="more_streak">السلسلة</string>
+    <plurals name="streak_days_short">
+        <item quantity="zero">%d يوم</item>
+        <item quantity="one">يوم</item>
+        <item quantity="two">يومين</item>
+        <item quantity="few">%d أيام</item>
+        <item quantity="many">%d يوم</item>
+        <item quantity="other">%d يوم</item>
+    </plurals>
+    <string name="more_recap_line">قصة فلوسك في 5 شرايح، تقدر تشاركها</string>
+    <string name="more_backup_title">بياناتك على الموبايل ده بس</string>
+    <string name="more_backup_body">فعّل النسخ الاحتياطي عشان متضيعش</string>
+    <string name="more_backup_cta">فعّل</string>
+    <string name="more_recurring_title">المتكررة والأقساط</string>
+    <string name="more_fixed_monthly">%1$s كل شهر</string>
+    <string name="more_health">صحتك المالية %1$d</string>
+    <string name="more_gameya_turn">دورك في %1$s</string>
+    <string name="more_debts_line">ليك %1$s · عليك %2$s</string>
+    <string name="more_split_line">قسّم دخلك أول ما ينزل</string>
+    <string name="more_security_line">قفل بالبصمة</string>
+    <string name="more_backup_on">مفعّل</string>
+    <string name="more_backup_off">مش متفعّل</string>
+    <string name="more_categories_line">نظّم مصروفاتك</string>
+    <string name="more_settings_line">مصروفي بريميوم، اللغة، الشكل</string>
 </resources>

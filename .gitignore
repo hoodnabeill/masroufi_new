@@ -9,3 +9,8 @@ captures/
 *.keystore
 *.jks
 graphify-out/
+
+# Promo video project: build output and caches
+marketing/promo/.hyperframes/
+marketing/promo/node_modules/
+marketing/promo/.check.json

@@ -983,4 +983,26 @@
     <string name="remind_log_title">You have %1$s left for today</string>
     <string name="remind_log_body_start">Log your first expense and start your streak</string>
     <string name="remind_log_body_streak">Log today\'s spending so your streak reaches day %1$d</string>
+    <string name="more_profile">Your profile</string>
+    <string name="more_level_line">Level %1$d · %2$s · %3$d of %4$d</string>
+    <string name="more_streak">Streak</string>
+    <plurals name="streak_days_short">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <string name="more_recap_line">Your money\'s story in 5 slides, ready to share</string>
+    <string name="more_backup_title">Your data is only on this phone</string>
+    <string name="more_backup_body">Turn on backup so you don\'t lose it</string>
+    <string name="more_backup_cta">Turn on</string>
+    <string name="more_recurring_title">Recurring &amp; instalments</string>
+    <string name="more_fixed_monthly">%1$s a month</string>
+    <string name="more_health">Money health %1$d</string>
+    <string name="more_gameya_turn">Your turn in %1$s</string>
+    <string name="more_debts_line">Owed %1$s · owe %2$s</string>
+    <string name="more_split_line">Split income as it lands</string>
+    <string name="more_security_line">Fingerprint lock</string>
+    <string name="more_backup_on">On</string>
+    <string name="more_backup_off">Not set up</string>
+    <string name="more_categories_line">Organise your spending</string>
+    <string name="more_settings_line">Premium, language, display</string>
 </resources>
