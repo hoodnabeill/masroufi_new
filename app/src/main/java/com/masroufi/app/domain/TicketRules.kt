@@ -11,16 +11,21 @@ sealed interface TicketCalc {
     data class EndOfMonth(val pool: Long, val daysLeft: Int) : TicketCalc
 }
 
-/** `reserved` excludes `carriedIn`; the carry leaves the pool before dividing, then is added back. */
+/**
+ * `reserved` excludes `carriedIn`. The carry (capped at Spendable - Reserved) leaves the pool before dividing and is
+ * added back, so a carried-in leftover still prints when the divided base floors to zero.
+ */
 fun computeTicket(spendable: Long, reserved: Long, carriedIn: Long, daysLeft: Int): TicketCalc {
     require(daysLeft >= 1) { "daysLeft must be >= 1" }
     require(carriedIn >= 0) { "carriedIn must be >= 0" }
-    val pool = spendable - reserved - carriedIn
-    val endOfMonth = TicketCalc.EndOfMonth(spendable - reserved, daysLeft)
-    if (pool <= 0) return endOfMonth
-    val base = Math.floorDiv(pool, daysLeft.toLong()).floorToPound()
-    if (base == 0L) return endOfMonth // never print a zero ticket
-    return TicketCalc.Printed(amount = base + carriedIn, base = base, carriedIn = carriedIn)
+    val sr = spendable - reserved
+    val endOfMonth = TicketCalc.EndOfMonth(sr, daysLeft)
+    if (sr <= 0) return endOfMonth
+    val carry = minOf(carriedIn, sr)
+    val pool = sr - carry
+    val base = if (pool > 0) Math.floorDiv(pool, daysLeft.toLong()).floorToPound() else 0L
+    if (base + carry == 0L) return endOfMonth // never print a zero ticket
+    return TicketCalc.Printed(amount = base + carry, base = base, carriedIn = carry)
 }
 
 data class EntryForDay(
@@ -31,9 +36,10 @@ data class EntryForDay(
     val recurringId: Long?,
 )
 
-fun spentToday(entries: List<EntryForDay>): Long =
-    entries.filter { it.kind == EntryKind.SPENT && it.countsInTicket && it.recurringId == null }
-        .sumOf { it.amount + it.roundUp }
+/** Punches the ticket: spent, from a counting pocket, not a fixed bill. */
+val EntryForDay.punches: Boolean get() = kind == EntryKind.SPENT && countsInTicket && recurringId == null
+
+fun spentToday(entries: List<EntryForDay>): Long = entries.filter { it.punches }.sumOf { it.amount + it.roundUp }
 
 fun overspendPerDay(overspend: Long, daysLeft: Int): Long {
     require(daysLeft >= 1) { "daysLeft must be >= 1" }

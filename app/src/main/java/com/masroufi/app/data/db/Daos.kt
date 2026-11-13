@@ -5,6 +5,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.masroufi.app.domain.EntryForDay
+import com.masroufi.app.domain.StampKind
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -45,6 +47,20 @@ interface EntryDao {
 
     @Query("SELECT * FROM entry WHERE happenedAt >= :start AND happenedAt < :end ORDER BY happenedAt")
     fun forDayFlow(start: Long, end: Long): Flow<List<EntryEntity>>
+
+    /** A day's entries with their pocket's countsInTicket, for spentToday; [start, end) epoch millis. */
+    @Query(
+        """SELECT e.kind, e.amount, e.roundUp, p.countsInTicket, e.recurringId FROM entry e
+        JOIN pocket p ON p.id = e.pocketId WHERE e.happenedAt >= :start AND e.happenedAt < :end"""
+    )
+    suspend fun forDayWithPocket(start: Long, end: Long): List<EntryForDay>
+
+    /** Latest income into a counting pocket (anchors a not-fixed pay cycle). */
+    @Query(
+        """SELECT MAX(e.happenedAt) FROM entry e JOIN pocket p ON p.id = e.pocketId
+        WHERE e.kind = 'RECEIVED' AND p.countsInTicket = 1 AND p.archived = 0"""
+    )
+    suspend fun latestReceivedAt(): Long?
 }
 
 @Dao
@@ -62,6 +78,8 @@ interface DayTicketDao {
 
     @Query("SELECT * FROM day_ticket WHERE status = 'OPEN' AND date < :date ORDER BY date DESC LIMIT 1")
     suspend fun latestOpenBefore(date: LocalDate): DayTicketEntity?
+
+    @Query("SELECT * FROM day_ticket ORDER BY date") suspend fun allNow(): List<DayTicketEntity>
 
     @Query("SELECT * FROM day_ticket WHERE date >= :from AND date <= :to ORDER BY date")
     fun range(from: LocalDate, to: LocalDate): Flow<List<DayTicketEntity>>
@@ -108,10 +126,12 @@ interface GoalDao {
 interface ProverbDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insert(collected: ProverbCollectedEntity)
     @Query("SELECT * FROM proverb_collected") fun all(): Flow<List<ProverbCollectedEntity>>
+    @Query("SELECT number FROM proverb_collected") suspend fun numbers(): List<Int>
 }
 
 @Dao
 interface StampDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insert(stamp: StampEntity)
     @Query("SELECT * FROM stamp") fun all(): Flow<List<StampEntity>>
+    @Query("SELECT kind FROM stamp") suspend fun kinds(): List<StampKind>
 }

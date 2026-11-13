@@ -45,4 +45,20 @@ class TicketRulesTest {
     fun daysLeftZeroRejected() {
         computeTicket(100000, 0, 0, 0)
     }
+
+    @Test fun carryKeptWhenBaseFloorsToZero() =
+        assertEquals(TicketCalc.Printed(5000, 0, 5000), computeTicket(5800, 0, 5000, 10))
+
+    @Test fun carryCappedAtAvailable() =
+        assertEquals(TicketCalc.Printed(3000, 0, 3000), computeTicket(3000, 0, 5000, 4))
+
+    @Test(expected = IllegalArgumentException::class)
+    fun carriedInNegativeRejected() {
+        computeTicket(100000, 0, -1, 10)
+    }
+
+    @Test fun overspendNonPositiveIsZero() {
+        assertEquals(0L, overspendPerDay(0, 5))
+        assertEquals(0L, overspendPerDay(-100, 5))
+    }
 }
