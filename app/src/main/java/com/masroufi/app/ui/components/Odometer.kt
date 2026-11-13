@@ -69,9 +69,9 @@ fun Odometer(
         if (showPiastres) append('.').append((magnitude % 100).toString().padStart(2, '0'))
     }
 
-    Box(modifier) {
+    Box(modifier.clearAndSetSemantics { text = AnnotatedString(display) }) {
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Row(Modifier.clearAndSetSemantics { text = AnnotatedString(display) }) {
+            Row {
                 // Keyed from the right so a digit keeps its cell when the number grows or shrinks.
                 display.forEachIndexed { index, ch ->
                     key(display.length - 1 - index) {
