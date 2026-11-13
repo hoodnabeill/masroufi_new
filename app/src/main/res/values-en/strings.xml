@@ -6,4 +6,6 @@
     <string name="tab_plan">Plan</string>
     <string name="tab_people">People</string>
     <string name="add_entry">Log a new entry</string>
+    <string name="paper_currency">EGP</string>
+    <string name="paper_sealed">Paid</string>
 </resources>

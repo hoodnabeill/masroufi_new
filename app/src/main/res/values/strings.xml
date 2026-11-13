@@ -6,4 +6,6 @@
     <string name="tab_plan">الخطة</string>
     <string name="tab_people">الناس</string>
     <string name="add_entry">سجّل عملية جديدة</string>
+    <string name="paper_currency">جنيه</string>
+    <string name="paper_sealed">مدفوع</string>
 </resources>
