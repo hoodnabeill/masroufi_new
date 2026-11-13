@@ -3,9 +3,14 @@ package com.masroufi.app.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -71,8 +76,17 @@ private val TzTypography = Typography(
 fun MasroufiTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val view = LocalView.current
-    // Read once per composition; 0f means the user turned animations off.
-    val reduceMotion = Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    // 0f animator scale means the user turned animations off; observed so toggling it updates live.
+    val reduceMotion by produceState(false, context) {
+        val resolver = context.contentResolver
+        fun read() = Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+        value = read()
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) { value = read() }
+        }
+        resolver.registerContentObserver(Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, observer)
+        awaitDispose { resolver.unregisterContentObserver(observer) }
+    }
     val haptics = remember(view) { AndroidHaptics(view) }
     CompositionLocalProvider(LocalReduceMotion provides reduceMotion, LocalHaptics provides haptics) {
         MaterialTheme(colorScheme = TzColorScheme, typography = TzTypography, content = content)
