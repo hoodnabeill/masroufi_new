@@ -1,10 +1,9 @@
 package com.masroufi.app.feature.gallery
 
-import androidx.compose.ui.test.hasScrollAction
-import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollToKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.ui.theme.MasroufiTheme
 import org.junit.Rule
@@ -28,7 +27,7 @@ class GalleryTest {
         try { rule.onNodeWithText("Icons").assertExists() }
         catch (t: AssertionError) { throw IllegalStateException() }
         catch (t: Throwable) { throw IllegalArgumentException(t.javaClass.simpleName) }
-        try { rule.onNode(hasScrollAction()).performScrollToNode(hasText("QershBubble")) }
+        try { rule.onNode(hasScrollToKeyAction()).performScrollToKey("bubble") }
         catch (t: AssertionError) { throw IllegalStateException() }
         catch (t: Throwable) { throw IllegalArgumentException(t.javaClass.simpleName) }
         try { rule.onNodeWithText("QershBubble").assertExists() }
