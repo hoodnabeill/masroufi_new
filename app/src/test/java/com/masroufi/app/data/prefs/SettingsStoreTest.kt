@@ -37,11 +37,11 @@ class SettingsStoreTest {
     @Test fun otherSettersRoundTrip() = runTest {
         val store = store()
         store.setLeftoverDefault(LeftoverDestination.EMERGENCY)
-        store.setRoundUpStep(500)
+        store.setRoundUpStep(5)
         store.setOnboarded(true)
         val s = store.current()
         assertEquals(LeftoverDestination.EMERGENCY, s.leftoverDefault)
-        assertEquals(500, s.roundUpStep)
+        assertEquals(5, s.roundUpStep)
         assertEquals(true, s.onboarded)
     }
 

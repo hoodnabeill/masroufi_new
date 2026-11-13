@@ -46,6 +46,10 @@ data class EntryEntity(
     val loggedAt: Long,
     val roundUp: Long = 0,
     val recurringId: Long? = null,
+    /**
+     * A transfer's or cash-out's fee is stored in `fee` on that entry and deducted from `pocketId`; never also log a
+     * separate SPENT entry for it. `isFee` marks an entry whose whole amount is a fee (e.g. a standalone bank charge).
+     */
     val fee: Long = 0,
     val isFee: Boolean = false,
     val trackedItemId: Long? = null,

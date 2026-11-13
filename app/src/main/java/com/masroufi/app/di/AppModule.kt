@@ -2,8 +2,10 @@ package com.masroufi.app.di
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.masroufi.app.BuildConfig
@@ -22,6 +24,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+    // shortcut: zone fixed at process start; re-read ZoneId per day calc when Phase 3 builds Home.
     @Provides @Singleton fun clock(): Clock = Clock.systemDefaultZone()
 
     @Provides @Singleton
@@ -41,7 +44,11 @@ object AppModule {
 
     @Provides @Singleton
     fun dataStore(@ApplicationContext context: Context): DataStore<Preferences> =
-        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("settings") }
+        // Not v1's "settings" file: v2 starts fresh and must not inherit v1 keys (PIN hash, sync secrets).
+        // A corrupt file resets to empty instead of crashing every launch; the seed regenerates in edit {}.
+        PreferenceDataStoreFactory.create(corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }) {
+            context.preferencesDataStoreFile("tazkara_settings")
+        }
 
     @Provides @Singleton
     fun entitlements(): Entitlements = if (BuildConfig.DEBUG) DebugEntitlements() else ReleaseEntitlements()

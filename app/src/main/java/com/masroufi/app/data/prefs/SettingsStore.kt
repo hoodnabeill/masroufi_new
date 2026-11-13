@@ -21,6 +21,7 @@ import javax.inject.Singleton
 data class Settings(
     val payday: Payday = Payday.Day(25),
     val leftoverDefault: LeftoverDestination = LeftoverDestination.JAR,
+    /** Step in pounds (0, 5, 10, 50). */
     val roundUpStep: Int = 0,
     val proverbSeed: Long,
     val onboarded: Boolean = false,

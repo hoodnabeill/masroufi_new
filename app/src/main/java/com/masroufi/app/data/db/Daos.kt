@@ -27,7 +27,8 @@ interface PocketDao {
     @Query("SELECT p.id AS pocketId, $BALANCE_EXPR AS balance FROM pocket p")
     fun balances(): Flow<List<PocketBalance>>
 
-    @Query("SELECT COALESCE(SUM($BALANCE_EXPR), 0) FROM pocket p WHERE p.countsInTicket = 1 AND p.archived = 0")
+    // Primary currency only: the daily ticket is EGP.
+    @Query("SELECT COALESCE(SUM($BALANCE_EXPR), 0) FROM pocket p WHERE p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'")
     suspend fun countingBalanceTotal(): Long
 }
 

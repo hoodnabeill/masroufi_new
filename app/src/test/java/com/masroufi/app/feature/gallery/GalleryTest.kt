@@ -2,12 +2,14 @@ package com.masroufi.app.feature.gallery
 
 import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.ui.theme.MasroufiTheme
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,6 +40,15 @@ class GalleryTest {
                 throw AssertionError("section '$title' (key '$key') failed: ${e.message}", e)
             }
         }
+    }
+
+    @Test
+    fun plusToggleFlipsEntitlement() {
+        val entitlements = DebugEntitlements()
+        rule.setContent { MasroufiTheme { GalleryScreen(entitlements) } }
+        rule.onNodeWithContentDescription("Plus (debug)", useUnmergedTree = true).performClick()
+        rule.waitForIdle()
+        assertTrue("isPlus did not flip", entitlements.isPlus.value)
     }
 
     @Test
