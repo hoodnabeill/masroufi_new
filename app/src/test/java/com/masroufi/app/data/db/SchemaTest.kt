@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.TicketStatus
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -84,13 +85,16 @@ class SchemaTest {
         val cash = pocket(100_000)
         val seen = Channel<List<PocketBalance>>(Channel.UNLIMITED)
         val job = launch(Dispatchers.IO) { db.pocketDao().balances().collect { seen.send(it) } }
-        // Real-time timeout: runTest's virtual clock would fire withTimeout immediately.
-        withContext(Dispatchers.Default) { withTimeout(10_000) {
-            assertEquals(100_000L, seen.receive().single { it.pocketId == cash }.balance)
-            entry(EntryKind.SPENT, 2_000, cash)
-            assertEquals(98_000L, seen.receive().single { it.pocketId == cash }.balance)
-        } }
-        job.cancel()
+        try {
+            // Real-time timeout: runTest's virtual clock would fire withTimeout immediately.
+            withContext(Dispatchers.Default) { withTimeout(10_000) {
+                assertEquals(100_000L, seen.receive().single { it.pocketId == cash }.balance)
+                entry(EntryKind.SPENT, 2_000, cash)
+                assertEquals(98_000L, seen.receive().single { it.pocketId == cash }.balance)
+            } }
+        } finally {
+            job.cancelAndJoin()
+        }
     }
 
     @Test fun forDayBoundary() = runTest {

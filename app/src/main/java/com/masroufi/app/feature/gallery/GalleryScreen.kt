@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -146,7 +147,8 @@ fun GalleryScreen(entitlements: Entitlements) {
         if (entitlements is DebugEntitlements) item(key = "plus") {
             val plus by entitlements.isPlus.collectAsState()
             Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Plus (debug)", style = TzType.body, color = Tz.text)
+                // The toggle carries the one spoken label; the visible text is hidden from TalkBack.
+                Text("Plus (debug)", style = TzType.body, color = Tz.text, modifier = Modifier.clearAndSetSemantics {})
                 TzToggle(plus, entitlements::setDebugOverride, "Plus (debug)")
             }
         }
