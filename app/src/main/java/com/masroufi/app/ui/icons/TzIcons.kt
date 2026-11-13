@@ -68,7 +68,7 @@ class TzIconDef(val name: String, val outline: List<Part>, val filled: List<Part
 }
 
 /**
- * The icon family (03-DESIGN-SYSTEM.md, "Icons"): paths copied from `screens/*.dc.html`, 24 grid, round caps and
+ * The icon family (03-DESIGN-SYSTEM.md, "Icons"): paths copied from the `.dc.html` mocks in `screens`, 24 grid, round caps and
  * joins. Rects, circles and dashes are expanded to path data. Drawn black; [TzIcon] tints.
  */
 object TzIcons {
