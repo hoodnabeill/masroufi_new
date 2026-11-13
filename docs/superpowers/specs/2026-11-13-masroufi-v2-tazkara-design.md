@@ -133,6 +133,9 @@ next starts: 0 setup, 1 design system and gallery, 2 data and rules, 3 daily loo
 12. **Screens without their own build prompt** are placed: Subscriptions and Payday ritual in Phase 6 (with
     recurring items), Wallet detail in Phase 5 (with pockets), Profile in Phase 8 (with the album).
 
+13. **A transfer or cash-out fee punches today's ticket** (owner decision, 2026-11-13): the fee counts in today's
+    spent and makes one hole; the transferred amount itself never punches.
+
 ## Left to the builder
 
 Package and class naming, Room schema shape within the "What to store" table, the icon vector paths (drawn to
