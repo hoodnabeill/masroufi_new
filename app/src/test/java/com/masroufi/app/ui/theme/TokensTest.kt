@@ -15,6 +15,14 @@ class TokensTest {
 
     @Test fun ticketType() {
         assertEquals(104.sp, TzType.ticket.fontSize)
-        assertEquals("tnum", TzType.ticket.fontFeatureSettings)
+    }
+
+    @Test fun everyStyleIsTabular() {
+        val styles = listOf(
+            TzType.ticket, TzType.hero, TzType.card, TzType.rowNumber, TzType.titleTab, TzType.titlePushed,
+            TzType.cardHeading, TzType.button, TzType.body, TzType.label, TzType.caption,
+        )
+        assertEquals(11, styles.size)
+        styles.forEach { assertEquals("tnum", it.fontFeatureSettings) }
     }
 }

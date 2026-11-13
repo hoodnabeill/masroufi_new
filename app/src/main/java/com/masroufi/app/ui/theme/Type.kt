@@ -26,6 +26,7 @@ val Alexandria = FontFamily(
 
 private const val TNUM = "tnum"
 
+// Lalezar has no tnum feature: tabular digits come from Odometer's fixed per-digit cells (Task 5), not from this setting.
 private fun display(size: Int) = TextStyle(
     fontFamily = Lalezar,
     fontSize = size.sp,
