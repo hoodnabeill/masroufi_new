@@ -19,13 +19,16 @@ import org.robolectric.annotation.GraphicsMode
 class GalleryTest {
     @get:Rule val rule = createComposeRule()
 
+    // DIAG temporary: AssertionError -> IllegalStateException, other -> IllegalArgumentException; the line shows the step.
+    private fun step(f: () -> Unit) {
+        try { f() } catch (t: AssertionError) { throw IllegalStateException() } catch (t: Throwable) { throw IllegalArgumentException(t.javaClass.simpleName) }
+    }
+
     @Test
     fun galleryComposes() {
-        try { // DIAG: temporary, surfaces the failure in the CI annotation
-        rule.setContent { MasroufiTheme { GalleryScreen() } }
-        rule.onNodeWithText("Icons").assertExists()
-        rule.onNode(hasScrollAction()).performScrollToNode(hasText("QershBubble"))
-        rule.onNodeWithText("QershBubble").assertExists()
-        } catch (t: Throwable) { throw IllegalStateException("Exception DIAG " + t.javaClass.name + " " + t.toString().replace(Regex("\\s+"), " ").take(900) + " AT " + t.stackTrace.take(6).joinToString(" | ")) }
+        step { rule.setContent { MasroufiTheme { GalleryScreen() } } }
+        step { rule.onNodeWithText("Icons").assertExists() }
+        step { rule.onNode(hasScrollAction()).performScrollToNode(hasText("QershBubble")) }
+        step { rule.onNodeWithText("QershBubble").assertExists() }
     }
 }
