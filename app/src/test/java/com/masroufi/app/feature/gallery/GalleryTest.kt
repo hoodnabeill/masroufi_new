@@ -20,15 +20,19 @@ class GalleryTest {
     @get:Rule val rule = createComposeRule()
 
     // DIAG temporary: AssertionError -> IllegalStateException, other -> IllegalArgumentException; the line shows the step.
-    private fun step(f: () -> Unit) {
-        try { f() } catch (t: AssertionError) { throw IllegalStateException() } catch (t: Throwable) { throw IllegalArgumentException(t.javaClass.simpleName) }
-    }
-
     @Test
     fun galleryComposes() {
-        step { rule.setContent { MasroufiTheme { GalleryScreen() } } }
-        step { rule.onNodeWithText("Icons").assertExists() }
-        step { rule.onNode(hasScrollAction()).performScrollToNode(hasText("QershBubble")) }
-        step { rule.onNodeWithText("QershBubble").assertExists() }
+        try { rule.setContent { MasroufiTheme { GalleryScreen() } } }
+        catch (t: AssertionError) { throw IllegalStateException() }
+        catch (t: Throwable) { throw IllegalArgumentException(t.javaClass.simpleName) }
+        try { rule.onNodeWithText("Icons").assertExists() }
+        catch (t: AssertionError) { throw IllegalStateException() }
+        catch (t: Throwable) { throw IllegalArgumentException(t.javaClass.simpleName) }
+        try { rule.onNode(hasScrollAction()).performScrollToNode(hasText("QershBubble")) }
+        catch (t: AssertionError) { throw IllegalStateException() }
+        catch (t: Throwable) { throw IllegalArgumentException(t.javaClass.simpleName) }
+        try { rule.onNodeWithText("QershBubble").assertExists() }
+        catch (t: AssertionError) { throw IllegalStateException() }
+        catch (t: Throwable) { throw IllegalArgumentException(t.javaClass.simpleName) }
     }
 }
