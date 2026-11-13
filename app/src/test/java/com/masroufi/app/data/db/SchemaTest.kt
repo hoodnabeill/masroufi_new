@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -83,11 +84,12 @@ class SchemaTest {
         val cash = pocket(100_000)
         val seen = Channel<List<PocketBalance>>(Channel.UNLIMITED)
         val job = launch(Dispatchers.IO) { db.pocketDao().balances().collect { seen.send(it) } }
-        withTimeout(10_000) {
+        // Real-time timeout: runTest's virtual clock would fire withTimeout immediately.
+        withContext(Dispatchers.Default) { withTimeout(10_000) {
             assertEquals(100_000L, seen.receive().single { it.pocketId == cash }.balance)
             entry(EntryKind.SPENT, 2_000, cash)
             assertEquals(98_000L, seen.receive().single { it.pocketId == cash }.balance)
-        }
+        } }
         job.cancel()
     }
 
