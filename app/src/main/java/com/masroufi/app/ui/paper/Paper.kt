@@ -71,6 +71,8 @@ fun EnvelopeCard(
     bar: Float,
     line: String?,
     sealed: Boolean,
+    status: String? = null,
+    sealedLabel: String = stringResource(R.string.paper_sealed),
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomEnd = 22.dp, bottomStart = 22.dp)
@@ -86,19 +88,20 @@ fun EnvelopeCard(
         Column(Modifier.padding(start = 14.dp, end = 14.dp, top = 36.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(name, style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = Tz.text)
             if (sealed) {
-                Text(stringResource(R.string.paper_sealed), style = TzType.card, color = color)
+                Text(sealedLabel, style = TzType.card, color = color)
             } else {
                 Odometer(leftPiastres, TzType.card.copy(color = color))
             }
             if (line != null) Text(line, style = TzType.caption, color = Tz.text2)
             TzProgressBar(listOf((if (sealed) 1f else bar) to color), Modifier.padding(top = 4.dp), height = 6.dp)
+            if (status != null) Text(status, style = TzType.caption.copy(fontSize = 11.sp), color = Tz.text2)
         }
     }
 }
 
 /** Double-ring stamp (Album.dc.html). [color] null = locked: dashed ring and label. */
 @Composable
-fun Stamp(label: String, color: Color?, modifier: Modifier = Modifier, tilt: Float = -8f) {
+fun Stamp(label: String, color: Color?, subLabel: String? = null, tilt: Float = -8f, modifier: Modifier = Modifier) {
     Box(modifier.size(96.dp).graphicsLayer { rotationZ = tilt }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val r = size.minDimension / 2f
@@ -113,12 +116,11 @@ fun Stamp(label: String, color: Color?, modifier: Modifier = Modifier, tilt: Flo
                 )
             }
         }
-        Text(
-            label,
-            style = TzType.cardHeading.copy(fontSize = 17.sp, lineHeight = 1.1.em, textAlign = TextAlign.Center),
-            color = color ?: Tz.text3,
-            modifier = Modifier.padding(horizontal = 10.dp),
-        )
+        Column(Modifier.padding(horizontal = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            val tint = color ?: Tz.text3
+            Text(label, style = TzType.cardHeading.copy(fontSize = 17.sp, lineHeight = 1.1.em, textAlign = TextAlign.Center), color = tint)
+            if (subLabel != null) Text(subLabel, style = TzType.caption.copy(fontSize = 10.sp, textAlign = TextAlign.Center), color = tint)
+        }
     }
 }
 
@@ -162,7 +164,7 @@ fun ProverbCard(
     }
 }
 
-/** Qersh's speech bubble: Surface, the corner nearest him squared to 6 dp, the others 18 dp. */
+/** Qersh's speech bubble (ObMoney.dc.html): Surface, the corner nearest him squared to 6 dp, the others 20 dp. */
 @Composable
 fun QershBubble(
     text: String,
@@ -170,15 +172,15 @@ fun QershBubble(
     modifier: Modifier = Modifier,
     mood: QershMood = QershMood.Happy,
 ) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
         Qersh(mood, qershSize)
-        val shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 18.dp, bottomStart = 6.dp)
+        val shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomEnd = 20.dp, bottomStart = 6.dp)
         Text(
             text,
-            style = TzType.body,
-            color = Tz.text,
+            style = TzType.body.copy(fontSize = 14.sp, lineHeight = 1.6.em),
+            color = Tz.text2,
             modifier = Modifier.weight(1f, fill = false).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         )
     }
 }

@@ -27,7 +27,7 @@ class PaperTest {
         rule.setContent {
             MasroufiTheme {
                 Ticket(
-                    label = "معاك النهارده", leftPiastres = 15_600, subLine = "من 240", holes = holes,
+                    label = "تذكرة اليوم", amountLabel = "معاك النهارده", leftPiastres = 15_600, subLine = "من 240", holes = holes,
                     caption = "كل تسجيلة = خُرم في التذكرة", stub = stub, showQersh = false,
                     contentDescription = "معاك النهارده 156 جنيه",
                 )
@@ -46,6 +46,7 @@ class PaperTest {
     fun ticketIsOneTalkBackNode() {
         ticket(holes = 3)
         rule.onNodeWithContentDescription("معاك النهارده 156 جنيه").assertExists()
+        rule.onNodeWithText("من 240").assertDoesNotExist()
     }
 
     @Test
