@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import com.masroufi.app.ui.theme.MasroufiTheme
+import com.masroufi.app.ui.theme.Tz
+import com.masroufi.app.ui.theme.TzType
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -24,8 +26,10 @@ class MainActivity : AppCompatActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         setContent {
-            Box(Modifier.fillMaxSize().background(Color(0xFF0A1033)), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.app_name), color = Color.White)
+            MasroufiTheme {
+                Box(Modifier.fillMaxSize().background(Tz.night), contentAlignment = Alignment.Center) {
+                    Text(stringResource(R.string.app_name), color = Tz.text, style = TzType.titleTab)
+                }
             }
         }
     }
