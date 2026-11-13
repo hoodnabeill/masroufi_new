@@ -95,7 +95,7 @@ fun Ticket(
     LaunchedEffect(holes) {
         if (holes > last) {
             fill.snapTo(0f)
-            dot.snapTo(0f)
+            if (!reduce) dot.snapTo(0f)
             last = holes
             launch { fill.animateTo(1f, tween(120)) }
             if (!reduce) {

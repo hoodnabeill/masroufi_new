@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -43,6 +44,21 @@ class SettingsStoreTest {
         assertEquals(LeftoverDestination.EMERGENCY, s.leftoverDefault)
         assertEquals(5, s.roundUpStep)
         assertEquals(true, s.onboarded)
+    }
+
+    @Test fun roundUpStepRejectsOtherValues() = runTest {
+        val store = store()
+        for (bad in listOf(-5, 1, 7, 100)) {
+            try {
+                store.setRoundUpStep(bad)
+                fail("step $bad must be rejected")
+            } catch (expected: IllegalArgumentException) {
+            }
+        }
+        for (ok in listOf(0, 5, 10, 50)) {
+            store.setRoundUpStep(ok)
+            assertEquals(ok, store.current().roundUpStep)
+        }
     }
 
     @Test fun seedIsStableAcrossReads() = runTest {

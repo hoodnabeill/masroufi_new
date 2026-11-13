@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.data.db.DayTicketEntity
+import com.masroufi.app.data.db.EntryEntity
 import com.masroufi.app.data.db.JarMovementEntity
 import com.masroufi.app.data.db.JarSource
 import com.masroufi.app.data.db.PocketEntity
@@ -87,7 +88,7 @@ class TicketRepositoryTest {
             db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
             db.stampDao(), settings, clock,
         )
-        entries = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), tickets, settings, plus, clock)
+        entries = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), tickets, settings, plus, clock)
         cash = db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, openingBalance = opening, color = 0))
     }
 
@@ -385,13 +386,22 @@ class TicketRepositoryTest {
         val old = db.pocketDao().insert(
             PocketEntity(name = "old", kind = PocketKind.CASH, openingBalance = 50_000, color = 0, archived = true),
         )
+        val outside = db.pocketDao().insert(
+            PocketEntity(name = "outside", kind = PocketKind.CASH, openingBalance = 50_000, color = 0, countsInTicket = false),
+        )
         tickets.printToday()
         val dollars = entries.log(NewEntry(kind = EntryKind.SPENT, amount = 5_000, pocketId = usd, happenedAt = millis(nov12, 10)))
-        val archived = entries.log(NewEntry(kind = EntryKind.SPENT, amount = 2_300, pocketId = old, happenedAt = millis(nov12, 11)))
+        // log() refuses an archived pocket, so a spend from before the pocket was archived is inserted directly.
+        val archived = db.entryDao().insert(
+            EntryEntity(kind = EntryKind.SPENT, amount = 2_300, pocketId = old, happenedAt = millis(nov12, 11), loggedAt = 0),
+        )
+        val uncounted = entries.log(NewEntry(kind = EntryKind.SPENT, amount = 1_700, pocketId = outside, happenedAt = millis(nov12, 12)))
+        tickets.recalcDay(nov12)
         val t = row(nov12)
-        assertEquals("USD and archived spends do not punch", 0L to 0, t.spent to t.entryCount)
+        assertEquals("USD, archived and not-counted spends do not punch", 0L to 0, t.spent to t.entryCount)
         assertEquals("no round-up for USD", 0L, db.entryDao().byId(dollars)?.roundUp)
         assertEquals("no round-up for archived", 0L, db.entryDao().byId(archived)?.roundUp)
+        assertEquals("no round-up for a pocket outside the ticket", 0L, db.entryDao().byId(uncounted)?.roundUp)
         assertEquals(0L, jarTotal())
     }
 
@@ -521,6 +531,74 @@ class TicketRepositoryTest {
         assertEquals("only 11-10's 10000 in the jar", 10_000L, jarTotal())
         // Spendable 390000 - jar 10000 = 380000; carry 20000 leaves 360000 / 13 = 27692 -> 27600; amount 47600.
         assertTicket("11-12 carries 11-11", 47_600, 27_600, 20_000, t12)
+    }
+
+    @Test fun secondSpendAfterPrintNotDoublePunched() = runTest {
+        setUp()
+        spend(5_000, hour = 0) // before the print
+        tickets.printToday()
+        spend(2_000)
+        val t = row(nov12)
+        assertEquals("spent is the sum, each entry punched once", 7_000L to 2, t.spent to t.entryCount)
+    }
+
+    @Test fun usdIncomeDoesNotAnchorNotFixed() = runTest {
+        setUp()
+        settings.setPayday(Payday.NotFixed)
+        val usd = db.pocketDao().insert(PocketEntity(name = "usd", kind = PocketKind.BANK, currency = "USD", color = 0))
+        entries.log(NewEntry(kind = EntryKind.RECEIVED, amount = 100_000, pocketId = usd, happenedAt = millis(LocalDate.of(2026, 11, 2), 10)))
+        // No EGP income: the anchor is today, a full 30 days. 390000 / 30 = 13000 (the USD income would leave 20 days).
+        assertTicket("USD income is not an anchor", 13_000, 13_000, 0, tickets.printToday())
+    }
+
+    @Test fun payingBillStopsReservingIt() = runTest {
+        setUp()
+        val nov20 = LocalDate.of(2026, 11, 20)
+        val nov25 = LocalDate.of(2026, 11, 25)
+        val billId = db.recurringDao().insert(bill(50_000, nov20))
+        assertEquals("reserved before paying", 50_000L, db.recurringDao().unpaidDueBefore(nov25))
+        fun pay(hour: Int, id: Long? = billId) =
+            NewEntry(kind = EntryKind.SPENT, amount = 50_000, pocketId = cash, happenedAt = millis(nov12, hour), recurringId = id)
+        val paying = entries.log(pay(10))
+        assertEquals("not reserved once paid", 0L, db.recurringDao().unpaidDueBefore(nov25))
+        entries.delete(paying)
+        assertEquals("reserved again after delete", 50_000L, db.recurringDao().unpaidDueBefore(nov25))
+        val first = entries.log(pay(10))
+        val second = entries.log(pay(11))
+        entries.delete(first)
+        assertEquals("another entry in the cycle still pays it", 0L, db.recurringDao().unpaidDueBefore(nov25))
+        entries.edit(second, pay(11, id = null))
+        assertEquals("edited to no bill: reserved again", 50_000L, db.recurringDao().unpaidDueBefore(nov25))
+    }
+
+    @Test fun entryInputChecksRejected() = runTest {
+        setUp()
+        val usd = db.pocketDao().insert(PocketEntity(name = "usd", kind = PocketKind.BANK, currency = "USD", color = 0))
+        val old = db.pocketDao().insert(PocketEntity(name = "old", kind = PocketKind.CASH, color = 0, archived = true))
+        val other = db.pocketDao().insert(PocketEntity(name = "other", kind = PocketKind.BANK, color = 0))
+        val at = millis(nov12, 10)
+        val bad = listOf(
+            "missing pocket" to NewEntry(kind = EntryKind.SPENT, amount = 100, pocketId = 999, happenedAt = at),
+            "archived pocket" to NewEntry(kind = EntryKind.SPENT, amount = 100, pocketId = old, happenedAt = at),
+            "missing target" to NewEntry(kind = EntryKind.MOVED, amount = 100, pocketId = cash, toPocketId = 999, happenedAt = at),
+            "archived target" to NewEntry(kind = EntryKind.MOVED, amount = 100, pocketId = cash, toPocketId = old, happenedAt = at),
+            "move across currencies" to NewEntry(kind = EntryKind.MOVED, amount = 100, pocketId = cash, toPocketId = usd, happenedAt = at),
+            "fee on a spend" to NewEntry(kind = EntryKind.SPENT, amount = 100, pocketId = cash, happenedAt = at, fee = 5),
+        )
+        val good = entries.log(NewEntry(kind = EntryKind.SPENT, amount = 100, pocketId = cash, happenedAt = at))
+        for ((what, e) in bad) {
+            try {
+                entries.log(e)
+                fail("log: $what must be rejected")
+            } catch (expected: IllegalArgumentException) {
+            }
+            try {
+                entries.edit(good, e)
+                fail("edit: $what must be rejected")
+            } catch (expected: IllegalArgumentException) {
+            }
+        }
+        entries.log(NewEntry(kind = EntryKind.MOVED, amount = 100, pocketId = cash, toPocketId = other, happenedAt = at, fee = 5))
     }
 
     private fun bill(amount: Long, due: LocalDate, paid: Boolean = false) = RecurringEntity(

@@ -3,6 +3,7 @@ package com.masroufi.app.data.db
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.masroufi.app.core.PRIMARY_CURRENCY
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.domain.StampKind
@@ -22,7 +23,7 @@ data class PocketEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val kind: PocketKind,
-    val currency: String = "EGP",
+    val currency: String = PRIMARY_CURRENCY,
     val openingBalance: Long = 0,
     val color: Int,
     val archived: Boolean = false,

@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.masroufi.app.BuildConfig
+import com.masroufi.app.core.SystemZoneClock
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.Entitlements
@@ -24,8 +25,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    // shortcut: zone fixed at process start; re-read ZoneId per day calc when Phase 3 builds Home.
-    @Provides @Singleton fun clock(): Clock = Clock.systemDefaultZone()
+    @Provides @Singleton fun clock(): Clock = SystemZoneClock()
 
     @Provides @Singleton
     fun database(@ApplicationContext context: Context): TazkaraDatabase =

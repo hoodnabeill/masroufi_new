@@ -1,6 +1,7 @@
 package com.masroufi.app.data.repo
 
 import androidx.room.withTransaction
+import com.masroufi.app.core.payCycleFor
 import com.masroufi.app.data.db.EntryDao
 import com.masroufi.app.data.db.EntryEntity
 import com.masroufi.app.data.db.JarDao
@@ -8,6 +9,7 @@ import com.masroufi.app.data.db.JarMovementEntity
 import com.masroufi.app.data.db.JarSource
 import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.db.Pot
+import com.masroufi.app.data.db.RecurringDao
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.EntryKind
@@ -48,6 +50,7 @@ class EntryRepository @Inject constructor(
     private val entryDao: EntryDao,
     private val pocketDao: PocketDao,
     private val jarDao: JarDao,
+    private val recurringDao: RecurringDao,
     private val tickets: TicketRepository,
     private val settings: SettingsStore,
     private val entitlements: Entitlements,
@@ -57,6 +60,7 @@ class EntryRepository @Inject constructor(
         requireNotFuture(entry)
         val step = activeStep()
         return db.withTransaction {
+            checkInputs(entry)
             val now = clock.millis()
             val rounded = if (step != null && qualifies(entry)) roundUp(entry.amount, step) else 0L
             val fresh = EntryEntity(
@@ -64,6 +68,7 @@ class EntryRepository @Inject constructor(
             )
             val id = entryDao.insert(fresh.with(entry, rounded, now))
             if (rounded > 0) jarDao.insert(roundUpMovement(id, rounded, now))
+            entry.recurringId?.let { recurringDao.setPaid(it, true) }
             tickets.recalcDay(clock.dayOf(entry.happenedAt))
             id
         }
@@ -74,6 +79,7 @@ class EntryRepository @Inject constructor(
         val step = activeStep()
         db.withTransaction<Unit> {
             val old = checkNotNull(entryDao.byId(id)) { "no entry $id" }
+            checkInputs(entry)
             val now = clock.millis()
             // Turning round-ups off keeps old ones (11-DATA), as long as the entry still punches the ticket.
             val rounded = when {
@@ -84,6 +90,8 @@ class EntryRepository @Inject constructor(
             entryDao.update(old.with(entry, rounded, now))
             val movement = jarDao.forEntry(id).firstOrNull { it.source == JarSource.ROUND_UP }
             jarDao.sync(movement, rounded, now) { roundUpMovement(id, rounded, now) }
+            releaseBill(old)
+            entry.recurringId?.let { recurringDao.setPaid(it, true) }
             val oldDay = clock.dayOf(old.happenedAt)
             val newDay = clock.dayOf(entry.happenedAt)
             tickets.recalcDay(newDay)
@@ -96,8 +104,35 @@ class EntryRepository @Inject constructor(
             val old = entryDao.byId(id) ?: return@withTransaction // already gone (e.g. a double tap): nothing to undo
             jarDao.forEntry(id).filter { it.source == JarSource.ROUND_UP }.forEach { jarDao.delete(it.id) }
             entryDao.delete(id)
+            releaseBill(old)
             tickets.recalcDay(clock.dayOf(old.happenedAt))
         }
+    }
+
+    /** Caller holds the transaction. */
+    private suspend fun checkInputs(e: NewEntry) {
+        val pocket = pocketDao.byId(e.pocketId)
+        require(pocket != null && !pocket.archived) { "pocket ${e.pocketId} must exist and not be archived" }
+        require(e.fee == 0L || e.kind == EntryKind.MOVED) { "only a move can carry a fee" }
+        if (e.kind == EntryKind.MOVED) {
+            val to = pocketDao.byId(checkNotNull(e.toPocketId))
+            require(to != null && !to.archived) { "pocket ${e.toPocketId} must exist and not be archived" }
+            require(to.currency == pocket.currency) { "a move needs two pockets in the same currency" }
+        }
+    }
+
+    /**
+     * An entry no longer pays its bill (deleted, or edited to another bill/none): the bill is unpaid again unless
+     * another entry in the same pay cycle still pays it. Caller holds the transaction and has already stored the change.
+     * shortcut: paidThisCycle is only reset here; resetting it at payday is Phase 6 work.
+     */
+    private suspend fun releaseBill(old: EntryEntity) {
+        val rid = old.recurringId ?: return
+        val day = clock.dayOf(old.happenedAt)
+        val cycle = payCycleFor(day, settings.current().payday, entryDao.latestReceivedAt()?.let(clock::dayOf))
+        fun startMillis(d: LocalDate) = d.atStartOfDay(clock.zone).toInstant().toEpochMilli()
+        val still = entryDao.countForRecurring(rid, startMillis(cycle.start), startMillis(cycle.nextPayday))
+        if (still == 0) recurringDao.setPaid(rid, false)
     }
 
     private fun requireNotFuture(entry: NewEntry) =

@@ -45,7 +45,10 @@ class SettingsStore @Inject constructor(private val store: DataStore<Preferences
 
     suspend fun setPayday(v: Payday) { store.edit { it[paydayKey] = encode(v) } }
     suspend fun setLeftoverDefault(v: LeftoverDestination) { store.edit { it[leftoverKey] = v.name } }
-    suspend fun setRoundUpStep(v: Int) { store.edit { it[roundUpKey] = v } }
+    suspend fun setRoundUpStep(v: Int) {
+        require(v in setOf(0, 5, 10, 50)) { "round-up step must be 0, 5, 10 or 50" }
+        store.edit { it[roundUpKey] = v }
+    }
     suspend fun setOnboarded(v: Boolean) { store.edit { it[onboardedKey] = v } }
 
     private fun decode(p: Preferences) = Settings(

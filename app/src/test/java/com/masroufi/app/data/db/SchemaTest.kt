@@ -105,14 +105,12 @@ class SchemaTest {
         assertEquals(listOf(1_000L), db.entryDao().forDay(1_000, 2_000).map { it.happenedAt })
     }
 
-    @Test fun latestOpenBeforeAndRange() = runTest {
+    @Test fun rangeReturnsDaysInclusive() = runTest {
         val d = LocalDate.of(2026, 11, 10)
         fun t(offset: Long, status: TicketStatus) = DayTicketEntity(date = d.plusDays(offset), amount = 1, base = 1, status = status)
         for ((o, s) in listOf(0L to TicketStatus.OPEN, 1L to TicketStatus.CLOSED_BY_HAND, 2L to TicketStatus.OPEN, 3L to TicketStatus.OPEN)) {
             db.dayTicketDao().insert(t(o, s))
         }
-        assertEquals(d.plusDays(2), db.dayTicketDao().latestOpenBefore(d.plusDays(3))?.date)
-        assertEquals(null, db.dayTicketDao().latestOpenBefore(d))
         assertEquals(listOf(d.plusDays(1), d.plusDays(2)), db.dayTicketDao().range(d.plusDays(1), d.plusDays(2)).first().map { it.date })
     }
 

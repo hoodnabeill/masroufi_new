@@ -30,7 +30,7 @@ interface PocketDao {
     @Query("SELECT p.id AS pocketId, $BALANCE_EXPR AS balance FROM pocket p")
     fun balances(): Flow<List<PocketBalance>>
 
-    // Primary currency only: the daily ticket is EGP.
+    // Primary currency only: the daily ticket is EGP (SQL cannot use PRIMARY_CURRENCY; keep 'EGP' in sync).
     @Query("SELECT COALESCE(SUM($BALANCE_EXPR), 0) FROM pocket p WHERE p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'")
     suspend fun countingBalanceTotal(): Long
 }
@@ -41,6 +41,10 @@ interface EntryDao {
     @Update suspend fun update(entry: EntryEntity)
     @Query("DELETE FROM entry WHERE id = :id") suspend fun delete(id: Long)
     @Query("SELECT * FROM entry WHERE id = :id") suspend fun byId(id: Long): EntryEntity?
+
+    /** Entries paying this recurring item with happenedAt in [start, end) epoch millis. */
+    @Query("SELECT COUNT(*) FROM entry WHERE recurringId = :recurringId AND happenedAt >= :start AND happenedAt < :end")
+    suspend fun countForRecurring(recurringId: Long, start: Long, end: Long): Int
 
     /** Epoch-millis bounds, [start, end). */
     @Query("SELECT * FROM entry WHERE happenedAt >= :start AND happenedAt < :end ORDER BY happenedAt")
@@ -78,9 +82,6 @@ interface DayTicketDao {
     @Update suspend fun update(ticket: DayTicketEntity)
     @Query("SELECT * FROM day_ticket WHERE date = :date") suspend fun forDate(date: LocalDate): DayTicketEntity?
 
-    @Query("SELECT * FROM day_ticket WHERE status = 'OPEN' AND date < :date ORDER BY date DESC LIMIT 1")
-    suspend fun latestOpenBefore(date: LocalDate): DayTicketEntity?
-
     @Query("SELECT * FROM day_ticket WHERE status = 'OPEN' AND date < :date ORDER BY date")
     suspend fun openBefore(date: LocalDate): List<DayTicketEntity>
 
@@ -107,6 +108,8 @@ interface RecurringDao {
 
     @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE paidThisCycle = 0 AND nextDue < :date")
     suspend fun unpaidDueBefore(date: LocalDate): Long
+
+    @Query("UPDATE recurring SET paidThisCycle = :paid WHERE id = :id") suspend fun setPaid(id: Long, paid: Boolean)
 }
 
 @Dao

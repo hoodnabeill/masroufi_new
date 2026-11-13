@@ -2,6 +2,9 @@ package com.masroufi.app.core
 
 const val PIASTRES = 100L
 
+/** The primary currency: the daily ticket is in it. SQL in Daos.kt spells it out as 'EGP'. */
+const val PRIMARY_CURRENCY = "EGP"
+
 /** Largest multiple of 100 piastres <= this (toward negative infinity). */
 fun Long.floorToPound(): Long = Math.floorDiv(this, PIASTRES) * PIASTRES
 

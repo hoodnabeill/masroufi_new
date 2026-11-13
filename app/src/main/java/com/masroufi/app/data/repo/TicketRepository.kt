@@ -1,6 +1,7 @@
 package com.masroufi.app.data.repo
 
 import androidx.room.withTransaction
+import com.masroufi.app.core.PRIMARY_CURRENCY
 import com.masroufi.app.core.payCycleFor
 import com.masroufi.app.data.db.DayTicketDao
 import com.masroufi.app.data.db.DayTicketEntity
@@ -42,7 +43,7 @@ data class CloseResult(val leftover: Long, val proverbNumber: Int?, val newStamp
 internal fun Clock.dayOf(millis: Long): LocalDate = Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 
 /** Same predicate as countingBalanceTotal / forDayWithPocket: the pocket's spending punches the EGP ticket. */
-internal val PocketEntity.punchesTicket: Boolean get() = countsInTicket && !archived && currency == "EGP"
+internal val PocketEntity.punchesTicket: Boolean get() = countsInTicket && !archived && currency == PRIMARY_CURRENCY
 
 internal fun potOf(destination: LeftoverDestination?): Pot? = when (destination) {
     LeftoverDestination.JAR -> Pot.JAR
