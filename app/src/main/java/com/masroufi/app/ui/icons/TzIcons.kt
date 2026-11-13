@@ -14,31 +14,49 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.ui.theme.Tz
-import java.util.concurrent.ConcurrentHashMap
 
 /** Stroke draws the line only; FillStroke also fills; Ink is a detail drawn in the surface colour on a filled icon. */
 enum class PartMode { Stroke, FillStroke, Ink }
 
 class Part(val d: String, val mode: PartMode = PartMode.Stroke)
 
-/** One icon: a 24 grid outline and an optional filled (selected) drawing. */
-class TzIconDef(val name: String, val outline: List<Part>, val filled: List<Part>? = null) {
-    private val cache = ConcurrentHashMap<String, ImageVector>()
+/**
+ * One icon: a 24 grid outline and an optional filled (selected) drawing. [autoMirror] flips the vector in RTL
+ * (set for icons that point somewhere).
+ */
+class TzIconDef(
+    val name: String,
+    val outline: List<Part>,
+    val filled: List<Part>? = null,
+    val autoMirror: Boolean = false,
+) {
+    private val outlineBase = outline.filter { it.mode != PartMode.Ink }
+    private val filledBase = filled?.filter { it.mode != PartMode.Ink }
+    private val inkParts = filled?.filter { it.mode == PartMode.Ink }.orEmpty()
+
+    // Slot = stroke index; built on first use, then reused (a racing rebuild is harmless).
+    private val outlineVec = arrayOfNulls<ImageVector>(2)
+    private val filledVec = arrayOfNulls<ImageVector>(2)
+    private val inkVec = arrayOfNulls<ImageVector>(2)
+
+    private fun slot(stroke: Float) = if (stroke == TzIcons.StrokeSmall) 1 else 0
 
     /** Tinted layer: the outline, or the filled drawing's Stroke and FillStroke parts. */
     fun vector(stroke: Float, filled: Boolean = false): ImageVector {
-        val useFilled = filled && this.filled != null
-        val parts = if (useFilled) this.filled!! else outline
-        return cache.computeIfAbsent("v$stroke$useFilled") {
-            build(parts.filter { it.mode != PartMode.Ink }, stroke)
+        val i = slot(stroke)
+        val base = filledBase
+        return if (filled && base != null) {
+            filledVec[i] ?: build(base, stroke).also { filledVec[i] = it }
+        } else {
+            outlineVec[i] ?: build(outlineBase, stroke).also { outlineVec[i] = it }
         }
     }
 
     /** Ink layer of the filled drawing, or null when it has none. */
     fun ink(stroke: Float): ImageVector? {
-        val parts = filled?.filter { it.mode == PartMode.Ink }.orEmpty()
-        if (parts.isEmpty()) return null
-        return cache.computeIfAbsent("i$stroke") { build(parts, stroke) }
+        if (inkParts.isEmpty()) return null
+        val i = slot(stroke)
+        return inkVec[i] ?: build(inkParts, stroke).also { inkVec[i] = it }
     }
 
     fun allVectors(): List<ImageVector> = TzIcons.strokes.flatMap { s ->
@@ -52,6 +70,7 @@ class TzIconDef(val name: String, val outline: List<Part>, val filled: List<Part
             defaultHeight = 24.dp,
             viewportWidth = 24f,
             viewportHeight = 24f,
+            autoMirror = autoMirror,
         )
         parts.forEach {
             b.addPath(
@@ -199,12 +218,13 @@ object TzIcons {
         ),
     )
 
-    /** Album row end (points left). */
+    /** Album row end, drawn LTR (points right), auto-mirrored (points left in RTL as in the mock). */
     val chevron = TzIconDef(
         "chevron",
         listOf(
-            Part("m15 6-6 6 6 6"),
+            Part("m9 6 6 6-6 6"),
         ),
+        autoMirror = true,
     )
 
     /** Roll. */
@@ -223,12 +243,13 @@ object TzIcons {
         ),
     )
 
-    /** Album/Settings back button (points right, RTL). */
+    /** Album/Settings back button, drawn LTR (points left), auto-mirrored (points right in RTL as in the mock). */
     val back = TzIconDef(
         "back",
         listOf(
-            Part("m9 6 6 6-6 6"),
+            Part("m15 6-6 6 6 6"),
         ),
+        autoMirror = true,
     )
 
     /** Backup. */
@@ -255,7 +276,7 @@ object TzIcons {
         ),
     )
 
-    /** AddPunch keypad backspace (Lock's variant is the same drawing). */
+    /** AddPunch keypad backspace (Lock's backspace is a different shape; merged). */
     val delete = TzIconDef(
         "delete",
         listOf(
@@ -532,6 +553,9 @@ object TzIcons {
     ).distinct()
 }
 
+/** Stroke 2.2 at 18 dp and below, 1.9 above, so the line looks the same weight at every size. */
+internal fun strokeFor(size: Dp): Float = if (size <= 18.dp) TzIcons.StrokeSmall else TzIcons.Stroke
+
 /**
  * Draws [icon] tinted [tint]; uses stroke 2.2 at 18 dp and below, 1.9 above. [filled] is the selected state; its
  * ink details take [inkColor], which must match the surface behind the icon.
@@ -546,7 +570,7 @@ fun TzIcon(
     filled: Boolean = false,
     inkColor: Color = Tz.surface,
 ) {
-    val stroke = if (size <= 18.dp) TzIcons.StrokeSmall else TzIcons.Stroke
+    val stroke = strokeFor(size)
     val showFilled = filled && icon.filled != null
     Box(modifier.size(size)) {
         Icon(icon.vector(stroke, showFilled), contentDescription, Modifier.size(size), tint)
