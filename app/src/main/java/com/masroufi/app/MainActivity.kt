@@ -5,16 +5,8 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.ui.theme.MasroufiTheme
-import com.masroufi.app.ui.theme.Tz
-import com.masroufi.app.ui.theme.TzType
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -27,9 +19,8 @@ class MainActivity : AppCompatActivity() {
         )
         setContent {
             MasroufiTheme {
-                Box(Modifier.fillMaxSize().background(Tz.night), contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.app_name), color = Tz.text, style = TzType.titleTab)
-                }
+                // shortcut: gallery is the start screen until Phase 3 builds Home; replace then.
+                GalleryScreen()
             }
         }
     }
