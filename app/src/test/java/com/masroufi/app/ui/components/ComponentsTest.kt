@@ -19,9 +19,12 @@ import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.theme.MasroufiTheme
 import com.masroufi.app.ui.theme.TzType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 private class RecordingHaptics : Haptics {
     val levels = mutableListOf<HapticLevel>()
@@ -29,6 +32,8 @@ private class RecordingHaptics : Haptics {
 }
 
 @RunWith(AndroidJUnit4::class)
+@Config(qualifiers = "ar")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ComponentsTest {
     @get:Rule val rule = createComposeRule()
 
@@ -69,6 +74,7 @@ class ComponentsTest {
         }
         val a = rule.onNodeWithTag("narrow").getUnclippedBoundsInRoot().width
         val b = rule.onNodeWithTag("wide").getUnclippedBoundsInRoot().width
+        assertTrue("measured width must be positive, was $a", a.value > 0f)
         assertEquals("111 and 888 must occupy the same width", a, b)
     }
 }

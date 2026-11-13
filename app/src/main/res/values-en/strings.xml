@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Masroufi</string>
+    <string name="tab_today">Today</string>
+    <string name="tab_roll">Roll</string>
+    <string name="tab_plan">Plan</string>
+    <string name="tab_people">People</string>
+    <string name="add_entry">Log a new entry</string>
 </resources>

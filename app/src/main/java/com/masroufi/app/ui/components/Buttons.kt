@@ -9,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -34,6 +33,7 @@ import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.motion.LocalReduceMotion
 import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.TzSpring
 import com.masroufi.app.ui.motion.pressScale
 import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
@@ -44,6 +44,7 @@ private val Pill = RoundedCornerShape(percent = 50)
 /**
  * Yellow pill. Disabled keeps the yellow at 40% and stays tappable: a tap shakes 6 dp twice and fires Reject
  * (05-MOTION "Buttons and taps"); [onClick] is not called. Pressed: scale 0.97 and brightness -6%.
+ * Fires no haptic when enabled: the caller fires the action's own (Confirm, Heavy...), so there is never two.
  */
 @Composable
 fun PrimaryButton(
@@ -97,7 +98,7 @@ fun PrimaryButton(
     }
 }
 
-/** 1.5 dp Line outline, same height as [PrimaryButton]. */
+/** 1.5 dp Line outline, same height as [PrimaryButton]. Fires no haptic: the caller fires the action's own. */
 @Composable
 fun SecondaryButton(
     text: String,
@@ -120,16 +121,16 @@ fun SecondaryButton(
     }
 }
 
-/** Yellow Alexandria 13 link; 48 dp touch height. */
+/** Yellow Alexandria 13 link; 48 dp touch height; dips to 0.94 on press. Fires no haptic: the caller fires the action's own. */
 @Composable
 fun TextLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val source = remember { MutableInteractionSource() }
     Box(
         modifier
-            .defaultMinSize(minHeight = 48.dp)
             .minimumInteractiveComponentSize()
-            .clickable(role = Role.Button, onClick = onClick),
+            .clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, style = TzType.label.copy(color = Tz.yellow))
+        Text(text, Modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy), style = TzType.label.copy(color = Tz.yellow))
     }
 }

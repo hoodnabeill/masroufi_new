@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
@@ -68,17 +69,19 @@ fun Odometer(
         if (showPiastres) append('.').append((magnitude % 100).toString().padStart(2, '0'))
     }
 
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        Row(modifier.clearAndSetSemantics { text = AnnotatedString(display) }) {
-            // Keyed from the right so a digit keeps its cell when the number grows or shrinks.
-            display.forEachIndexed { index, ch ->
-                key(display.length - 1 - index) {
-                    if (ch.isDigit()) {
-                        DigitCell(ch.digitToInt(), rising, glyphs, cellW, cellH)
-                    } else {
-                        val g = remember(ch, styled, measurer) { measurer.measure(ch.toString(), styled) }
-                        Canvas(Modifier.size(with(density) { g.size.width.toDp() }, with(density) { cellH.toDp() })) {
-                            drawText(g, topLeft = Offset(0f, (size.height - g.size.height) / 2f))
+    Box(modifier) {
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row(Modifier.clearAndSetSemantics { text = AnnotatedString(display) }) {
+                // Keyed from the right so a digit keeps its cell when the number grows or shrinks.
+                display.forEachIndexed { index, ch ->
+                    key(display.length - 1 - index) {
+                        if (ch.isDigit()) {
+                            DigitCell(ch.digitToInt(), rising, glyphs, cellW, cellH)
+                        } else {
+                            val g = remember(ch, styled, measurer) { measurer.measure(ch.toString(), styled) }
+                            Canvas(Modifier.size(with(density) { g.size.width.toDp() }, with(density) { cellH.toDp() })) {
+                                drawText(g, topLeft = Offset(0f, (size.height - g.size.height) / 2f))
+                            }
                         }
                     }
                 }

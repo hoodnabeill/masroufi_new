@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">مصروفي</string>
+    <string name="tab_today">اليوم</string>
+    <string name="tab_roll">الدفتر</string>
+    <string name="tab_plan">الخطة</string>
+    <string name="tab_people">الناس</string>
+    <string name="add_entry">سجّل عملية جديدة</string>
 </resources>
