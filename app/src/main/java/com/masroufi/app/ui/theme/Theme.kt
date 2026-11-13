@@ -3,7 +3,15 @@ package com.masroufi.app.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
+import android.provider.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import com.masroufi.app.ui.haptics.AndroidHaptics
+import com.masroufi.app.ui.haptics.LocalHaptics
+import com.masroufi.app.ui.motion.LocalReduceMotion
 import androidx.compose.ui.graphics.Color
 
 // Only so platform widgets do not show Material purple; screens use Tz directly.
@@ -61,5 +69,12 @@ private val TzTypography = Typography(
 
 @Composable
 fun MasroufiTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = TzColorScheme, typography = TzTypography, content = content)
+    val context = LocalContext.current
+    val view = LocalView.current
+    // Read once per composition; 0f means the user turned animations off.
+    val reduceMotion = Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    val haptics = remember(view) { AndroidHaptics(view) }
+    CompositionLocalProvider(LocalReduceMotion provides reduceMotion, LocalHaptics provides haptics) {
+        MaterialTheme(colorScheme = TzColorScheme, typography = TzTypography, content = content)
+    }
 }
