@@ -14,4 +14,13 @@ class SpringsTest {
     @Test fun rewardOvershoots() {
         assertTrue(TzSpring.Reward.damping < 1f)
     }
+
+    @Test fun allSpringValues() {
+        val expected = mapOf(
+            TzSpring.Press to (1f to .15f), TzSpring.Snappy to (1f to .24f), TzSpring.Move to (1f to .38f),
+            TzSpring.Sheet to (.86f to .32f), TzSpring.Reward to (.62f to .45f),
+        )
+        assertEquals(TzSpring.values().size, expected.size)
+        expected.forEach { (s, v) -> assertEquals(v.first, s.damping, 0f); assertEquals(v.second, s.response, 0f) }
+    }
 }

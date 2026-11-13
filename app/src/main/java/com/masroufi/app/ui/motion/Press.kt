@@ -17,12 +17,12 @@ object PressScale {
     const val Plus = 0.92f
 }
 
-/** Dips to [pressed] the moment the finger lands (touch-down), springs back on release. */
-fun Modifier.pressScale(interaction: MutableInteractionSource, pressed: Float): Modifier = composed {
+/** Dips to [pressed] on touch-down with Press; goes back to 1 with [release]. */
+fun Modifier.pressScale(interaction: MutableInteractionSource, pressed: Float, release: TzSpring = TzSpring.Press): Modifier = composed {
     val isPressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (isPressed) pressed else 1f,
-        animationSpec = motionSpec(TzSpring.Press),
+        animationSpec = motionSpec(if (isPressed) TzSpring.Press else release),
         label = "pressScale",
     )
     graphicsLayer { scaleX = scale; scaleY = scale }

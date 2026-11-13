@@ -2,7 +2,9 @@ package com.masroufi.app.ui.haptics
 
 import android.content.Context
 import android.os.Build
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
+import android.provider.Settings
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.view.HapticFeedbackConstants
@@ -44,9 +46,19 @@ class AndroidHaptics(private val view: View) : Haptics {
             HapticLevel.Reject -> view.performHapticFeedback(
                 if (api30) HapticFeedbackConstants.REJECT else HapticFeedbackConstants.LONG_PRESS,
             )
-            HapticLevel.Milestone -> vibrator?.takeIf { it.hasAmplitudeControl() }?.vibrate(
-                VibrationEffect.createWaveform(longArrayOf(0, 20, 60, 20, 60, 45), intArrayOf(0, 120, 0, 120, 0, 255), -1),
-            )
+            HapticLevel.Milestone -> milestone()
+        }
+    }
+
+    // Vibrator ignores the system touch-feedback switch, so honour it by hand below API 33.
+    private fun milestone() {
+        val v = vibrator?.takeIf { it.hasAmplitudeControl() } ?: return
+        val effect = VibrationEffect.createWaveform(longArrayOf(0, 20, 60, 20, 60, 45), intArrayOf(0, 120, 0, 120, 0, 255), -1)
+        if (Build.VERSION.SDK_INT >= 33) {
+            v.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH))
+        } else {
+            if (Settings.System.getInt(view.context.contentResolver, Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) == 0) return
+            v.vibrate(effect)
         }
     }
 }
