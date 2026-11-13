@@ -26,7 +26,6 @@ class GalleryTest {
         rule.onNodeWithText("Icons").assertExists()
         rule.onNode(hasScrollAction()).performScrollToNode(hasText("QershBubble"))
         rule.onNodeWithText("QershBubble").assertExists()
-        } catch (t: Throwable) { throw IllegalStateException("Exception DIAG " + t.javaClass.name + " " + t.toString().replace('
-', ' ').take(900) + " AT " + t.stackTrace.take(6).joinToString(" | ")) }
+        } catch (t: Throwable) { throw IllegalStateException("Exception DIAG " + t.javaClass.name + " " + t.toString().replace(Regex("\s+"), " ").take(900) + " AT " + t.stackTrace.take(6).joinToString(" | ")) }
     }
 }
