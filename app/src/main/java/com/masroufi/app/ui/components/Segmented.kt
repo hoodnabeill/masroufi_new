@@ -21,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
@@ -75,7 +74,7 @@ fun Segmented(
         Row(Modifier.fillMaxSize()) {
             options.forEachIndexed { i, label ->
                 val source = remember { MutableInteractionSource() }
-                val color = animateColorAsState<Color>(
+                val color = animateColorAsState(
                     if (i == selected) Tz.night else Tz.text2,
                     motionSpec(TzSpring.Snappy),
                     label = "segmentLabel",
