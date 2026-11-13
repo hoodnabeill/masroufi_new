@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -34,6 +35,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.masroufi.app.entitlements.DebugEntitlements
+import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.Odometer
 import com.masroufi.app.ui.components.PrimaryButton
@@ -114,7 +117,7 @@ private fun SampleTicket(subLine: String, holes: Int, left: Long = 15_600) {
 }
 
 @Composable
-fun GalleryScreen() {
+fun GalleryScreen(entitlements: Entitlements) {
     val haptics = LocalHaptics.current
     var choice by remember { mutableIntStateOf(0) }
     var filter by remember { mutableIntStateOf(0) }
@@ -139,6 +142,13 @@ fun GalleryScreen() {
         Modifier.fillMaxSize().background(Tz.night),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = top + 16.dp, bottom = bottom + 32.dp),
     ) {
+        if (entitlements is DebugEntitlements) item(key = "plus") {
+            val plus by entitlements.isPlus.collectAsState()
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Plus (debug)", style = TzType.body, color = Tz.text)
+                TzToggle(plus, entitlements::setDebugOverride, "Plus (debug)")
+            }
+        }
         section("icons", "Icons") {}
         items(TzIcons.all, key = { "icon:${it.name}" }) { icon ->
             Row(

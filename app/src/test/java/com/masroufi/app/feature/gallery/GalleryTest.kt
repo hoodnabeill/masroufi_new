@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.ui.theme.MasroufiTheme
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +29,7 @@ class GalleryTest {
 
     @Test
     fun galleryComposes() {
-        rule.setContent { MasroufiTheme { GalleryScreen() } }
+        rule.setContent { MasroufiTheme { GalleryScreen(DebugEntitlements()) } }
         for ((key, title) in sections) {
             try {
                 rule.onNode(hasScrollToKeyAction()).performScrollToKey(key)
@@ -41,7 +42,7 @@ class GalleryTest {
 
     @Test
     fun odometerButtonChangesAmount() {
-        rule.setContent { MasroufiTheme { GalleryScreen() } }
+        rule.setContent { MasroufiTheme { GalleryScreen(DebugEntitlements()) } }
         rule.onNode(hasScrollToKeyAction()).performScrollToKey("odometer")
         rule.onNodeWithText("240").assertExists("start amount 240 missing")
         rule.onNodeWithText("+72").performClick()
