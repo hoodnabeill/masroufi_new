@@ -3,6 +3,7 @@ package com.masroufi.app.domain
 import com.masroufi.app.core.ceilDiv
 import com.masroufi.app.core.floorToPound
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 fun envelopeLeft(monthly: Long, spentThisCycle: Long): Long = monthly - spentThisCycle
 
@@ -16,9 +17,9 @@ fun runsOutDay(
 ): LocalDate? {
     if (daysWithData < 5 || spentThisCycle <= 0 || left <= 0) return null
     // ceil(left / (spent / days)) without fractions
-    val days = (left * daysWithData).ceilDiv(spentThisCycle)
-    val date = today.plusDays(days)
-    return if (date.isBefore(nextPayday)) date else null
+    val days = Math.multiplyExact(left, daysWithData.toLong()).ceilDiv(spentThisCycle)
+    if (days >= ChronoUnit.DAYS.between(today, nextPayday)) return null
+    return today.plusDays(days)
 }
 
 sealed interface SplitRule {
@@ -41,6 +42,7 @@ fun splitIncome(income: Long, rules: List<SplitRule>): SplitResult {
     require(percentTotal <= 100) { "percent total must be <= 100" }
 
     val shares = LinkedHashMap<Long, Long>()
+    rules.forEach { shares.putIfAbsent(it.envelopeId, 0L) }
     var remaining = income
     for (r in rules) if (r is SplitRule.Fixed) {
         val share = minOf(r.amount, remaining)
