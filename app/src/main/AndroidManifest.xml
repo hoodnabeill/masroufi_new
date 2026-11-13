@@ -2,23 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
-    <!-- Opt-in (Settings): incoming wallet/bank SMS are parsed on the device to suggest an entry. SMS history is never
-         read and nothing is sent. Play policy: "SMS-based money management" exception, see docs/legal/PLAY_CONSOLE.md. -->
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-
-    <!-- allowBackup is off: financial data leaves the device only through the user's own encrypted backup or WebDAV sync. -->
-    <!-- Voice logging asks the system speech recogniser; Android 11+ only reveals it when declared here. -->
-    <queries>
-        <intent>
-            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
-        </intent>
-        <intent>
-            <action android:name="android.speech.RecognitionService" />
-        </intent>
-    </queries>
 
     <application
         android:name=".MasroufiApplication"
@@ -36,32 +21,12 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Widget quick buttons open the transaction editor: masroufi://add?type=EXPENSE -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="masroufi" android:host="add" />
-            </intent-filter>
         </activity>
-
-        <receiver
-            android:name=".widget.MasroufiWidgetReceiver"
-            android:exported="true"
-            android:label="@string/app_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/masroufi_widget_info" />
-        </receiver>
 
         <!-- Persists the per-app language chosen through AppCompatDelegate on Android 12 and lower. -->
         <service
@@ -72,37 +37,5 @@
                 android:name="autoStoreLocales"
                 android:value="true" />
         </service>
-
-        <!-- WorkManager is initialised by MasroufiApplication with the Hilt worker factory. -->
-        <receiver
-            android:name=".sms.MoneySmsReceiver"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS">
-            <intent-filter>
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Shares the monthly recap image; only the share cache folder is reachable. -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.files"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup"
-                tools:node="remove" />
-        </provider>
     </application>
 </manifest>

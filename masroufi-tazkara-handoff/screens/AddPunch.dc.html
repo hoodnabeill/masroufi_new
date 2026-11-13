@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<title>مصروفي · سجّل</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700&amp;family=Lalezar&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A1033}
+a{color:#FFC72C;text-decoration:none}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div dir="rtl" style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #050818; color: #F2F3FF; font-family: 'Alexandria', sans-serif; display: flex; flex-direction: column; justify-content: flex-end;">
+
+  <div style="padding: 10px 16px 20px; border-radius: 32px 32px 0 0; background: #141C4F; border-top: 1px solid #2A357A; display: flex; flex-direction: column; gap: 14px;">
+    <span aria-hidden="true" style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: #3A4590;"></span>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div role="tablist" aria-label="نوع العملية" style="flex-grow: 1; height: 44px; padding: 4px; box-sizing: border-box; border-radius: 22px; background: #0A1033; display: flex;">
+        <button role="tab" aria-selected="true" style="flex: 1 1 0; border: none; border-radius: 18px; background: #FFC72C; color: #0A1033; font-family: 'Lalezar', sans-serif; font-size: 16px; cursor: pointer;">صرفت</button>
+        <button role="tab" aria-selected="false" style="flex: 1 1 0; border: none; border-radius: 18px; background: transparent; color: #AEB6E6; font-family: 'Lalezar', sans-serif; font-size: 16px; cursor: pointer;">جالي</button>
+        <button role="tab" aria-selected="false" style="flex: 1 1 0; border: none; border-radius: 18px; background: transparent; color: #AEB6E6; font-family: 'Lalezar', sans-serif; font-size: 16px; cursor: pointer;">حوّلت</button>
+      </div>
+      <a href="Main.dc.html" aria-label="اقفل" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: #1D2766; color: #F2F3FF; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+      </a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0 2px;">
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-family: 'Lalezar', sans-serif; font-size: 84px; line-height: 1; color: #FFC72C;">25</span>
+        <span style="font-family: 'Lalezar', sans-serif; font-size: 22px; color: #AEB6E6;">جنيه</span>
+      </div>
+      <span style="font-size: 13px; color: #AEB6E6;">هيفضل في تذكرة النهارده <span style="color: #F2F3FF; font-weight: 600;">131</span></span>
+    </div>
+
+    <div style="display: flex; gap: 8px; overflow: hidden;">
+      <button aria-pressed="true" style="flex-shrink: 0; height: 48px; padding: 0 14px 0 16px; border-radius: 24px; border: 2px solid #35E0D0; background: #0F3B4A; color: #F2F3FF; display: flex; align-items: center; gap: 8px; font-family: 'Alexandria', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#35E0D0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM16 10h2a2 2 0 0 1 0 4h-2"></path></svg>قهوة</button>
+      <button aria-pressed="false" style="flex-shrink: 0; height: 48px; padding: 0 14px 0 16px; border-radius: 24px; border: 1px solid #2A357A; background: #1D2766; color: #F2F3FF; display: flex; align-items: center; gap: 8px; font-family: 'Alexandria', sans-serif; font-size: 14px; cursor: pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEB6E6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="13" rx="3"></rect><path d="M4 11h16M8 20v-3M16 20v-3"></path></svg>مواصلات</button>
+      <button aria-pressed="false" style="flex-shrink: 0; height: 48px; padding: 0 14px 0 16px; border-radius: 24px; border: 1px solid #2A357A; background: #1D2766; color: #F2F3FF; display: flex; align-items: center; gap: 8px; font-family: 'Alexandria', sans-serif; font-size: 14px; cursor: pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEB6E6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v8M5 3v4a2 2 0 0 0 4 0V3M7 11v10M16 3c-2 2-2 6 0 8v10"></path></svg>أكل</button>
+      <button aria-pressed="false" style="flex-shrink: 0; height: 48px; padding: 0 14px 0 16px; border-radius: 24px; border: 1px solid #2A357A; background: #1D2766; color: #F2F3FF; display: flex; align-items: center; gap: 8px; font-family: 'Alexandria', sans-serif; font-size: 14px; cursor: pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEB6E6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h2l2 10h9l2-7H7"></path><circle cx="10" cy="19" r="1.4"></circle><circle cx="16" cy="19" r="1.4"></circle></svg>بقالة</button>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button style="flex: 1 1 0; height: 48px; border-radius: 16px; border: 1px solid #2A357A; background: #0A1033; color: #F2F3FF; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-family: 'Alexandria', sans-serif; font-size: 13px; cursor: pointer;"><span style="color: #AEB6E6;">من</span><span style="font-weight: 600;">الكاش</span></button>
+      <button style="flex: 1 1 0; height: 48px; border-radius: 16px; border: 1px solid #2A357A; background: #0A1033; color: #AEB6E6; display: flex; align-items: center; padding: 0 14px; font-family: 'Alexandria', sans-serif; font-size: 13px; cursor: pointer;">ضيف ملاحظة</button>
+    </div>
+
+    <label style="height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 16px; background: #0F3B4A; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px;">
+      <span>قرّبها لـ 30 و<span style="color: #35E0D0; font-weight: 600;"> 5 جنيه فكة</span> للحصّالة</span>
+      <span aria-hidden="true" style="width: 44px; height: 26px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border-radius: 13px; background: #35E0D0; display: flex; justify-content: flex-end;"><span style="width: 20px; height: 20px; border-radius: 10px; background: #06282B;"></span></span>
+    </label>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;" dir="ltr">
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">1</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">2</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">3</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">4</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">5</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">6</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">7</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">8</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">9</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: transparent; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">.</button>
+      <button style="height: 56px; border-radius: 18px; border: none; background: #1D2766; color: #F2F3FF; font-family: 'Lalezar', sans-serif; font-size: 26px; cursor: pointer;">0</button>
+      <button aria-label="امسح" style="height: 56px; border-radius: 18px; border: none; background: transparent; color: #F2F3FF; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6-7z"></path><path d="m12 9.5 5 5M17 9.5l-5 5"></path></svg></button>
+    </div>
+
+    <a href="Main.dc.html" style="height: 60px; border-radius: 30px; background: #FFC72C; color: #0A1033; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Lalezar', sans-serif; font-size: 22px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.5" fill="currentColor"></circle></svg>
+      اخرم التذكرة
+    </a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

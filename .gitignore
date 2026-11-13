@@ -14,3 +14,5 @@ graphify-out/
 marketing/promo/.hyperframes/
 marketing/promo/node_modules/
 marketing/promo/.check.json
+
+.superpowers/

@@ -1,51 +1,28 @@
 package com.masroufi.app
 
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import com.masroufi.app.widget.MasroufiWidget
-import com.masroufi.app.core.migrateArabicDigits
-import androidx.lifecycle.repeatOnLifecycle
-import com.masroufi.app.data.prefs.SettingsRepository
-import com.masroufi.app.ui.MasroufiRoot
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-/** AppCompatActivity (a FragmentActivity) is required by BiometricPrompt and per-app language switching. */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-    @Inject lateinit var settings: SettingsRepository
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        migrateArabicDigits()
-        // Secure by default until settings load, so the recents thumbnail never flashes balances.
-        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.CREATED) {
-                settings.settings.map { it.hideInRecents }.distinctUntilChanged().collect { hide ->
-                    if (hide) {
-                        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                    } else {
-                        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                    }
-                }
+        enableEdgeToEdge()
+        setContent {
+            Box(Modifier.fillMaxSize().background(Color(0xFF0A1033)), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.app_name), color = Color.White)
             }
         }
-        setContent { MasroufiRoot() }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        // Leaving the app is when balances last changed, so placed widgets catch up then.
-        lifecycleScope.launch { MasroufiWidget.refresh(applicationContext) }
     }
 }

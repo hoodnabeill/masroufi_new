@@ -104,7 +104,6 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
-    implementation(libs.compose.icons.extended)
     implementation(libs.compose.animation)
     debugImplementation(libs.compose.ui.tooling)
 
@@ -123,14 +122,12 @@ dependencies {
     implementation(libs.biometric)
     implementation(libs.coroutines.android)
     implementation(libs.serialization.json)
-    implementation(libs.okhttp)
-    implementation(libs.coil.compose)
-    implementation(libs.backdrop)
     implementation(libs.glance.appwidget)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
-    testImplementation(libs.okhttp.mockwebserver)
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

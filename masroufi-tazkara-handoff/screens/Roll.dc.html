@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<title>مصروفي · الدفتر</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700&amp;family=Lalezar&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A1033}
+a{color:#FFC72C;text-decoration:none}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div dir="rtl" style="width: 390px; height: 1300px; box-sizing: border-box; position: relative; overflow: hidden; background: #0A1033; color: #F2F3FF; font-family: 'Alexandria', sans-serif; padding: 24px 16px 120px; display: flex; flex-direction: column; gap: 14px;">
+
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+    <h1 style="margin: 0; font-family: 'Lalezar', sans-serif; font-size: 30px; font-weight: 400;">الدفتر</h1>
+    <div style="display: flex; gap: 8px;">
+      <button aria-label="دوّر" style="width: 44px; height: 44px; border-radius: 22px; background: #141C4F; border: 1px solid #2A357A; color: #F2F3FF; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg></button>
+      <button style="height: 44px; padding: 0 16px; border-radius: 22px; background: #141C4F; border: 1px solid #2A357A; color: #F2F3FF; display: flex; align-items: center; gap: 6px; font-family: 'Alexandria', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer;">نوفمبر<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+    </div>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+    <div style="padding: 12px; border-radius: 18px; background: #141C4F; border: 1px solid #2A357A; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #AEB6E6;">صرفت</span><span style="font-family: 'Lalezar', sans-serif; font-size: 22px;">2,940</span></div>
+    <div style="padding: 12px; border-radius: 18px; background: #141C4F; border: 1px solid #2A357A; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #AEB6E6;">جالك</span><span style="font-family: 'Lalezar', sans-serif; font-size: 22px; color: #35E0D0;">9,000</span></div>
+    <div style="padding: 12px; border-radius: 18px; background: #141C4F; border: 1px solid #2A357A; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #AEB6E6;">تذاكر مقفولة</span><span style="font-family: 'Lalezar', sans-serif; font-size: 22px; color: #FFC72C;">9 / 11</span></div>
+  </div>
+
+  <div style="display: flex; gap: 8px;">
+    <button aria-pressed="true" style="height: 40px; padding: 0 16px; border-radius: 20px; border: none; background: #F2F3FF; color: #0A1033; font-family: 'Alexandria', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer;">الكل</button>
+    <button aria-pressed="false" style="height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #2A357A; background: transparent; color: #AEB6E6; font-family: 'Alexandria', sans-serif; font-size: 13px; cursor: pointer;">صرف</button>
+    <button aria-pressed="false" style="height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #2A357A; background: transparent; color: #AEB6E6; font-family: 'Alexandria', sans-serif; font-size: 13px; cursor: pointer;">دخل</button>
+    <button aria-pressed="false" style="height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #2A357A; background: transparent; color: #AEB6E6; font-family: 'Alexandria', sans-serif; font-size: 13px; cursor: pointer;">متكرر</button>
+  </div>
+
+  <section style="border-radius: 24px; background: #141C4F; border: 1px solid #2A357A; display: flex; overflow: hidden;">
+    <div style="width: 64px; flex-shrink: 0; background: #FFC72C; color: #0A1033; display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 2px; border-left: 2px dashed #0A1033;">
+      <span style="font-size: 11px; font-weight: 700;">خميس</span>
+      <span style="font-family: 'Lalezar', sans-serif; font-size: 34px; line-height: 1;">12</span>
+      <span style="margin-top: 6px; font-size: 10px; font-weight: 700;">مفتوحة</span>
+    </div>
+    <div style="flex-grow: 1; min-width: 0; padding: 14px 14px 8px; display: flex; flex-direction: column; gap: 2px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline;">
+        <span style="font-size: 13px; color: #AEB6E6;">النهارده · صرفت</span>
+        <span style="font-family: 'Lalezar', sans-serif; font-size: 22px;">84 <span style="font-size: 13px; color: #AEB6E6;">من 240</span></span>
+      </div>
+      <a href="AddPunch.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 10px 0; color: #F2F3FF;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; border: 2px solid #35E0D0; color: #35E0D0; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v8M5 3v4a2 2 0 0 0 4 0V3M7 11v10M16 3c-2 2-2 6 0 8v10"></path></svg></span>
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">فطار · فول وطعمية</span><span style="font-size: 12px; color: #AEB6E6;">الكاش · 8:40 ص</span></span>
+        <span style="font-family: 'Lalezar', sans-serif; font-size: 18px;">30</span>
+      </a>
+      <a href="AddPunch.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 10px 0; color: #F2F3FF; border-top: 1px solid #2A357A;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; border: 2px solid #8FB4FF; color: #8FB4FF; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="13" rx="3"></rect><path d="M4 11h16M8 20v-3M16 20v-3"></path></svg></span>
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">مواصلات · ميكروباص</span><span style="font-size: 12px; color: #AEB6E6;">الكاش · 9:05 ص</span></span>
+        <span style="font-family: 'Lalezar', sans-serif; font-size: 18px;">14</span>
+      </a>
+      <a href="AddPunch.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 10px 0; color: #F2F3FF; border-top: 1px solid #2A357A;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; border: 2px solid #FFC72C; color: #FFC72C; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM16 10h2a2 2 0 0 1 0 4h-2"></path></svg></span>
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">قهوة</span><span style="font-size: 12px; color: #AEB6E6;">فودافون كاش · 11:20 ص · +5 فكة</span></span>
+        <span style="font-family: 'Lalezar', sans-serif; font-size: 18px;">40</span>
+      </a>
+    </div>
+  </section>
+
+  <section style="border-radius: 24px; background: #141C4F; border: 1px solid #2A357A; display: flex; overflow: hidden;">
+    <div style="width: 64px; flex-shrink: 0; background: #35E0D0; color: #06282B; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 0; gap: 2px; border-left: 2px dashed #0A1033;">
+      <span style="font-size: 11px; font-weight: 700;">أربع</span>
+      <span style="font-family: 'Lalezar', sans-serif; font-size: 30px; line-height: 1;">11</span>
+    </div>
+    <div style="flex-grow: 1; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">صرفت 235 في 5 مرات</span><span style="font-size: 12px; color: #35E0D0;">تحت التذكرة بـ 5 · راحوا الحصّالة</span></span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEB6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
+    </div>
+  </section>
+
+  <section style="border-radius: 24px; background: #141C4F; border: 1px solid #2A357A; display: flex; overflow: hidden;">
+    <div style="width: 64px; flex-shrink: 0; background: #35E0D0; color: #06282B; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 0; gap: 2px; border-left: 2px dashed #0A1033;">
+      <span style="font-size: 11px; font-weight: 700;">تلات</span>
+      <span style="font-family: 'Lalezar', sans-serif; font-size: 30px; line-height: 1;">10</span>
+    </div>
+    <div style="flex-grow: 1; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">صرفت 168 في 6 مرات</span><span style="font-size: 12px; color: #35E0D0;">تحت التذكرة بـ 72 · راحوا الحصّالة</span></span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEB6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
+    </div>
+  </section>
+
+  <section style="border-radius: 24px; background: #141C4F; border: 1px solid #2A357A; display: flex; overflow: hidden;">
+    <div style="width: 64px; flex-shrink: 0; background: #FF6B4A; color: #2B0A02; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 0; gap: 2px; border-left: 2px dashed #0A1033;">
+      <span style="font-size: 11px; font-weight: 700;">اتنين</span>
+      <span style="font-family: 'Lalezar', sans-serif; font-size: 30px; line-height: 1;">9</span>
+    </div>
+    <div style="flex-grow: 1; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">صرفت 275 في 4 مرات</span><span style="font-size: 12px; color: #FF9A82;">فوق التذكرة بـ 35 · اتوزّعوا على باقي الأيام</span></span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEB6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
+    </div>
+  </section>
+
+  <section style="border-radius: 24px; background: #141C4F; border: 1px solid #2A357A; display: flex; overflow: hidden;">
+    <div style="width: 64px; flex-shrink: 0; background: #1D2766; color: #AEB6E6; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 0; gap: 2px; border-left: 2px dashed #0A1033;">
+      <span style="font-size: 11px; font-weight: 700;">حد</span>
+      <span style="font-family: 'Lalezar', sans-serif; font-size: 30px; line-height: 1;">8</span>
+    </div>
+    <div style="flex-grow: 1; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">الإيجار · 2,500</span><span style="font-size: 12px; color: #AEB6E6;">متكرر · من ظرف الإيجار، مش من التذكرة</span></span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEB6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
+    </div>
+  </section>
+
+  <section style="border-radius: 24px; background: #0F3B4A; display: flex; overflow: hidden;">
+    <div style="width: 64px; flex-shrink: 0; background: #35E0D0; color: #06282B; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 0; gap: 2px; border-left: 2px dashed #0A1033;">
+      <span style="font-size: 11px; font-weight: 700;">أحد</span>
+      <span style="font-family: 'Lalezar', sans-serif; font-size: 30px; line-height: 1;">1</span>
+    </div>
+    <div style="flex-grow: 1; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">المرتب نزل</span><span style="font-size: 12px; color: #D6F7F3;">اتقسّم لوحده على الظروف</span></span>
+      <span style="font-family: 'Lalezar', sans-serif; font-size: 22px; color: #35E0D0;">+9,000</span>
+    </div>
+  </section>
+
+  <nav aria-label="التنقل الرئيسي" style="position: absolute; left: 16px; right: 16px; bottom: 20px; height: 72px; box-sizing: border-box; border-radius: 26px; background: #141C4F; border: 1px solid #2A357A; display: flex; align-items: center; justify-content: space-around; padding: 0 6px;">
+    <a href="Main.dc.html" style="width: 60px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #AEB6E6;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"></path><path d="M14 6v12" stroke-dasharray="2 2"></path></svg>
+      <span style="font-size: 11px;">اليوم</span>
+    </a>
+    <span aria-current="page" style="width: 60px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #FFC72C;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"></path><path d="M9 9h6M9 13h6" stroke="#141C4F"></path></svg>
+      <span style="font-size: 11px; font-weight: 700;">الدفتر</span>
+    </span>
+    <a href="AddPunch.dc.html" aria-label="سجّل عملية جديدة" style="width: 56px; height: 56px; flex-shrink: 0; border-radius: 28px; background: #FFC72C; color: #0A1033; display: flex; align-items: center; justify-content: center;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+    </a>
+    <a href="Envelopes.dc.html" style="width: 60px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #AEB6E6;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 7 9-7"></path></svg>
+      <span style="font-size: 11px;">الخطة</span>
+    </a>
+    <a href="People.dc.html" style="width: 60px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #AEB6E6;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path><circle cx="17.5" cy="9" r="2.4"></circle><path d="M16 14.2c2.8.2 5 2.6 5 5.8"></path></svg>
+      <span style="font-size: 11px;">الناس</span>
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
