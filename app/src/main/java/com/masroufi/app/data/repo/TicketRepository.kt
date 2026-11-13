@@ -9,6 +9,7 @@ import com.masroufi.app.data.db.JarDao
 import com.masroufi.app.data.db.JarMovementEntity
 import com.masroufi.app.data.db.JarSource
 import com.masroufi.app.data.db.PocketDao
+import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.Pot
 import com.masroufi.app.data.db.ProverbCollectedEntity
 import com.masroufi.app.data.db.ProverbDao
@@ -40,6 +41,9 @@ data class CloseResult(val leftover: Long, val proverbNumber: Int?, val newStamp
 /** The local day an entry belongs to. */
 internal fun Clock.dayOf(millis: Long): LocalDate = Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 
+/** Same predicate as countingBalanceTotal / forDayWithPocket: the pocket's spending punches the EGP ticket. */
+internal val PocketEntity.punchesTicket: Boolean get() = countsInTicket && !archived && currency == "EGP"
+
 internal fun potOf(destination: LeftoverDestination?): Pot? = when (destination) {
     LeftoverDestination.JAR -> Pot.JAR
     LeftoverDestination.EMERGENCY -> Pot.EMERGENCY
@@ -68,14 +72,18 @@ class TicketRepository @Inject constructor(
     private val settings: SettingsStore,
     private val clock: Clock,
 ) {
-    /** Today's ticket: printed once, after auto-closing the last open day. Days in a gap get no row (design call 10). */
+    /**
+     * Today's ticket: printed once, after auto-closing every earlier open day. Days in a gap get no row (design
+     * call 10). Entries already logged today are added back to Spendable, so the ticket is the morning's.
+     */
     suspend fun printToday(): DayTicketEntity {
         val s = settings.current()
         return db.withTransaction {
             val today = LocalDate.now(clock)
             ticketDao.forDate(today)?.let { return@withTransaction it }
 
-            ticketDao.latestOpenBefore(today)?.let { open ->
+            // Normally one row (yesterday or the last printed day); more only if the clock went backwards.
+            for (open in ticketDao.openBefore(today)) {
                 // A carry is only for the next day; an older day's leftover goes to the jar instead.
                 val dest = if (s.leftoverDefault == LeftoverDestination.TOMORROW && open.date != today.minusDays(1)) {
                     LeftoverDestination.JAR
@@ -90,15 +98,19 @@ class TicketRepository @Inject constructor(
                 ?.leftover ?: 0L
             val cycle = payCycleFor(today, s.payday, entryDao.latestReceivedAt()?.let(clock::dayOf))
             val reserved = recurringDao.unpaidDueBefore(cycle.nextPayday) +
-                jarDao.totalNow(Pot.JAR) + jarDao.totalNow(Pot.EMERGENCY)
+                jarDao.totalNow(Pot.JAR).coerceAtLeast(0) + jarDao.totalNow(Pot.EMERGENCY).coerceAtLeast(0)
+            val punches = punchesOn(today)
+            val spent = spentToday(punches)
+            // A round-up is in both spent and the reserved jar, so adding it back here nets to zero.
+            val spendable = pocketDao.countingBalanceTotal() + spent
             val now = clock.millis()
-            val calc = computeTicket(pocketDao.countingBalanceTotal(), reserved, carriedIn, cycle.daysLeft(today))
+            val calc = computeTicket(spendable, reserved, carriedIn, cycle.daysLeft(today))
             val row = when (calc) {
                 is TicketCalc.Printed ->
                     DayTicketEntity(date = today, amount = calc.amount, base = calc.base, carriedIn = calc.carriedIn, updatedAt = now)
                 is TicketCalc.EndOfMonth ->
                     DayTicketEntity(date = today, amount = 0, base = 0, endOfMonth = true, updatedAt = now)
-            }
+            }.copy(spent = spent, entryCount = punches.size)
             row.copy(id = ticketDao.insert(row))
         }
     }
@@ -125,22 +137,12 @@ class TicketRepository @Inject constructor(
     /**
      * Recomputes a printed day's spent and holes after an entry changes. The ticket amount never changes; a closed
      * day's leftover and its jar movement follow the new spent.
+     *
+     * Known limit: a later edit to a TOMORROW-closed day updates that day's leftover but not the next day's stored
+     * carriedIn. No money is lost: the pockets carry the difference into the following tickets.
      */
     suspend fun recalcDay(date: LocalDate) {
-        db.withTransaction<Unit> {
-            val row = ticketDao.forDate(date) ?: return@withTransaction
-            val punches = punchesOn(date)
-            val spent = spentToday(punches)
-            val closed = row.status != TicketStatus.OPEN
-            val left = if (closed) leftover(row.amount, spent) else row.leftover
-            val now = clock.millis()
-            ticketDao.update(row.copy(spent = spent, entryCount = punches.size, leftover = left, updatedAt = now))
-            val pot = potOf(row.destination)
-            if (closed && pot != null) {
-                val movement = jarDao.forDay(date).firstOrNull { it.source == JarSource.TICKET_LEFTOVER }
-                jarDao.sync(movement, left, now) { leftoverMovement(pot, left, date, now) }
-            }
-        }
+        db.withTransaction<Unit> { ticketDao.forDate(date)?.let { settle(it) } }
     }
 
     /** Caller holds the transaction. */
@@ -149,24 +151,27 @@ class TicketRepository @Inject constructor(
         status: TicketStatus,
         destination: LeftoverDestination,
         proverbNumber: Int?,
-    ): DayTicketEntity {
+    ): DayTicketEntity = settle(row.copy(status = status, destination = destination, proverbNumber = proverbNumber))
+
+    /** Writes spent, holes and (once closed) leftover, and syncs the leftover movement. Caller holds the transaction. */
+    private suspend fun settle(row: DayTicketEntity): DayTicketEntity {
         val punches = punchesOn(row.date)
         val spent = spentToday(punches)
-        val left = leftover(row.amount, spent)
+        val closed = row.status != TicketStatus.OPEN
         val now = clock.millis()
-        val closed = row.copy(
+        val updated = row.copy(
             spent = spent,
             entryCount = punches.size,
-            status = status,
-            leftover = left,
-            destination = destination,
-            proverbNumber = proverbNumber,
+            leftover = if (closed) leftover(row.amount, spent) else row.leftover,
             updatedAt = now,
         )
-        ticketDao.update(closed)
-        val pot = potOf(destination)
-        if (pot != null && left > 0) jarDao.insert(leftoverMovement(pot, left, row.date, now))
-        return closed
+        ticketDao.update(updated)
+        val pot = potOf(row.destination)
+        if (closed && pot != null) {
+            val movement = jarDao.forDay(row.date).firstOrNull { it.source == JarSource.TICKET_LEFTOVER }
+            jarDao.sync(movement, updated.leftover, now) { leftoverMovement(pot, updated.leftover, row.date, now) }
+        }
+        return updated
     }
 
     private suspend fun punchesOn(date: LocalDate) = entryDao.forDayWithPocket(

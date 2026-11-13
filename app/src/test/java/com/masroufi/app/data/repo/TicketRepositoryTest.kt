@@ -1,6 +1,7 @@
 package com.masroufi.app.data.repo
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.masroufi.app.core.Payday
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -86,7 +87,7 @@ class TicketRepositoryTest {
             db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
             db.stampDao(), settings, clock,
         )
-        entries = EntryRepository(db, db.entryDao(), db.jarDao(), tickets, settings, plus, clock)
+        entries = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), tickets, settings, plus, clock)
         cash = db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, openingBalance = opening, color = 0))
     }
 
@@ -372,6 +373,154 @@ class TicketRepositoryTest {
             NewEntry(kind = EntryKind.SPENT, amount = 100, pocketId = cash, note = "x".repeat(120), happenedAt = millis(nov12, 10)),
         )
         assertEquals(120, db.entryDao().byId(id)?.note?.length)
+    }
+
+    @Test fun foreignCurrencySpendDoesNotPunch() = runTest {
+        setUp()
+        settings.setRoundUpStep(5)
+        plus.setDebugOverride(true)
+        val usd = db.pocketDao().insert(
+            PocketEntity(name = "usd", kind = PocketKind.BANK, currency = "USD", openingBalance = 50_000, color = 0),
+        )
+        val old = db.pocketDao().insert(
+            PocketEntity(name = "old", kind = PocketKind.CASH, openingBalance = 50_000, color = 0, archived = true),
+        )
+        tickets.printToday()
+        val dollars = entries.log(NewEntry(kind = EntryKind.SPENT, amount = 5_000, pocketId = usd, happenedAt = millis(nov12, 10)))
+        val archived = entries.log(NewEntry(kind = EntryKind.SPENT, amount = 2_300, pocketId = old, happenedAt = millis(nov12, 11)))
+        val t = row(nov12)
+        assertEquals("USD and archived spends do not punch", 0L to 0, t.spent to t.entryCount)
+        assertEquals("no round-up for USD", 0L, db.entryDao().byId(dollars)?.roundUp)
+        assertEquals("no round-up for archived", 0L, db.entryDao().byId(archived)?.roundUp)
+        assertEquals(0L, jarTotal())
+    }
+
+    @Test fun entryLoggedBeforePrintCounts() = runTest {
+        setUp()
+        spend(5_000, hour = 0) // 00:00, before the first print of the day
+        val t = tickets.printToday()
+        // Morning Spendable = 385000 + today's 5000 = 390000: the same 30000 as without the spend.
+        assertTicket("ticket ignores the pre-print spend", 30_000, 30_000, 0, t)
+        assertEquals("pre-print spend punches", 5_000L to 1, t.spent to t.entryCount)
+        assertEquals("stored row", 5_000L to 1, row(nov12).let { it.spent to it.entryCount })
+    }
+
+    @Test fun futureDatedEntryRejected() = runTest {
+        setUp()
+        tickets.printToday()
+        try {
+            spend(1_000, date = nov13)
+            fail("an entry dated tomorrow must be rejected")
+        } catch (expected: IllegalArgumentException) {
+        }
+        val id = spend(1_000)
+        try {
+            entries.edit(id, NewEntry(kind = EntryKind.SPENT, amount = 1_000, pocketId = cash, happenedAt = millis(nov13, 10)))
+            fail("an edit dated tomorrow must be rejected")
+        } catch (expected: IllegalArgumentException) {
+        }
+        assertEquals("only the valid entry stored", listOf(id), db.entryDao().forDay(0, Long.MAX_VALUE).map { it.id })
+        assertEquals(1_000L, row(nov12).spent)
+    }
+
+    @Test fun roundUpKeptOnEditWhenOff() = runTest {
+        setUp()
+        settings.setRoundUpStep(5)
+        plus.setDebugOverride(true)
+        tickets.printToday()
+        val id = spend(2_300)
+        assertEquals(200L, jarTotal())
+        plus.setDebugOverride(false)
+        entries.edit(id, NewEntry(kind = EntryKind.SPENT, amount = 2_400, pocketId = cash, happenedAt = millis(nov12, 10)))
+        assertEquals("old round-up kept while off", 200L, db.entryDao().byId(id)?.roundUp)
+        assertEquals(listOf(200L), db.jarDao().forEntry(id).map { it.amount })
+        assertEquals("2400 + kept 200", 2_600L, row(nov12).spent)
+        entries.edit(
+            id,
+            NewEntry(kind = EntryKind.SPENT, amount = 2_400, pocketId = cash, happenedAt = millis(nov12, 10), recurringId = 1),
+        )
+        assertEquals("a fixed bill loses its round-up", 0L, db.entryDao().byId(id)?.roundUp)
+        assertEquals(emptyList<JarMovementEntity>(), db.jarDao().forEntry(id))
+        assertEquals("fixed bill does not punch", 0L, row(nov12).spent)
+        assertEquals(0L, jarTotal())
+    }
+
+    @Test fun emergencyDestination() = runTest {
+        setUp()
+        tickets.printToday()
+        spend(22_800)
+        assertEquals(7_200L, tickets.closeDay(nov12, LeftoverDestination.EMERGENCY).leftover)
+        assertEquals(listOf(Pot.EMERGENCY to 7_200L), leftoverMovements(nov12).map { it.pot to it.amount })
+        assertEquals(0L, jarTotal())
+        assertEquals(7_200L, db.jarDao().totalNow(Pot.EMERGENCY))
+        today(nov13)
+        // Spendable 367200 - emergency 7200 = 360000 / 12 = 30000.
+        assertTicket("emergency money is reserved", 30_000, 30_000, 0, tickets.printToday())
+    }
+
+    @Test fun notFixedAnchorsOnLatestIncome() = runTest {
+        setUp()
+        settings.setPayday(Payday.NotFixed)
+        val nov2 = LocalDate.of(2026, 11, 2)
+        entries.log(NewEntry(kind = EntryKind.RECEIVED, amount = 100_000, pocketId = cash, happenedAt = millis(nov2, 10)))
+        // Cycle 11-02..12-01: 20 days left on 11-12. Spendable 490000 / 20 = 24500 (a 30-day window would give 16300).
+        assertTicket("rolling 30 days from the income", 24_500, 24_500, 0, tickets.printToday())
+    }
+
+    @Test fun roundUpSkippedForRecurringAndReceived() = runTest {
+        setUp()
+        settings.setRoundUpStep(5)
+        plus.setDebugOverride(true)
+        tickets.printToday()
+        val bill = entries.log(
+            NewEntry(kind = EntryKind.SPENT, amount = 2_300, pocketId = cash, happenedAt = millis(nov12, 10), recurringId = 1),
+        )
+        val income = entries.log(NewEntry(kind = EntryKind.RECEIVED, amount = 2_300, pocketId = cash, happenedAt = millis(nov12, 11)))
+        assertEquals("no round-ups", 0L to 0L, db.entryDao().byId(bill)?.roundUp to db.entryDao().byId(income)?.roundUp)
+        assertEquals(0L, jarTotal())
+        assertEquals("neither punches", 0L to 0, row(nov12).let { it.spent to it.entryCount })
+    }
+
+    @Test fun closeDayMissingDateThrows() = runTest {
+        setUp()
+        try {
+            tickets.closeDay(nov12, LeftoverDestination.JAR)
+            fail("closing a day with no ticket must throw")
+        } catch (expected: IllegalStateException) {
+        }
+    }
+
+    @Test fun movedWithoutTargetRejected() = runTest {
+        setUp()
+        val at = millis(nov12, 10)
+        val bad = listOf<Pair<String, () -> NewEntry>>(
+            "move without target" to { NewEntry(kind = EntryKind.MOVED, amount = 100, pocketId = cash, happenedAt = at) },
+            "move to itself" to { NewEntry(kind = EntryKind.MOVED, amount = 100, pocketId = cash, toPocketId = cash, happenedAt = at) },
+            "spend with target" to { NewEntry(kind = EntryKind.SPENT, amount = 100, pocketId = cash, toPocketId = 99, happenedAt = at) },
+        )
+        for ((what, make) in bad) {
+            try {
+                make()
+                fail("$what must be rejected")
+            } catch (expected: IllegalArgumentException) {
+            }
+        }
+        NewEntry(kind = EntryKind.MOVED, amount = 100, pocketId = cash, toPocketId = cash + 1, happenedAt = at) // valid
+    }
+
+    @Test fun everyOpenDayBeforeTodayAutoCloses() = runTest {
+        setUp()
+        settings.setLeftoverDefault(LeftoverDestination.TOMORROW)
+        val nov10 = LocalDate.of(2026, 11, 10)
+        val nov11 = LocalDate.of(2026, 11, 11)
+        db.dayTicketDao().insert(DayTicketEntity(date = nov10, amount = 10_000, base = 10_000))
+        db.dayTicketDao().insert(DayTicketEntity(date = nov11, amount = 20_000, base = 20_000))
+        val t12 = tickets.printToday()
+        assertEquals(TicketStatus.CLOSED_AUTO to LeftoverDestination.JAR, row(nov10).let { it.status to it.destination })
+        assertEquals(TicketStatus.CLOSED_AUTO to LeftoverDestination.TOMORROW, row(nov11).let { it.status to it.destination })
+        assertEquals("only 11-10's 10000 in the jar", 10_000L, jarTotal())
+        // Spendable 390000 - jar 10000 = 380000; carry 20000 leaves 360000 / 13 = 27692 -> 27600; amount 47600.
+        assertTicket("11-12 carries 11-11", 47_600, 27_600, 20_000, t12)
     }
 
     private fun bill(amount: Long, due: LocalDate, paid: Boolean = false) = RecurringEntity(

@@ -6,6 +6,7 @@ import com.masroufi.app.data.db.EntryEntity
 import com.masroufi.app.data.db.JarDao
 import com.masroufi.app.data.db.JarMovementEntity
 import com.masroufi.app.data.db.JarSource
+import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.db.Pot
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.data.prefs.SettingsStore
@@ -13,6 +14,7 @@ import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.roundUp
 import com.masroufi.app.entitlements.Entitlements
 import java.time.Clock
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,6 +34,10 @@ data class NewEntry(
     init {
         require(amount > 0) { "amount must be > 0" }
         require(fee >= 0) { "fee must be >= 0" }
+        require(kind != EntryKind.MOVED || (toPocketId != null && toPocketId != pocketId)) {
+            "a move needs a different target pocket"
+        }
+        require(kind == EntryKind.MOVED || toPocketId == null) { "only a move has a target pocket" }
         require(note == null || note.length <= NOTE_MAX_CHARS) { "note must be at most $NOTE_MAX_CHARS chars" }
     }
 }
@@ -40,6 +46,7 @@ data class NewEntry(
 class EntryRepository @Inject constructor(
     private val db: TazkaraDatabase,
     private val entryDao: EntryDao,
+    private val pocketDao: PocketDao,
     private val jarDao: JarDao,
     private val tickets: TicketRepository,
     private val settings: SettingsStore,
@@ -47,27 +54,36 @@ class EntryRepository @Inject constructor(
     private val clock: Clock,
 ) {
     suspend fun log(entry: NewEntry): Long {
-        val roundUp = roundUpFor(entry)
+        requireNotFuture(entry)
+        val step = activeStep()
         return db.withTransaction {
             val now = clock.millis()
+            val rounded = if (step != null && qualifies(entry)) roundUp(entry.amount, step) else 0L
             val fresh = EntryEntity(
                 kind = entry.kind, amount = entry.amount, pocketId = entry.pocketId, happenedAt = entry.happenedAt, loggedAt = now,
             )
-            val id = entryDao.insert(fresh.with(entry, roundUp, now))
-            if (roundUp > 0) jarDao.insert(roundUpMovement(id, roundUp, now))
+            val id = entryDao.insert(fresh.with(entry, rounded, now))
+            if (rounded > 0) jarDao.insert(roundUpMovement(id, rounded, now))
             tickets.recalcDay(clock.dayOf(entry.happenedAt))
             id
         }
     }
 
     suspend fun edit(id: Long, entry: NewEntry) {
-        val roundUp = roundUpFor(entry)
+        requireNotFuture(entry)
+        val step = activeStep()
         db.withTransaction<Unit> {
             val old = checkNotNull(entryDao.byId(id)) { "no entry $id" }
             val now = clock.millis()
-            entryDao.update(old.with(entry, roundUp, now))
+            // Turning round-ups off keeps old ones (11-DATA), as long as the entry still punches the ticket.
+            val rounded = when {
+                !qualifies(entry) -> 0L
+                step != null -> roundUp(entry.amount, step)
+                else -> old.roundUp
+            }
+            entryDao.update(old.with(entry, rounded, now))
             val movement = jarDao.forEntry(id).firstOrNull { it.source == JarSource.ROUND_UP }
-            jarDao.sync(movement, roundUp, now) { roundUpMovement(id, roundUp, now) }
+            jarDao.sync(movement, rounded, now) { roundUpMovement(id, rounded, now) }
             val oldDay = clock.dayOf(old.happenedAt)
             val newDay = clock.dayOf(entry.happenedAt)
             tickets.recalcDay(newDay)
@@ -84,11 +100,16 @@ class EntryRepository @Inject constructor(
         }
     }
 
-    private suspend fun roundUpFor(entry: NewEntry): Long {
-        if (entry.kind != EntryKind.SPENT || entry.recurringId != null || !entitlements.isPlus.value) return 0L
-        val step = settings.current().roundUpStep
-        return if (step > 0) roundUp(entry.amount, step) else 0L
-    }
+    private fun requireNotFuture(entry: NewEntry) =
+        require(!clock.dayOf(entry.happenedAt).isAfter(LocalDate.now(clock))) { "an entry cannot be dated after today" }
+
+    /** The round-up step in pounds while round-ups are on (Plus and a step > 0), else null. */
+    private suspend fun activeStep(): Int? =
+        if (entitlements.isPlus.value) settings.current().roundUpStep.takeIf { it > 0 } else null
+
+    /** Only an entry that punches the ticket rounds up. Caller holds the transaction. */
+    private suspend fun qualifies(entry: NewEntry): Boolean =
+        entry.kind == EntryKind.SPENT && entry.recurringId == null && pocketDao.byId(entry.pocketId)?.punchesTicket == true
 
     private fun EntryEntity.with(e: NewEntry, roundUp: Long, now: Long) = copy(
         kind = e.kind,

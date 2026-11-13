@@ -25,6 +25,7 @@ interface PocketDao {
     @Insert suspend fun insert(pocket: PocketEntity): Long
     @Update suspend fun update(pocket: PocketEntity)
     @Query("SELECT * FROM pocket") fun all(): Flow<List<PocketEntity>>
+    @Query("SELECT * FROM pocket WHERE id = :id") suspend fun byId(id: Long): PocketEntity?
 
     @Query("SELECT p.id AS pocketId, $BALANCE_EXPR AS balance FROM pocket p")
     fun balances(): Flow<List<PocketBalance>>
@@ -48,9 +49,10 @@ interface EntryDao {
     @Query("SELECT * FROM entry WHERE happenedAt >= :start AND happenedAt < :end ORDER BY happenedAt")
     fun forDayFlow(start: Long, end: Long): Flow<List<EntryEntity>>
 
-    /** A day's entries with their pocket's countsInTicket, for spentToday; [start, end) epoch millis. */
+    /** A day's entries, countsInTicket = the pocket counts in the EGP ticket, for spentToday; [start, end) epoch millis. */
     @Query(
-        """SELECT e.kind, e.amount, e.roundUp, p.countsInTicket, e.recurringId FROM entry e
+        """SELECT e.kind, e.amount, e.roundUp, (p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP') AS countsInTicket,
+        e.recurringId FROM entry e
         JOIN pocket p ON p.id = e.pocketId WHERE e.happenedAt >= :start AND e.happenedAt < :end"""
     )
     suspend fun forDayWithPocket(start: Long, end: Long): List<EntryForDay>
@@ -58,7 +60,7 @@ interface EntryDao {
     /** Latest income into a counting pocket (anchors a not-fixed pay cycle). */
     @Query(
         """SELECT MAX(e.happenedAt) FROM entry e JOIN pocket p ON p.id = e.pocketId
-        WHERE e.kind = 'RECEIVED' AND p.countsInTicket = 1 AND p.archived = 0"""
+        WHERE e.kind = 'RECEIVED' AND p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"""
     )
     suspend fun latestReceivedAt(): Long?
 }
@@ -78,6 +80,9 @@ interface DayTicketDao {
 
     @Query("SELECT * FROM day_ticket WHERE status = 'OPEN' AND date < :date ORDER BY date DESC LIMIT 1")
     suspend fun latestOpenBefore(date: LocalDate): DayTicketEntity?
+
+    @Query("SELECT * FROM day_ticket WHERE status = 'OPEN' AND date < :date ORDER BY date")
+    suspend fun openBefore(date: LocalDate): List<DayTicketEntity>
 
     @Query("SELECT * FROM day_ticket ORDER BY date") suspend fun allNow(): List<DayTicketEntity>
 
