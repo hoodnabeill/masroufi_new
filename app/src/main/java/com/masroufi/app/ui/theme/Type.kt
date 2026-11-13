@@ -1,5 +1,6 @@
 package com.masroufi.app.ui.theme
 
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -12,6 +13,7 @@ import com.masroufi.app.R
 val Lalezar = FontFamily(Font(R.font.lalezar, FontWeight.Normal))
 
 // Variable font: one file, four weights picked through the wght axis.
+@OptIn(ExperimentalTextApi::class)
 val Alexandria = FontFamily(
     listOf(400, 500, 600, 700).map { w ->
         Font(
