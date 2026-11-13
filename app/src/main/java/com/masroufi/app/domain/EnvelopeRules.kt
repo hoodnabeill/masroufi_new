@@ -23,8 +23,9 @@ fun runsOutDay(
 }
 
 sealed interface SplitRule {
-    data class Fixed(val envelopeId: Long, val amount: Long) : SplitRule
-    data class Percent(val envelopeId: Long, val percent: Int) : SplitRule
+    val envelopeId: Long
+    data class Fixed(override val envelopeId: Long, val amount: Long) : SplitRule
+    data class Percent(override val envelopeId: Long, val percent: Int) : SplitRule
 }
 
 data class SplitResult(val shares: Map<Long, Long>, val unassigned: Long)
