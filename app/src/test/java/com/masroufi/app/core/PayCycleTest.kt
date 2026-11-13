@@ -65,4 +65,40 @@ class PayCycleTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun dayOutOfRangeRejected() { Payday.Day(32) }
+
+    @Test fun notFixedFutureIncome() {
+        val today = d("2026-11-12")
+        val c = payCycleFor(today, Payday.NotFixed, d("2026-11-20"))
+        assertEquals(d("2026-10-21"), c.start)
+        assertEquals(d("2026-11-20"), c.nextPayday)
+        assertTrue(c.contains(today))
+        assertEquals(8, c.daysLeft(today))
+    }
+
+    @Test fun day31In30DayMonth() {
+        val c = payCycleFor(d("2026-11-30"), Payday.Day(31), null)
+        assertEquals(d("2026-11-30"), c.start)
+        assertEquals(d("2026-12-31"), c.nextPayday)
+    }
+
+    @Test fun leapFebruary() {
+        val c = payCycleFor(d("2028-02-28"), Payday.Day(31), null)
+        assertEquals(d("2028-01-31"), c.start)
+        assertEquals(d("2028-02-29"), c.nextPayday)
+    }
+
+    @Test fun day30InFebruary() {
+        val c = payCycleFor(d("2027-03-01"), Payday.Day(30), null)
+        assertEquals(d("2027-02-28"), c.start)
+        assertEquals(d("2027-03-30"), c.nextPayday)
+    }
+
+    @Test fun decemberToJanuary() {
+        val c = payCycleFor(d("2026-12-26"), Payday.Day(25), null)
+        assertEquals(d("2026-12-25"), c.start)
+        assertEquals(d("2027-01-25"), c.nextPayday)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun day0Rejected() { Payday.Day(0) }
 }

@@ -37,13 +37,9 @@ fun payCycleFor(today: LocalDate, payday: Payday, lastIncome: LocalDate?): PayCy
         is Payday.Day -> monthly { it.atDay(minOf(payday.day, it.lengthOfMonth())) }
         Payday.LastDay -> monthly { it.atEndOfMonth() }
         Payday.NotFixed -> {
-            var start = lastIncome ?: today
-            var next = start.plusDays(30)
-            while (!next.isAfter(today)) {
-                start = next
-                next = next.plusDays(30)
-            }
-            PayCycle(start, next)
+            val anchor = lastIncome ?: today
+            val start = anchor.plusDays(30L * Math.floorDiv(ChronoUnit.DAYS.between(anchor, today), 30L))
+            PayCycle(start, start.plusDays(30))
         }
     }
 }

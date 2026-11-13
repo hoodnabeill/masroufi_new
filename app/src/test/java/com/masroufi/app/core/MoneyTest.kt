@@ -13,4 +13,6 @@ class MoneyTest {
     @Test fun ceilDivNegative() = assertEquals(-3L, (-10L).ceilDiv(3L))
     @Test(expected = IllegalArgumentException::class)
     fun ceilDivRejectsZero() { 10L.ceilDiv(0L) }
+    @Test(expected = IllegalArgumentException::class)
+    fun negativeDivisorRejected() { 10L.ceilDiv(-3L) }
 }

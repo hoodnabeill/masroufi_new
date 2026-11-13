@@ -6,10 +6,10 @@ const val PIASTRES = 100L
 fun Long.floorToPound(): Long = Math.floorDiv(this, PIASTRES) * PIASTRES
 
 /** Smallest multiple of 100 piastres >= this. */
-fun Long.ceilToPound(): Long = -Math.floorDiv(-this, PIASTRES) * PIASTRES
+fun Long.ceilToPound(): Long = ceilDiv(PIASTRES) * PIASTRES
 
 /** Ceiling division by a positive divisor. */
 fun Long.ceilDiv(d: Long): Long {
     require(d > 0) { "divisor must be positive" }
-    return -Math.floorDiv(-this, d)
+    return Math.floorDiv(this, d) + if (Math.floorMod(this, d) != 0L) 1 else 0
 }
