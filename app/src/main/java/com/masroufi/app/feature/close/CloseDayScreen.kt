@@ -137,7 +137,7 @@ private enum class Phase { Blank, Skeleton, Content, Error }
 fun CloseDayScreen(viewModel: CloseDayViewModel, onBack: () -> Unit, onDone: (epochDay: Long) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val tear by viewModel.tear.collectAsStateWithLifecycle()
-    CloseDayContent(state, tear, viewModel::tear, onBack, onDone = { onDone(viewModel.date.toEpochDay()) })
+    CloseDayContent(state, tear, { viewModel.tear(it) }, onBack, onDone = { onDone(viewModel.date.toEpochDay()) })
 }
 
 /** Stateless close-the-day screen: skeleton after 150 ms of loading, 160 ms cross-fade to the content or the error. */

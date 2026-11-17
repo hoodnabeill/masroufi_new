@@ -65,14 +65,15 @@ class CloseDayViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _state.value = try<CloseDayUi> {
-                ready()
+            var next: CloseDayUi = CloseDayUi.Error
+            try {
+                next = ready()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "close day failed to load", e)
-                CloseDayUi.Error
             }
+            _state.value = next
         }
     }
 
