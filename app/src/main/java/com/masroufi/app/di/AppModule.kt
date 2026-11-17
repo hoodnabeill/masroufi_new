@@ -14,6 +14,7 @@ import com.masroufi.app.BuildConfig
 import com.masroufi.app.core.SystemZoneClock
 import com.masroufi.app.data.db.MIGRATION_1_2
 import com.masroufi.app.data.db.MIGRATION_2_3
+import com.masroufi.app.data.db.MIGRATION_3_4
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.Entitlements
@@ -51,7 +52,7 @@ object AppModule {
 
     @Provides @Singleton
     fun database(@ApplicationContext context: Context): TazkaraDatabase =
-        Room.databaseBuilder(context, TazkaraDatabase::class.java, TazkaraDatabase.FILE_NAME).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+        Room.databaseBuilder(context, TazkaraDatabase::class.java, TazkaraDatabase.FILE_NAME).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
 
     @Provides fun pocketDao(db: TazkaraDatabase) = db.pocketDao()
     @Provides fun entryDao(db: TazkaraDatabase) = db.entryDao()
@@ -64,6 +65,9 @@ object AppModule {
     @Provides fun proverbDao(db: TazkaraDatabase) = db.proverbDao()
     @Provides fun stampDao(db: TazkaraDatabase) = db.stampDao()
     @Provides fun seasonDao(db: TazkaraDatabase) = db.seasonDao()
+    @Provides fun peopleDao(db: TazkaraDatabase) = db.peopleDao()
+    @Provides fun dutyDao(db: TazkaraDatabase) = db.dutyDao()
+    @Provides fun gameyaDao(db: TazkaraDatabase) = db.gameyaDao()
 
     @Provides @Singleton
     fun dataStore(@ApplicationContext context: Context): DataStore<Preferences> =

@@ -36,4 +36,12 @@ class Converters {
     @TypeConverter fun stringToSeasonKind(v: String): SeasonKind = SeasonKind.valueOf(v)
     @TypeConverter fun splitKindToString(v: SplitKind): String = v.name
     @TypeConverter fun stringToSplitKind(v: String): SplitKind = SplitKind.valueOf(v)
+    @TypeConverter fun personKindToString(v: PersonKind): String = v.name
+    @TypeConverter fun stringToPersonKind(v: String): PersonKind = PersonKind.valueOf(v)
+    @TypeConverter fun debtDirectionToString(v: DebtDirection): String = v.name
+    @TypeConverter fun stringToDebtDirection(v: String): DebtDirection = DebtDirection.valueOf(v)
+    @TypeConverter fun occasionOwnerToString(v: OccasionOwner): String = v.name
+    @TypeConverter fun stringToOccasionOwner(v: String): OccasionOwner = OccasionOwner.valueOf(v)
+    @TypeConverter fun giftDirectionToString(v: GiftDirection): String = v.name
+    @TypeConverter fun stringToGiftDirection(v: String): GiftDirection = GiftDirection.valueOf(v)
 }

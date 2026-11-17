@@ -19,6 +19,10 @@ enum class JarSource { TICKET_LEFTOVER, ROUND_UP, MANUAL, CHANGED_MIND }
 enum class ScheduleType { MONTHLY, YEARLY }
 enum class SeasonKind { RAMADAN, EID_AL_FITR, EID_AL_ADHA, SUMMER, SCHOOL, PERSONAL }
 enum class SplitKind { FIXED, PERCENT }
+enum class PersonKind { PERSON, SHOP }
+enum class DebtDirection { THEY_OWE, I_OWE }
+enum class OccasionOwner { MINE, THEIRS }
+enum class GiftDirection { RECEIVED, GIVEN }
 
 // Money is Long piastres. updatedAt is epoch millis, set by callers from the injected Clock.
 
@@ -49,7 +53,7 @@ data class PocketEntity(
 data class EntryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val kind: EntryKind,
-    val amount: Long, // signed only for ADJUST
+    val amount: Long, // signed only for ADJUST and DEBT
     val pocketId: Long,
     val toPocketId: Long? = null,
     val categoryId: Long? = null,
@@ -67,6 +71,8 @@ data class EntryEntity(
     val trackedItemId: Long? = null,
     val unitPrice: Long? = null,
     val updatedAt: Long = 0,
+    /** A DEBT entry's loan, repayment or borrow; null for a split's single DEBT entry (it covers several debts). */
+    val debtId: Long? = null,
 )
 
 @Entity(tableName = "category")
@@ -228,4 +234,98 @@ data class SplitRuleEntity(
     val kind: SplitKind,
     val value: Long,
     val sortOrder: Int,
+)
+
+@Entity(tableName = "person")
+data class PersonEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val phone: String? = null,
+    val kind: PersonKind = PersonKind.PERSON,
+    val updatedAt: Long = 0,
+)
+
+/** [amount] is what is still open: a partial repayment lowers it; a full one sets [settled]. */
+@Entity(tableName = "debt")
+data class DebtEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val personId: Long,
+    val direction: DebtDirection,
+    val amount: Long,
+    val reason: String? = null,
+    val date: LocalDate,
+    val dueDate: LocalDate? = null,
+    val settled: Boolean = false,
+    /** A shared subscription's payment that created this debt (decision 4). */
+    val sourceRecurringId: Long? = null,
+)
+
+@Entity(tableName = "tab_item")
+data class TabItemEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val personId: Long,
+    val label: String,
+    val amount: Long,
+    val date: LocalDate,
+    val settled: Boolean = false,
+    val settledEntryId: Long? = null,
+)
+
+@Entity(tableName = "occasion")
+data class OccasionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val date: LocalDate,
+    val whose: OccasionOwner,
+    val personId: Long? = null,
+)
+
+@Entity(tableName = "gift")
+data class GiftEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val occasionId: Long,
+    val personId: Long,
+    val amount: Long,
+    val direction: GiftDirection,
+)
+
+/** [startMonth] and the payment months are yyyymm; the user is turn [myTurn] and is not in gameya_member. */
+@Entity(tableName = "gameya")
+data class GameyaEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val monthly: Long,
+    val startMonth: Int,
+    val myTurn: Int,
+    val recurringId: Long? = null,
+    val archived: Boolean = false,
+)
+
+@Entity(tableName = "gameya_member")
+data class GameyaMemberEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val gameyaId: Long,
+    val name: String,
+    val turn: Int,
+    val phone: String? = null,
+)
+
+/** memberId null = the user's own installment. */
+@Entity(tableName = "gameya_payment")
+data class GameyaPaymentEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val gameyaId: Long,
+    val memberId: Long? = null,
+    val month: Int,
+    val paid: Boolean,
+)
+
+@Entity(tableName = "gameya_plan")
+data class GameyaPlanEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val gameyaId: Long,
+    val label: String,
+    val amount: Long,
+    val seasonId: Long? = null,
+    val goalId: Long? = null,
 )

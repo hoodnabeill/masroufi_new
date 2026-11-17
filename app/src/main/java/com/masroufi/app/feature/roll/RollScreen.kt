@@ -581,6 +581,7 @@ private fun entryTitle(e: EntryRow, salaryDay: Boolean): String {
         EntryKind.RECEIVED -> note ?: stringResource(if (salaryDay) R.string.roll_entry_salary else R.string.roll_entry_income)
         EntryKind.MOVED -> stringResource(R.string.add_transfer_line, e.pocketName, e.toPocketName.orEmpty())
         EntryKind.ADJUST -> stringResource(R.string.roll_entry_adjust)
+        EntryKind.DEBT -> note ?: stringResource(R.string.roll_entry_debt)
     }
 }
 
@@ -616,20 +617,22 @@ internal fun EntryLine(
         EntryKind.RECEIVED -> Tz.turquoise
         EntryKind.MOVED -> Tz.sky
         EntryKind.ADJUST -> Tz.text2
+        EntryKind.DEBT -> Tz.lilac
     }
     val icon = when (e.kind) {
         EntryKind.SPENT -> TzIcons.all.firstOrNull { it.name == cat?.icon } ?: TzIcons.grid
         EntryKind.RECEIVED -> TzIcons.arrowUp
         EntryKind.MOVED -> TzIcons.swap
         EntryKind.ADJUST -> TzIcons.refresh
+        EntryKind.DEBT -> TzIcons.people
     }
     val amount = when (e.kind) {
         EntryKind.RECEIVED -> "+" + formatPounds(e.amount)
-        EntryKind.ADJUST -> (if (e.amount < 0) "-" else "+") + formatPounds(abs(e.amount))
+        EntryKind.ADJUST, EntryKind.DEBT -> (if (e.amount < 0) "-" else "+") + formatPounds(abs(e.amount))
         else -> formatPounds(e.amount)
     }
-    // An adjustment is the app's own correction, not something to edit or delete.
-    val open = if (e.kind == EntryKind.ADJUST) Modifier else Modifier.clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onEntry(e) }
+    // An adjustment or a debt entry is the app's own record (a debt is edited from People), not something to edit or delete here.
+    val open = if (e.kind == EntryKind.ADJUST || e.kind == EntryKind.DEBT) Modifier else Modifier.clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onEntry(e) }
     Row(
         Modifier.fillMaxWidth()
             .drawBehind { if (!first) drawLine(Tz.line, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }

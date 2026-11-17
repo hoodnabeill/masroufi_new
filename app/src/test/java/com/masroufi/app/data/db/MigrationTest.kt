@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.masroufi.app.domain.EntryKind
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -34,6 +35,20 @@ private val V2_TABLES = listOf(
     "CREATE INDEX IF NOT EXISTS `index_jar_movement_entryId` ON `jar_movement` (`entryId`)",
 )
 
+/** The tables v4 added, and `entry` as v3 had it (no debtId), exactly as Room created them from the v3 entities. */
+private val V4_TABLES = listOf("person", "debt", "tab_item", "occasion", "gift", "gameya", "gameya_member", "gameya_payment", "gameya_plan")
+
+private val V3_ENTRY = listOf(
+    "CREATE TABLE IF NOT EXISTS `entry` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `kind` TEXT NOT NULL, " +
+        "`amount` INTEGER NOT NULL, `pocketId` INTEGER NOT NULL, `toPocketId` INTEGER, `categoryId` INTEGER, `note` TEXT, " +
+        "`happenedAt` INTEGER NOT NULL, `loggedAt` INTEGER NOT NULL, `roundUp` INTEGER NOT NULL, `recurringId` INTEGER, " +
+        "`fee` INTEGER NOT NULL, `isFee` INTEGER NOT NULL, `trackedItemId` INTEGER, `unitPrice` INTEGER, `updatedAt` INTEGER NOT NULL)",
+    "CREATE INDEX IF NOT EXISTS `index_entry_pocketId` ON `entry` (`pocketId`)",
+    "CREATE INDEX IF NOT EXISTS `index_entry_toPocketId` ON `entry` (`toPocketId`)",
+    "CREATE INDEX IF NOT EXISTS `index_entry_happenedAt` ON `entry` (`happenedAt`)",
+    "CREATE INDEX IF NOT EXISTS `index_entry_recurringId` ON `entry` (`recurringId`)",
+)
+
 @RunWith(AndroidJUnit4::class)
 class MigrationTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
@@ -43,10 +58,20 @@ class MigrationTest {
         context.deleteDatabase(name)
     }
 
-    /** Room creates the current file; the tables v3 added or changed go back to their v2 shapes and user_version to 2. */
-    private fun v2File(): SQLiteDatabase {
+    /** Room creates the current file; the v4 tables go and `entry` loses debtId, user_version 3. */
+    private fun v3File(): SQLiteDatabase {
         Room.databaseBuilder(context, TazkaraDatabase::class.java, name).build().apply { openHelper.writableDatabase }.close()
-        val v2 = SQLiteDatabase.openDatabase(context.getDatabasePath(name).path, null, SQLiteDatabase.OPEN_READWRITE)
+        val v3 = SQLiteDatabase.openDatabase(context.getDatabasePath(name).path, null, SQLiteDatabase.OPEN_READWRITE)
+        V4_TABLES.forEach { v3.execSQL("DROP TABLE `$it`") }
+        v3.execSQL("DROP TABLE `entry`")
+        V3_ENTRY.forEach(v3::execSQL)
+        v3.version = 3
+        return v3
+    }
+
+    /** The tables v3 added or changed go back to their v2 shapes and user_version to 2. */
+    private fun v2File(): SQLiteDatabase {
+        val v2 = v3File()
         listOf("season", "season_item", "envelope_move", "split_rule", "envelope", "recurring", "jar_movement")
             .forEach { v2.execSQL("DROP TABLE `$it`") }
         V2_TABLES.forEach(v2::execSQL)
@@ -56,7 +81,7 @@ class MigrationTest {
 
     /** Opening runs the migrations and then Room's schema validation over every table. */
     private fun open() =
-        Room.databaseBuilder(context, TazkaraDatabase::class.java, name).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+        Room.databaseBuilder(context, TazkaraDatabase::class.java, name).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
 
     /** v1 file database: only `pocket` differs between v1 and v2, so the v2 file gets the v1 pocket table and version 1. */
     @Test fun migration1to2KeepsData() = runTest {
@@ -85,7 +110,7 @@ class MigrationTest {
             assertEquals("new columns: no limit, alert off, no SMS", listOf(null, null, false, null, null),
                 listOf(p.monthlyLimit, p.lowBalanceThreshold, p.lowBalanceAlert, p.lastSmsBalance, p.lastSmsAt))
             assertEquals("the entry survives and still counts", 98_000L, db.pocketDao().balanceOf(1))
-            assertEquals(3, db.openHelper.readableDatabase.version)
+            assertEquals(4, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -136,7 +161,44 @@ class MigrationTest {
             db.envelopeDao().insertMove(EnvelopeMoveEntity(cycleStart = due, fromId = 1, toId = 1, amount = 1, at = 0))
             db.envelopeDao().insertSplit(listOf(SplitRuleEntity(envelopeId = 1, kind = SplitKind.PERCENT, value = 10, sortOrder = 0)))
             assertEquals("new tables usable", 1 to 1, db.envelopeDao().moves().first().size to db.envelopeDao().splitRules().size)
-            assertEquals(3, db.openHelper.readableDatabase.version)
+            assertEquals(4, db.openHelper.readableDatabase.version)
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test fun migration3to4KeepsDataAndAddsPeopleTables() = runTest {
+        v3File().use { v3 ->
+            v3.execSQL(
+                "INSERT INTO pocket (id, name, kind, currency, openingBalance, color, archived, countsInTicket, updatedAt, lowBalanceAlert) " +
+                    "VALUES (1, 'cash', 'CASH', 'EGP', 100000, 7, 0, 1, 5, 0)",
+            )
+            v3.execSQL(
+                "INSERT INTO entry (kind, amount, pocketId, happenedAt, loggedAt, roundUp, fee, isFee, updatedAt) " +
+                    "VALUES ('SPENT', 2000, 1, 0, 0, 0, 0, 0, 0)",
+            )
+        }
+
+        val db = open()
+        try {
+            assertEquals("the entry survives and still counts", 98_000L, db.pocketDao().balanceOf(1))
+            val entry = checkNotNull(db.entryDao().byId(1)) { "entry lost in the migration" }
+            assertEquals("old entry has no debt", null, entry.debtId)
+            val person = db.peopleDao().insertPerson(PersonEntity(name = "ahmed"))
+            val debt = db.peopleDao().insertDebt(DebtEntity(personId = person, direction = DebtDirection.THEY_OWE, amount = 500, date = LocalDate.of(2026, 11, 1)))
+            db.peopleDao().insertTab(TabItemEntity(personId = person, label = "x", amount = 1, date = LocalDate.of(2026, 11, 1)))
+            db.dutyDao().insertOccasion(OccasionEntity(name = "wedding", date = LocalDate.of(2026, 12, 20), whose = OccasionOwner.MINE))
+            db.dutyDao().insertGift(GiftEntity(occasionId = 1, personId = person, amount = 500, direction = GiftDirection.RECEIVED))
+            val g = db.gameyaDao().insert(GameyaEntity(name = "work", monthly = 200_000, startMonth = 202611, myTurn = 2))
+            db.gameyaDao().insertMember(GameyaMemberEntity(gameyaId = g, name = "mona", turn = 1))
+            db.gameyaDao().insertPayment(GameyaPaymentEntity(gameyaId = g, month = 202611, paid = true))
+            db.gameyaDao().insertPlan(GameyaPlanEntity(gameyaId = g, label = "eid", amount = 1))
+            db.entryDao().insert(EntryEntity(kind = EntryKind.DEBT, amount = -500, pocketId = 1, happenedAt = 0, loggedAt = 0, debtId = debt))
+            assertEquals("a loan moves the pocket", 97_500L, db.pocketDao().balanceOf(1))
+            assertEquals(listOf(1, 1, 1, 1), listOf(
+                db.peopleDao().openDebts().size, db.dutyDao().giftsNow().size, db.gameyaDao().all().first().size, db.gameyaDao().plans().first().size,
+            ))
+            assertEquals(4, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }

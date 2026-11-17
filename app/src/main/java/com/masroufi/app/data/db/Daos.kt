@@ -13,10 +13,10 @@ import java.time.LocalDate
 
 data class PocketBalance(val pocketId: Long, val balance: Long)
 
-// Opening + received + adjustments (signed) - spent - every fee - moved out + moved in. Round-ups are not deducted: the
+// Opening + received + adjustments and debts (signed) - spent - every fee - moved out + moved in. Round-ups are not deducted: the
 // jar is not a pocket.
 private const val BALANCE_EXPR = """p.openingBalance
-    + COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.pocketId = p.id AND e.kind IN ('RECEIVED', 'ADJUST')), 0)
+    + COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.pocketId = p.id AND e.kind IN ('RECEIVED', 'ADJUST', 'DEBT')), 0)
     - COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.pocketId = p.id AND e.kind = 'SPENT'), 0)
     - COALESCE((SELECT SUM(e.fee) FROM entry e WHERE e.pocketId = p.id), 0)
     - COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.pocketId = p.id AND e.kind = 'MOVED'), 0)

@@ -13,6 +13,7 @@ import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.TicketStatus
 import com.masroufi.app.entitlements.DebugEntitlements
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -128,5 +129,29 @@ class PaydayRitualRepositoryTest {
         f.ritual.apply(1_000_000, JarShare.Percent(5))
         assertEquals("today already punched: the ticket stays", 1_600L, db.dayTicketDao().forDate(today)?.amount)
         assertEquals(50_000L, db.jarDao().totalNow(Pot.JAR))
+    }
+
+    @Test fun tickedDebtsAreRepaidAtApplyTime() = runTest {
+        setUp()
+        val mama = f.people.addPerson("ماما")
+        val ahmed = f.people.addPerson("أحمد")
+        val owed = f.people.borrow(mama, 20_000, null)
+        f.people.lend(ahmed, 5_000, null)
+        val salary = income(1_000_000)
+        assertEquals("only what I owe is offered", listOf(owed), f.ritual.debtsIOwe().map { it.debt.id })
+
+        val view = f.ritual.preview(1_000_000, JarShare.Percent(10), setOf(owed))
+        assertEquals(listOf(20_000L, 830_000L), listOf(view.debts, view.forTickets))
+        assertEquals("unticked: nothing", 0L, f.ritual.preview(1_000_000, JarShare.Percent(10)).debts)
+
+        val failed = runCatching { f.ritual.apply(1_000_000, JarShare.Percent(10), salary, setOf(owed), null) }.exceptionOrNull()
+        assertTrue("a pocket is needed", failed is IllegalArgumentException)
+        assertFalse("nothing was repaid", checkNotNull(db.peopleDao().debtById(owed)).settled)
+
+        f.ritual.apply(1_000_000, JarShare.Percent(10), salary, setOf(owed), cash)
+        assertTrue(checkNotNull(db.peopleDao().debtById(owed)).settled)
+        assertEquals("the salary in, the debt out", 1_080_000L, db.pocketDao().balanceOf(cash))
+        assertEquals(setOf(EntryKind.RECEIVED, EntryKind.DEBT), db.entryDao().forDay(0, Long.MAX_VALUE).map { it.kind }.toSet())
+        assertTrue("the loan I gave stays open", f.people.observeTotals().first().theyOwe == 5_000L)
     }
 }

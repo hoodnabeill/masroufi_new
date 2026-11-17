@@ -241,6 +241,7 @@
     <string name="roll_entry_income">Money in</string>
     <string name="roll_entry_salary">Salary arrived</string>
     <string name="roll_entry_adjust">Balance adjustment</string>
+    <string name="roll_entry_debt">Loan</string>
     <string name="roll_entry_roundup">+%1$s change</string>
     <string name="roll_entry_fee">Fee %1$s</string>
     <string name="roll_entry_title_note">%1$s · %2$s</string>

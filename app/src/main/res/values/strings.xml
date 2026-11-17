@@ -241,6 +241,7 @@
     <string name="roll_entry_income">جالك فلوس</string>
     <string name="roll_entry_salary">المرتب نزل</string>
     <string name="roll_entry_adjust">تسوية رصيد</string>
+    <string name="roll_entry_debt">سلفة</string>
     <string name="roll_entry_roundup">+%1$s فكة</string>
     <string name="roll_entry_fee">رسوم %1$s</string>
     <string name="roll_entry_title_note">%1$s · %2$s</string>

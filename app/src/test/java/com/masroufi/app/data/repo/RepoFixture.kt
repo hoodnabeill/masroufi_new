@@ -26,7 +26,7 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
         db.stampDao(), settings, clock,
     )
-    val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), tickets, settings, plus, clock)
+    val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), db.peopleDao(), tickets, settings, plus, clock)
     val home = HomeRepository(
         db.pocketDao(), db.entryDao(), db.categoryDao(), db.dayTicketDao(), db.jarDao(), db.proverbDao(), db.recurringDao(),
         settings, clock,
@@ -37,8 +37,11 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val jar = JarRepository(db, db.jarDao(), db.goalDao(), settings, clock)
     val seasons = SeasonRepository(db, db.seasonDao(), db.jarDao(), clock)
     val subscriptions = SubscriptionRepository(db.recurringDao(), db.dayTicketDao(), clock)
+    val people = PeopleRepository(db, db.peopleDao(), db.dutyDao(), entries, clock)
+    val duty = DutyRepository(db, db.dutyDao(), db.peopleDao(), clock)
+    val gameyas = GameyaRepository(db, db.gameyaDao(), recurring, plus, clock)
     val ritual = PaydayRitualRepository(
-        db.entryDao(), db.pocketDao(), db.recurringDao(), db.dayTicketDao(), tickets, jar, envelopes, settings, clock,
+        db.entryDao(), db.pocketDao(), db.recurringDao(), db.dayTicketDao(), tickets, jar, envelopes, people, settings, clock,
     )
     val roll = RollRepository(db.entryDao(), db.dayTicketDao(), clock)
     val pockets = PocketRepository(db, db.pocketDao(), db.entryDao(), db.recurringDao(), entries, clock)

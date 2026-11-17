@@ -1,18 +1,24 @@
 package com.masroufi.app.data.repo
 
 import androidx.room.withTransaction
+import com.masroufi.app.data.db.DebtDirection
+import com.masroufi.app.data.db.DebtEntity
 import com.masroufi.app.data.db.EntryDao
 import com.masroufi.app.data.db.EntryEntity
 import com.masroufi.app.data.db.JarDao
 import com.masroufi.app.data.db.JarMovementEntity
 import com.masroufi.app.data.db.JarSource
+import com.masroufi.app.data.db.PeopleDao
+import com.masroufi.app.data.db.PersonEntity
 import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.db.Pot
 import com.masroufi.app.data.db.RecurringDao
+import com.masroufi.app.data.db.RecurringKind
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.roundUp
+import com.masroufi.app.domain.sharedGroupName
 import com.masroufi.app.entitlements.Entitlements
 import java.time.Clock
 import java.time.LocalDate
@@ -33,9 +39,13 @@ data class NewEntry(
     val fee: Long = 0,
     /** False: no round-up for this entry even while round-ups are on (the add sheet's toggle). */
     val roundUp: Boolean = true,
+    /** DEBT entries: the loan, borrow or repayment this moves money for. */
+    val debtId: Long? = null,
 ) {
     init {
-        require(if (kind == EntryKind.ADJUST) amount != 0L else amount > 0) { "amount must be > 0 (an adjustment: != 0)" }
+        require(if (kind == EntryKind.ADJUST || kind == EntryKind.DEBT) amount != 0L else amount > 0) {
+            "amount must be > 0 (an adjustment or a debt: != 0)"
+        }
         require(fee >= 0) { "fee must be >= 0" }
         require(kind != EntryKind.MOVED || (toPocketId != null && toPocketId != pocketId)) {
             "a move needs a different target pocket"
@@ -52,6 +62,7 @@ class EntryRepository @Inject constructor(
     private val pocketDao: PocketDao,
     private val jarDao: JarDao,
     private val recurringDao: RecurringDao,
+    private val peopleDao: PeopleDao,
     private val tickets: TicketRepository,
     private val settings: SettingsStore,
     private val entitlements: Entitlements,
@@ -70,6 +81,7 @@ class EntryRepository @Inject constructor(
             val id = entryDao.insert(fresh.with(entry, rounded, now))
             if (rounded > 0) jarDao.insert(roundUpMovement(id, rounded, now))
             markBill(entry)
+            createShareDebt(entry)
             tickets.recalcDay(clock.dayOf(entry.happenedAt))
             id
         }
@@ -95,6 +107,10 @@ class EntryRepository @Inject constructor(
                 releaseBill(old)
                 markBill(entry)
             }
+            if (old.recurringId != entry.recurringId || old.amount != entry.amount || clock.dayOf(old.happenedAt) != clock.dayOf(entry.happenedAt)) {
+                releaseShareDebt(old)
+                createShareDebt(entry)
+            }
             val oldDay = clock.dayOf(old.happenedAt)
             val newDay = clock.dayOf(entry.happenedAt)
             tickets.recalcDay(newDay)
@@ -108,6 +124,7 @@ class EntryRepository @Inject constructor(
             jarDao.forEntry(id).filter { it.source == JarSource.ROUND_UP }.forEach { jarDao.delete(it.id) }
             entryDao.delete(id)
             releaseBill(old)
+            releaseShareDebt(old)
             tickets.recalcDay(clock.dayOf(old.happenedAt))
         }
     }
@@ -139,6 +156,30 @@ class EntryRepository @Inject constructor(
         recurringDao.update(item.copy(nextDue = item.shiftedDue(-1), updatedAt = clock.millis()))
     }
 
+    /** Decision 4: a payment of a subscription shared with N people (the user included) is one debt "ليك" for the others' total. Caller holds the transaction. */
+    private suspend fun createShareDebt(entry: NewEntry) {
+        if (entry.kind != EntryKind.SPENT) return
+        val item = entry.recurringId?.let { recurringDao.byId(it) } ?: return
+        if (item.kind != RecurringKind.SUBSCRIPTION || item.sharedWith < 2) return
+        val name = sharedGroupName(item.name, item.sharedWith - 1)
+        val person = peopleDao.personByName(name) ?: PersonEntity(name = name, updatedAt = clock.millis()).let { it.copy(id = peopleDao.insertPerson(it)) }
+        peopleDao.insertDebt(
+            DebtEntity(
+                personId = person.id, direction = DebtDirection.THEY_OWE, amount = entry.amount - entry.amount / item.sharedWith,
+                reason = item.name, date = clock.dayOf(entry.happenedAt), sourceRecurringId = item.id,
+            ),
+        )
+    }
+
+    /** The payment goes: the debt it created goes with it while still unsettled. Caller holds the transaction. */
+    private suspend fun releaseShareDebt(old: EntryEntity) {
+        if (old.kind != EntryKind.SPENT) return
+        val item = old.recurringId?.let { recurringDao.byId(it) } ?: return
+        if (item.kind != RecurringKind.SUBSCRIPTION || item.sharedWith < 2) return
+        val others = old.amount - old.amount / item.sharedWith
+        peopleDao.shareDebt(item.id, clock.dayOf(old.happenedAt), others)?.let { peopleDao.deleteDebt(it.id) }
+    }
+
     private fun requireNotFuture(entry: NewEntry) =
         require(!clock.dayOf(entry.happenedAt).isAfter(LocalDate.now(clock))) { "an entry cannot be dated after today" }
 
@@ -160,6 +201,7 @@ class EntryRepository @Inject constructor(
         happenedAt = e.happenedAt,
         recurringId = e.recurringId,
         fee = e.fee,
+        debtId = e.debtId,
         roundUp = roundUp,
         updatedAt = now,
     )

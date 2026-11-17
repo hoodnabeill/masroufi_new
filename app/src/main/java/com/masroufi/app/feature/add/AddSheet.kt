@@ -276,7 +276,7 @@ private fun liveLine(state: AddUiState): AnnotatedString = when (state.form.type
         val to = state.toPocket
         if (from != null && to != null && state.transferValid) AnnotatedString(stringResource(R.string.add_transfer_line, from.name, to.name)) else null
     }
-    EntryKind.ADJUST -> null
+    EntryKind.ADJUST, EntryKind.DEBT -> null
 } ?: AnnotatedString("")
 
 /** [line] with the last [part] in [style]. */
