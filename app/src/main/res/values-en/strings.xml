@@ -300,7 +300,7 @@
     <string name="pocket_recent_title">Latest moves</string>
     <string name="pocket_recent_all">The whole roll</string>
     <string name="pocket_recent_empty">No moves in this pocket yet.</string>
-    <string name="pocket_counts_title">Counts in today's ticket</string>
+    <string name="pocket_counts_title">Counts in today\'s ticket</string>
     <string name="pocket_counts_caption">Turn it off if this money is set aside for something</string>
     <string name="pocket_low_title">Warn me if the balance drops below %1$s</string>
     <string name="pocket_low_caption">So you are not surprised when you pay</string>
