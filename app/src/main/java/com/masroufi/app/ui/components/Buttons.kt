@@ -8,7 +8,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -26,11 +28,14 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
+import com.masroufi.app.ui.icons.TzIcon
+import com.masroufi.app.ui.icons.TzIconDef
 import com.masroufi.app.ui.motion.LocalReduceMotion
 import com.masroufi.app.ui.motion.PressScale
 import com.masroufi.app.ui.motion.TzSpring
@@ -45,6 +50,7 @@ private val Pill = RoundedCornerShape(percent = 50)
  * Yellow pill. Disabled keeps the yellow at 40% and stays tappable: a tap shakes 6 dp twice and fires Reject
  * (05-MOTION "Buttons and taps"); [onClick] is not called. Pressed: scale 0.97 and brightness -6%.
  * Fires no haptic when enabled: the caller fires the action's own (Confirm, Heavy...), so there is never two.
+ * [onDisabledClick] runs on a disabled tap (to pulse the missing field). [icon] sits before the label, 22 dp, gap 10.
  */
 @Composable
 fun PrimaryButton(
@@ -53,6 +59,9 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     height: Dp = 58.dp,
+    textStyle: TextStyle = TzType.button,
+    icon: TzIconDef? = null,
+    onDisabledClick: () -> Unit = {},
 ) {
     val haptics = LocalHaptics.current
     val reduceMotion = LocalReduceMotion.current
@@ -78,6 +87,7 @@ fun PrimaryButton(
                     onClick()
                 } else {
                     haptics.perform(HapticLevel.Reject)
+                    onDisabledClick()
                     if (!reduceMotion) scope.launch {
                         shake.snapTo(0f)
                         shake.animateTo(0f, keyframes {
@@ -94,7 +104,10 @@ fun PrimaryButton(
             .padding(horizontal = 28.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, style = TzType.button.copy(color = Tz.night))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) TzIcon(icon, 22.dp, null, tint = Tz.night, filled = false)
+            Text(text, style = textStyle.copy(color = Tz.night))
+        }
     }
 }
 

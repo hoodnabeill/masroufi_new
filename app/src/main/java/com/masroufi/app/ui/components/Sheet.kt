@@ -28,7 +28,7 @@ import com.masroufi.app.ui.theme.TzRadius
  * drawn inside the sheet content along the two 32 dp corners, so it moves with the sheet. Pass [sheetState] to hide
  * it with the exit animation. M3 supplies finger tracking and fling dismissal (its own spring, not [TzSpring.Sheet]).
  */
-// shortcut: no rise-from-the-+ and no 0.96 scale of the screen behind, and M3's dismiss spring instead of TzSpring.Sheet; Phase 3 (add sheet) builds those.
+// shortcut: the sheet rises from the bottom edge (not from the +) with M3's spring instead of TzSpring.Sheet; the 0.96 scale of the screen behind lives in AppRoot (add sheet).
 @Composable
 fun TzSheet(
     onDismiss: () -> Unit,

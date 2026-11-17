@@ -40,6 +40,7 @@ import com.masroufi.app.ui.theme.TzType
  * Surface track, Line border, yellow thumb sliding with Snappy, Lalezar 17. Geometry from Envelopes.dc.html
  * (48 dp track, 4 dp thumb inset, thumb radius 20); AddPunch.dc.html uses a 44 dp Night track, the brief's surface
  * track wins here. Cells are the full 48 dp tall; the inset lives on the thumb only. Ticks only on a change.
+ * [compact] is the add sheet's switch (AddPunch.dc.html): 44 dp Night track with no border, thumb radius 18, Lalezar 16.
  */
 @Composable
 fun Segmented(
@@ -47,19 +48,20 @@ fun Segmented(
     selected: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     if (options.isEmpty()) return
     val haptics = LocalHaptics.current
     val sign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
     val position = animateFloatAsState(selected.toFloat(), motionSpec(TzSpring.Snappy), label = "segmentedThumb")
-    val track = RoundedCornerShape(24.dp)
+    val track = RoundedCornerShape(if (compact) 22.dp else 24.dp)
     Box(
         modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(if (compact) 44.dp else 48.dp)
             .clip(track)
-            .background(Tz.surface)
-            .border(1.dp, Tz.line, track)
+            .background(if (compact) Tz.night else Tz.surface)
+            .then(if (compact) Modifier else Modifier.border(1.dp, Tz.line, track))
             .selectableGroup(),
     ) {
         Box(
@@ -68,7 +70,7 @@ fun Segmented(
                 .fillMaxHeight()
                 .graphicsLayer { translationX = position.value * size.width * sign }
                 .padding(4.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(if (compact) 18.dp else 20.dp))
                 .background(Tz.yellow),
         )
         Row(Modifier.fillMaxSize()) {
@@ -92,7 +94,7 @@ fun Segmented(
                     Text(
                         label,
                         Modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy),
-                        style = TzType.button.copy(fontSize = 17.sp, color = color),
+                        style = TzType.button.copy(fontSize = if (compact) 16.sp else 17.sp, color = color),
                     )
                 }
             }

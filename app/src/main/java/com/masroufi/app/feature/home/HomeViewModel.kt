@@ -29,10 +29,13 @@ import com.masroufi.app.domain.parseQuickLog
 import com.masroufi.app.domain.projectedAtPayday
 import com.masroufi.app.domain.weekStart
 import com.masroufi.app.feature.add.AddPrefill
+import com.masroufi.app.feature.add.FeedbackBus
 import com.masroufi.app.feature.add.Pending
 import com.masroufi.app.feature.add.PendingPunches
+import com.masroufi.app.feature.add.PunchFeedback
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -101,6 +104,7 @@ sealed interface HomeUiState {
 private const val TAG = "Home"
 private const val DOUBLE_TAP_MS = 400L
 private const val PENDING_CATCH_UP_MS = 2_000L
+private const val FEEDBACK_MS = 3_000L
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -112,11 +116,17 @@ class HomeViewModel @Inject constructor(
     private val pendingPunches: PendingPunches,
     @ProcessLifecycle private val processLifecycle: Lifecycle,
     private val clock: Clock,
+    feedbackBus: FeedbackBus,
 ) : ViewModel() {
     private val failure = MutableStateFlow<Throwable?>(null)
     private val _saveFailed = MutableStateFlow(false)
     /** The last punch failed and was rolled back ("ماتسجّلتش. جرّب تاني."); cleared by the next punch. */
     val saveFailed: StateFlow<Boolean> = _saveFailed.asStateFlow()
+
+    private val _feedback = MutableStateFlow<PunchFeedback.Saved?>(null)
+    /** The add sheet's last punch, shown under the ticket for 3 s. */
+    val feedback: StateFlow<PunchFeedback.Saved?> = _feedback.asStateFlow()
+    private var feedbackJob: Job? = null
 
     private val prefills = Channel<AddPrefill>(Channel.BUFFERED)
     /** The quick log could not log on its own: open the add sheet with this. */
@@ -138,7 +148,11 @@ class HomeViewModel @Inject constructor(
         when {
             f != null -> HomeUiState.Error
             d == null || row == null -> HomeUiState.Loading
-            else -> homeUi(d, pending, LocalTime.now(clock).hour)
+            else -> {
+                // The add sheet's placeholders stop counting once this row holds them; then they can go.
+                pendingPunches.prune(row.entryCount)
+                homeUi(d, pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour)
+            }
         }
     }
         .conflate()
@@ -151,6 +165,29 @@ class HomeViewModel @Inject constructor(
     init {
         print()
         processLifecycle.addObserver(onStart)
+        viewModelScope.launch {
+            feedbackBus.events.collect { f ->
+                when (f) {
+                    PunchFeedback.Failed -> {
+                        feedbackJob?.cancel()
+                        _feedback.value = null
+                        _saveFailed.value = true
+                    }
+                    is PunchFeedback.Saved -> {
+                        _saveFailed.value = false
+                        feedbackJob?.cancel()
+                        feedbackJob = launch {
+                            _feedback.value = f
+                            try {
+                                delay(FEEDBACK_MS)
+                            } finally {
+                                if (_feedback.value === f) _feedback.value = null
+                            }
+                        }
+                    }
+                }
+            }
+        }
         viewModelScope.launch {
             while (true) {
                 val midnight = LocalDate.now(clock).plusDays(1).atStartOfDay(clock.zone).toInstant().toEpochMilli()

@@ -31,6 +31,8 @@ data class NewEntry(
     val happenedAt: Long,
     val recurringId: Long? = null,
     val fee: Long = 0,
+    /** False: no round-up for this entry even while round-ups are on (the add sheet's toggle). */
+    val roundUp: Boolean = true,
 ) {
     init {
         require(amount > 0) { "amount must be > 0" }
@@ -143,7 +145,7 @@ class EntryRepository @Inject constructor(
 
     /** Only a spend that punches the ticket rounds up (a move's fee punches but never rounds up). Caller holds the transaction. */
     private suspend fun qualifies(entry: NewEntry): Boolean =
-        entry.kind == EntryKind.SPENT && entry.recurringId == null && pocketDao.byId(entry.pocketId)?.punchesTicket == true
+        entry.roundUp && entry.kind == EntryKind.SPENT && entry.recurringId == null && pocketDao.byId(entry.pocketId)?.punchesTicket == true
 
     private fun EntryEntity.with(e: NewEntry, roundUp: Long, now: Long) = copy(
         kind = e.kind,

@@ -25,6 +25,7 @@ import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.feature.add.AddPrefill
+import com.masroufi.app.feature.add.FeedbackBus
 import com.masroufi.app.feature.add.Pending
 import com.masroufi.app.feature.add.PendingPunches
 import kotlinx.coroutines.CoroutineScope
@@ -99,7 +100,9 @@ class HomeViewModelTest {
     private fun newVm(): HomeViewModel {
         val factory = viewModelFactory {
             initializer {
-                HomeViewModel(f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock)
+                HomeViewModel(
+                    f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, FeedbackBus(),
+                )
             }
         }
         vm = ViewModelProvider.create(store, factory)[HomeViewModel::class]

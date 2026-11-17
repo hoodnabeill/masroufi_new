@@ -3,6 +3,7 @@ package com.masroufi.app.ui
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,18 +12,17 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
@@ -40,10 +40,10 @@ import com.masroufi.app.R
 import com.masroufi.app.data.repo.DebugSampleData
 import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.feature.add.AddPrefill
+import com.masroufi.app.feature.add.AddSheet
 import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.placeholder.TabPlaceholder
-import com.masroufi.app.ui.components.TzSheet
 import com.masroufi.app.ui.components.TzTab
 import com.masroufi.app.ui.components.TzTabBar
 import com.masroufi.app.ui.motion.LocalReduceMotion
@@ -111,7 +111,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
         val entry by nav.currentBackStackEntryAsState()
         val current = entry?.destination
         var addSheetOpen by rememberSaveable { mutableStateOf(false) }
-        // What the quick log hands to the add sheet; null for the + button. Task 18's sheet reads it.
+        // What the quick log hands to the add sheet; null for the + button.
         var addPrefill by remember { mutableStateOf<AddPrefill?>(null) }
         fun openAddSheet(prefill: AddPrefill?) {
             addPrefill = prefill
@@ -122,6 +122,8 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
         val sign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) 1 else -1
         val move = TzSpring.Move.spec<IntOffset>() // reduce motion never slides, so no tween fallback
         val fade = tween<Float>(if (reduce) 120 else 140)
+        // 05-MOTION "Anything -> add sheet": the screen behind scales to 0.96 (the sheet's scrim dims it).
+        val behind by animateFloatAsState(if (addSheetOpen && !reduce) 0.96f else 1f, TzSpring.Sheet.spec(), label = "behindSheet")
 
         fun AnimatedContentTransitionScope<NavBackStackEntry>.pushedIn(): EnterTransition =
             if (reduce) fadeIn(tween(120)) else slideInHorizontally(move) { sign * it }
@@ -133,6 +135,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
             onTab = nav::switchTab,
             onAdd = { openAddSheet(null) },
             showTabBar = current.tab() != null,
+            modifier = Modifier.graphicsLayer { scaleX = behind; scaleY = behind },
         ) {
             NavHost(
                 nav,
@@ -158,10 +161,6 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                 composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }) }
             }
         }
-        if (addSheetOpen) {
-            TzSheet(onDismiss = { addSheetOpen = false }) {
-                key(addPrefill) { Box(Modifier.height(200.dp)) } // Task 18 replaces this and reads addPrefill
-            }
-        }
+        if (addSheetOpen) AddSheet(addPrefill, onDismiss = { addSheetOpen = false })
     }
 }

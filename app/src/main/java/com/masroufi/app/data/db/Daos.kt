@@ -49,6 +49,16 @@ interface EntryDao {
     @Query("DELETE FROM entry WHERE id = :id") suspend fun delete(id: Long)
     @Query("SELECT * FROM entry WHERE id = :id") suspend fun byId(id: Long): EntryEntity?
 
+    /** Categories of SPENT entries, the most recently used first. */
+    @Query(
+        """SELECT categoryId FROM entry WHERE kind = 'SPENT' AND categoryId IS NOT NULL
+        GROUP BY categoryId ORDER BY MAX(happenedAt) DESC"""
+    )
+    suspend fun categoriesByLastUse(): List<Long>
+
+    /** The pocket of the most recent entry, if any. */
+    @Query("SELECT pocketId FROM entry ORDER BY happenedAt DESC, id DESC LIMIT 1") suspend fun latestPocketId(): Long?
+
     /** Emits on every entry change; Home uses it to re-read today. */
     @Query("SELECT COUNT(*) FROM entry") fun countFlow(): Flow<Int>
 

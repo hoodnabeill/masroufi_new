@@ -67,6 +67,7 @@ import com.masroufi.app.core.formatDayDate
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.domain.ProverbCatalog
+import com.masroufi.app.feature.add.PunchFeedback
 import com.masroufi.app.ui.components.TzCard
 import com.masroufi.app.ui.components.TzProgressBar
 import com.masroufi.app.ui.haptics.HapticLevel
@@ -78,6 +79,7 @@ import com.masroufi.app.ui.motion.PressScale
 import com.masroufi.app.ui.motion.pressScale
 import com.masroufi.app.ui.paper.ProverbCard
 import com.masroufi.app.ui.paper.Qersh
+import com.masroufi.app.ui.paper.QershBubble
 import com.masroufi.app.ui.paper.QershMood
 import com.masroufi.app.ui.paper.color
 import com.masroufi.app.ui.theme.Tz
@@ -249,6 +251,23 @@ internal fun SaveFailedLine() {
         color = Tz.carnelianText,
         modifier = Modifier.padding(horizontal = 4.dp).semantics { liveRegion = LiveRegionMode.Polite },
     )
+}
+
+/** After a punch from the add sheet: the saved line, and Qersh's bubble on the day's first hole (Home clears both after 3 s). */
+@Composable
+internal fun PunchFeedbackLines(f: PunchFeedback.Saved, spread: Boolean) {
+    Column(
+        Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        val text = when {
+            f.left >= 0 -> stringResource(R.string.home_punch_saved, formatPounds(f.left))
+            spread -> stringResource(R.string.home_punch_over, formatPounds(-f.left))
+            else -> stringResource(R.string.home_punch_over_last, formatPounds(-f.left))
+        }
+        Text(text, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text, modifier = Modifier.padding(horizontal = 4.dp))
+        if (f.firstOfDay) QershBubble(stringResource(R.string.home_first_punch))
+    }
 }
 
 @Composable

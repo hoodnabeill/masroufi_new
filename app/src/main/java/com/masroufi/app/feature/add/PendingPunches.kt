@@ -8,8 +8,11 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** A punch shown on the ticket before storage has it; [punched] is in piastres. */
-data class Pending(val id: Long, val punched: Long)
+/**
+ * A punch shown on the ticket before storage has it; [punched] is in piastres. [expectedHoles] is today's stored hole
+ * count once it is stored: Home stops counting it from then on (Int.MAX_VALUE: count it until it is removed).
+ */
+data class Pending(val id: Long, val punched: Long, val expectedHoles: Int = Int.MAX_VALUE)
 
 /** Optimistic punches: Home adds them to today's spent and holes until the stored row has them. */
 @Singleton
@@ -26,4 +29,9 @@ class PendingPunches @Inject constructor() {
     }
 
     fun remove(id: Long) = state.update { list -> list.filterNot { it.id == id } }
+
+    /** Drops the punches a stored row with [storedHoles] holes already shows. */
+    fun prune(storedHoles: Int) {
+        if (state.value.any { it.expectedHoles <= storedHoles }) state.update { list -> list.filter { it.expectedHoles > storedHoles } }
+    }
 }
