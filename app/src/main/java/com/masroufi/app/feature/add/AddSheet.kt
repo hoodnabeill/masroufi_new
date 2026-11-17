@@ -60,6 +60,7 @@ import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.ui.components.Odometer
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.Segmented
+import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzRow
 import com.masroufi.app.ui.components.TzSheet
 import com.masroufi.app.ui.components.TzToggle
@@ -88,6 +89,8 @@ interface AddSheetActions {
     fun selectToPocket(id: Long)
     fun setNote(text: String)
     fun setRoundUp(on: Boolean)
+    /** Edit mode's "امسحها". */
+    fun delete() {}
 }
 
 private val Types = listOf(EntryKind.SPENT, EntryKind.RECEIVED, EntryKind.MOVED)
@@ -161,6 +164,7 @@ fun ColumnScope.AddSheetContent(state: AddUiState, actions: AddSheetActions, onC
             text = stringResource(
                 when {
                     state.amount <= 0 -> R.string.add_amount_missing
+                    f.edit != null -> R.string.add_save_edit
                     f.type == EntryKind.RECEIVED -> R.string.add_income
                     f.type == EntryKind.MOVED -> R.string.add_transfer
                     else -> R.string.add_punch
@@ -174,6 +178,18 @@ fun ColumnScope.AddSheetContent(state: AddUiState, actions: AddSheetActions, onC
             icon = TzIcons.punch.takeIf { f.type == EntryKind.SPENT && state.amount > 0 },
             onDisabledClick = { pulseMissing() },
         )
+        if (f.edit != null) {
+            val haptics = LocalHaptics.current
+            TextLink(
+                stringResource(R.string.add_delete),
+                {
+                    haptics.perform(HapticLevel.Tap)
+                    actions.delete()
+                    onClose()
+                },
+                Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
     }
 
     picking?.let { slot ->

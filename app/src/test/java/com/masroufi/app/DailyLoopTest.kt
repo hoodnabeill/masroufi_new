@@ -34,6 +34,7 @@ import com.masroufi.app.feature.close.TearState
 import com.masroufi.app.feature.home.HomeUiState
 import com.masroufi.app.feature.home.HomeViewModel
 import com.masroufi.app.feature.proverb.ProverbRewardUi
+import com.masroufi.app.feature.roll.PendingDeletes
 import com.masroufi.app.feature.proverb.ProverbRewardViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -120,7 +121,7 @@ class DailyLoopTest {
                 initializer {
                     HomeViewModel(
                         f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, bus,
-                        f.settings, f.onboarding,
+                        f.settings, f.onboarding, PendingDeletes(f.entries, io),
                     )
                 }
             },
@@ -130,7 +131,7 @@ class DailyLoopTest {
             store,
             viewModelFactory {
                 initializer {
-                    AddViewModel(f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, bus, clock)
+                    AddViewModel(f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, PendingDeletes(f.entries, io), bus, clock)
                 }
             },
         )[AddViewModel::class]

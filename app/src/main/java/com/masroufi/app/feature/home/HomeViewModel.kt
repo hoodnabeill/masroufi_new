@@ -32,6 +32,8 @@ import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.FeedbackBus
 import com.masroufi.app.feature.add.Pending
 import com.masroufi.app.feature.add.PendingPunches
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.PendingDeletes
 import com.masroufi.app.feature.add.PunchFeedback
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -123,6 +125,7 @@ class HomeViewModel @Inject constructor(
     feedbackBus: FeedbackBus,
     private val settings: SettingsStore,
     private val onboarding: OnboardingRepository,
+    private val pendingDeletes: PendingDeletes,
 ) : ViewModel() {
     private val failure = MutableStateFlow<Throwable?>(null)
     private val _saveFailed = MutableStateFlow(false)
@@ -149,7 +152,7 @@ class HomeViewModel @Inject constructor(
         .catch { fail(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure) { d, pending, f ->
+    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure, pendingDeletes.pending) { d, pending, f, deleted ->
         val row = d?.today
         when {
             f != null -> HomeUiState.Error
@@ -157,7 +160,7 @@ class HomeViewModel @Inject constructor(
             else -> {
                 // The add sheet's placeholders stop counting once this row holds them; then they can go.
                 pendingPunches.prune(row.entryCount)
-                homeUi(d, pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour)
+                homeUi(d.withoutDeleted(deleted.values), pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour)
             }
         }
     }
@@ -316,6 +319,18 @@ class HomeViewModel @Inject constructor(
 }
 
 /** Builds the screen from the stored data plus the punches not stored yet. Caller checks d.today != null. */
+/** Leaves out entries the roll has hidden for undo: today's spent and holes, and the spendable they took. */
+private fun HomeData.withoutDeleted(deleted: Collection<PendingDelete>): HomeData {
+    val row = today ?: return this
+    val gone = deleted.filter { it.punched > 0 }
+    if (gone.isEmpty()) return this
+    val todays = gone.filter { it.day == row.date }
+    return copy(
+        today = row.copy(spent = row.spent - todays.sumOf { it.punched }, entryCount = row.entryCount - todays.size),
+        spendable = spendable + gone.sumOf { it.punched },
+    )
+}
+
 internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int): HomeUiState.Ready {
     val row = checkNotNull(d.today)
     val today = row.date

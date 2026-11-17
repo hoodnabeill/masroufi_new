@@ -19,6 +19,7 @@ import com.masroufi.app.data.repo.RepoFixture
 import com.masroufi.app.data.repo.TestClock
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.entitlements.DebugEntitlements
+import com.masroufi.app.feature.roll.PendingDeletes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -60,6 +61,7 @@ class AddViewModelTest {
     private val store = ViewModelStore()
     private val pending = PendingPunches()
     private val bus = FeedbackBus()
+    private val deletes by lazy { PendingDeletes(f.entries, io) }
     private val plus = DebugEntitlements()
     private lateinit var db: TazkaraDatabase
     private lateinit var f: RepoFixture
@@ -92,7 +94,7 @@ class AddViewModelTest {
         val factory = viewModelFactory {
             initializer {
                 AddViewModel(
-                    f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, bus, clock,
+                    f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, deletes, bus, clock,
                 )
             }
         }
@@ -148,6 +150,23 @@ class AddViewModelTest {
         assertEquals("the hole shows before storage", listOf(2_500L), pending.pending.value.map { it.punched })
         settle("feedback") { events.isNotEmpty() }
         assertEquals(PunchFeedback.Saved(27_500, firstOfDay = true), events.single())
+    }
+
+    @Test fun editSavesInPlaceAndDeleteGoesToTheUndo() {
+        newVm()
+        val id = runBlocking { f.entries.log(NewEntry(EntryKind.SPENT, 2_500, cash, note = "فول", happenedAt = clock.millis())) }
+        val old = runBlocking { db.entryDao().byId(id)!! }
+        opened(AddPrefill(2_500, null, "فول", EntryKind.SPENT, cash, null, 0, EditTarget(id, old.happenedAt, null, 0, 2_500)))
+        settle("form loaded") { state.amount == 2_500L && state.form.edit != null }
+        vm.digit(0)
+        settle("typed") { state.amount == 25_000L }
+        assertTrue(vm.save())
+        settle("edited in place") { entries().single().amount == 25_000L }
+        assertEquals(id, entries().single().id)
+        assertTrue("an edit shows no placeholder punch", pending.pending.value.isEmpty())
+        vm.delete()
+        assertEquals(setOf(id), deletes.pending.value.keys)
+        assertEquals("nothing is written before the 5 s", 1, entries().size)
     }
 
     @Test fun transferNeedsTwoPockets() {

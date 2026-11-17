@@ -14,11 +14,14 @@ import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.repo.EntryRepository
 import com.masroufi.app.data.repo.NOTE_MAX_CHARS
 import com.masroufi.app.data.repo.NewEntry
+import com.masroufi.app.data.repo.dayOf
 import com.masroufi.app.data.repo.punchesTicket
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.TicketStatus
 import com.masroufi.app.domain.roundUp
 import com.masroufi.app.entitlements.Entitlements
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.PendingDeletes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -50,6 +53,8 @@ data class AddForm(
     /** The keypad types into [fee] (transfers only), else into [amount]. */
     val feeFocused: Boolean = false,
     val roundUpOn: Boolean = true,
+    /** Set while the sheet edits a stored entry. */
+    val edit: EditTarget? = null,
     /** Last used first, then seed order. */
     val categories: List<CategoryEntity> = emptyList(),
     /** Not archived. */
@@ -113,6 +118,7 @@ class AddViewModel @Inject constructor(
     settings: SettingsStore,
     entitlements: Entitlements,
     private val pendingPunches: PendingPunches,
+    private val pendingDeletes: PendingDeletes,
     private val feedback: FeedbackBus,
     private val clock: Clock,
 ) : ViewModel(), AddSheetActions {
@@ -142,8 +148,14 @@ class AddViewModel @Inject constructor(
         if (!keep) {
             val old = form.value
             form.value = AddForm(
+                type = prefill?.type ?: EntryKind.SPENT,
                 amount = prefill?.amount?.let(AmountInput::of) ?: AmountInput(),
                 categoryId = prefill?.categoryId,
+                pocketId = prefill?.pocketId,
+                toPocketId = prefill?.toPocketId,
+                fee = AmountInput.of(prefill?.fee ?: 0),
+                roundUpOn = prefill?.edit?.let { it.roundUp > 0 } ?: true,
+                edit = prefill?.edit,
                 note = prefill?.note.orEmpty().take(NOTE_MAX_CHARS),
                 categories = old.categories,
                 pockets = old.pockets,
@@ -191,6 +203,12 @@ class AddViewModel @Inject constructor(
     override fun setNote(text: String) = form.update { it.copy(note = text.take(NOTE_MAX_CHARS)) }
     override fun setRoundUp(on: Boolean) = form.update { it.copy(roundUpOn = on) }
 
+    /** Edit mode: the entry goes into the roll's 5 s undo; the sheet closes itself. */
+    override fun delete() {
+        val e = form.value.edit ?: return
+        pendingDeletes.schedule(PendingDelete(e.id, e.punched, clock.dayOf(e.happenedAt)))
+    }
+
     /**
      * Shows the punch at once and stores it in the background. False when the form cannot be saved or this is a second
      * tap within 400 ms. The form stays as typed until the next [open]; on failure the punch is rolled back, Home says
@@ -203,6 +221,7 @@ class AddViewModel @Inject constructor(
         if (lastSaveAt != Long.MIN_VALUE && now - lastSaveAt < DOUBLE_TAP_MS) return false
         lastSaveAt = now
         val f = s.form
+        val edit = f.edit
         val entry = NewEntry(
             kind = f.type,
             amount = s.amount,
@@ -210,10 +229,25 @@ class AddViewModel @Inject constructor(
             toPocketId = if (f.type == EntryKind.MOVED) f.toPocketId else null,
             categoryId = if (f.type == EntryKind.SPENT) f.categoryId else null,
             note = f.note.trim().ifEmpty { null },
-            happenedAt = now,
+            happenedAt = edit?.happenedAt ?: now,
+            recurringId = edit?.recurringId,
             fee = if (f.type == EntryKind.MOVED) f.fee.toPiastres() else 0,
             roundUp = f.roundUpOn,
         )
+        if (edit != null) {
+            // The roll re-reads on its own; no placeholder on Home.
+            viewModelScope.launch {
+                try {
+                    entryRepo.edit(edit.id, entry)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "edit failed", e)
+                    feedback.emit(PunchFeedback.Failed)
+                }
+            }
+            return true
+        }
         val punched = s.punched
         val holesBefore = (s.today?.entryCount ?: 0) + s.pendingHoles
         val pendingId = if (punched > 0) pendingPunches.add(Pending(0, punched, expectedHoles = holesBefore + 1)) else null

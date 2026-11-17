@@ -48,6 +48,7 @@ import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.onboarding.OnboardingScreen
 import com.masroufi.app.feature.placeholder.TabPlaceholder
 import com.masroufi.app.feature.proverb.ProverbRewardScreen
+import com.masroufi.app.feature.roll.RollScreen
 import com.masroufi.app.ui.components.TzTab
 import com.masroufi.app.ui.components.TzTabBar
 import com.masroufi.app.ui.motion.LocalReduceMotion
@@ -183,7 +184,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         onOpenAddSheet = ::openAddSheet,
                     )
                 }
-                composable<RollTab> { TabPlaceholder(R.string.tab_roll) }
+                composable<RollTab> { RollScreen(viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet) }
                 composable<PlanTab> { TabPlaceholder(R.string.tab_plan, onGallery = { nav.navigate(Gallery) }) }
                 composable<PeopleTab> { TabPlaceholder(R.string.tab_people) }
                 composable<CloseDay> {

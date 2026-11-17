@@ -40,7 +40,7 @@ fun RollFilter.matches(e: EntryRow): Boolean = when (this) {
     RollFilter.RECURRING -> e.recurringId != null
 }
 
-private val EntryRow.punched: Long get() = EntryForDay(kind, amount, roundUp, fee, countsInTicket, recurringId).punched
+internal val EntryRow.punched: Long get() = EntryForDay(kind, amount, roundUp, fee, countsInTicket, recurringId).punched
 
 /** The roll (الدفتر): calendar months (decision 1), newest first. Every Flow re-emits on entry, pocket, category or ticket changes. */
 @Singleton

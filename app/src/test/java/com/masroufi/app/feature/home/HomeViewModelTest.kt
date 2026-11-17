@@ -24,6 +24,7 @@ import com.masroufi.app.data.repo.TestClock
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.entitlements.DebugEntitlements
+import com.masroufi.app.feature.roll.PendingDeletes
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.FeedbackBus
 import com.masroufi.app.feature.add.Pending
@@ -102,6 +103,7 @@ class HomeViewModelTest {
             initializer {
                 HomeViewModel(
                     f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, FeedbackBus(), f.settings, f.onboarding,
+                    PendingDeletes(f.entries, io),
                 )
             }
         }

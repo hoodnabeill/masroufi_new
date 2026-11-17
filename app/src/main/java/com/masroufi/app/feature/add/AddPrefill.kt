@@ -1,4 +1,21 @@
 package com.masroufi.app.feature.add
 
-/** What the add sheet opens with (the quick log hands over what it could not log). Task 18 reads it. */
-data class AddPrefill(val amount: Long?, val categoryId: Long?, val note: String?)
+import com.masroufi.app.domain.EntryKind
+
+/** The stored entry the sheet edits: its id, what the form does not show, and what it took from its day's ticket. */
+data class EditTarget(val id: Long, val happenedAt: Long, val recurringId: Long?, val roundUp: Long, val punched: Long)
+
+/**
+ * What the add sheet opens with: the quick log hands over what it could not log; the roll hands over a stored entry
+ * ([edit] set, every field filled).
+ */
+data class AddPrefill(
+    val amount: Long?,
+    val categoryId: Long?,
+    val note: String?,
+    val type: EntryKind? = null,
+    val pocketId: Long? = null,
+    val toPocketId: Long? = null,
+    val fee: Long = 0,
+    val edit: EditTarget? = null,
+)
