@@ -16,6 +16,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class EnvelopeDetail(val id: Long)
 @Serializable data object NewEnvelope
 @Serializable data class EditEnvelope(val id: Long)
+@Serializable data object NewGoal
 @Serializable data object FixedCosts
 /** [id] 0 = a new fixed cost. */
 @Serializable data class FixedCostEdit(val id: Long)

@@ -51,6 +51,7 @@ import com.masroufi.app.feature.plan.EnvelopeDetailScreen
 import com.masroufi.app.feature.plan.EnvelopeFormScreen
 import com.masroufi.app.feature.plan.FixedCostFormScreen
 import com.masroufi.app.feature.plan.FixedCostsScreen
+import com.masroufi.app.feature.plan.NewGoalScreen
 import com.masroufi.app.feature.plan.PlanScreen
 import com.masroufi.app.feature.pockets.NewPocketScreen
 import com.masroufi.app.feature.pockets.PocketDetailScreen
@@ -68,6 +69,7 @@ import com.masroufi.app.ui.nav.EnvelopeDetail
 import com.masroufi.app.ui.nav.FixedCostEdit
 import com.masroufi.app.ui.nav.FixedCosts
 import com.masroufi.app.ui.nav.NewEnvelope
+import com.masroufi.app.ui.nav.NewGoal
 import com.masroufi.app.ui.nav.Subscriptions
 import com.masroufi.app.ui.nav.Gallery
 import com.masroufi.app.ui.nav.Home
@@ -112,7 +114,7 @@ private fun NavDestination?.tab(): TzTab? = when {
 }
 
 private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>() || hasRoute<Pockets>() || hasRoute<PocketDetail>() || hasRoute<NewPocket>() ||
-    hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
+    hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<NewGoal>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
     hasRoute<Subscriptions>()
 
 private fun NavController.switchTab(tab: TzTab) {
@@ -213,9 +215,12 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         onNewEnvelope = { nav.navigate(NewEnvelope) },
                         onOpenSubscriptions = { nav.navigate(Subscriptions) },
                         onOpenFixedCosts = { nav.navigate(FixedCosts) },
+                        onNewGoal = { nav.navigate(NewGoal) },
+                        onToday = { nav.switchTab(TzTab.Today) },
                         onGallery = { nav.navigate(Gallery) },
                     )
                 }
+                composable<NewGoal> { NewGoalScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 // Task 34 replaces this with the subscriptions screen.
                 composable<Subscriptions> { TabPlaceholder(R.string.subscriptions_title) }
                 composable<EnvelopeDetail> {

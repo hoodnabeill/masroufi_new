@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.BuildConfig
 import com.masroufi.app.R
@@ -36,7 +37,7 @@ import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
 
 /**
- * الخطة: the three views under one switch. Seasons and the jar are Tasks 32 and 33; until then they show a sleepy Qersh.
+ * الخطة: the three views under one switch. Seasons is Task 33; until then it shows a sleepy Qersh.
  * Debug builds keep the gallery link at the bottom.
  */
 @Composable
@@ -47,7 +48,10 @@ fun PlanScreen(
     onNewEnvelope: () -> Unit,
     onOpenSubscriptions: () -> Unit,
     onOpenFixedCosts: () -> Unit,
+    onNewGoal: () -> Unit,
+    onToday: () -> Unit,
     onGallery: () -> Unit,
+    jarViewModel: JarViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var segment by rememberSaveable { mutableIntStateOf(0) }
@@ -79,8 +83,9 @@ fun PlanScreen(
                 onMoveTip = viewModel::openMove,
                 onMoveFrom = viewModel::openMoveFrom,
             )
-            // Task 32 replaces this with the jar; Task 33 replaces the seasons one.
-            else -> Soon()
+            // Task 33 replaces the seasons one.
+            1 -> Soon()
+            else -> JarSection(jarViewModel, onNewGoal, onToday, onSeasons = { segment = 1 })
         }
         if (BuildConfig.DEBUG) TextLink("Gallery", onGallery, Modifier.align(Alignment.CenterHorizontally))
     }

@@ -37,6 +37,8 @@ data class JarView(
     val free: Long,
     /** Null until the user types a gold price. */
     val gold: GoldView?,
+    /** When the oldest movement happened (epoch millis); null for an untouched jar. */
+    val firstAt: Long? = null,
 )
 
 /**
@@ -104,6 +106,7 @@ class JarRepository @Inject constructor(
             goals = goals.map { GoalView(it, rows.earmarkedFor(goalId = it.id)) },
             free = rows.free(),
             gold = gold(total, s),
+            firstAt = rows.minOfOrNull { it.at },
         )
     }
 
