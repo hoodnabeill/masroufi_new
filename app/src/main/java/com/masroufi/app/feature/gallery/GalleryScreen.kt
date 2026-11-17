@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.masroufi.app.BuildConfig
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.ui.components.ChipStyle
@@ -118,8 +119,9 @@ private fun SampleTicket(subLine: String, holes: Int, left: Long = 15_600) {
     )
 }
 
+/** [onSampleData] (debug builds only) loads the mock's money so Home shows the 240 ticket. */
 @Composable
-fun GalleryScreen(entitlements: Entitlements) {
+fun GalleryScreen(entitlements: Entitlements, onSampleData: (() -> Unit)? = null) {
     val haptics = LocalHaptics.current
     var choice by remember { mutableIntStateOf(0) }
     var filter by remember { mutableIntStateOf(0) }
@@ -144,6 +146,9 @@ fun GalleryScreen(entitlements: Entitlements) {
         Modifier.fillMaxSize().background(Tz.night),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = top + 16.dp, bottom = bottom + 32.dp),
     ) {
+        if (BuildConfig.DEBUG && onSampleData != null) item(key = "sample") {
+            TextLink("Sample data", { confirm(onSampleData) })
+        }
         if (entitlements is DebugEntitlements) item(key = "plus") {
             val plus by entitlements.isPlus.collectAsState()
             Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {

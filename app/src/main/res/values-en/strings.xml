@@ -9,4 +9,48 @@
     <string name="paper_currency">EGP</string>
     <string name="paper_sealed">Paid</string>
     <string name="proverb_set_title">Money proverbs</string>
+    <string name="home_ticket_label">Today\'s ticket · valid for one day</string>
+    <string name="home_ticket_amount_label">You have today</string>
+    <string name="home_ticket_sub">of %1$s · spent %2$s in %3$s punches</string>
+    <string name="home_ticket_none">Nothing spent today yet</string>
+    <string name="home_ticket_over">You went over today\'s ticket by %1$s. It\'s spread over the days left.</string>
+    <string name="home_ticket_over_last">You went over today\'s ticket by %1$s.</string>
+    <string name="home_ticket_short">What you have is %1$s short of what has to be paid. Don\'t worry, we\'ll sort it out together.</string>
+    <string name="home_ticket_caption">Every entry = a hole in the ticket</string>
+    <string name="home_ticket_cd">You have %1$s EGP left today of %2$s, spent %3$s in %4$s punches</string>
+    <string name="home_stub_title">Tear it off at the end of the day</string>
+    <string name="home_stub_sub">and what\'s left goes to the jar</string>
+    <string name="home_close_day">Close the day</string>
+    <string name="home_tomorrow">Tomorrow\'s ticket: %1$s</string>
+    <string name="home_quick_label">Log by typing</string>
+    <string name="home_quick_hint">Type: 20 foul and falafel</string>
+    <string name="home_mic">Log by voice</string>
+    <string name="home_save_failed">Not saved. Try again.</string>
+    <string name="home_repeats_title">You repeat these · one tap punches</string>
+    <string name="home_week_title">Your week</string>
+    <string name="home_week_count">%1$s tickets closed under the limit</string>
+    <string name="home_week_today">Today</string>
+    <string-array name="home_week_days">
+        <item>Sat</item>
+        <item>Sun</item>
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+    </string-array>
+    <string name="home_jar_title">The jar</string>
+    <string name="home_jar_unit">EGP</string>
+    <string name="home_cycle_title">%1$s days to payday</string>
+    <string name="home_cycle_line">You have %1$s EGP. If you stay on today\'s ticket, you\'ll have about %2$s left on the %3$s.</string>
+    <string name="home_teaser_title">Today\'s proverb is locked</string>
+    <string name="home_teaser_sub">Close your day and open a new card · you have %1$s of %2$s</string>
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_greeting_payday">Payday. Congratulations.</string>
+    <string name="home_greeting_close">Almost there. %1$s days left.</string>
+    <string name="home_streak">%1$s days</string>
+    <string name="home_streak_cd">Streak: %1$s days</string>
+    <string name="home_error">Something unexpected happened. Your money and entries are safe. Close the screen and open it again.</string>
 </resources>

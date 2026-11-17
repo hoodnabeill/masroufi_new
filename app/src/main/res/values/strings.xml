@@ -9,4 +9,48 @@
     <string name="paper_currency">جنيه</string>
     <string name="paper_sealed">مدفوع</string>
     <string name="proverb_set_title">أمثال الفلوس</string>
+    <string name="home_ticket_label">تذكرة اليوم · صالحة ليوم واحد</string>
+    <string name="home_ticket_amount_label">معاك النهارده</string>
+    <string name="home_ticket_sub">من %1$s · صرفت %2$s في %3$s مرات</string>
+    <string name="home_ticket_none">لسه مصرفتش حاجة النهارده</string>
+    <string name="home_ticket_over">عدّيت تذكرة النهارده بـ %1$s. اتوزّعوا على باقي الأيام.</string>
+    <string name="home_ticket_over_last">عدّيت تذكرة النهارده بـ %1$s.</string>
+    <string name="home_ticket_short">اللي معاك أقل من اللي لازم يتدفع بـ %1$s. ولا يهمك، نرتّبها سوا.</string>
+    <string name="home_ticket_caption">كل تسجيلة = خُرم في التذكرة</string>
+    <string name="home_ticket_cd">معاك النهارده %1$s جنيه من %2$s، صرفت %3$s في %4$s مرات</string>
+    <string name="home_stub_title">اقطعها آخر اليوم</string>
+    <string name="home_stub_sub">واللي يفضل يروح الحصّالة</string>
+    <string name="home_close_day">قفّل اليوم</string>
+    <string name="home_tomorrow">تذكرة بكره: %1$s</string>
+    <string name="home_quick_label">سجّل بالكتابة</string>
+    <string name="home_quick_hint">اكتب: 20 فول وطعمية</string>
+    <string name="home_mic">سجّل بالصوت</string>
+    <string name="home_save_failed">ماتسجّلتش. جرّب تاني.</string>
+    <string name="home_repeats_title">بتتكرر معاك · دوسة واحدة تخرم</string>
+    <string name="home_week_title">أسبوعك</string>
+    <string name="home_week_count">%1$s تذاكر مقفولة تحت الحد</string>
+    <string name="home_week_today">النهارده</string>
+    <string-array name="home_week_days">
+        <item>سبت</item>
+        <item>حد</item>
+        <item>اتنين</item>
+        <item>تلات</item>
+        <item>أربع</item>
+        <item>خميس</item>
+        <item>جمعة</item>
+    </string-array>
+    <string name="home_jar_title">الحصّالة</string>
+    <string name="home_jar_unit">ج</string>
+    <string name="home_cycle_title">%1$s يوم لحد المرتب</string>
+    <string name="home_cycle_line">معاك %1$s جنيه. لو كمّلت على تذكرة اليوم، هيفضل معاك حوالي %2$s يوم %3$s.</string>
+    <string name="home_teaser_title">مثل النهارده مقفول</string>
+    <string name="home_teaser_sub">قفّل يومك وافتح كارت جديد · معاك %1$s من %2$s</string>
+    <string name="home_greeting_morning">صباح الفل</string>
+    <string name="home_greeting_afternoon">نهارك سعيد</string>
+    <string name="home_greeting_evening">مساء الخير</string>
+    <string name="home_greeting_payday">يوم القبض. مبروك.</string>
+    <string name="home_greeting_close">قرّبنا. فاضل %1$s أيام.</string>
+    <string name="home_streak">%1$s يوم</string>
+    <string name="home_streak_cd">السلسلة: %1$s يوم</string>
+    <string name="home_error">حصلت حاجة مش متوقعة. فلوسك وتسجيلاتك سليمة. اقفل الشاشة وافتحها تاني.</string>
 </resources>

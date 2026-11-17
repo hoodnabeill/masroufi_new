@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.room.Room
 import com.masroufi.app.BuildConfig
 import com.masroufi.app.core.SystemZoneClock
@@ -31,10 +33,17 @@ import javax.inject.Singleton
 @Retention(AnnotationRetention.BINARY)
 annotation class AppScope
 
+/** The app process's lifecycle (ProcessLifecycleOwner): ON_START is the app coming to the foreground. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ProcessLifecycle
+
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
     @Provides @Singleton fun clock(): Clock = SystemZoneClock()
+
+    @Provides @ProcessLifecycle fun processLifecycle(): Lifecycle = ProcessLifecycleOwner.get().lifecycle
 
     @Provides @Singleton @AppScope fun appScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 

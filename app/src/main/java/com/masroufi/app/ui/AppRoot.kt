@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -25,6 +27,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -34,8 +37,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.DebugSampleData
 import com.masroufi.app.entitlements.Entitlements
+import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.gallery.GalleryScreen
+import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.placeholder.TabPlaceholder
 import com.masroufi.app.ui.components.TzSheet
 import com.masroufi.app.ui.components.TzTab
@@ -99,12 +105,18 @@ private fun NavController.switchTab(tab: TzTab) {
 }
 
 @Composable
-fun AppRoot(entitlements: Entitlements) {
+fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
     MasroufiTheme {
         val nav = rememberNavController()
         val entry by nav.currentBackStackEntryAsState()
         val current = entry?.destination
         var addSheetOpen by rememberSaveable { mutableStateOf(false) }
+        // What the quick log hands to the add sheet; null for the + button. Task 18's sheet reads it.
+        var addPrefill by remember { mutableStateOf<AddPrefill?>(null) }
+        fun openAddSheet(prefill: AddPrefill?) {
+            addPrefill = prefill
+            addSheetOpen = true
+        }
         val reduce = LocalReduceMotion.current
         // Leading edge = start edge: right in RTL, left in LTR.
         val sign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) 1 else -1
@@ -119,7 +131,7 @@ fun AppRoot(entitlements: Entitlements) {
         AppScaffold(
             selectedTab = current.tab(),
             onTab = nav::switchTab,
-            onAdd = { addSheetOpen = true },
+            onAdd = { openAddSheet(null) },
             showTabBar = current.tab() != null,
         ) {
             NavHost(
@@ -130,18 +142,25 @@ fun AppRoot(entitlements: Entitlements) {
                 popEnterTransition = { fadeIn(fade) },
                 popExitTransition = { if (initialState.destination.isPushed()) pushedOut() else fadeOut(fade) },
             ) {
-                composable<Home> { TabPlaceholder(R.string.tab_today) } // Task 17 replaces this
+                composable<Home> {
+                    HomeScreen(
+                        viewModel = hiltViewModel(),
+                        onCloseDay = { nav.navigate(CloseDay(it)) },
+                        onOpenProverb = { nav.navigate(ProverbReward(it)) },
+                        onOpenAddSheet = ::openAddSheet,
+                    )
+                }
                 composable<RollTab> { TabPlaceholder(R.string.tab_roll) }
                 composable<PlanTab> { TabPlaceholder(R.string.tab_plan, onGallery = { nav.navigate(Gallery) }) }
                 composable<PeopleTab> { TabPlaceholder(R.string.tab_people) }
                 composable<CloseDay> { TabPlaceholder(R.string.tab_today) } // Task 19 replaces this
                 composable<ProverbReward> { TabPlaceholder(R.string.tab_today) } // Task 20 replaces this
-                composable<Gallery> { GalleryScreen(entitlements) }
+                composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }) }
             }
         }
         if (addSheetOpen) {
             TzSheet(onDismiss = { addSheetOpen = false }) {
-                Box(Modifier.height(200.dp)) // Task 18 replaces this
+                key(addPrefill) { Box(Modifier.height(200.dp)) } // Task 18 replaces this and reads addPrefill
             }
         }
     }

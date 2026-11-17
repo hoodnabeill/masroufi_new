@@ -31,6 +31,7 @@ data class HomeData(
     val today: DayTicketEntity?,
     val week: List<DayTicketEntity>,
     val jarTotal: Long,
+    val emergencyTotal: Long,
     val streak: Int,
     val collected: Int,
     val spendable: Long,
@@ -66,7 +67,7 @@ class HomeRepository @Inject constructor(
      */
     fun observeHome(): Flow<HomeData> = merge<Any>(
         ticketDao.countFlow(), entryDao.countFlow(), pocketDao.countingBalanceTotalFlow(), jarDao.total(Pot.JAR),
-        proverbDao.countFlow(), categoryDao.all(), recurringDao.all(), settings.settings,
+        jarDao.total(Pot.EMERGENCY), proverbDao.countFlow(), categoryDao.all(), recurringDao.all(), settings.settings,
     )
         .map { LocalDate.now(clock) }
         .distinctUntilChanged()
@@ -83,10 +84,11 @@ class HomeRepository @Inject constructor(
         }
         // recurring rows only trigger: unpaid bills are read below once the cycle is known.
         val settingsAndCategories = combine(settings.settings, categoryDao.all(), recurringDao.all()) { s, c, _ -> s to c }
+        val pots = combine(jarDao.total(Pot.JAR), jarDao.total(Pot.EMERGENCY), ::Pair)
         // Spendable re-emits on every entry change, which also refreshes the cycle anchor and the repeat chips.
         return combine(
-            days, jarDao.total(Pot.JAR), proverbDao.countFlow(), pocketDao.countingBalanceTotalFlow(), settingsAndCategories,
-        ) { d, jar, collected, spendable, (s, categories) ->
+            days, pots, proverbDao.countFlow(), pocketDao.countingBalanceTotalFlow(), settingsAndCategories,
+        ) { d, (jar, emergency), collected, spendable, (s, categories) ->
             val names = categories.associate { it.id to it.name }
             val since = today.minusDays(REPEAT_DAYS - 1).atStartOfDay(clock.zone).toInstant().toEpochMilli()
             // The query already skips missing categories; this only covers a delete racing the read.
@@ -98,6 +100,7 @@ class HomeRepository @Inject constructor(
                 today = d.today,
                 week = d.week,
                 jarTotal = jar,
+                emergencyTotal = emergency,
                 streak = d.streak,
                 collected = collected,
                 spendable = spendable,

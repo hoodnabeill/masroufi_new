@@ -115,6 +115,9 @@ interface DayTicketDao {
 
     @Query("SELECT * FROM day_ticket ORDER BY date") suspend fun allNow(): List<DayTicketEntity>
 
+    /** Debug sample data only (re-printing today). */
+    @Query("DELETE FROM day_ticket WHERE id = :id") suspend fun delete(id: Long)
+
     @Query("SELECT * FROM day_ticket WHERE date >= :from AND date <= :to ORDER BY date")
     fun range(from: LocalDate, to: LocalDate): Flow<List<DayTicketEntity>>
 }
