@@ -41,7 +41,7 @@ sealed interface CloseDayUi {
         val tomorrowWith: Long,
         val tomorrowWithout: Long,
         val defaultDestination: LeftoverDestination,
-    )
+    ) : CloseDayUi
 }
 
 enum class TearState { Idle, Saving, Done, Failed }
