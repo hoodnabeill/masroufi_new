@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.db.EntryDao
 import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.prefs.SettingsStore
+import com.masroufi.app.data.repo.DebtWithPerson
 import com.masroufi.app.data.repo.JarRepository
 import com.masroufi.app.data.repo.JarShare
 import com.masroufi.app.data.repo.PaydayRitualRepository
@@ -29,6 +30,11 @@ data class RitualUi(
     val share: JarShare = JarShare.Percent(DEFAULT_SHARE),
     val jarTotal: Long = 0,
     val view: RitualView? = null,
+    /** Step 2: what the user owes people (loans); the step shows only when there is any. */
+    val debts: List<DebtWithPerson> = emptyList(),
+    /** The debts ticked to be repaid in full when the tickets print. */
+    val repay: Set<Long> = emptySet(),
+    val pocketId: Long? = null,
     val amountSheet: Boolean = false,
     /** Printed or skipped: the screen goes Home. */
     val finished: Boolean = false,
@@ -63,9 +69,10 @@ class PaydayRitualViewModel @Inject constructor(
                     return@launch
                 }
                 val share = JarShare.Percent(settings.current().lastJarSharePercent ?: DEFAULT_SHARE)
+                val debts = ritual.debtsIOwe()
                 _state.update {
                     it.copy(
-                        loading = false, salary = entry.amount, share = share,
+                        loading = false, salary = entry.amount, share = share, debts = debts, repay = debts.map { d -> d.debt.id }.toSet(), pocketId = entry.pocketId,
                         pocketName = pocketDao.byId(entry.pocketId)?.name.orEmpty(), jarTotal = jar.observe().first().total,
                     )
                 }
@@ -83,8 +90,8 @@ class PaydayRitualViewModel @Inject constructor(
         preview?.cancel()
         preview = viewModelScope.launch {
             val s = _state.value
-            val v = ritual.preview(s.salary, s.share)
-            _state.update { if (it.share == s.share) it.copy(view = v) else it }
+            val v = ritual.preview(s.salary, s.share, s.repay)
+            _state.update { if (it.share == s.share && it.repay == s.repay) it.copy(view = v) else it }
         }
     }
 
@@ -100,6 +107,12 @@ class PaydayRitualViewModel @Inject constructor(
         refresh()
     }
 
+    /** Tick or untick a debt of step 2; the preview recomputes what is left for the tickets. */
+    fun toggleDebt(id: Long) {
+        _state.update { it.copy(repay = if (id in it.repay) it.repay - id else it.repay + id) }
+        refresh()
+    }
+
     fun openAmount() = _state.update { it.copy(amountSheet = true) }
     fun dismissAmount() = _state.update { it.copy(amountSheet = false) }
 
@@ -110,7 +123,7 @@ class PaydayRitualViewModel @Inject constructor(
         applying = true
         viewModelScope.launch {
             try {
-                ritual.apply(s.salary, s.share, entryId)
+                ritual.apply(s.salary, s.share, entryId, s.repay, s.pocketId)
                 _state.update { it.copy(finished = true, printed = true) }
             } catch (e: CancellationException) {
                 throw e

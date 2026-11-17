@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.repo.COMMON_SUBSCRIPTIONS
+import com.masroufi.app.data.repo.PeopleRepository
 import com.masroufi.app.data.repo.RecurringRepository
 import com.masroufi.app.data.repo.SubscriptionAnswer
 import com.masroufi.app.data.repo.SubscriptionRepository
 import com.masroufi.app.data.repo.SubscriptionView
+import com.masroufi.app.domain.sharedGroupName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +48,7 @@ const val TRIAL_WARNING_DAYS = 7L
 class SubscriptionsViewModel @Inject constructor(
     private val repo: SubscriptionRepository,
     private val recurring: RecurringRepository,
+    private val people: PeopleRepository,
     private val settings: SettingsStore,
     private val clock: Clock,
 ) : ViewModel() {
@@ -67,6 +70,10 @@ class SubscriptionsViewModel @Inject constructor(
             chips = COMMON_SUBSCRIPTIONS.filter { it !in names },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SubscriptionsUi())
+
+    /** The People entry of a shared subscription's group ("{name} · N صحاب"); null until a payment created its debt. */
+    suspend fun sharedPersonId(view: SubscriptionView): Long? =
+        people.personByName(sharedGroupName(view.item.name, view.item.sharedWith - 1))?.id
 
     fun answer(id: Long, answer: SubscriptionAnswer) {
         viewModelScope.launch { repo.answer(id, answer) }

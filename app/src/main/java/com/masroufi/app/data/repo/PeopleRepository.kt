@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.masroufi.app.data.db.DebtDirection
 import com.masroufi.app.data.db.DebtEntity
 import com.masroufi.app.data.db.DutyDao
+import com.masroufi.app.data.db.EntryEntity
 import com.masroufi.app.data.db.PeopleDao
 import com.masroufi.app.data.db.PersonEntity
 import com.masroufi.app.data.db.PersonKind
@@ -104,6 +105,11 @@ class PeopleRepository @Inject constructor(
     }
 
     fun observePersons(): Flow<List<PersonEntity>> = dao.persons()
+
+    suspend fun personByName(name: String): PersonEntity? = dao.personByName(name)
+
+    /** The money moves behind a person's debts, newest first. */
+    fun observeDebtEntries(personId: Long): Flow<List<EntryEntity>> = dao.entriesOf(personId)
 
     fun observeDetail(personId: Long): Flow<PersonDetail?> =
         combine(rows(), dao.debts(), dao.tabItems()) { rows, debts, tab ->

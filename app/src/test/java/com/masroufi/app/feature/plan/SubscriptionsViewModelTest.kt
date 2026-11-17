@@ -8,6 +8,7 @@ import com.masroufi.app.data.db.RecurringEntity
 import com.masroufi.app.data.db.RecurringKind
 import com.masroufi.app.data.db.ScheduleType
 import com.masroufi.app.data.repo.SubscriptionAnswer
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -29,7 +30,7 @@ class SubscriptionsViewModelTest : PlanVmTestBase() {
 
     @Before fun open() {
         cash = runBlocking { db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, color = 0)) }
-        vm = make(SubscriptionsViewModel::class, { it.state }) { SubscriptionsViewModel(f.subscriptions, f.recurring, f.settings, clock) }
+        vm = make(SubscriptionsViewModel::class, { it.state }) { SubscriptionsViewModel(f.subscriptions, f.recurring, f.people, f.settings, clock) }
     }
 
     private fun sub(
@@ -127,5 +128,13 @@ class SubscriptionsViewModelTest : PlanVmTestBase() {
         assertEquals(4, shared.item.sharedWith)
         assertEquals(20_000L, state.rows.first { it.view.item.name == "أنغامي" }.view.yearlySaving)
         assertNotNull(state.rows.first { it.view.item.name == "أنغامي" })
+    }
+
+    @Test fun sharedPersonIsTheGroupsEntryInPeople() {
+        val netflix = sub("نتفليكس", 20_000, shared = 3)
+        val view = checkNotNull(runBlocking { f.subscriptions.observe().first() }.items.firstOrNull { it.item.id == netflix })
+        assertNull("no payment yet, no person", runBlocking { vm.sharedPersonId(view) })
+        val id = runBlocking { f.people.addPerson(com.masroufi.app.domain.sharedGroupName("نتفليكس", 2)) }
+        assertEquals(id, runBlocking { vm.sharedPersonId(view) })
     }
 }

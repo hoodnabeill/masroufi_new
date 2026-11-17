@@ -51,6 +51,7 @@ import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzProgressBar
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
+import com.masroufi.app.ui.icons.TzIcon
 import com.masroufi.app.ui.icons.TzIcons
 import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
@@ -92,8 +93,9 @@ fun PaydayRitualScreen(viewModel: PaydayRitualViewModel, onHome: () -> Unit, onF
         }
         Hero(ui.salary, ui.pocketName)
         JarStep(ui, viewModel, view)
-        // Phase 7: step 2 "سدّد اللي عليك" (people owed) goes here, FixedStep becomes number 3 and the lilac leg follows view.debts.
-        FixedStep(2, view, ui.salary, onFixedCosts)
+        // Step 2 "سدّد اللي عليك" only when the user owes someone; the fixed costs are then step 3.
+        if (ui.debts.isNotEmpty()) DebtsStep(ui, viewModel)
+        FixedStep(if (ui.debts.isNotEmpty()) 3 else 2, view, ui.salary, onFixedCosts)
         TicketCard(view)
         PrimaryButton(
             stringResource(R.string.payday_print), viewModel::print, Modifier.fillMaxWidth(), height = 60.dp,
@@ -201,6 +203,33 @@ private fun ShareChip(label: String, selected: Boolean, display: Boolean, modifi
     }
 }
 
+/** Step 2 (Payday.dc.html): a tick row per person the user owes; ticked ones are repaid in full when the tickets print. */
+@Composable
+private fun DebtsStep(ui: RitualUi, vm: PaydayRitualViewModel) {
+    val haptics = LocalHaptics.current
+    StepCard(2, stringResource(R.string.payday_step_debts)) {
+        Column {
+            ui.debts.forEach { d ->
+                val on = d.debt.id in ui.repay
+                Row(
+                    Modifier.fillMaxWidth().height(44.dp).clickable(role = Role.Checkbox) { haptics.perform(HapticLevel.Tick); vm.toggleDebt(d.debt.id) },
+                    horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val box = RoundedCornerShape(6.dp)
+                    Box(
+                        Modifier.size(22.dp).clip(box).background(if (on) Tz.yellow else Color.Transparent).border(1.5.dp, if (on) Tz.yellow else Tz.line, box),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (on) TzIcon(TzIcons.check, 14.dp, null, tint = Tz.night)
+                    }
+                    Text(d.person.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, modifier = Modifier.weight(1f), maxLines = 1)
+                    Text(formatPounds(d.debt.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun FixedStep(number: Int, view: RitualView, salary: Long, onEdit: () -> Unit) {
     StepCard(number, stringResource(R.string.payday_step_fixed), trailing = { TextLink(stringResource(R.string.payday_edit), onEdit) }) {
@@ -225,18 +254,30 @@ private fun FixedStep(number: Int, view: RitualView, salary: Long, onEdit: () ->
             TzProgressBar(
                 listOf(
                     view.jarShare / total to Tz.turquoise,
-                    view.debts / total to Tz.lilac, // 0 until Phase 7: not drawn
+                    view.debts / total to Tz.lilac, // 0 without ticked debts: not drawn
                     view.fixed / total to Tz.sky,
                     view.forTickets / total to Tz.yellow,
                 ),
                 height = 14.dp,
             )
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Legend(Tz.turquoise, stringResource(R.string.payday_leg_jar), view.jarShare, Tz.text2, Modifier.weight(1f))
-                    Legend(Tz.sky, stringResource(R.string.payday_leg_fixed), view.fixed, Tz.text2, Modifier.weight(1f))
+                if (view.debts > 0) {
+                    // The mock's two-column grid: jar and repayments, then fixed costs and tickets.
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Legend(Tz.turquoise, stringResource(R.string.payday_leg_jar), view.jarShare, Tz.text2, Modifier.weight(1f))
+                        Legend(Tz.lilac, stringResource(R.string.payday_leg_debts), view.debts, Tz.text2, Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Legend(Tz.sky, stringResource(R.string.payday_leg_fixed), view.fixed, Tz.text2, Modifier.weight(1f))
+                        Legend(Tz.yellow, stringResource(R.string.payday_leg_tickets), view.forTickets, Tz.yellow, Modifier.weight(1f), bold = true)
+                    }
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Legend(Tz.turquoise, stringResource(R.string.payday_leg_jar), view.jarShare, Tz.text2, Modifier.weight(1f))
+                        Legend(Tz.sky, stringResource(R.string.payday_leg_fixed), view.fixed, Tz.text2, Modifier.weight(1f))
+                    }
+                    Legend(Tz.yellow, stringResource(R.string.payday_leg_tickets), view.forTickets, Tz.yellow, Modifier.fillMaxWidth(), bold = true)
                 }
-                Legend(Tz.yellow, stringResource(R.string.payday_leg_tickets), view.forTickets, Tz.yellow, Modifier.fillMaxWidth(), bold = true)
             }
         }
     }

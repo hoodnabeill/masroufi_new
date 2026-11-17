@@ -97,4 +97,32 @@ class PaydayRitualViewModelTest : PlanVmTestBase() {
         assertNull(runBlocking { f.settings.current().usualSalary })
         assertEquals("not offered again", entryId, runBlocking { f.settings.current().lastRitualForEntryId })
     }
+
+    @Test fun debtsStepIsHiddenWithoutDebts() {
+        start()
+        assertTrue(state.debts.isEmpty())
+        assertEquals(0L, state.view!!.debts)
+    }
+
+    @Test fun debtsStepListsWhatIOweAndRepaysTheTickedOnes() {
+        val (mama, papa) = runBlocking {
+            f.people.addPerson("ماما") to f.people.addPerson("بابا")
+        }
+        val owedMama = runBlocking { f.people.borrow(mama, 50_000, null) }
+        val owedPapa = runBlocking { f.people.borrow(papa, 30_000, null) }
+        runBlocking { f.people.lend(papa, 10_000, null) } // what they owe me is not step 2
+        start()
+        assertEquals(setOf(owedMama, owedPapa), state.debts.map { it.debt.id }.toSet())
+        assertEquals("all ticked, as drawn", setOf(owedMama, owedPapa), state.repay)
+        assertEquals(80_000L, state.view!!.debts)
+        val ticketsWith = state.view!!.forTickets
+        vm.toggleDebt(owedPapa)
+        settle("untick") { state.view?.debts == 50_000L }
+        assertEquals(ticketsWith + 30_000, state.view!!.forTickets)
+        vm.print()
+        settle("finished") { state.finished }
+        assertTrue(runBlocking { db.peopleDao().debtById(owedMama)!!.settled })
+        assertFalse(runBlocking { db.peopleDao().debtById(owedPapa)!!.settled })
+        assertEquals("repaid out of the salary's pocket", 50_000L, -runBlocking { db.entryDao().forDay(0, Long.MAX_VALUE) }.filter { it.debtId == owedMama }.sumOf { it.amount })
+    }
 }

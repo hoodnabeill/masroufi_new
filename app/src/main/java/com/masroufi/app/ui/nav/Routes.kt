@@ -28,3 +28,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object Zakat
 /** يوم القبض: the ritual for the income [entryId]. */
 @Serializable data class PaydayRitual(val entryId: Long)
+/** A person's loans, tab and history. */
+@Serializable data class PersonDetail(val id: Long)
+/** The duty ledger (Task 38). */
+@Serializable data object DutyLedger
+/** The gameya (Task 39). */
+@Serializable data object GameyaScreen

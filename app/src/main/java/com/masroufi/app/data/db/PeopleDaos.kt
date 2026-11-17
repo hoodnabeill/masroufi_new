@@ -31,6 +31,10 @@ interface PeopleDao {
     )
     suspend fun shareDebt(recurringId: Long, date: LocalDate, amount: Long): DebtEntity?
 
+    /** The money moves of a person's debts: the loan itself and every repayment that touched a pocket. */
+    @Query("SELECT * FROM entry WHERE debtId IN (SELECT id FROM debt WHERE personId = :personId) ORDER BY happenedAt DESC, id DESC")
+    fun entriesOf(personId: Long): Flow<List<EntryEntity>>
+
     /** A deleted person's debts leave; the entries that moved money keep their record, minus the link. */
     @Query("UPDATE entry SET debtId = NULL WHERE debtId IN (SELECT id FROM debt WHERE personId = :personId)")
     suspend fun unlinkEntriesOf(personId: Long)

@@ -80,6 +80,7 @@ Decisions made during Phase 3 (owner may override):
 - Deleting a person deletes their debts, tab items and gifts; money entries stay, unlinked.
 - The gameya statement text and the shared-subscription person name are Arabic literals in data code (no Context in repositories).
 - The ritual preview does not check that the pocket covers the ticked repayments.
+- Task 37: the payday debts step lists loans only (not tab items) and ticks them all by default, as drawn; the duty ledger and gameya routes are stubs (`SoonScreen`) for Tasks 38 and 39; the reminder feedback shows when the share sheet closes (Android cannot say whether anything was sent).
 
 ## Later phases
 

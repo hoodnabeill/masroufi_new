@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.SubscriptionAnswer
 import com.masroufi.app.data.repo.SubscriptionView
@@ -65,7 +67,8 @@ import androidx.compose.ui.unit.IntSize
 
 /** الاشتراكات (Subscriptions.dc.html): monthly total, trial card, question of the month, the list by next renewal. */
 @Composable
-fun SubscriptionsScreen(viewModel: SubscriptionsViewModel, onBack: () -> Unit, onOpen: (Long) -> Unit, onNew: (String) -> Unit) {
+fun SubscriptionsScreen(viewModel: SubscriptionsViewModel, onBack: () -> Unit, onOpen: (Long) -> Unit, onNew: (String) -> Unit, onOpenPerson: (Long) -> Unit) {
+    val scope = rememberCoroutineScope()
     val s by viewModel.state.collectAsStateWithLifecycle()
     val haptics = LocalHaptics.current
     val context = LocalContext.current
@@ -91,13 +94,8 @@ fun SubscriptionsScreen(viewModel: SubscriptionsViewModel, onBack: () -> Unit, o
                 QuestionCard(s.question) { id, a -> viewModel.answer(id, a) }
                 ListCard(
                     s.rows, onOpen,
-                    onRemindFriends = { v ->
-                        val text = context.getString(
-                            R.string.subs_share_text, v.item.name, v.item.nextDue.dayOfMonth.toString(), formatPounds(v.userShare),
-                        )
-                        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
-                        context.startActivity(Intent.createChooser(send, context.getString(R.string.subs_share_chooser)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                    },
+                    // The group's People entry when it exists (what they owe, the reminder there); else the plain share text.
+                    onRemindFriends = { v -> scope.launch { viewModel.sharedPersonId(v)?.let(onOpenPerson) ?: shareReminder(context, v) } },
                 )
             }
         }
@@ -110,6 +108,12 @@ fun SubscriptionsScreen(viewModel: SubscriptionsViewModel, onBack: () -> Unit, o
             }
         }
     }
+}
+
+private fun shareReminder(context: android.content.Context, v: SubscriptionView) {
+    val text = context.getString(R.string.subs_share_text, v.item.name, v.item.nextDue.dayOfMonth.toString(), formatPounds(v.userShare))
+    val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+    context.startActivity(Intent.createChooser(send, context.getString(R.string.subs_share_chooser)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
 }
 
 /** The last common name is "something else": it opens the form with no name. */
@@ -288,7 +292,8 @@ internal fun SubscriptionRow(row: SubRowUi, onOpen: () -> Unit, onRemindFriends:
         }
         if (shared) {
             Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Tz.turquoiseDim).padding(horizontal = 12.dp, vertical = 8.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Tz.turquoiseDim).clickable(role = Role.Button, onClick = onRemindFriends)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -298,7 +303,7 @@ internal fun SubscriptionRow(row: SubRowUi, onOpen: () -> Unit, onRemindFriends:
                 Text(
                     stringResource(R.string.subs_remind_them),
                     style = TzType.label.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold), color = Tz.turquoise,
-                    modifier = Modifier.clickable(role = Role.Button, onClick = onRemindFriends).padding(start = 8.dp),
+                    modifier = Modifier.padding(start = 8.dp),
                 )
             }
         }
