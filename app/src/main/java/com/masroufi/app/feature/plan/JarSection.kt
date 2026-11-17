@@ -302,7 +302,7 @@ private fun JarSheets(ui: JarUi, vm: JarViewModel) {
 
 /** A sheet with a hero amount and the keypad; [actions] gets the typed piastres. */
 @Composable
-private fun AmountSheet(title: String, onDismiss: () -> Unit, initial: AmountInput = AmountInput(), actions: @Composable ColumnScope.(Long) -> Unit) {
+fun AmountSheet(title: String, onDismiss: () -> Unit, initial: AmountInput = AmountInput(), actions: @Composable ColumnScope.(Long) -> Unit) {
     var input by remember { mutableStateOf(initial) }
     TzSheet(onDismiss) {
         Column(

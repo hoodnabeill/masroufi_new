@@ -440,4 +440,73 @@
     <string name="goal_date_q">A date? (optional)</string>
     <string name="goal_date_none">No date</string>
     <string name="goal_date_months">In %1$d months</string>
+
+    <string name="seasons_intro">Big expenses have known dates. Get ready early instead of being surprised.</string>
+    <string name="seasons_days_hijri">In about %1$d days</string>
+    <string name="seasons_days">In %1$d days</string>
+    <string name="seasons_of">of %1$s</string>
+    <string name="seasons_per_day">EGP %1$s a day from today and you arrive comfortable.</string>
+    <string name="seasons_chip">%1$s %2$s</string>
+    <string name="seasons_when_hijri">%1$s · about %2$d days</string>
+    <string name="seasons_when">%1$s · %2$d days</string>
+    <string name="seasons_together_title">All seasons together</string>
+    <string name="seasons_together_lead">To catch %1$d you need to save about</string>
+    <string name="seasons_together_need">%1$s a month</string>
+    <string name="seasons_together_over">. That is more than what is left over now (about %1$s).</string>
+    <string name="seasons_together_ok">. That is within what you usually save.</string>
+    <string name="seasons_reorder">Order by importance</string>
+    <string name="seasons_reorder_done">Done</string>
+    <string name="seasons_up">Move %1$s up</string>
+    <string name="seasons_down">Move %1$s down</string>
+    <string name="seasons_new">New season or occasion</string>
+    <string name="seasons_add_occasion">Add an occasion</string>
+    <string name="zakat_row_title">Zakat calculator</string>
+    <string name="zakat_row_line">Zakat on money and fitr from your numbers, and you confirm the nisab.</string>
+    <string name="season_new_title">New occasion</string>
+    <string name="season_q_name">What is the occasion called?</string>
+    <string name="season_name_hint">Cousin\'s wedding</string>
+    <string name="season_q_date">When?</string>
+    <string name="season_hijri_date">%1$d %2$s, approximately</string>
+    <string name="season_day_less">One day earlier</string>
+    <string name="season_day_more">One day later</string>
+    <string name="season_q_target">How much will you need?</string>
+    <string name="season_q_items">What will it go on?</string>
+    <string name="season_item_add">Add an item</string>
+    <string name="season_item_name_hint">Item name</string>
+    <string name="season_item_save">Add</string>
+    <string name="season_item_remove">Remove %1$s</string>
+    <string name="season_items_total">Total %1$s</string>
+    <string name="season_items_as_target">Use it as the target</string>
+    <string name="season_q_saved">How much have you set aside for it?</string>
+    <string name="season_put">Put aside for this season</string>
+    <string name="season_release">Give it back to the jar</string>
+    <string name="zakat_title">Zakat calculator</string>
+    <string name="zakat_lock">Zakat on money and fitr from your numbers, with Plus.</string>
+    <string name="zakat_held">Money that has been with you a full year</string>
+    <string name="zakat_nisab">Nisab</string>
+    <string name="zakat_nisab_prompt">Type the nisab</string>
+    <string name="zakat_nisab_note">You are the one who confirms the nisab.</string>
+    <string name="zakat_result">Zakat on money %1$s</string>
+    <string name="zakat_none">No zakat on money yet</string>
+    <string name="zakat_fitr_title">Zakat al-fitr</string>
+    <string name="zakat_people">People</string>
+    <string name="zakat_per_person">Amount per person</string>
+    <string name="zakat_fitr_result">Zakat al-fitr %1$s</string>
+    <string name="zakat_people_less">One person fewer</string>
+    <string name="zakat_people_more">One person more</string>
+    <string name="zakat_save">Done</string>
+    <string-array name="hijri_months">
+        <item>Muharram</item>
+        <item>Safar</item>
+        <item>Rabi al-awwal</item>
+        <item>Rabi al-thani</item>
+        <item>Jumada al-ula</item>
+        <item>Jumada al-akhira</item>
+        <item>Rajab</item>
+        <item>Shaban</item>
+        <item>Ramadan</item>
+        <item>Shawwal</item>
+        <item>Dhu al-Qadah</item>
+        <item>Dhu al-Hijjah</item>
+    </string-array>
 </resources>

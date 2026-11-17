@@ -53,6 +53,8 @@ import com.masroufi.app.feature.plan.FixedCostFormScreen
 import com.masroufi.app.feature.plan.FixedCostsScreen
 import com.masroufi.app.feature.plan.NewGoalScreen
 import com.masroufi.app.feature.plan.PlanScreen
+import com.masroufi.app.feature.plan.SeasonDetailScreen
+import com.masroufi.app.feature.plan.ZakatScreen
 import com.masroufi.app.feature.pockets.NewPocketScreen
 import com.masroufi.app.feature.pockets.PocketDetailScreen
 import com.masroufi.app.feature.pockets.PocketsScreen
@@ -77,6 +79,8 @@ import com.masroufi.app.ui.nav.NewPocket
 import com.masroufi.app.ui.nav.Onboarding
 import com.masroufi.app.ui.nav.PeopleTab
 import com.masroufi.app.ui.nav.PlanTab
+import com.masroufi.app.ui.nav.SeasonEdit
+import com.masroufi.app.ui.nav.Zakat
 import com.masroufi.app.ui.nav.PocketDetail
 import com.masroufi.app.ui.nav.Pockets
 import com.masroufi.app.ui.nav.ProverbReward
@@ -115,7 +119,7 @@ private fun NavDestination?.tab(): TzTab? = when {
 
 private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>() || hasRoute<Pockets>() || hasRoute<PocketDetail>() || hasRoute<NewPocket>() ||
     hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<NewGoal>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
-    hasRoute<Subscriptions>()
+    hasRoute<Subscriptions>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -216,10 +220,14 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         onOpenSubscriptions = { nav.navigate(Subscriptions) },
                         onOpenFixedCosts = { nav.navigate(FixedCosts) },
                         onNewGoal = { nav.navigate(NewGoal) },
+                        onOpenSeason = { nav.navigate(SeasonEdit(it)) },
+                        onZakat = { nav.navigate(Zakat) },
                         onToday = { nav.switchTab(TzTab.Today) },
                         onGallery = { nav.navigate(Gallery) },
                     )
                 }
+                composable<SeasonEdit> { SeasonDetailScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                composable<Zakat> { ZakatScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 composable<NewGoal> { NewGoalScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 // Task 34 replaces this with the subscriptions screen.
                 composable<Subscriptions> { TabPlaceholder(R.string.subscriptions_title) }

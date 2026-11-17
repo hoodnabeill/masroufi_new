@@ -51,6 +51,8 @@ data class Settings(
     val goldPriceDate: Long? = null,
     /** The income entry the payday ritual was last offered for (offered once per income). */
     val lastRitualForEntryId: Long? = null,
+    /** The user's "most important first" order of season ids; seasons not listed follow by date. */
+    val seasonOrder: List<Long> = emptyList(),
 )
 
 @Singleton
@@ -76,6 +78,7 @@ class SettingsStore @Inject constructor(
     private val goldPriceKey = longPreferencesKey("goldPricePerGram")
     private val goldPriceDateKey = longPreferencesKey("goldPriceDate")
     private val lastRitualKey = longPreferencesKey("lastRitualForEntryId")
+    private val seasonOrderKey = stringPreferencesKey("seasonOrder")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -116,6 +119,7 @@ class SettingsStore @Inject constructor(
             if (jarSharePercent == null) it.remove(lastJarSharePercentKey) else it[lastJarSharePercentKey] = jarSharePercent
         }
     }
+    suspend fun setSeasonOrder(ids: List<Long>) { store.edit { it[seasonOrderKey] = ids.joinToString(",") } }
     suspend fun setLastRitualForEntryId(id: Long) { store.edit { it[lastRitualKey] = id } }
     suspend fun setGoldPrice(perGram: Long, epochDay: Long) {
         require(perGram > 0) { "gold price must be > 0" }
@@ -146,6 +150,7 @@ class SettingsStore @Inject constructor(
         goldPricePerGram = p[goldPriceKey],
         goldPriceDate = p[goldPriceDateKey],
         lastRitualForEntryId = p[lastRitualKey],
+        seasonOrder = p[seasonOrderKey]?.split(",")?.mapNotNull { it.toLongOrNull() } ?: emptyList(),
     )
 
     private fun encode(v: Payday) = when (v) {

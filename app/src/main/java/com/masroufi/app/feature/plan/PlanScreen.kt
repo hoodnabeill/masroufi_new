@@ -1,12 +1,10 @@
 package com.masroufi.app.feature.plan
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -31,13 +29,11 @@ import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.ui.components.Segmented
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.icons.TzIcons
-import com.masroufi.app.ui.paper.Qersh
-import com.masroufi.app.ui.paper.QershMood
 import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
 
 /**
- * الخطة: the three views under one switch. Seasons is Task 33; until then it shows a sleepy Qersh.
+ * الخطة: the three views under one switch.
  * Debug builds keep the gallery link at the bottom.
  */
 @Composable
@@ -49,9 +45,12 @@ fun PlanScreen(
     onOpenSubscriptions: () -> Unit,
     onOpenFixedCosts: () -> Unit,
     onNewGoal: () -> Unit,
+    onOpenSeason: (Long) -> Unit,
+    onZakat: () -> Unit,
     onToday: () -> Unit,
     onGallery: () -> Unit,
     jarViewModel: JarViewModel = hiltViewModel(),
+    seasonsViewModel: SeasonsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var segment by rememberSaveable { mutableIntStateOf(0) }
@@ -83,8 +82,7 @@ fun PlanScreen(
                 onMoveTip = viewModel::openMove,
                 onMoveFrom = viewModel::openMoveFrom,
             )
-            // Task 33 replaces the seasons one.
-            1 -> Soon()
+            1 -> SeasonsSection(seasonsViewModel, onOpenSeason, onNewOccasion = { onOpenSeason(0) }, onZakat = onZakat)
             else -> JarSection(jarViewModel, onNewGoal, onToday, onSeasons = { segment = 1 })
         }
         if (BuildConfig.DEBUG) TextLink("Gallery", onGallery, Modifier.align(Alignment.CenterHorizontally))
@@ -94,9 +92,4 @@ fun PlanScreen(
         is EnvelopeSheet.Move -> MoveSheet(sheet, state.cards, viewModel::confirmMove, viewModel::dismissSheet)
         null -> Unit
     }
-}
-
-@Composable
-private fun Soon() {
-    Box(Modifier.fillMaxWidth().height(240.dp), contentAlignment = Alignment.Center) { Qersh(QershMood.Sleepy, 150.dp) }
 }

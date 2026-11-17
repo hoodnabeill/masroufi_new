@@ -440,4 +440,72 @@
     <string name="goal_date_q">ميعاد؟ (اختياري)</string>
     <string name="goal_date_none">من غير ميعاد</string>
     <string name="goal_date_months">بعد %1$d شهور</string>
+
+    <string name="seasons_intro">المصاريف الكبيرة معروف ميعادها. جهّزلها من بدري بدل ما تتفاجئ.</string>
+    <string name="seasons_days_hijri">بعد %1$d يوم تقريبًا</string>
+    <string name="seasons_days">بعد %1$d يوم</string>
+    <string name="seasons_of">من %1$s</string>
+    <string name="seasons_per_day">%1$s جنيه في اليوم من النهارده وتوصل مرتاح.</string>
+    <string name="seasons_chip">%1$s %2$s</string>
+    <string name="seasons_when_hijri">%1$s · %2$d يوم تقريبًا</string>
+    <string name="seasons_when">%1$s · %2$d يوم</string>
+    <string name="seasons_together_title">كل المواسم مع بعض</string>
+    <string name="seasons_together_lead">عشان تلحق %1$d محتاج تحوّش حوالي</string>
+    <string name="seasons_together_need">%1$s في الشهر</string>
+    <string name="seasons_together_over">. ده أكتر من اللي بيفضل معاك دلوقتي (حوالي %1$s).</string>
+    <string name="seasons_together_ok">. ده في حدود اللي بتحوّشه.</string>
+    <string name="seasons_reorder">رتّبهم حسب الأهم</string>
+    <string name="seasons_reorder_done">تمام</string>
+    <string name="seasons_up">اطلع بـ %1$s</string>
+    <string name="seasons_down">انزل بـ %1$s</string>
+    <string name="seasons_new">موسم أو مناسبة جديدة</string>
+    <string name="seasons_add_occasion">ضيف مناسبة</string>
+    <string name="zakat_row_title">حاسبة الزكاة</string>
+    <string name="zakat_row_line">زكاة المال والفطر من أرقامك، وانت بتأكد النصاب.</string>
+    <string name="season_new_title">مناسبة جديدة</string>
+    <string name="season_q_name">اسم المناسبة إيه؟</string>
+    <string name="season_name_hint">فرح ابن خالتك</string>
+    <string name="season_q_date">امتى؟</string>
+    <string name="season_hijri_date">%1$d %2$s تقريبًا</string>
+    <string name="season_day_less">يوم أقل</string>
+    <string name="season_day_more">يوم أكتر</string>
+    <string name="season_q_target">محتاج كام؟</string>
+    <string name="season_q_items">هتصرف على إيه؟</string>
+    <string name="season_item_add">ضيف بند</string>
+    <string name="season_item_name_hint">اسم البند</string>
+    <string name="season_item_save">ضيف</string>
+    <string name="season_item_remove">شيل %1$s</string>
+    <string name="season_items_total">المجموع %1$s</string>
+    <string name="season_items_as_target">خليه الهدف</string>
+    <string name="season_q_saved">محوّش كام للموسم ده؟</string>
+    <string name="season_put">حطّ للموسم ده</string>
+    <string name="season_release">رجّعها للحصّالة</string>
+    <string name="zakat_title">حاسبة الزكاة</string>
+    <string name="zakat_lock">زكاة المال والفطر من أرقامك، مع بلس.</string>
+    <string name="zakat_held">فلوسك اللي عدّى عليها سنة</string>
+    <string name="zakat_nisab">النصاب</string>
+    <string name="zakat_nisab_prompt">اكتب النصاب</string>
+    <string name="zakat_nisab_note">إنت اللي بتأكد النصاب.</string>
+    <string name="zakat_result">زكاة المال %1$s</string>
+    <string name="zakat_none">مفيش زكاة مال لسه</string>
+    <string name="zakat_fitr_title">زكاة الفطر</string>
+    <string name="zakat_people">عدد الأفراد</string>
+    <string name="zakat_per_person">المبلغ للفرد</string>
+    <string name="zakat_fitr_result">زكاة الفطر %1$s</string>
+    <string name="zakat_people_less">فرد أقل</string>
+    <string name="zakat_people_more">فرد أكتر</string>
+    <string-array name="hijri_months">
+        <item>محرّم</item>
+        <item>صفر</item>
+        <item>ربيع الأول</item>
+        <item>ربيع الآخر</item>
+        <item>جمادى الأولى</item>
+        <item>جمادى الآخرة</item>
+        <item>رجب</item>
+        <item>شعبان</item>
+        <item>رمضان</item>
+        <item>شوال</item>
+        <item>ذو القعدة</item>
+        <item>ذو الحجة</item>
+    </string-array>
 </resources>

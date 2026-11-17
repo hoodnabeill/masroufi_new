@@ -120,6 +120,14 @@ class SeasonRepository @Inject constructor(
         seasonDao.update(season.copy(updatedAt = clock.millis()))
     }
 
+    /** Brings Ramadan back to a plan whose seasons were all removed. */
+    suspend fun addRamadan(): Long = seasonDao.insert(
+        SeasonEntity(
+            kind = SeasonKind.RAMADAN, name = "رمضان", hijriMonth = 9, hijriDay = 1, target = 0,
+            color = CATEGORY_COLORS[seasonDao.count() % CATEGORY_COLORS.size], updatedAt = clock.millis(),
+        ),
+    )
+
     suspend fun addItem(seasonId: Long, label: String, amount: Long): Long {
         require(amount >= 0) { "amount must be >= 0" }
         return seasonDao.insertItem(SeasonItemEntity(seasonId = seasonId, label = label, amount = amount))
