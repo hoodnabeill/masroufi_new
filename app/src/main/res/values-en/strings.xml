@@ -8,4 +8,5 @@
     <string name="add_entry">Log a new entry</string>
     <string name="paper_currency">EGP</string>
     <string name="paper_sealed">Paid</string>
+    <string name="proverb_set_title">Money proverbs</string>
 </resources>

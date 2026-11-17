@@ -23,7 +23,7 @@ import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.DayResult
 import com.masroufi.app.domain.LeftoverDestination
-import com.masroufi.app.domain.PROVERB_SET_SIZE
+import com.masroufi.app.domain.ProverbCatalog
 import com.masroufi.app.domain.StampKind
 import com.masroufi.app.domain.TicketCalc
 import com.masroufi.app.domain.TicketStatus
@@ -32,6 +32,7 @@ import com.masroufi.app.domain.earnedStamps
 import com.masroufi.app.domain.leftover
 import com.masroufi.app.domain.nextProverb
 import com.masroufi.app.domain.punches
+import com.masroufi.app.domain.streak
 import com.masroufi.app.domain.spentToday
 import java.time.Clock
 import java.time.Instant
@@ -39,7 +40,11 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
-data class CloseResult(val leftover: Long, val proverbNumber: Int?, val newStamps: Set<StampKind>)
+data class CloseResult(val leftover: Long, val proverbNumber: Int?, val newStamps: Set<StampKind>, val rare: Boolean = false)
+
+private const val RARE_FULL_WEEK = 45
+private const val RARE_STREAK = 50
+private const val RARE_STREAK_DAYS = 30
 
 /** The local day an entry belongs to. */
 internal fun Clock.dayOf(millis: Long): LocalDate = Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
@@ -134,14 +139,26 @@ class TicketRepository @Inject constructor(
             if (row.status != TicketStatus.OPEN) return@withTransaction CloseResult(row.leftover, null, emptySet())
 
             val now = clock.millis()
-            val proverb = nextProverb(proverbDao.numbers().toSet(), s.proverbSeed, PROVERB_SET_SIZE)
-            proverb?.let { proverbDao.insert(ProverbCollectedEntity(number = it, collectedOn = date, updatedAt = now)) }
-            val closed = close(row, TicketStatus.CLOSED_BY_HAND, destination, proverb)
+            val closed = close(row, TicketStatus.CLOSED_BY_HAND, destination, proverbNumber = null)
 
             val days = ticketDao.allNow().map { DayResult(it.date, it.status, it.amount, it.spent) }
             val newStamps = earnedStamps(days) - stampDao.kinds().toSet()
             newStamps.forEach { stampDao.insert(StampEntity(kind = it, earnedOn = date, updatedAt = now)) }
-            CloseResult(closed.leftover, proverb, newStamps)
+
+            // One card per close: a milestone's rare card replaces the ordinary draw (45 first, 50 on a later close).
+            val collected = proverbDao.numbers().toSet()
+            val rareNumber = when {
+                StampKind.FULL_WEEK in newStamps && RARE_FULL_WEEK !in collected -> RARE_FULL_WEEK
+                streak(days, date) >= RARE_STREAK_DAYS && RARE_STREAK !in collected -> RARE_STREAK
+                else -> null
+            }
+            val proverb = rareNumber
+                ?: nextProverb(collected, s.proverbSeed, ProverbCatalog.all.size, ProverbCatalog.rare)
+            proverb?.let {
+                proverbDao.insert(ProverbCollectedEntity(number = it, collectedOn = date, updatedAt = now))
+                ticketDao.update(closed.copy(proverbNumber = it))
+            }
+            CloseResult(closed.leftover, proverb, newStamps, rare = rareNumber != null)
         }
     }
 

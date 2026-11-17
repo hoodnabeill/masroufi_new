@@ -13,11 +13,13 @@ import com.masroufi.app.data.db.PocketKind
 import com.masroufi.app.data.db.Pot
 import com.masroufi.app.data.db.RecurringEntity
 import com.masroufi.app.data.db.RecurringKind
+import com.masroufi.app.data.db.StampEntity
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.DayResult
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
+import com.masroufi.app.domain.ProverbCatalog
 import com.masroufi.app.domain.StampKind
 import com.masroufi.app.domain.TicketStatus
 import com.masroufi.app.domain.overspendPerDay
@@ -648,4 +650,62 @@ class TicketRepositoryTest {
         name = "bill", amount = amount, pocketId = cash, scheduleDay = due.dayOfMonth, nextDue = due, paidThisCycle = paid,
         kind = RecurringKind.BILL,
     )
+
+    private suspend fun seedHandClosed(from: LocalDate, to: LocalDate) {
+        var d = from
+        while (!d.isAfter(to)) {
+            db.dayTicketDao().insert(
+                DayTicketEntity(date = d, amount = 30_000, base = 30_000, status = TicketStatus.CLOSED_BY_HAND, destination = LeftoverDestination.JAR),
+            )
+            d = d.plusDays(1)
+        }
+    }
+
+    @Test fun fullWeekAwardsRare45() = runTest {
+        setUp()
+        seedHandClosed(nov12.minusDays(5), nov12) // Sat 11-07 .. Thu 11-12
+        today(nov13)
+        tickets.printToday()
+        val r = tickets.closeDay(nov13, LeftoverDestination.JAR)
+        assertTrue(StampKind.FULL_WEEK in r.newStamps)
+        assertEquals(45, r.proverbNumber)
+        assertTrue(r.rare)
+        assertEquals(listOf(45), db.proverbDao().numbers())
+        assertEquals(45, row(nov13).proverbNumber)
+    }
+
+    @Test fun streak30AwardsRare50() = runTest {
+        setUp()
+        db.stampDao().insert(StampEntity(kind = StampKind.FIRST_TICKET, earnedOn = nov12, updatedAt = 0))
+        db.stampDao().insert(StampEntity(kind = StampKind.FULL_WEEK, earnedOn = nov12, updatedAt = 0))
+        seedHandClosed(nov12.minusDays(28), nov12) // 29 days in a row
+        today(nov13)
+        tickets.printToday()
+        val r = tickets.closeDay(nov13, LeftoverDestination.JAR)
+        assertEquals(50, r.proverbNumber)
+        assertTrue(r.rare)
+    }
+
+    @Test fun rareNotRepeated() = runTest {
+        setUp()
+        db.stampDao().insert(StampEntity(kind = StampKind.FIRST_TICKET, earnedOn = nov12, updatedAt = 0))
+        db.stampDao().insert(StampEntity(kind = StampKind.FULL_WEEK, earnedOn = nov12, updatedAt = 0))
+        seedHandClosed(nov12.minusDays(28), nov12)
+        today(nov13)
+        tickets.printToday()
+        assertEquals(50, tickets.closeDay(nov13, LeftoverDestination.JAR).proverbNumber)
+        today(nov13.plusDays(1))
+        tickets.printToday()
+        val next = tickets.closeDay(nov13.plusDays(1), LeftoverDestination.JAR)
+        assertFalse(next.rare)
+        assertTrue("streak 31 draws an ordinary card", next.proverbNumber!! !in ProverbCatalog.rare)
+    }
+
+    @Test fun ordinaryCloseIsNotRare() = runTest {
+        setUp()
+        tickets.printToday()
+        val r = tickets.closeDay(nov12, LeftoverDestination.JAR)
+        assertFalse(r.rare)
+        assertTrue(r.proverbNumber!! !in ProverbCatalog.rare)
+    }
 }

@@ -22,4 +22,18 @@ class ProverbDeckTest {
         val second = nextProverb(setOf(first), 11L, 10)!!
         assertNotEquals(first, second)
     }
+
+    @Test fun ordinaryDeckSkipsRare() {
+        val rare = ProverbCatalog.rare
+        val drawn = mutableSetOf<Int>()
+        repeat(47) { drawn += nextProverb(drawn, 5L, 50, rare)!! }
+        assertEquals((1..50).toSet() - rare, drawn)
+    }
+
+    @Test fun allCollected() = assertNull(nextProverb((1..50).toSet() - ProverbCatalog.rare, 9L, 50, ProverbCatalog.rare))
+
+    @Test fun excludeKeepsShuffleOrder() {
+        val order = (1..50).shuffled(Random(42L))
+        assertEquals(order.first { it !in setOf(45, 49, 50) }, nextProverb(emptySet(), 42L, 50, setOf(45, 49, 50)))
+    }
 }
