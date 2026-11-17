@@ -65,7 +65,7 @@ class CloseDayViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _state.value = try {
+            _state.value = try<CloseDayUi> {
                 ready()
             } catch (e: CancellationException) {
                 throw e
