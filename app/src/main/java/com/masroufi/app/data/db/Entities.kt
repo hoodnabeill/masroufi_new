@@ -117,6 +117,8 @@ data class RecurringEntity(
     val envelopeId: Long? = null,
     val paidThisCycle: Boolean = false,
     val kind: RecurringKind,
+    /** "onboarding" for items the first-run flow created (it replaces them on a redo); null otherwise. */
+    val source: String? = null,
     val updatedAt: Long = 0,
 )
 

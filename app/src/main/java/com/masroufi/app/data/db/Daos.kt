@@ -35,6 +35,11 @@ interface PocketDao {
     @Query("SELECT * FROM pocket WHERE id = :id") suspend fun byId(id: Long): PocketEntity?
     @Query("SELECT COUNT(*) FROM pocket") suspend fun count(): Int
 
+    /** The cash pocket: the lowest-id CASH pocket. */
+    @Query("SELECT * FROM pocket WHERE kind = 'CASH' ORDER BY id LIMIT 1") suspend fun firstCash(): PocketEntity?
+
+    @Query("SELECT $BALANCE_EXPR FROM pocket p WHERE p.id = :id") suspend fun balanceOf(id: Long): Long
+
     @Query("SELECT p.id AS pocketId, $BALANCE_EXPR AS balance FROM pocket p")
     fun balances(): Flow<List<PocketBalance>>
 
@@ -146,6 +151,7 @@ interface RecurringDao {
     @Insert suspend fun insert(recurring: RecurringEntity): Long
     @Update suspend fun update(recurring: RecurringEntity)
     @Query("SELECT * FROM recurring") fun all(): Flow<List<RecurringEntity>>
+    @Query("DELETE FROM recurring WHERE source = 'onboarding'") suspend fun deleteOnboarding()
 
     @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE paidThisCycle = 0 AND nextDue < :date")
     suspend fun unpaidDueBefore(date: LocalDate): Long

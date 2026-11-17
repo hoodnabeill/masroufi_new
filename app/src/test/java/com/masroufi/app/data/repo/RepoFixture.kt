@@ -18,7 +18,7 @@ class TestClock(var instant: Instant, private val zoneId: ZoneId = ZoneId.of("Af
 
 /** The repositories over one test database and a DataStore file in `dir`, whose scope is `scope`. */
 class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: Clock, plus: DebugEntitlements) {
-    val settings = SettingsStore(PreferenceDataStoreFactory.create(scope = scope) { File(dir, "s.preferences_pb") })
+    val settings = SettingsStore(PreferenceDataStoreFactory.create(scope = scope) { File(dir, "s.preferences_pb") }, clock)
     val tickets = TicketRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
         db.stampDao(), settings, clock,
@@ -29,4 +29,7 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
         settings, clock,
     )
     val seed = SeedData(db, db.pocketDao(), db.categoryDao(), clock)
+    val onboarding = OnboardingRepository(
+        db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), tickets, seed, settings, clock,
+    )
 }

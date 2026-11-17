@@ -20,6 +20,7 @@ import com.masroufi.app.data.db.RecurringDao
 import com.masroufi.app.data.db.StampDao
 import com.masroufi.app.data.db.StampEntity
 import com.masroufi.app.data.db.TazkaraDatabase
+import com.masroufi.app.data.prefs.Settings
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.DayResult
 import com.masroufi.app.domain.LeftoverDestination
@@ -39,6 +40,11 @@ import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/** The starter ticket (design call 8): 100 EGP while the user has not said how much money they have. */
+internal const val STARTER_TICKET = 10_000L
+
+internal data class TodayBasis(val calc: TicketCalc, val spent: Long, val entryCount: Int)
 
 data class CloseResult(val leftover: Long, val proverbNumber: Int?, val newStamps: Set<StampKind>, val rare: Boolean = false)
 
@@ -89,7 +95,7 @@ class TicketRepository @Inject constructor(
      * call 10). What today's punches took (a spend's amount + round-up, a move's fee) is added back to Spendable, so
      * the ticket is the morning's; a move's amount is not a punch and is not added back.
      */
-    suspend fun printToday(): DayTicketEntity {
+    suspend fun printToday(startAfterPayday: Boolean = false): DayTicketEntity {
         val s = settings.current()
         return db.withTransaction {
             val today = LocalDate.now(clock)
@@ -106,18 +112,8 @@ class TicketRepository @Inject constructor(
                 close(open, TicketStatus.CLOSED_AUTO, dest, proverbNumber = null)
             }
 
-            val carriedIn = ticketDao.forDate(today.minusDays(1))
-                ?.takeIf { it.status != TicketStatus.OPEN && it.destination == LeftoverDestination.TOMORROW }
-                ?.leftover ?: 0L
-            val cycle = entryDao.payCycleOn(today, s.payday, clock)
-            val reserved = recurringDao.unpaidDueBefore(cycle.nextPayday) +
-                jarDao.totalNow(Pot.JAR).coerceAtLeast(0) + jarDao.totalNow(Pot.EMERGENCY).coerceAtLeast(0)
-            val punches = punchesOn(today)
-            val spent = spentToday(punches)
-            // A round-up is in both spent and the reserved jar, so adding it back here nets to zero.
-            val spendable = pocketDao.countingBalanceTotal() + spent
+            val (calc, spent, entryCount) = basisToday(s, today, startAfterPayday)
             val now = clock.millis()
-            val calc = computeTicket(spendable, reserved, carriedIn, cycle.daysLeft(today))
             val row = when (calc) {
                 is TicketCalc.Printed ->
                     DayTicketEntity(date = today, amount = calc.amount, base = calc.base, carriedIn = calc.carriedIn, updatedAt = now)
@@ -126,8 +122,43 @@ class TicketRepository @Inject constructor(
                         date = today, amount = 0, base = 0, endOfMonth = true, eomPool = calc.pool, eomDaysLeft = calc.daysLeft,
                         updatedAt = now,
                     )
-            }.copy(spent = spent, entryCount = punches.size)
+            }.copy(spent = spent, entryCount = entryCount)
             row.copy(id = ticketDao.insert(row))
+        }
+    }
+
+    /** Today's ticket calculation, shared by printToday and the onboarding preview; writes nothing. */
+    internal suspend fun basisToday(s: Settings, today: LocalDate, startAfterPayday: Boolean): TodayBasis {
+        val punches = punchesOn(today)
+        val spent = spentToday(punches)
+        if (s.moneyUnknown) return TodayBasis(TicketCalc.Printed(STARTER_TICKET, STARTER_TICKET, 0), spent, punches.size)
+        val carriedIn = ticketDao.forDate(today.minusDays(1))
+            ?.takeIf { it.status != TicketStatus.OPEN && it.destination == LeftoverDestination.TOMORROW }
+            ?.leftover ?: 0L
+        val cycle = cycleFor(s, today, startAfterPayday)
+        val reserved = recurringDao.unpaidDueBefore(cycle.nextPayday) +
+            jarDao.totalNow(Pot.JAR).coerceAtLeast(0) + jarDao.totalNow(Pot.EMERGENCY).coerceAtLeast(0)
+        // A round-up is in both spent and the reserved jar, so adding it back here nets to zero.
+        val spendable = pocketDao.countingBalanceTotal() + spent
+        val calc = computeTicket(spendable, reserved, carriedIn, cycle.daysLeft(maxOf(today, cycle.start)))
+        return TodayBasis(calc, spent, punches.size)
+    }
+
+    /** Payday is today or tomorrow (never for a not-fixed payday). */
+    suspend fun paydayIsNear(): Boolean {
+        val s = settings.current()
+        val today = LocalDate.now(clock)
+        val cycle = entryDao.payCycleOn(today, s.payday, clock)
+        return s.payday != Payday.NotFixed && (cycle.start == today || cycle.nextPayday == today.plusDays(1))
+    }
+
+    /** With [startAfterPayday] and payday tomorrow, the cycle that starts at that payday; else today's (already one if payday is today). */
+    private suspend fun cycleFor(s: Settings, today: LocalDate, startAfterPayday: Boolean): PayCycle {
+        val cycle = entryDao.payCycleOn(today, s.payday, clock)
+        return if (startAfterPayday && s.payday != Payday.NotFixed && cycle.nextPayday == today.plusDays(1)) {
+            entryDao.payCycleOn(cycle.nextPayday, s.payday, clock)
+        } else {
+            cycle
         }
     }
 
