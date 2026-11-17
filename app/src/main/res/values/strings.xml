@@ -99,4 +99,19 @@
     <string name="close_dest_emergency_sub">فيه %1$s دلوقتي</string>
     <string name="close_button">اقطع التذكرة</string>
     <string name="close_button_over">اقطعها وكمّل</string>
+    <string name="proverb_ticket_cut">التذكرة رقم %1$s اتقطعت</string>
+    <string name="proverb_new">كسبت مثل جديد</string>
+    <string name="proverb_album_done">معاك الألبوم كله</string>
+    <string name="proverb_line_saved">والنهارده حوّشت %1$s.</string>
+    <string name="proverb_tile_jar">للحصّالة</string>
+    <string name="proverb_tile_tomorrow">لبكره</string>
+    <string name="proverb_tile_emergency">للطوارئ</string>
+    <string name="proverb_streak_value">%1$s يوم</string>
+    <string name="proverb_streak_label">سلسلة التذاكر</string>
+    <string name="proverb_week_value">%1$s / 7</string>
+    <string name="proverb_week_label">أيام الأسبوع</string>
+    <string name="proverb_share">شارك المثل</string>
+    <string name="proverb_done">تمام، لبكره</string>
+    <string name="proverb_rare">نادر</string>
+    <string name="proverb_share_failed">ماقدرتش أشارك المثل. جرّب تاني.</string>
 </resources>

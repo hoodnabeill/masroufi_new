@@ -99,4 +99,19 @@
     <string name="close_dest_emergency_sub">Has %1$s now</string>
     <string name="close_button">Tear the ticket</string>
     <string name="close_button_over">Tear it and carry on</string>
+    <string name="proverb_ticket_cut">Ticket No. %1$s torn off</string>
+    <string name="proverb_new">You earned a new proverb</string>
+    <string name="proverb_album_done">You have the whole album</string>
+    <string name="proverb_line_saved">And today you saved %1$s.</string>
+    <string name="proverb_tile_jar">To the jar</string>
+    <string name="proverb_tile_tomorrow">For tomorrow</string>
+    <string name="proverb_tile_emergency">To emergency</string>
+    <string name="proverb_streak_value">%1$s days</string>
+    <string name="proverb_streak_label">Ticket streak</string>
+    <string name="proverb_week_value">%1$s / 7</string>
+    <string name="proverb_week_label">Days this week</string>
+    <string name="proverb_share">Share the proverb</string>
+    <string name="proverb_done">OK, for tomorrow</string>
+    <string name="proverb_rare">Rare</string>
+    <string name="proverb_share_failed">Couldn\'t share the proverb. Try again.</string>
 </resources>

@@ -45,6 +45,7 @@ import com.masroufi.app.feature.close.CloseDayScreen
 import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.placeholder.TabPlaceholder
+import com.masroufi.app.feature.proverb.ProverbRewardScreen
 import com.masroufi.app.ui.components.TzTab
 import com.masroufi.app.ui.components.TzTabBar
 import com.masroufi.app.ui.motion.LocalReduceMotion
@@ -175,7 +176,10 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         onDone = { nav.navigate(ProverbReward(it)) { popUpTo<CloseDay> { inclusive = true } } },
                     )
                 }
-                composable<ProverbReward> { TabPlaceholder(R.string.tab_today) } // Task 20 replaces this
+                composable<ProverbReward> {
+                    // Back and "تمام، لبكره" both land on Home.
+                    ProverbRewardScreen(hiltViewModel(), onHome = { nav.popBackStack<Home>(inclusive = false) })
+                }
                 composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }) }
             }
         }
