@@ -30,4 +30,10 @@ class Converters {
     @TypeConverter fun stringToPot(v: String): Pot = Pot.valueOf(v)
     @TypeConverter fun jarSourceToString(v: JarSource): String = v.name
     @TypeConverter fun stringToJarSource(v: String): JarSource = JarSource.valueOf(v)
+    @TypeConverter fun scheduleTypeToString(v: ScheduleType): String = v.name
+    @TypeConverter fun stringToScheduleType(v: String): ScheduleType = ScheduleType.valueOf(v)
+    @TypeConverter fun seasonKindToString(v: SeasonKind): String = v.name
+    @TypeConverter fun stringToSeasonKind(v: String): SeasonKind = SeasonKind.valueOf(v)
+    @TypeConverter fun splitKindToString(v: SplitKind): String = v.name
+    @TypeConverter fun stringToSplitKind(v: String): SplitKind = SplitKind.valueOf(v)
 }

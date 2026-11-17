@@ -84,6 +84,7 @@ class TicketRepository @Inject constructor(
     private val entryDao: EntryDao,
     private val ticketDao: DayTicketDao,
     private val recurringDao: RecurringDao,
+    private val recurring: RecurringRepository,
     private val jarDao: JarDao,
     private val proverbDao: ProverbDao,
     private val stampDao: StampDao,
@@ -110,6 +111,13 @@ class TicketRepository @Inject constructor(
                     s.leftoverDefault
                 }
                 close(open, TicketStatus.CLOSED_AUTO, dest, proverbNumber = null)
+            }
+
+            // Payday (decision 4): the first print of a new cycle resets the bills before Reserved is read.
+            val cycle = entryDao.payCycleOn(today, s.payday, clock)
+            val previous = ticketDao.latestBefore(today)
+            if (previous == null || entryDao.payCycleOn(previous.date, s.payday, clock).start != cycle.start) {
+                recurring.resetForNewCycle(cycle)
             }
 
             val (calc, spent, entryCount) = basisToday(s, today, startAfterPayday)

@@ -39,6 +39,9 @@ data class Settings(
     val firstWeekCardsDismissed: Set<String> = emptySet(),
     /** Epoch day of the first settings read; first-week cards count from it. */
     val firstOpenDay: Long? = null,
+    /** The last income split by the saved split and what no envelope took ("من غير ظرف"); null = never split. */
+    val lastSplitIncome: Long? = null,
+    val lastSplitUnassigned: Long? = null,
 )
 
 @Singleton
@@ -57,6 +60,8 @@ class SettingsStore @Inject constructor(
     private val reminderHourKey = intPreferencesKey("reminderHour")
     private val cardsDismissedKey = stringSetPreferencesKey("firstWeekCardsDismissed")
     private val firstOpenDayKey = longPreferencesKey("firstOpenDay")
+    private val lastSplitIncomeKey = longPreferencesKey("lastSplitIncome")
+    private val lastSplitUnassignedKey = longPreferencesKey("lastSplitUnassigned")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -83,6 +88,12 @@ class SettingsStore @Inject constructor(
         require(v == null || v in 0..23) { "reminder hour must be 0..23" }
         store.edit { if (v == null) it.remove(reminderHourKey) else it[reminderHourKey] = v }
     }
+    suspend fun setLastSplit(income: Long, unassigned: Long) {
+        store.edit {
+            it[lastSplitIncomeKey] = income
+            it[lastSplitUnassignedKey] = unassigned
+        }
+    }
     suspend fun dismissFirstWeekCard(id: String) { store.edit { it[cardsDismissedKey] = (it[cardsDismissedKey] ?: emptySet()) + id } }
 
     private fun decode(p: Preferences) = Settings(
@@ -98,6 +109,8 @@ class SettingsStore @Inject constructor(
         reminderHour = p[reminderHourKey],
         firstWeekCardsDismissed = p[cardsDismissedKey] ?: emptySet(),
         firstOpenDay = p[firstOpenDayKey],
+        lastSplitIncome = p[lastSplitIncomeKey],
+        lastSplitUnassigned = p[lastSplitUnassignedKey],
     )
 
     private fun encode(v: Payday) = when (v) {

@@ -58,6 +58,22 @@ data class PocketActivity(val pocketId: Long, val at: Long?)
 /** A move's fee from a pocket; cashOut = the move went into a CASH pocket. */
 data class FeeRow(val fee: Long, val cashOut: Boolean)
 
+/** SPENT amounts (no fees, no round-ups) in a category over a range. */
+data class CategorySpend(val categoryId: Long, val total: Long)
+
+/** A recurring item with its pocket's name, for the fixed-costs list. */
+data class RecurringRow(
+    val id: Long,
+    val name: String,
+    val amount: Long,
+    val kind: RecurringKind,
+    val pocketId: Long,
+    val pocketName: String,
+    val nextDue: LocalDate,
+    val paidThisCycle: Boolean,
+    val envelopeId: Long?,
+)
+
 /** A repeated spend in the last days: same category, amount and pocket. */
 data class RepeatRow(val categoryId: Long, val amount: Long, val pocketId: Long, val count: Int, val lastAt: Long)
 
@@ -114,6 +130,16 @@ interface EntryDao {
     /** Entries paying this recurring item with happenedAt in [start, end) epoch millis. */
     @Query("SELECT COUNT(*) FROM entry WHERE recurringId = :recurringId AND happenedAt >= :start AND happenedAt < :end")
     suspend fun countForRecurring(recurringId: Long, start: Long, end: Long): Int
+
+    @Query("SELECT COUNT(*) FROM entry WHERE recurringId = :recurringId") suspend fun countAllForRecurring(recurringId: Long): Int
+
+    /** Envelopes: SPENT amounts per category from EGP pockets (counting or not), [start, end) epoch millis. */
+    @Query(
+        """SELECT e.categoryId AS categoryId, SUM(e.amount) AS total FROM entry e JOIN pocket p ON p.id = e.pocketId
+        WHERE e.kind = 'SPENT' AND e.isFee = 0 AND e.categoryId IS NOT NULL AND p.currency = 'EGP'
+        AND e.happenedAt >= :start AND e.happenedAt < :end GROUP BY e.categoryId"""
+    )
+    suspend fun spentByCategory(start: Long, end: Long): List<CategorySpend>
 
     /** Epoch-millis bounds, [start, end). */
     @Query("SELECT * FROM entry WHERE happenedAt >= :start AND happenedAt < :end ORDER BY happenedAt")
@@ -202,6 +228,9 @@ interface DayTicketDao {
 
     @Query("SELECT * FROM day_ticket ORDER BY date") suspend fun allNow(): List<DayTicketEntity>
 
+    @Query("SELECT * FROM day_ticket WHERE date < :date ORDER BY date DESC LIMIT 1")
+    suspend fun latestBefore(date: LocalDate): DayTicketEntity?
+
     @Query("SELECT date FROM day_ticket") fun dates(): Flow<List<LocalDate>>
 
     /** Debug sample data only (re-printing today). */
@@ -218,6 +247,16 @@ interface EnvelopeDao {
     @Query("SELECT * FROM envelope") fun all(): Flow<List<EnvelopeEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun link(link: EnvelopeCategoryEntity)
     @Query("SELECT * FROM envelope_category") fun links(): Flow<List<EnvelopeCategoryEntity>>
+    @Query("SELECT * FROM envelope WHERE id = :id") suspend fun byId(id: Long): EnvelopeEntity?
+    @Query("SELECT COUNT(*) FROM envelope WHERE archived = 0") suspend fun activeCount(): Int
+    @Query("DELETE FROM envelope_category WHERE envelopeId = :envelopeId") suspend fun unlinkAll(envelopeId: Long)
+
+    @Insert suspend fun insertMove(move: EnvelopeMoveEntity): Long
+    @Query("SELECT * FROM envelope_move") fun moves(): Flow<List<EnvelopeMoveEntity>>
+
+    @Query("DELETE FROM split_rule") suspend fun clearSplit()
+    @Insert suspend fun insertSplit(rules: List<SplitRuleEntity>)
+    @Query("SELECT * FROM split_rule ORDER BY sortOrder") suspend fun splitRules(): List<SplitRuleEntity>
 }
 
 @Dao
@@ -227,16 +266,31 @@ interface RecurringDao {
     @Query("SELECT * FROM recurring") fun all(): Flow<List<RecurringEntity>>
     @Query("DELETE FROM recurring WHERE source = 'onboarding'") suspend fun deleteOnboarding()
 
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE paidThisCycle = 0 AND nextDue < :date")
+    @Query("SELECT * FROM recurring") suspend fun allNow(): List<RecurringEntity>
+    @Query("SELECT * FROM recurring WHERE id = :id") suspend fun byId(id: Long): RecurringEntity?
+    @Query("DELETE FROM recurring WHERE id = :id") suspend fun delete(id: Long)
+
+    @Query(
+        """SELECT r.id, r.name, r.amount, r.kind, r.pocketId, p.name AS pocketName, r.nextDue, r.paidThisCycle, r.envelopeId
+        FROM recurring r JOIN pocket p ON p.id = r.pocketId WHERE r.archived = 0 ORDER BY r.nextDue, r.id"""
+    )
+    fun rows(): Flow<List<RecurringRow>>
+
+    /** Reserved bills: only items paid from a pocket that punches the EGP ticket (same predicate as COUNTING_TOTAL). */
+    @Query(
+        """SELECT COALESCE(SUM(r.amount), 0) FROM recurring r JOIN pocket p ON p.id = r.pocketId
+        WHERE r.paidThisCycle = 0 AND r.archived = 0 AND r.nextDue < :date
+        AND p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"""
+    )
     suspend fun unpaidDueBefore(date: LocalDate): Long
 
     @Query("UPDATE recurring SET paidThisCycle = :paid WHERE id = :id") suspend fun setPaid(id: Long, paid: Boolean)
 
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE pocketId = :pocketId AND paidThisCycle = 0 AND nextDue < :date")
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE pocketId = :pocketId AND paidThisCycle = 0 AND archived = 0 AND nextDue < :date")
     suspend fun unpaidFromPocketDueBefore(pocketId: Long, date: LocalDate): Long
 
     /** The soonest unpaid payment from the pocket due before [date]. */
-    @Query("SELECT * FROM recurring WHERE pocketId = :pocketId AND paidThisCycle = 0 AND nextDue < :date ORDER BY nextDue, id LIMIT 1")
+    @Query("SELECT * FROM recurring WHERE pocketId = :pocketId AND paidThisCycle = 0 AND archived = 0 AND nextDue < :date ORDER BY nextDue, id LIMIT 1")
     suspend fun nextUnpaidFromPocket(pocketId: Long, date: LocalDate): RecurringEntity?
 }
 

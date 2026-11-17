@@ -125,6 +125,7 @@ class SchemaTest {
 
     @Test fun unpaidDueBefore() = runTest {
         val day = LocalDate.of(2026, 11, 10)
+        assertEquals("the bills' counting pocket", 1L, pocket(0))
         fun r(amount: Long, due: LocalDate, paid: Boolean) =
             RecurringEntity(name = "r", amount = amount, pocketId = 1, scheduleDay = 1, nextDue = due, paidThisCycle = paid, kind = RecurringKind.BILL)
         db.recurringDao().insert(r(1_000, day.minusDays(1), false))

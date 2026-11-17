@@ -9,6 +9,7 @@ import java.io.File
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
+import javax.inject.Provider
 
 class TestClock(var instant: Instant, private val zoneId: ZoneId = ZoneId.of("Africa/Cairo")) : Clock() {
     override fun getZone(): ZoneId = zoneId
@@ -19,14 +20,19 @@ class TestClock(var instant: Instant, private val zoneId: ZoneId = ZoneId.of("Af
 /** The repositories over one test database and a DataStore file in `dir`, whose scope is `scope`. */
 class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: Clock, plus: DebugEntitlements) {
     val settings = SettingsStore(PreferenceDataStoreFactory.create(scope = scope) { File(dir, "s.preferences_pb") }, clock)
+    // Provider: entries is declared below (the Hilt graph breaks the same cycle).
+    val recurring = RecurringRepository(db.recurringDao(), db.entryDao(), Provider { entries }, clock)
     val tickets = TicketRepository(
-        db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
+        db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), recurring, db.jarDao(), db.proverbDao(),
         db.stampDao(), settings, clock,
     )
     val entries = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), tickets, settings, plus, clock)
     val home = HomeRepository(
         db.pocketDao(), db.entryDao(), db.categoryDao(), db.dayTicketDao(), db.jarDao(), db.proverbDao(), db.recurringDao(),
         settings, clock,
+    )
+    val envelopes = EnvelopeRepository(
+        db, db.envelopeDao(), db.entryDao(), db.recurringDao(), db.categoryDao(), settings, plus, clock,
     )
     val roll = RollRepository(db.entryDao(), db.dayTicketDao(), clock)
     val pockets = PocketRepository(db, db.pocketDao(), db.entryDao(), db.recurringDao(), entries, clock)

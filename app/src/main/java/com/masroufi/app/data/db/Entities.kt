@@ -16,6 +16,9 @@ enum class EnvelopeKind { SPENDING, FIXED, EMERGENCY }
 enum class RecurringKind { BILL, INSTALLMENT, SUBSCRIPTION, GAMEYA }
 enum class Pot { JAR, EMERGENCY }
 enum class JarSource { TICKET_LEFTOVER, ROUND_UP, MANUAL, CHANGED_MIND }
+enum class ScheduleType { MONTHLY, YEARLY }
+enum class SeasonKind { RAMADAN, EID_AL_FITR, EID_AL_ADHA, SUMMER, SCHOOL, PERSONAL }
+enum class SplitKind { FIXED, PERCENT }
 
 // Money is Long piastres. updatedAt is epoch millis, set by callers from the injected Clock.
 
@@ -105,6 +108,7 @@ data class EnvelopeEntity(
     val monthly: Long,
     val kind: EnvelopeKind,
     val updatedAt: Long = 0,
+    @ColumnInfo(defaultValue = "0") val archived: Boolean = false,
 )
 
 @Entity(tableName = "envelope_category", primaryKeys = ["envelopeId", "categoryId"])
@@ -128,6 +132,18 @@ data class RecurringEntity(
     /** "onboarding" for items the first-run flow created (it replaces them on a redo); null otherwise. */
     val source: String? = null,
     val updatedAt: Long = 0,
+    // No @ColumnInfo default: MIGRATION_2_3 adds DEFAULT 'MONTHLY' for old rows; Room always writes the column.
+    val scheduleType: ScheduleType = ScheduleType.MONTHLY,
+    /** Subscriptions: the free trial's last day; null = none. */
+    val trialEnd: LocalDate? = null,
+    val yearlyPrice: Long? = null,
+    /** People paying it, the user included. */
+    @ColumnInfo(defaultValue = "1") val sharedWith: Int = 1,
+    /** The last three answers to the question of the month. */
+    val answers: String? = null,
+    val lastAskedAt: Long? = null,
+    /** Deleted while entries still pay it: kept for them, hidden everywhere else. */
+    @ColumnInfo(defaultValue = "0") val archived: Boolean = false,
 )
 
 @Entity(
@@ -144,6 +160,8 @@ data class JarMovementEntity(
     val entryId: Long? = null,
     val at: Long,
     val updatedAt: Long = 0,
+    /** Jar money earmarked for a season (decision 3); moves nothing out of the jar. */
+    val seasonId: Long? = null,
 )
 
 @Entity(tableName = "goal")
@@ -167,4 +185,46 @@ data class StampEntity(
     @PrimaryKey val kind: StampKind,
     val earnedOn: LocalDate,
     val updatedAt: Long = 0,
+)
+
+@Entity(tableName = "season")
+data class SeasonEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val kind: SeasonKind,
+    val name: String,
+    val hijriMonth: Int? = null,
+    val hijriDay: Int? = null,
+    val gregorianDate: LocalDate? = null,
+    val target: Long,
+    val color: Int,
+    val updatedAt: Long = 0,
+)
+
+@Entity(tableName = "season_item")
+data class SeasonItemEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val seasonId: Long,
+    val label: String,
+    val amount: Long,
+)
+
+/** Decision 2: money moved between envelopes for the pay cycle starting `cycleStart` only. */
+@Entity(tableName = "envelope_move")
+data class EnvelopeMoveEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val cycleStart: LocalDate,
+    val fromId: Long,
+    val toId: Long,
+    val amount: Long,
+    val at: Long,
+)
+
+/** One line of the saved income split; value = piastres (FIXED) or percent (PERCENT). */
+@Entity(tableName = "split_rule")
+data class SplitRuleEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val envelopeId: Long,
+    val kind: SplitKind,
+    val value: Long,
+    val sortOrder: Int,
 )

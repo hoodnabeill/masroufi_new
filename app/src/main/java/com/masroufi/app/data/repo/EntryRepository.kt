@@ -69,7 +69,7 @@ class EntryRepository @Inject constructor(
             )
             val id = entryDao.insert(fresh.with(entry, rounded, now))
             if (rounded > 0) jarDao.insert(roundUpMovement(id, rounded, now))
-            entry.recurringId?.let { recurringDao.setPaid(it, true) }
+            markBill(entry)
             tickets.recalcDay(clock.dayOf(entry.happenedAt))
             id
         }
@@ -92,7 +92,7 @@ class EntryRepository @Inject constructor(
             val movement = jarDao.forEntry(id).firstOrNull { it.source == JarSource.ROUND_UP }
             jarDao.sync(movement, rounded, now) { roundUpMovement(id, rounded, now) }
             releaseBill(old)
-            entry.recurringId?.let { recurringDao.setPaid(it, true) }
+            markBill(entry)
             val oldDay = clock.dayOf(old.happenedAt)
             val newDay = clock.dayOf(entry.happenedAt)
             tickets.recalcDay(newDay)
@@ -122,15 +122,24 @@ class EntryRepository @Inject constructor(
         }
     }
 
+    /** paidThisCycle is about today's pay cycle; payday resets it (RecurringRepository.resetForNewCycle). */
+    private suspend fun currentCycle() = entryDao.payCycleOn(LocalDate.now(clock), settings.current().payday, clock)
+
+    /** Only a payment dated in the current cycle marks its bill paid. Caller holds the transaction. */
+    private suspend fun markBill(entry: NewEntry) {
+        val rid = entry.recurringId ?: return
+        if (currentCycle().contains(clock.dayOf(entry.happenedAt))) recurringDao.setPaid(rid, true)
+    }
+
     /**
      * An entry no longer pays its bill (deleted, or edited to another bill/none): the bill is unpaid again unless
-     * another entry in the same pay cycle still pays it. Caller holds the transaction and has already stored the change.
-     * shortcut: paidThisCycle is only reset here; resetting it at payday is Phase 6 work.
+     * another entry in the current pay cycle still pays it. An old-cycle payment never un-marks the current cycle.
+     * Caller holds the transaction and has already stored the change.
      */
     private suspend fun releaseBill(old: EntryEntity) {
         val rid = old.recurringId ?: return
-        val day = clock.dayOf(old.happenedAt)
-        val cycle = entryDao.payCycleOn(day, settings.current().payday, clock)
+        val cycle = currentCycle()
+        if (!cycle.contains(clock.dayOf(old.happenedAt))) return
         fun startMillis(d: LocalDate) = d.atStartOfDay(clock.zone).toInstant().toEpochMilli()
         val still = entryDao.countForRecurring(rid, startMillis(cycle.start), startMillis(cycle.nextPayday))
         if (still == 0) recurringDao.setPaid(rid, false)
