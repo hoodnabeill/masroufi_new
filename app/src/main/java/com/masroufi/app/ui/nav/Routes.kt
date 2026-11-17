@@ -26,3 +26,5 @@ import kotlinx.serialization.Serializable
 /** [id] 0 = a new personal occasion. */
 @Serializable data class SeasonEdit(val id: Long)
 @Serializable data object Zakat
+/** يوم القبض: the ritual for the income [entryId]. */
+@Serializable data class PaydayRitual(val entryId: Long)

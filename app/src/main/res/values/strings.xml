@@ -566,4 +566,31 @@
         <item>ذو القعدة</item>
         <item>ذو الحجة</item>
     </string-array>
+
+    <!-- Payday ritual (Payday.dc.html) -->
+    <string name="payday_close">اقفل</string>
+    <string name="payday_title">يوم القبض. مبروك</string>
+    <string name="payday_currency">جنيه</string>
+    <string name="payday_hero_sub">نزلوا على %1$s. نوزّعهم قبل ما يتوهوا؟</string>
+    <string name="payday_step_jar">ادفع لنفسك الأول</string>
+    <string name="payday_jar_line">%1$s للحصّالة قبل أي حاجة</string>
+    <string name="payday_jar_sub_pct">%1$s%% من المرتب · الحصّالة تبقى %2$s</string>
+    <string name="payday_jar_sub_amount">الحصّالة تبقى %1$s</string>
+    <string name="payday_chip_amount">مبلغ</string>
+    <string name="payday_amount_title">كام للحصّالة؟</string>
+    <string name="payday_step_fixed">احجز الثوابت</string>
+    <string name="payday_edit">عدّل</string>
+    <string name="payday_fixed_row">%1$s · يوم %2$s</string>
+    <string name="payday_fixed_none">مفيش ثوابت مستنياك الدورة دي.</string>
+    <string name="payday_where">المرتب كله راح فين</string>
+    <string name="payday_leg_jar">الحصّالة</string>
+    <string name="payday_leg_fixed">الثوابت</string>
+    <string name="payday_leg_tickets">للتذاكر</string>
+    <string name="payday_ticket_title">تذكرتك الشهر ده</string>
+    <string name="payday_more">أكتر من الشهر اللي فات بـ %1$s</string>
+    <string name="payday_less">أقل من الشهر اللي فات بـ %1$s</string>
+    <string name="payday_per_day">جنيه كل يوم</string>
+    <string name="payday_count">%1$s تذكرة هيتطبعوا، واحدة كل صبح لحد %2$s.</string>
+    <string name="payday_print">اطبع تذاكر الشهر</string>
+    <string name="payday_roll_link">وزّع المرتب</string>
 </resources>

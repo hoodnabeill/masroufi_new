@@ -11,6 +11,7 @@ import com.masroufi.app.domain.TicketStatus
 import kotlinx.coroutines.flow.first
 import java.time.Clock
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,6 +40,8 @@ sealed interface JarShare {
  * is left goes to the tickets. [ticket] is today's ticket with the share reserved (0 at end of month); [lastCycleTicket]
  * is the first ordinary ticket of the previous cycle, for "أكتر من الشهر اللي فات بـ N".
  */
+data class RitualFixed(val name: String, val day: Int, val amount: Long)
+
 data class RitualView(
     val jarShare: Long,
     val debts: Long = 0,
@@ -46,6 +49,10 @@ data class RitualView(
     val forTickets: Long,
     val ticket: Long,
     val lastCycleTicket: Long?,
+    val fixedItems: List<RitualFixed> = emptyList(),
+    /** The tickets to print: today up to the day before [nextPayday]. */
+    val days: Int = 0,
+    val nextPayday: LocalDate? = null,
 )
 
 @Singleton
@@ -95,6 +102,9 @@ class PaydayRitualRepository @Inject constructor(
             forTickets = (salary - jarShare - fixed).coerceAtLeast(0),
             ticket = (calc as? TicketCalc.Printed)?.amount ?: 0L,
             lastCycleTicket = lastTicket,
+            fixedItems = recurringDao.unpaidItemsDueBefore(cycle.nextPayday).map { RitualFixed(it.name, it.nextDue.dayOfMonth, it.amount) },
+            days = ChronoUnit.DAYS.between(today, cycle.nextPayday).toInt(),
+            nextPayday = cycle.nextPayday,
         )
     }
 

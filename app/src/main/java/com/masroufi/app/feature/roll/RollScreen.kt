@@ -127,7 +127,7 @@ private const val ENTRIES_FADE_DELAY_MS = 40
 
 /** الدفتر (Roll.dc.html). Leaving the screen writes any delete still waiting its 5 s. */
 @Composable
-fun RollScreen(viewModel: RollViewModel, onOpenAddSheet: (AddPrefill?) -> Unit) {
+fun RollScreen(viewModel: RollViewModel, onOpenAddSheet: (AddPrefill?) -> Unit, onPayday: (Long) -> Unit = {}) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val haptics = LocalHaptics.current
     val open by rememberUpdatedState(onOpenAddSheet)
@@ -140,6 +140,7 @@ fun RollScreen(viewModel: RollViewModel, onOpenAddSheet: (AddPrefill?) -> Unit) 
         onSearch = { if (state.searching) viewModel.closeSearch() else viewModel.openSearch() },
         onQuery = viewModel::setQuery,
         onEntry = { e -> open(e.editPrefill()) },
+        onPayday = onPayday,
         onAdd = { open(null) },
         onUndo = viewModel::undo,
     )
@@ -170,6 +171,7 @@ fun RollContent(
     onAdd: () -> Unit,
     onUndo: () -> Unit,
     modifier: Modifier = Modifier,
+    onPayday: (Long) -> Unit = {},
 ) {
     var skeletonDue by remember { mutableStateOf(false) }
     LaunchedEffect(state.loading) {
@@ -209,7 +211,7 @@ fun RollContent(
                     Entries(
                         state, searchActive, flipped,
                         { d -> flipped = if (d in flipped) flipped - d else flipped + d },
-                        onQuery, onEntry, onAdd,
+                        onQuery, onEntry, onAdd, onPayday,
                     )
                 }
             }
@@ -228,6 +230,7 @@ private fun Entries(
     onQuery: (String) -> Unit,
     onEntry: (EntryRow) -> Unit,
     onAdd: () -> Unit,
+    onPayday: (Long) -> Unit,
 ) {
     val results = state.results
     val listPadding = PaddingValues(bottom = 24.dp)
@@ -252,7 +255,7 @@ private fun Entries(
         else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = listPadding) {
             items(state.days, key = { it.date.toEpochDay() }) { day ->
                 val expanded = (day.date == state.today) != (day.date.toEpochDay() in flipped)
-                DayStub(day, state.today, expanded, state.categories, { onToggle(day.date.toEpochDay()) }, onEntry)
+                DayStub(day, state.today, expanded, state.categories, { onToggle(day.date.toEpochDay()) }, onEntry, onPayday = onPayday)
             }
         }
     }
@@ -428,6 +431,7 @@ internal fun DayStub(
     onToggle: () -> Unit,
     onEntry: (EntryRow) -> Unit,
     modifier: Modifier = Modifier,
+    onPayday: (Long) -> Unit = {},
 ) {
     val tone = day.tone(today)
     val look = tone.look()
@@ -489,6 +493,10 @@ internal fun DayStub(
                 }
             } else {
                 EntryList(entries, categories, true, onEntry, Modifier.padding(horizontal = 14.dp))
+                // Phase 6 ruling: a salary day offers the ritual again (it never auto-offers twice for one income).
+                if (salary) entries.filter { it.kind == EntryKind.RECEIVED }.forEach { e ->
+                    TextLink(stringResource(R.string.payday_roll_link), { haptics.perform(HapticLevel.Tap); onPayday(e.id) }, Modifier.padding(horizontal = 6.dp))
+                }
             }
         }
     }

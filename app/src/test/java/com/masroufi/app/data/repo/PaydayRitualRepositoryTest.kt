@@ -94,7 +94,10 @@ class PaydayRitualRepositoryTest {
         income(1_000_000)
         // Cash 11,000 EGP; reserved 500 bill + 1,000 jar share; 9,500 / 30 days = 316.66 -> 316 EGP.
         assertEquals(
-            RitualView(jarShare = 100_000, fixed = 50_000, forTickets = 850_000, ticket = 31_600, lastCycleTicket = 25_000),
+            RitualView(
+                jarShare = 100_000, fixed = 50_000, forTickets = 850_000, ticket = 31_600, lastCycleTicket = 25_000,
+                fixedItems = listOf(RitualFixed("نت", 5, 50_000)), days = 30, nextPayday = LocalDate.of(2026, 12, 25),
+            ),
             f.ritual.preview(1_000_000, JarShare.Percent(10)),
         )
         assertEquals("an amount above the salary is capped", 1_000_000L, f.ritual.preview(1_000_000, JarShare.Amount(2_000_000)).jarShare)

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +46,9 @@ import com.masroufi.app.feature.add.AddSheet
 import com.masroufi.app.feature.close.CloseDayScreen
 import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
+import com.masroufi.app.feature.add.AddViewModel
 import com.masroufi.app.feature.onboarding.OnboardingScreen
+import com.masroufi.app.feature.payday.PaydayRitualScreen
 import com.masroufi.app.feature.placeholder.TabPlaceholder
 import com.masroufi.app.feature.plan.EnvelopeDetailScreen
 import com.masroufi.app.feature.plan.EnvelopeFormScreen
@@ -80,6 +83,7 @@ import com.masroufi.app.ui.nav.Gallery
 import com.masroufi.app.ui.nav.Home
 import com.masroufi.app.ui.nav.NewPocket
 import com.masroufi.app.ui.nav.Onboarding
+import com.masroufi.app.ui.nav.PaydayRitual
 import com.masroufi.app.ui.nav.PeopleTab
 import com.masroufi.app.ui.nav.PlanTab
 import com.masroufi.app.ui.nav.SeasonEdit
@@ -122,7 +126,7 @@ private fun NavDestination?.tab(): TzTab? = when {
 
 private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>() || hasRoute<Pockets>() || hasRoute<PocketDetail>() || hasRoute<NewPocket>() ||
     hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<NewGoal>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
-    hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>()
+    hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -156,6 +160,9 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
             addPrefill = prefill
             addSheetOpen = true
         }
+        // The add sheet is closed by the time a saved income is judged; Home and the roll are behind this push.
+        val addViewModel: AddViewModel = hiltViewModel()
+        LaunchedEffect(addViewModel) { addViewModel.ritualOffer.collect { nav.navigate(PaydayRitual(it)) } }
         val reduce = LocalReduceMotion.current
         // Leading edge = start edge: right in RTL, left in LTR.
         val sign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) 1 else -1
@@ -213,7 +220,16 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         onOpenAddSheet = ::openAddSheet,
                     )
                 }
-                composable<RollTab> { RollScreen(viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet) }
+                composable<RollTab> {
+                    RollScreen(viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet, onPayday = { nav.navigate(PaydayRitual(it)) })
+                }
+                composable<PaydayRitual> {
+                    PaydayRitualScreen(
+                        viewModel = hiltViewModel(),
+                        onHome = { nav.popBackStack<Home>(inclusive = false) },
+                        onFixedCosts = { nav.navigate(FixedCosts) },
+                    )
+                }
                 composable<PlanTab> {
                     PlanScreen(
                         viewModel = hiltViewModel(),

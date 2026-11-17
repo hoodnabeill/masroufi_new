@@ -14,6 +14,7 @@ import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.repo.EntryRepository
 import com.masroufi.app.data.repo.NOTE_MAX_CHARS
 import com.masroufi.app.data.repo.NewEntry
+import com.masroufi.app.data.repo.PaydayRitualRepository
 import com.masroufi.app.data.repo.dayOf
 import com.masroufi.app.data.repo.punchesTicket
 import com.masroufi.app.domain.EntryKind
@@ -24,7 +25,10 @@ import com.masroufi.app.feature.roll.PendingDelete
 import com.masroufi.app.feature.roll.PendingDeletes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -123,12 +127,18 @@ class AddViewModel @Inject constructor(
     private val pendingPunches: PendingPunches,
     private val pendingDeletes: PendingDeletes,
     private val feedback: FeedbackBus,
+    private val ritual: PaydayRitualRepository,
     private val clock: Clock,
 ) : ViewModel(), AddSheetActions {
     private val form = MutableStateFlow(AddForm())
     private var lastSaveAt = Long.MIN_VALUE
     /** The last save failed: the next open keeps what was typed. */
     private var keepDraft = false
+
+    private val ritualOffers = Channel<Long>(Channel.BUFFERED)
+
+    /** The id of a saved income worth the payday ritual; AppRoot opens it (the sheet is closed by then). */
+    val ritualOffer: Flow<Long> = ritualOffers.receiveAsFlow()
 
     // Today is re-read on each pending change, so a sheet left open over midnight follows the new day's row.
     private val today = pendingPunches.pending.map { LocalDate.now(clock) }.distinctUntilChanged().flatMapLatest { ticketDao.forDateFlow(it) }
@@ -258,7 +268,7 @@ class AddViewModel @Inject constructor(
         val pendingId = if (punched > 0) pendingPunches.add(Pending(0, punched, expectedHoles = holesBefore + 1)) else null
         val left = s.leftAfter
         viewModelScope.launch {
-            try {
+            val id = try {
                 entryRepo.log(entry)
             } catch (e: CancellationException) {
                 pendingId?.let(pendingPunches::remove)
@@ -278,6 +288,15 @@ class AddViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Log.e(TAG, "recordSms failed", e)
+                }
+            }
+            if (entry.kind == EntryKind.RECEIVED) {
+                try {
+                    if (ritual.shouldOffer(id)) ritualOffers.send(id)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "ritual offer failed", e)
                 }
             }
             if (pendingId == null) return@launch

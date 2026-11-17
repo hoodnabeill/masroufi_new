@@ -131,7 +131,7 @@ class DailyLoopTest {
             store,
             viewModelFactory {
                 initializer {
-                    AddViewModel(f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, PendingDeletes(f.entries, io), bus, clock)
+                    AddViewModel(f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, PendingDeletes(f.entries, io), bus, f.ritual, clock)
                 }
             },
         )[AddViewModel::class]

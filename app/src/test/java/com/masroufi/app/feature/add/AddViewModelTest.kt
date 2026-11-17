@@ -68,6 +68,7 @@ class AddViewModelTest {
     private lateinit var f: RepoFixture
     private lateinit var vm: AddViewModel
     private val events = mutableListOf<PunchFeedback>()
+    private val offers = mutableListOf<Long>()
     private var cash = 0L
 
     @Before fun open() {
@@ -95,13 +96,14 @@ class AddViewModelTest {
         val factory = viewModelFactory {
             initializer {
                 AddViewModel(
-                    f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, deletes, bus, clock,
+                    f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, deletes, bus, f.ritual, clock,
                 )
             }
         }
         vm = ViewModelProvider.create(store, factory)[AddViewModel::class]
         vm.viewModelScope.launch { vm.state.collect {} } // the sheet collecting it
         vm.viewModelScope.launch { bus.events.collect { events += it } }
+        vm.viewModelScope.launch { vm.ritualOffer.collect { offers += it } }
         return vm
     }
 
@@ -135,6 +137,46 @@ class AddViewModelTest {
         assertTrue(vm.save())
         settle("stored") { entries().size == 1 }
         settle("recorded") { runBlocking { db.pocketDao().byId(cash) }?.lastSmsBalance == 115_000L }
+    }
+
+    @Test fun aSalarySizedIncomeOffersThePaydayRitualOnce() {
+        runBlocking { f.settings.setRitualDone(1_000_000, 10) } // usual salary 10,000: half is 5,000
+        newVm()
+        opened()
+        vm.setType(EntryKind.RECEIVED)
+        typeAmount("6000")
+        settle("amount typed") { state.amount == 600_000L }
+        assertTrue(vm.save())
+        settle("offered") { offers.isNotEmpty() }
+        val id = entries().single().id
+        assertEquals(listOf(id), offers)
+
+        runBlocking { f.ritual.markOffered(id) }
+        assertFalse("not offered twice for the same income", runBlocking { f.ritual.shouldOffer(id) })
+
+        clock.instant = clock.instant.plusMillis(450)
+        opened()
+        vm.setType(EntryKind.RECEIVED)
+        typeAmount("100")
+        settle("small amount typed") { state.amount == 10_000L }
+        assertTrue(vm.save())
+        settle("stored") { entries().size == 2 }
+        Thread.sleep(300)
+        main.scheduler.runCurrent()
+        assertEquals("a small income is no payday", listOf(id), offers)
+    }
+
+    @Test fun aSpendIsNeverOffered() {
+        runBlocking { f.settings.setRitualDone(1_000, 10) }
+        newVm()
+        opened()
+        typeAmount("25")
+        settle("amount typed") { state.amount == 2_500L }
+        assertTrue(vm.save())
+        settle("stored") { entries().size == 1 }
+        Thread.sleep(300)
+        main.scheduler.runCurrent()
+        assertTrue(offers.isEmpty())
     }
 
     @Test fun doubleTapLogsOnce() {

@@ -279,6 +279,14 @@ interface RecurringDao {
     )
     suspend fun unpaidDueBefore(date: LocalDate): Long
 
+    /** The items behind [unpaidDueBefore], soonest first. */
+    @Query(
+        """SELECT r.* FROM recurring r JOIN pocket p ON p.id = r.pocketId
+        WHERE r.archived = 0 AND r.nextDue < :date
+        AND p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP' ORDER BY r.nextDue, r.id"""
+    )
+    suspend fun unpaidItemsDueBefore(date: LocalDate): List<RecurringEntity>
+
     @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE pocketId = :pocketId AND archived = 0 AND nextDue < :date")
     suspend fun unpaidFromPocketDueBefore(pocketId: Long, date: LocalDate): Long
 

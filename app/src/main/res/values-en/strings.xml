@@ -567,4 +567,31 @@
         <item>Dhu al-Qadah</item>
         <item>Dhu al-Hijjah</item>
     </string-array>
+
+    <!-- Payday ritual (Payday.dc.html) -->
+    <string name="payday_close">Close</string>
+    <string name="payday_title">Payday. Congrats</string>
+    <string name="payday_currency">EGP</string>
+    <string name="payday_hero_sub">It landed in %1$s. Split it before it disappears?</string>
+    <string name="payday_step_jar">Pay yourself first</string>
+    <string name="payday_jar_line">%1$s to the jar before anything else</string>
+    <string name="payday_jar_sub_pct">%1$s%% of your pay · the jar becomes %2$s</string>
+    <string name="payday_jar_sub_amount">The jar becomes %1$s</string>
+    <string name="payday_chip_amount">Amount</string>
+    <string name="payday_amount_title">How much for the jar?</string>
+    <string name="payday_step_fixed">Set aside the fixed costs</string>
+    <string name="payday_edit">Edit</string>
+    <string name="payday_fixed_row">%1$s · day %2$s</string>
+    <string name="payday_fixed_none">No fixed costs waiting this cycle.</string>
+    <string name="payday_where">Where all of it goes</string>
+    <string name="payday_leg_jar">Jar</string>
+    <string name="payday_leg_fixed">Fixed costs</string>
+    <string name="payday_leg_tickets">For tickets</string>
+    <string name="payday_ticket_title">Your ticket this month</string>
+    <string name="payday_more">%1$s more than last month</string>
+    <string name="payday_less">%1$s less than last month</string>
+    <string name="payday_per_day">EGP a day</string>
+    <string name="payday_count">%1$s tickets will print, one each morning until %2$s.</string>
+    <string name="payday_print">Print this month\'s tickets</string>
+    <string name="payday_roll_link">Split this pay</string>
 </resources>
