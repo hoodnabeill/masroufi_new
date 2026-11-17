@@ -27,6 +27,9 @@ sealed interface ProverbRewardUi {
     data object Loading : ProverbRewardUi
     data object Error : ProverbRewardUi
 
+    /** Nothing to reward (the day closed by itself, or no card was drawn and none is owned): the screen goes straight back to Home. */
+    data object NoCard : ProverbRewardUi
+
     /** [allCollected]: the day drew no card because the album is full, so [proverb] is a favourite from it. */
     data class Ready(
         val ticketNumber: Int,
@@ -59,7 +62,7 @@ class ProverbRewardViewModel @Inject constructor(
         viewModelScope.launch {
             var next: ProverbRewardUi = ProverbRewardUi.Error
             try {
-                next = ready()
+                next = ready() ?: ProverbRewardUi.NoCard
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -69,18 +72,20 @@ class ProverbRewardViewModel @Inject constructor(
         }
     }
 
-    private suspend fun ready(): ProverbRewardUi.Ready {
+    private suspend fun ready(): ProverbRewardUi.Ready? {
         val row = checkNotNull(ticketDao.forDate(date)) { "no ticket for $date" }
         val days = ticketDao.allNow()
         val hand = days.filter { it.status == TicketStatus.CLOSED_BY_HAND }
         val weekFrom = weekStart(date)
         val number = row.proverbNumber
+        // Only a day closed by hand rewards a card (or, with the album full, a favourite).
+        if (row.status != TicketStatus.CLOSED_BY_HAND) return null
         val proverb = if (number != null) {
             checkNotNull(ProverbCatalog.all.firstOrNull { it.number == number }) { "no card $number" }
         } else {
             // Album full: a favourite from it, stable for the day.
             val owned = proverbDao.numbers().sorted()
-            check(owned.isNotEmpty()) { "no card drawn and none collected" }
+            if (owned.isEmpty()) return null
             val pick = owned[Random(date.toEpochDay()).nextInt(owned.size)]
             ProverbCatalog.all.first { it.number == pick }
         }

@@ -83,6 +83,8 @@ fun Ticket(
     stub: @Composable () -> Unit,
     showQersh: Boolean = true,
     contentDescription: String,
+    /** Qersh's scale, 0..1 (the new-ticket moment pops him in). */
+    qershScale: () -> Float = { 1f },
     modifier: Modifier = Modifier,
 ) {
     val reduce = LocalReduceMotion.current
@@ -146,7 +148,10 @@ fun Ticket(
             }
         }
         if (showQersh) {
-            Qersh(QershMood.Happy, 76.dp, Modifier.align(Alignment.TopEnd).padding(end = 22.dp).offset(y = (-40).dp))
+            Qersh(
+                QershMood.Happy, 76.dp,
+                Modifier.align(Alignment.TopEnd).padding(end = 22.dp).offset(y = (-40).dp).graphicsLayer { qershScale().let { scaleX = it; scaleY = it } },
+            )
         }
     }
 }

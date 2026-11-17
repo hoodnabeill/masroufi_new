@@ -11,6 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.domain.ProverbCatalog
 import com.masroufi.app.ui.theme.MasroufiTheme
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -96,7 +97,7 @@ class ProverbShareTest {
     private val app = ApplicationProvider.getApplicationContext<Application>()
 
     @Test fun shareIntentHasPngUri() {
-        ProverbShare.share(app, card(18))
+        runBlocking { ProverbShare.share(app, card(18)) }
         val chooser = shadowOf(app).nextStartedActivity
         assertEquals(Intent.ACTION_CHOOSER, chooser.action)
         val send = IntentCompat.getParcelableExtra(chooser, Intent.EXTRA_INTENT, Intent::class.java)

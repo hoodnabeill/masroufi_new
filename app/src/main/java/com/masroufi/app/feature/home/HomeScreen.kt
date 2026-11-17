@@ -6,6 +6,8 @@ import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -33,8 +37,14 @@ import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.PunchFeedback
+import com.masroufi.app.ui.haptics.HapticLevel
+import com.masroufi.app.ui.haptics.LocalHaptics
+import com.masroufi.app.ui.motion.LocalReduceMotion
+import com.masroufi.app.ui.motion.TzSpring
+import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.paper.Ticket
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private enum class Phase { Blank, Skeleton, Content, Error }
 
@@ -81,6 +91,7 @@ fun HomeScreen(
         onCloseDay = onCloseDay,
         onOpenProverb = onOpenProverb,
         feedback = feedback,
+        onTicketShown = viewModel::markTicketShown,
     )
 }
 
@@ -98,6 +109,7 @@ fun HomeContent(
     onOpenProverb: (epochDay: Long) -> Unit,
     modifier: Modifier = Modifier,
     feedback: PunchFeedback.Saved? = null,
+    onTicketShown: (epochDay: Long) -> Unit = {},
 ) {
     var skeletonDue by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -121,11 +133,53 @@ fun HomeContent(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback)
+                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown)
                 }
             }
         }
     }
+}
+
+/** Slide's steps: 40 dp in three, a Tick each (05-MOTION "A new ticket"). */
+private const val SLIDE_DP = 40f
+private const val SLIDE_STEPS = 3
+private const val SLIDE_STEP_MS = 80
+
+/**
+ * First open of the day: the ticket feeds out from under the header in three 13 dp steps (a Tick each), then Qersh pops
+ * over the corner with Reward; about 350 ms. Reduced motion: no movement, one Tick. [onShown] runs once the steps are done.
+ */
+@Composable
+private fun NewTicketMoment(
+    play: Boolean,
+    onShown: () -> Unit,
+    content: @Composable (slide: GraphicsLayerScope.() -> Unit, qershScale: () -> Float) -> Unit,
+) {
+    val haptics = LocalHaptics.current
+    val reduce = LocalReduceMotion.current
+    val moves = play && !reduce
+    // Remembered once: the key is written when the steps end, which flips [play] off mid-composition.
+    val animate = remember { moves }
+    val up = remember { Animatable(if (animate) SLIDE_DP else 0f) }
+    val pop = remember { Animatable(if (animate) 0f else 1f) }
+    val shown by rememberUpdatedState(onShown)
+    LaunchedEffect(Unit) {
+        if (!play) return@LaunchedEffect
+        if (!animate) {
+            haptics.perform(HapticLevel.Tick)
+        } else {
+            for (i in 1..SLIDE_STEPS) {
+                haptics.perform(HapticLevel.Tick)
+                up.animateTo(SLIDE_DP * (SLIDE_STEPS - i) / SLIDE_STEPS, tween(SLIDE_STEP_MS, easing = LinearEasing))
+            }
+            launch { pop.animateTo(1f, TzSpring.Reward.spec()) }
+        }
+        shown()
+    }
+    content({
+        translationY = -up.value.dp.toPx()
+        alpha = 1f - up.value / SLIDE_DP
+    }) { pop.value }
 }
 
 @Composable
@@ -140,6 +194,7 @@ private fun ReadyContent(
     onCloseDay: (Long) -> Unit,
     onOpenProverb: (Long) -> Unit,
     feedback: PunchFeedback.Saved?,
+    onTicketShown: (Long) -> Unit,
 ) {
     val epochDay = s.today.toEpochDay()
     HomeHeader(s.today, s.greeting, s.streak)
@@ -147,6 +202,7 @@ private fun ReadyContent(
     Box(Modifier.fillMaxWidth().padding(top = 26.dp)) {
         val t = s.ticket
         if (t != null) {
+            NewTicketMoment(play = s.newTicket, onShown = { onTicketShown(epochDay) }) { slide, qershScale ->
             Ticket(
                 label = stringResource(R.string.home_ticket_label),
                 amountLabel = stringResource(R.string.home_ticket_amount_label),
@@ -159,7 +215,10 @@ private fun ReadyContent(
                     R.string.home_ticket_cd,
                     formatPounds(t.left.coerceAtLeast(0)), formatPounds(t.amount), formatPounds(t.spent), t.holes.toString(),
                 ),
+                qershScale = qershScale,
+                modifier = Modifier.graphicsLayer(slide),
             )
+            }
         } else if (s.tomorrow != null) {
             TomorrowPreview(s.tomorrow) { onOpenProverb(epochDay) }
         }

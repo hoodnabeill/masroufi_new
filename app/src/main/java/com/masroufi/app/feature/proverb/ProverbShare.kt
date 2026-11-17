@@ -21,6 +21,8 @@ import com.masroufi.app.domain.Proverb
 import com.masroufi.app.domain.ProverbCatalog
 import com.masroufi.app.ui.paper.color
 import com.masroufi.app.ui.theme.Tz
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -78,8 +80,16 @@ object ProverbShare {
         return bmp
     }
 
-    /** Writes the card to cacheDir/share and opens the chooser. Throws [IOException] when the PNG cannot be written. */
-    fun share(context: Context, p: Proverb) {
+    /**
+     * Renders the card and writes cacheDir/share/proverb_N.png off the main thread, then opens the chooser on the
+     * caller's thread: call it from a scope on Main. Throws [IOException] when the PNG cannot be written.
+     */
+    suspend fun share(context: Context, p: Proverb) {
+        val chooser = withContext(Dispatchers.Default) { chooser(context, p) }
+        context.startActivity(chooser)
+    }
+
+    private fun chooser(context: Context, p: Proverb): Intent {
         val dir = File(context.cacheDir, "share").apply { mkdirs() }
         val file = File(dir, "proverb_${p.number}.png")
         val bmp = render(context, p)
@@ -95,6 +105,6 @@ object ProverbShare {
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val chooser = Intent.createChooser(send, null).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         if (context !is Activity) chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(chooser)
+        return chooser
     }
 }

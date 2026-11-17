@@ -32,6 +32,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,14 +90,20 @@ private enum class Phase { Blank, Skeleton, Content, Error }
 fun ProverbRewardScreen(viewModel: ProverbRewardViewModel, onHome: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // Nothing to reward (auto-closed day, no card): straight back.
+    val goHome by rememberUpdatedState(onHome)
+    LaunchedEffect(state) { if (state == ProverbRewardUi.NoCard) goHome() }
     ProverbRewardContent(
         state,
         onShare = { p ->
-            try {
-                ProverbShare.share(context, p)
-            } catch (e: IOException) {
-                Log.e(TAG, "share failed", e)
-                Toast.makeText(context, R.string.proverb_share_failed, Toast.LENGTH_SHORT).show()
+            scope.launch {
+                try {
+                    ProverbShare.share(context, p)
+                } catch (e: IOException) {
+                    Log.e(TAG, "share failed", e)
+                    Toast.makeText(context, R.string.proverb_share_failed, Toast.LENGTH_SHORT).show()
+                }
             }
         },
         onHome = onHome,
@@ -119,6 +127,7 @@ fun ProverbRewardContent(
     val phase = when (state) {
         is ProverbRewardUi.Ready -> Phase.Content
         ProverbRewardUi.Error -> Phase.Error
+        ProverbRewardUi.NoCard -> Phase.Blank
         ProverbRewardUi.Loading -> if (skeletonDue) Phase.Skeleton else Phase.Blank
     }
     Crossfade(phase, modifier.fillMaxSize(), animationSpec = tween(160), label = "proverbReward") { p ->

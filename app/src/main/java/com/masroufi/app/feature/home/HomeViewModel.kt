@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.db.CategoryDao
 import com.masroufi.app.data.db.PocketDao
+import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.repo.EntryRepository
 import com.masroufi.app.data.repo.HomeData
 import com.masroufi.app.data.repo.HomeRepository
@@ -96,6 +97,8 @@ sealed interface HomeUiState {
         val jarTotal: Long,
         val cycle: CycleUi,
         val collected: Int,
+        /** First open of this day's ticket: Home plays the new-ticket moment, then calls markTicketShown. */
+        val newTicket: Boolean = false,
     ) : HomeUiState
 }
 
@@ -115,6 +118,7 @@ class HomeViewModel @Inject constructor(
     @ProcessLifecycle private val processLifecycle: Lifecycle,
     private val clock: Clock,
     feedbackBus: FeedbackBus,
+    private val settings: SettingsStore,
 ) : ViewModel() {
     private val failure = MutableStateFlow<Throwable?>(null)
     private val _saveFailed = MutableStateFlow(false)
@@ -164,27 +168,7 @@ class HomeViewModel @Inject constructor(
         print()
         processLifecycle.addObserver(onStart)
         viewModelScope.launch {
-            feedbackBus.events.collect { f ->
-                when (f) {
-                    PunchFeedback.Failed -> {
-                        feedbackJob?.cancel()
-                        _feedback.value = null
-                        _saveFailed.value = true
-                    }
-                    is PunchFeedback.Saved -> {
-                        _saveFailed.value = false
-                        feedbackJob?.cancel()
-                        feedbackJob = launch {
-                            _feedback.value = f
-                            try {
-                                delay(FEEDBACK_MS)
-                            } finally {
-                                if (_feedback.value === f) _feedback.value = null
-                            }
-                        }
-                    }
-                }
-            }
+            feedbackBus.events.collect(::show)
         }
         viewModelScope.launch {
             while (true) {
@@ -197,6 +181,42 @@ class HomeViewModel @Inject constructor(
 
     override fun onCleared() {
         processLifecycle.removeObserver(onStart)
+    }
+
+    /** The one place a punch's outcome reaches the screen: the add sheet's events and Home's own saves both land here. */
+    private fun show(f: PunchFeedback) {
+        when (f) {
+            PunchFeedback.Failed -> {
+                feedbackJob?.cancel()
+                _feedback.value = null
+                _saveFailed.value = true
+            }
+            is PunchFeedback.Saved -> {
+                _saveFailed.value = false
+                feedbackJob?.cancel()
+                feedbackJob = viewModelScope.launch {
+                    _feedback.value = f
+                    try {
+                        delay(FEEDBACK_MS)
+                    } finally {
+                        if (_feedback.value === f) _feedback.value = null
+                    }
+                }
+            }
+        }
+    }
+
+    /** The new-ticket moment for [epochDay] has played: it does not play again today. */
+    fun markTicketShown(epochDay: Long) {
+        viewModelScope.launch {
+            try {
+                settings.setLastTicketShown(epochDay)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "lastTicketShown not saved", e)
+            }
+        }
     }
 
     private fun print() {
@@ -257,10 +277,15 @@ class HomeViewModel @Inject constructor(
     /** Shows the hole at once; rolls it back if storage refuses. */
     private suspend fun punch(entry: NewEntry): Boolean {
         _saveFailed.value = false
-        val expected = (home.value?.today?.entryCount ?: 0) + pendingPunches.pending.value.size + 1
+        val row = home.value?.today
+        val holesBefore = (row?.entryCount ?: 0) + pendingPunches.pending.value.size
+        val expected = holesBefore + 1
+        val left = row?.takeIf { it.status == TicketStatus.OPEN }
+            ?.let { it.amount - it.spent - pendingPunches.pending.value.sumOf { p -> p.punched } - entry.amount }
         val id = pendingPunches.add(Pending(0, entry.amount))
         return try {
             entryRepo.log(entry)
+            if (left != null) show(PunchFeedback.Saved(left, firstOfDay = holesBefore == 0))
             // Drop the placeholder only once the stored row has the hole, so the count never dips and re-punches.
             withTimeoutOrNull(PENDING_CATCH_UP_MS) { home.first { (it?.today?.entryCount ?: 0) >= expected } }
             true
@@ -268,7 +293,7 @@ class HomeViewModel @Inject constructor(
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "log failed", e)
-            _saveFailed.value = true
+            show(PunchFeedback.Failed)
             false
         } finally {
             pendingPunches.remove(id)
@@ -336,5 +361,6 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int): HomeUiState
             paydayDay = d.cycle.nextPayday.dayOfMonth,
         ),
         collected = d.collected,
+        newTicket = open && d.lastTicketShown != today.toEpochDay(),
     )
 }

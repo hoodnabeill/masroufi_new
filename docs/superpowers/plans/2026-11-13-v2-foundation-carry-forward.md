@@ -32,15 +32,23 @@ the decisions made during the build and what the next phases must pick up.
 
 ## Fix at the start of Phase 3 (Home, add sheet, close day)
 
-- Add `DayTicketDao.forDateFlow(date)` so Home can observe today's row.
-- Decide whether a transfer fee punches today's ticket (today it does not; `isFee` is never written). Decide before the add sheet's "رسوم" field.
-- Decide what an end-of-month row stores (pool and days left are not saved today) before the schema is frozen.
-- Commit `app/schemas/com.masroufi.app.data.db.TazkaraDatabase/1.json` from the CI artifact once Phase 3's schema is final; every later change needs a Migration.
+- ~~Add `DayTicketDao.forDateFlow(date)` so Home can observe today's row.~~ DONE (Phase 3).
+- ~~Decide whether a transfer fee punches today's ticket.~~ DONE: it does (one hole, adds to spent).
+- ~~Decide what an end-of-month row stores.~~ DONE: `eomPool` and `eomDaysLeft` are stored on the row.
+- Commit `app/schemas/com.masroufi.app.data.db.TazkaraDatabase/1.json` from the CI artifact: NOT done, see "Phase 3 notes".
 - Wire WorkManager for the midnight print: remove the default initializer and implement `Configuration.Provider` with the Hilt worker factory.
-- Show the ticket only after its row has loaded (avoids a punch animation on every open).
+- ~~Show the ticket only after its row has loaded.~~ DONE (Home composes the ticket only when Ready).
 - `edit` rejects any change to an entry whose pocket was archived later; the UI must explain it.
-- Check the touch-down press delay inside scrolling lists.
-- The gallery is the start screen until Home replaces it.
+- Check the touch-down press delay inside scrolling lists: noted, not measured on a device yet.
+- ~~The gallery is the start screen until Home replaces it.~~ DONE: Home is the start screen; the gallery is reached from the Plan tab (debug).
+
+## Phase 3 notes (daily loop: Home, add sheet, close day, reward)
+
+- Guessed copy to review (written by the builder, not in `07-COPY.md`): the TalkBack label of the streak; plural forms such as "في 1 مرات"; the transfer wording (حوّل / إلى / في / "من {from} لـ {to}"); the leftover destinations لبكره / للطوارئ / نادر; the share-failure toast; every English string in `values-en/`.
+- The add sheet rises from the bottom of the screen, not out of the + button.
+- `app/schemas/.../1.json` is still to be committed once a build is installed on a real phone (CI artifacts need a login to download); until then the comment in `TazkaraDatabase.kt` says schema v1 may change.
+- Dev installs need an uninstall and reinstall after Phase 3's v1 schema column changes (no migration exists yet).
+- New-ticket moment: `lastTicketShown` (epoch day) lives in `tazkara_settings`; it is written when the three steps end, so leaving Home mid-moment replays it.
 
 ## Later phases
 

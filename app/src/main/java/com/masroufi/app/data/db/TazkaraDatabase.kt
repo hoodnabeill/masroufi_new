@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-// shortcut: schema may change freely until Phase 3 ships the first usable build; from then every change adds a Migration.
+// shortcut: schema v1 may still change until the first build is installed on a real phone; from then every change adds a Migration and the exported 1.json goes into app/schemas.
 @Database(
     entities = [
         PocketEntity::class, EntryEntity::class, CategoryEntity::class, DayTicketEntity::class,

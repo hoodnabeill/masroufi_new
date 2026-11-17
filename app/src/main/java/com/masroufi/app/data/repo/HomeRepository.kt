@@ -48,6 +48,8 @@ data class HomeData(
     val repeats: List<RepeatChip>,
     /** The base of tomorrow's ticket, on tomorrow's own pay cycle. */
     val tomorrow: TomorrowBasis,
+    /** Epoch day of the last ticket shown with the new-ticket moment (null = never). */
+    val lastTicketShown: Long?,
 )
 
 /** The day's biggest punch: [categoryName] is null when that entry has no (or a deleted) category. */
@@ -133,6 +135,7 @@ class HomeRepository @Inject constructor(
                 unpaidBills = recurringDao.unpaidDueBefore(cycle.nextPayday),
                 repeats = repeats,
                 tomorrow = tomorrowBasis(today, s.payday),
+                lastTicketShown = s.lastTicketShown,
             )
         }
     }

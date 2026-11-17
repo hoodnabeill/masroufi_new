@@ -25,6 +25,8 @@ data class Settings(
     val roundUpStep: Int = 0,
     val proverbSeed: Long,
     val onboarded: Boolean = false,
+    /** Epoch day of the last ticket Home printed on screen with the new-ticket moment; null = never. */
+    val lastTicketShown: Long? = null,
 )
 
 @Singleton
@@ -34,6 +36,7 @@ class SettingsStore @Inject constructor(private val store: DataStore<Preferences
     private val roundUpKey = intPreferencesKey("roundUpStep")
     private val seedKey = longPreferencesKey("proverbSeed")
     private val onboardedKey = booleanPreferencesKey("onboarded")
+    private val lastTicketShownKey = longPreferencesKey("lastTicketShown")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -50,6 +53,7 @@ class SettingsStore @Inject constructor(private val store: DataStore<Preferences
         store.edit { it[roundUpKey] = v }
     }
     suspend fun setOnboarded(v: Boolean) { store.edit { it[onboardedKey] = v } }
+    suspend fun setLastTicketShown(epochDay: Long) { store.edit { it[lastTicketShownKey] = epochDay } }
 
     private fun decode(p: Preferences) = Settings(
         payday = p[paydayKey]?.let(::decodePayday) ?: Payday.Day(25),
@@ -58,6 +62,7 @@ class SettingsStore @Inject constructor(private val store: DataStore<Preferences
         roundUpStep = p[roundUpKey] ?: 0,
         proverbSeed = checkNotNull(p[seedKey]) { "seed is written before the first emit" },
         onboarded = p[onboardedKey] ?: false,
+        lastTicketShown = p[lastTicketShownKey],
     )
 
     private fun encode(v: Payday) = when (v) {
