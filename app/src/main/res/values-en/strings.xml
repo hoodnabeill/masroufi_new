@@ -78,4 +78,25 @@
     <string name="add_income">Add to my money</string>
     <string name="add_transfer">Move</string>
     <string name="add_amount_missing">Type the amount</string>
+    <string name="close_back">Back</string>
+    <string name="close_title">Your day went well</string>
+    <string name="close_sub">Tear the ticket and see where the rest goes.</string>
+    <string name="close_ticket_label">%1$s's ticket</string>
+    <string name="close_left_label">You have left</string>
+    <string name="close_line">Spent %1$s in %2$s punches</string>
+    <string name="close_line_biggest">Spent %1$s in %2$s punches · biggest: %3$s %4$s</string>
+    <string name="close_zero">Closed it right on the dot. Well done.</string>
+    <string name="close_over">You went over by %1$s.</string>
+    <string name="close_over_spread">You went over by %1$s. No worries, I'll spread it over the next %2$s days (%3$s EGP a day).</string>
+    <string name="close_stub_title">Ticket stub</string>
+    <string name="close_stub_amount">+%1$s</string>
+    <string name="close_where">Where should the %1$s go?</string>
+    <string name="close_dest_jar">The jar</string>
+    <string name="close_dest_jar_sub">Will be %1$s</string>
+    <string name="close_dest_tomorrow">Tomorrow's ticket</string>
+    <string name="close_dest_tomorrow_sub">%1$s will be %2$s instead of %3$s</string>
+    <string name="close_dest_emergency">Emergency envelope</string>
+    <string name="close_dest_emergency_sub">Has %1$s now</string>
+    <string name="close_button">Tear the ticket</string>
+    <string name="close_button_over">Tear it and carry on</string>
 </resources>

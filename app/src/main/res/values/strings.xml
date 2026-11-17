@@ -78,4 +78,25 @@
     <string name="add_income">ضيف للفلوس</string>
     <string name="add_transfer">حوّل</string>
     <string name="add_amount_missing">اكتب المبلغ</string>
+    <string name="close_back">رجوع</string>
+    <string name="close_title">يومك خلص على خير</string>
+    <string name="close_sub">اقطع التذكرة وشوف الباقي هيروح فين.</string>
+    <string name="close_ticket_label">تذكرة %1$s</string>
+    <string name="close_left_label">فضل معاك</string>
+    <string name="close_line">صرفت %1$s في %2$s مرات</string>
+    <string name="close_line_biggest">صرفت %1$s في %2$s مرات · أكبر حاجة: %3$s %4$s</string>
+    <string name="close_zero">قفلتها على الشعرة. شاطر.</string>
+    <string name="close_over">عدّيت بـ %1$s.</string>
+    <string name="close_over_spread">عدّيت بـ %1$s. ولا يهمك، هوزّعهم على الـ %2$s يوم الجايين (%3$s جنيه في اليوم).</string>
+    <string name="close_stub_title">كعب التذكرة</string>
+    <string name="close_stub_amount">+%1$s</string>
+    <string name="close_where">الـ %1$s يروحوا فين؟</string>
+    <string name="close_dest_jar">الحصّالة</string>
+    <string name="close_dest_jar_sub">تبقى %1$s</string>
+    <string name="close_dest_tomorrow">تذكرة بكره</string>
+    <string name="close_dest_tomorrow_sub">%1$s تبقى %2$s بدل %3$s</string>
+    <string name="close_dest_emergency">ظرف الطوارئ</string>
+    <string name="close_dest_emergency_sub">فيه %1$s دلوقتي</string>
+    <string name="close_button">اقطع التذكرة</string>
+    <string name="close_button_over">اقطعها وكمّل</string>
 </resources>

@@ -41,6 +41,7 @@ import com.masroufi.app.data.repo.DebugSampleData
 import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.AddSheet
+import com.masroufi.app.feature.close.CloseDayScreen
 import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.placeholder.TabPlaceholder
@@ -140,8 +141,18 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
             NavHost(
                 nav,
                 startDestination = Home,
-                enterTransition = { if (targetState.destination.isPushed()) pushedIn() else fadeIn(fade) },
-                exitTransition = { fadeOut(fade) },
+                // 05-MOTION "Tear": the reward cross-fades in over the torn ticket in 160 ms.
+                enterTransition = {
+                    when {
+                        initialState.destination.hasRoute<CloseDay>() && targetState.destination.hasRoute<ProverbReward>() -> fadeIn(tween(160))
+                        targetState.destination.isPushed() -> pushedIn()
+                        else -> fadeIn(fade)
+                    }
+                },
+                exitTransition = {
+                    if (initialState.destination.hasRoute<CloseDay>() && targetState.destination.hasRoute<ProverbReward>()) fadeOut(tween(160))
+                    else fadeOut(fade)
+                },
                 popEnterTransition = { fadeIn(fade) },
                 popExitTransition = { if (initialState.destination.isPushed()) pushedOut() else fadeOut(fade) },
             ) {
@@ -156,7 +167,14 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                 composable<RollTab> { TabPlaceholder(R.string.tab_roll) }
                 composable<PlanTab> { TabPlaceholder(R.string.tab_plan, onGallery = { nav.navigate(Gallery) }) }
                 composable<PeopleTab> { TabPlaceholder(R.string.tab_people) }
-                composable<CloseDay> { TabPlaceholder(R.string.tab_today) } // Task 19 replaces this
+                composable<CloseDay> {
+                    CloseDayScreen(
+                        viewModel = hiltViewModel(),
+                        onBack = { nav.popBackStack() },
+                        // The reward replaces this screen, so back from it lands on Home.
+                        onDone = { nav.navigate(ProverbReward(it)) { popUpTo<CloseDay> { inclusive = true } } },
+                    )
+                }
                 composable<ProverbReward> { TabPlaceholder(R.string.tab_today) } // Task 20 replaces this
                 composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }) }
             }

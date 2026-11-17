@@ -18,6 +18,7 @@ import com.masroufi.app.data.db.RecurringEntity
 import com.masroufi.app.data.db.RecurringKind
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.domain.EntryKind
+import com.masroufi.app.domain.TomorrowBasis
 import com.masroufi.app.domain.TicketStatus
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.ui.icons.TzIcons
@@ -269,5 +270,22 @@ class HomeRepositoryTest {
         assertTrue("every icon exists in TzIcons: ${cats.map { it.icon } - iconNames}", cats.all { it.icon in iconNames })
         val palette = listOf(Tz.sky, Tz.lilac, Tz.turquoise, Tz.yellow, Tz.carnelian).map { it.toArgb() }
         assertEquals("colours cycle sky, lilac, turquoise, yellow, carnelian (copies of Tz)", List(9) { palette[it % 5] }, cats.map { it.color })
+    }
+
+    @Test fun tomorrowPreviewOnDayBeforePayday() = runTest {
+        setUp()
+        val nov24 = LocalDate.of(2026, 11, 24)
+        // Tomorrow is payday 25: its ticket is spread over the new cycle (11-25 to 12-24 = 30 days), not over today's.
+        assertEquals(TomorrowBasis(30, 0), f.home.tomorrowBasis(nov24))
+        assertEquals("an ordinary day stays in its cycle", TomorrowBasis(12, 0), f.home.tomorrowBasis(nov12))
+        fun bill(amount: Long, due: LocalDate, paid: Boolean = false) = RecurringEntity(
+            name = "bill", amount = amount, pocketId = cash, scheduleDay = due.dayOfMonth, nextDue = due, paidThisCycle = paid,
+            kind = RecurringKind.BILL,
+        )
+        db.recurringDao().insert(bill(10_000, LocalDate.of(2026, 11, 20))) // still unpaid from the old cycle: stays reserved
+        db.recurringDao().insert(bill(20_000, LocalDate.of(2026, 12, 5))) // due in the new cycle
+        db.recurringDao().insert(bill(40_000, LocalDate.of(2026, 12, 28))) // after the new cycle's payday
+        db.recurringDao().insert(bill(80_000, LocalDate.of(2026, 11, 22), paid = true))
+        assertEquals(TomorrowBasis(30, 30_000), f.home.tomorrowBasis(nov24))
     }
 }

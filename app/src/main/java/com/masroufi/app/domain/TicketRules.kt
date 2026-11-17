@@ -28,6 +28,19 @@ fun computeTicket(spendable: Long, reserved: Long, carriedIn: Long, daysLeft: In
     return TicketCalc.Printed(amount = base + carry, base = base, carriedIn = carry)
 }
 
+/**
+ * What tomorrow's ticket is built on: tomorrow's own pay cycle (on the day before payday tomorrow starts a new one), so
+ * [daysLeft] counts from tomorrow and [unpaidBills] are those still unpaid and due before that cycle's next payday.
+ */
+data class TomorrowBasis(val daysLeft: Int, val unpaidBills: Long) {
+    /** Tomorrow's ticket amount (0 when it would be an end-of-month row), with [carry] of today's leftover added. */
+    fun preview(spendable: Long, jar: Long, emergency: Long, carry: Long): Long =
+        when (val c = computeTicket(spendable, unpaidBills + jar.coerceAtLeast(0) + emergency.coerceAtLeast(0), carry, daysLeft)) {
+            is TicketCalc.Printed -> c.amount
+            is TicketCalc.EndOfMonth -> 0L
+        }
+}
+
 data class EntryForDay(
     val kind: EntryKind,
     val amount: Long,

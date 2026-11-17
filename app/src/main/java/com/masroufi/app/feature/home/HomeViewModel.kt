@@ -22,9 +22,7 @@ import com.masroufi.app.data.repo.punchesTicket
 import com.masroufi.app.di.ProcessLifecycle
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
-import com.masroufi.app.domain.TicketCalc
 import com.masroufi.app.domain.TicketStatus
-import com.masroufi.app.domain.computeTicket
 import com.masroufi.app.domain.parseQuickLog
 import com.masroufi.app.domain.projectedAtPayday
 import com.masroufi.app.domain.weekStart
@@ -297,12 +295,8 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int): HomeUiState
     }
 
     val tomorrow = if (open) null else {
-        val reserved = d.unpaidBills + d.jarTotal.coerceAtLeast(0) + d.emergencyTotal.coerceAtLeast(0)
         val carry = if (row.destination == LeftoverDestination.TOMORROW) row.leftover else 0L
-        val amount = when (val c = computeTicket(spendable, reserved, carry, d.cycle.daysLeft(today.plusDays(1)))) {
-            is TicketCalc.Printed -> c.amount
-            is TicketCalc.EndOfMonth -> 0L
-        }
+        val amount = d.tomorrow.preview(spendable, d.jarTotal, d.emergencyTotal, carry)
         TomorrowUi(amount, row.proverbNumber)
     }
 
