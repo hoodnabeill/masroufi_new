@@ -2,6 +2,7 @@ package com.masroufi.app.feature.plan
 
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
@@ -55,7 +56,8 @@ import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcons
 import com.masroufi.app.ui.motion.TzSpring
-import com.masroufi.app.ui.motion.motionSpec
+import com.masroufi.app.ui.motion.LocalReduceMotion
+import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.paper.BlankSheet
 import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
@@ -211,7 +213,7 @@ private fun QuestionCard(question: QuestionCardUi?, onAnswer: (Long, Subscriptio
     if (question != null) last = question
     AnimatedVisibility(
         visible = question != null,
-        exit = shrinkVertically(motionSpec<IntSize>(TzSpring.Snappy)) + fadeOut(motionSpec(TzSpring.Snappy)),
+        exit = if (LocalReduceMotion.current) fadeOut(tween(120)) else shrinkVertically(TzSpring.Snappy.spec<IntSize>()) + fadeOut(TzSpring.Snappy.spec<Float>()),
     ) {
         val q = last ?: return@AnimatedVisibility
         val v = q.view
