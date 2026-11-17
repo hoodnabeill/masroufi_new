@@ -21,12 +21,12 @@ class TestClock(var instant: Instant, private val zoneId: ZoneId = ZoneId.of("Af
 class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: Clock, plus: DebugEntitlements) {
     val settings = SettingsStore(PreferenceDataStoreFactory.create(scope = scope) { File(dir, "s.preferences_pb") }, clock)
     // Provider: entries is declared below (the Hilt graph breaks the same cycle).
-    val recurring = RecurringRepository(db.recurringDao(), db.entryDao(), Provider { entries }, clock)
-    val tickets = TicketRepository(
+    val recurring: RecurringRepository = RecurringRepository(db.recurringDao(), db.entryDao(), Provider { entries }, clock)
+    val tickets: TicketRepository = TicketRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), recurring, db.jarDao(), db.proverbDao(),
         db.stampDao(), settings, clock,
     )
-    val entries = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), tickets, settings, plus, clock)
+    val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), tickets, settings, plus, clock)
     val home = HomeRepository(
         db.pocketDao(), db.entryDao(), db.categoryDao(), db.dayTicketDao(), db.jarDao(), db.proverbDao(), db.recurringDao(),
         settings, clock,
