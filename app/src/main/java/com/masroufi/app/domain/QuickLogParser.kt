@@ -13,7 +13,7 @@ private val KEYWORDS = listOf(
 private val NUMBER = Regex("""\d(?:[\d.,٫٬]*\d)?""")
 
 /** Western digits, no tatweel or diacritics, أإآ→ا, ة→ه, ى→ي. */
-private fun normalize(s: String): String = buildString {
+internal fun normalize(s: String): String = buildString {
     for (c in s) when {
         c in '٠'..'٩' -> append('0' + (c - '٠'))
         c in '۰'..'۹' -> append('0' + (c - '۰'))

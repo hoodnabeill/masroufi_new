@@ -12,6 +12,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.room.Room
 import com.masroufi.app.BuildConfig
 import com.masroufi.app.core.SystemZoneClock
+import com.masroufi.app.data.db.MIGRATION_1_2
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.Entitlements
@@ -49,7 +50,7 @@ object AppModule {
 
     @Provides @Singleton
     fun database(@ApplicationContext context: Context): TazkaraDatabase =
-        Room.databaseBuilder(context, TazkaraDatabase::class.java, TazkaraDatabase.FILE_NAME).build()
+        Room.databaseBuilder(context, TazkaraDatabase::class.java, TazkaraDatabase.FILE_NAME).addMigrations(MIGRATION_1_2).build()
 
     @Provides fun pocketDao(db: TazkaraDatabase) = db.pocketDao()
     @Provides fun entryDao(db: TazkaraDatabase) = db.entryDao()

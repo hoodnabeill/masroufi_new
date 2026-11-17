@@ -6,15 +6,17 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.masroufi.app.domain.EntryForDay
+import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.StampKind
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
 data class PocketBalance(val pocketId: Long, val balance: Long)
 
-// Opening + received - spent - every fee - moved out + moved in. Round-ups are not deducted: the jar is not a pocket.
+// Opening + received + adjustments (signed) - spent - every fee - moved out + moved in. Round-ups are not deducted: the
+// jar is not a pocket.
 private const val BALANCE_EXPR = """p.openingBalance
-    + COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.pocketId = p.id AND e.kind = 'RECEIVED'), 0)
+    + COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.pocketId = p.id AND e.kind IN ('RECEIVED', 'ADJUST')), 0)
     - COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.pocketId = p.id AND e.kind = 'SPENT'), 0)
     - COALESCE((SELECT SUM(e.fee) FROM entry e WHERE e.pocketId = p.id), 0)
     - COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.pocketId = p.id AND e.kind = 'MOVED'), 0)
@@ -23,6 +25,38 @@ private const val BALANCE_EXPR = """p.openingBalance
 // Primary currency only: the daily ticket is EGP (SQL cannot use PRIMARY_CURRENCY; keep 'EGP' in sync).
 private const val COUNTING_TOTAL =
     "SELECT COALESCE(SUM($BALANCE_EXPR), 0) FROM pocket p WHERE p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"
+
+/** An entry with the names the roll shows; countsInTicket as in forDayWithPocket. */
+data class EntryRow(
+    val id: Long,
+    val kind: EntryKind,
+    val amount: Long,
+    val fee: Long,
+    val roundUp: Long,
+    val happenedAt: Long,
+    val note: String?,
+    val categoryId: Long?,
+    val categoryName: String?,
+    val pocketId: Long,
+    val pocketName: String,
+    val currency: String,
+    val countsInTicket: Boolean,
+    val toPocketId: Long?,
+    val toPocketName: String?,
+    val recurringId: Long?,
+)
+
+private const val ENTRY_ROW = """SELECT e.id, e.kind, e.amount, e.fee, e.roundUp, e.happenedAt, e.note, e.categoryId,
+    c.name AS categoryName, e.pocketId, p.name AS pocketName, p.currency AS currency,
+    (p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP') AS countsInTicket,
+    e.toPocketId, tp.name AS toPocketName, e.recurringId
+    FROM entry e JOIN pocket p ON p.id = e.pocketId LEFT JOIN category c ON c.id = e.categoryId
+    LEFT JOIN pocket tp ON tp.id = e.toPocketId"""
+
+data class PocketActivity(val pocketId: Long, val at: Long?)
+
+/** A move's fee from a pocket; cashOut = the move went into a CASH pocket. */
+data class FeeRow(val fee: Long, val cashOut: Boolean)
 
 /** A repeated spend in the last days: same category, amount and pocket. */
 data class RepeatRow(val categoryId: Long, val amount: Long, val pocketId: Long, val count: Int, val lastAt: Long)
@@ -45,6 +79,16 @@ interface PocketDao {
 
     @Query(COUNTING_TOTAL) suspend fun countingBalanceTotal(): Long
     @Query(COUNTING_TOTAL) fun countingBalanceTotalFlow(): Flow<Long>
+
+    /** Latest entry from or into each pocket (null = none). */
+    @Query(
+        """SELECT p.id AS pocketId,
+        (SELECT MAX(e.happenedAt) FROM entry e WHERE e.pocketId = p.id OR e.toPocketId = p.id) AS at FROM pocket p"""
+    )
+    fun lastActivity(): Flow<List<PocketActivity>>
+
+    @Query("UPDATE pocket SET lastSmsBalance = :balance, lastSmsAt = :at, updatedAt = :at WHERE id = :id")
+    suspend fun recordSms(id: Long, balance: Long, at: Long)
 }
 
 @Dao
@@ -106,6 +150,30 @@ interface EntryDao {
         ORDER BY COUNT(*) DESC, MAX(happenedAt) DESC LIMIT 3"""
     )
     suspend fun repeatCandidates(sinceMillis: Long): List<RepeatRow>
+
+    /** [start, end) epoch millis, newest first. */
+    @Query("$ENTRY_ROW WHERE e.happenedAt >= :start AND e.happenedAt < :end ORDER BY e.happenedAt DESC, e.id DESC")
+    fun rows(start: Long, end: Long): Flow<List<EntryRow>>
+
+    @Query("$ENTRY_ROW ORDER BY e.happenedAt DESC, e.id DESC") fun allRows(): Flow<List<EntryRow>>
+
+    @Query("SELECT happenedAt FROM entry") fun allHappenedAt(): Flow<List<Long>>
+
+    /**
+     * Everything leaving or entering the pocket in [start, end) epoch millis, plus the fees it paid. Adjustments are
+     * not money moving.
+     */
+    @Query(
+        """SELECT COALESCE(SUM(ABS(amount) + CASE WHEN pocketId = :pocketId THEN fee ELSE 0 END), 0) FROM entry
+        WHERE (pocketId = :pocketId OR toPocketId = :pocketId) AND kind != 'ADJUST' AND happenedAt >= :start AND happenedAt < :end"""
+    )
+    suspend fun movedBetween(pocketId: Long, start: Long, end: Long): Long
+
+    @Query(
+        """SELECT e.fee, (tp.kind = 'CASH') AS cashOut FROM entry e JOIN pocket tp ON tp.id = e.toPocketId
+        WHERE e.pocketId = :pocketId AND e.kind = 'MOVED' AND e.fee > 0 AND e.happenedAt >= :start AND e.happenedAt < :end"""
+    )
+    suspend fun moveFees(pocketId: Long, start: Long, end: Long): List<FeeRow>
 }
 
 @Dao
@@ -129,6 +197,8 @@ interface DayTicketDao {
     suspend fun openBefore(date: LocalDate): List<DayTicketEntity>
 
     @Query("SELECT * FROM day_ticket ORDER BY date") suspend fun allNow(): List<DayTicketEntity>
+
+    @Query("SELECT date FROM day_ticket") fun dates(): Flow<List<LocalDate>>
 
     /** Debug sample data only (re-printing today). */
     @Query("DELETE FROM day_ticket WHERE id = :id") suspend fun delete(id: Long)
@@ -157,6 +227,9 @@ interface RecurringDao {
     suspend fun unpaidDueBefore(date: LocalDate): Long
 
     @Query("UPDATE recurring SET paidThisCycle = :paid WHERE id = :id") suspend fun setPaid(id: Long, paid: Boolean)
+
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE pocketId = :pocketId AND paidThisCycle = 0 AND nextDue < :date")
+    suspend fun unpaidFromPocketDueBefore(pocketId: Long, date: LocalDate): Long
 }
 
 @Dao

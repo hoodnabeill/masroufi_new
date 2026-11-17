@@ -4,7 +4,8 @@ import com.masroufi.app.core.ceilDiv
 import com.masroufi.app.core.ceilToPound
 import com.masroufi.app.core.floorToPound
 
-enum class EntryKind { SPENT, RECEIVED, MOVED }
+/** ADJUST: a reconcile; its signed amount (the difference) changes the pocket balance, never the ticket or income. */
+enum class EntryKind { SPENT, RECEIVED, MOVED, ADJUST }
 
 sealed interface TicketCalc {
     data class Printed(val amount: Long, val base: Long, val carriedIn: Long) : TicketCalc
@@ -57,14 +58,14 @@ data class EntryForDay(
 val EntryForDay.punches: Boolean get() = countsInTicket && when (kind) {
     EntryKind.SPENT -> recurringId == null
     EntryKind.MOVED -> fee > 0
-    EntryKind.RECEIVED -> false
+    EntryKind.RECEIVED, EntryKind.ADJUST -> false
 }
 
 /** What a punch takes from the ticket: a spend's amount + round-up, a move's fee. */
 val EntryForDay.punched: Long get() = when (kind) {
     EntryKind.SPENT -> amount + roundUp
     EntryKind.MOVED -> fee
-    EntryKind.RECEIVED -> 0
+    EntryKind.RECEIVED, EntryKind.ADJUST -> 0
 }
 
 fun spentToday(entries: List<EntryForDay>): Long = entries.filter { it.punches }.sumOf { it.punched }

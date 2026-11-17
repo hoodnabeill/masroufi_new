@@ -1,5 +1,6 @@
 package com.masroufi.app.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -29,6 +30,13 @@ data class PocketEntity(
     val archived: Boolean = false,
     val countsInTicket: Boolean = true,
     val updatedAt: Long = 0,
+    /** Typed by the user from their provider; null = none. */
+    val monthlyLimit: Long? = null,
+    val lowBalanceThreshold: Long? = null,
+    @ColumnInfo(defaultValue = "0") val lowBalanceAlert: Boolean = false,
+    /** The balance parsed from the last pasted SMS and when (epoch millis); the message text is never stored. */
+    val lastSmsBalance: Long? = null,
+    val lastSmsAt: Long? = null,
 )
 
 @Entity(
@@ -38,7 +46,7 @@ data class PocketEntity(
 data class EntryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val kind: EntryKind,
-    val amount: Long,
+    val amount: Long, // signed only for ADJUST
     val pocketId: Long,
     val toPocketId: Long? = null,
     val categoryId: Long? = null,

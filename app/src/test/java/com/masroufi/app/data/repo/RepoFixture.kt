@@ -28,6 +28,8 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
         db.pocketDao(), db.entryDao(), db.categoryDao(), db.dayTicketDao(), db.jarDao(), db.proverbDao(), db.recurringDao(),
         settings, clock,
     )
+    val roll = RollRepository(db.entryDao(), db.dayTicketDao(), clock)
+    val pockets = PocketRepository(db, db.pocketDao(), db.entryDao(), db.recurringDao(), entries, clock)
     val seed = SeedData(db, db.pocketDao(), db.categoryDao(), clock)
     val onboarding = OnboardingRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), tickets, seed, settings, clock,

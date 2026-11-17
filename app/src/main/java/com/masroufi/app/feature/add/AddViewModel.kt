@@ -83,7 +83,7 @@ data class AddUiState(
         return when (form.type) {
             EntryKind.SPENT -> amount + if (form.roundUpOn) roundUpOffer else 0
             EntryKind.MOVED -> form.fee.toPiastres()
-            EntryKind.RECEIVED -> 0
+            EntryKind.RECEIVED, EntryKind.ADJUST -> 0
         }
     }
 

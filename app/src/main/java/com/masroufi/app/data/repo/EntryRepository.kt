@@ -35,7 +35,7 @@ data class NewEntry(
     val roundUp: Boolean = true,
 ) {
     init {
-        require(amount > 0) { "amount must be > 0" }
+        require(if (kind == EntryKind.ADJUST) amount != 0L else amount > 0) { "amount must be > 0 (an adjustment: != 0)" }
         require(fee >= 0) { "fee must be >= 0" }
         require(kind != EntryKind.MOVED || (toPocketId != null && toPocketId != pocketId)) {
             "a move needs a different target pocket"
