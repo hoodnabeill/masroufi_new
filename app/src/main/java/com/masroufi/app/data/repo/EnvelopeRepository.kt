@@ -3,10 +3,12 @@ package com.masroufi.app.data.repo
 import androidx.annotation.StringRes
 import androidx.room.withTransaction
 import com.masroufi.app.R
+import com.masroufi.app.core.PRIMARY_CURRENCY
 import com.masroufi.app.core.PayCycle
 import com.masroufi.app.data.db.CategoryDao
 import com.masroufi.app.data.db.EntryDao
 import com.masroufi.app.data.db.EnvelopeCategoryEntity
+import com.masroufi.app.data.db.EntryRow
 import com.masroufi.app.data.db.EnvelopeDao
 import com.masroufi.app.data.db.EnvelopeEntity
 import com.masroufi.app.data.db.EnvelopeKind
@@ -17,6 +19,7 @@ import com.masroufi.app.data.db.SplitKind
 import com.masroufi.app.data.db.SplitRuleEntity
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.data.prefs.SettingsStore
+import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.SplitResult
 import com.masroufi.app.domain.SplitRule
 import com.masroufi.app.domain.envelopeLeft
@@ -27,6 +30,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import java.time.Clock
 import java.time.LocalDate
@@ -154,6 +160,10 @@ class EnvelopeRepository @Inject constructor(
         return s.lastSplitIncome?.let { income -> income to (s.lastSplitUnassigned ?: 0L) }
     }
 
+    /** The last applied split as it changes: (income, unassigned), or null before the first one. */
+    fun observeSplit(): Flow<Pair<Long, Long>?> =
+        settings.settings.map { s -> s.lastSplitIncome?.let { it to (s.lastSplitUnassigned ?: 0L) } }
+
     /** Refuses a 5th active envelope on Free with [PlusRequired]. */
     suspend fun create(name: String, color: Int, monthly: Long, kind: EnvelopeKind, categoryIds: Set<Long>): Long {
         require(monthly >= 0) { "monthly must be >= 0" }
@@ -233,6 +243,24 @@ class EnvelopeRepository @Inject constructor(
         val byName = categoryDao.all().first().associateBy({ it.name }, { it.id })
         return SUGGESTED.map { (name, kind, cats) -> EnvelopeSuggestion(name, kind, cats.mapNotNull(byName::get).toSet()) }
     }
+
+    /** Today's pay cycle. */
+    suspend fun cycle(): PayCycle = currentCycle()
+
+    /** The stored envelope (its saved monthly, not this cycle's) with its category ids; null when missing. */
+    suspend fun saved(id: Long): Pair<EnvelopeEntity, Set<Long>>? {
+        val env = envelopeDao.byId(id) ?: return null
+        return env to envelopeDao.links().first().filter { it.envelopeId == id }.map { it.categoryId }.toSet()
+    }
+
+    /** This cycle's EGP spending in [categoryIds], newest first. */
+    fun cycleEntries(categoryIds: Set<Long>): Flow<List<EntryRow>> =
+        flow { emit(currentCycle()) }.flatMapLatest { c ->
+            fun millis(d: LocalDate) = d.atStartOfDay(clock.zone).toInstant().toEpochMilli()
+            entryDao.rows(millis(c.start), millis(c.nextPayday)).map { rows ->
+                rows.filter { it.kind == EntryKind.SPENT && it.currency == PRIMARY_CURRENCY && it.categoryId in categoryIds }
+            }
+        }
 
     private suspend fun currentCycle(): PayCycle = entryDao.payCycleOn(LocalDate.now(clock), settings.current().payday, clock)
 

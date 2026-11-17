@@ -20,4 +20,6 @@ data class AddPrefill(
     val edit: EditTarget? = null,
     /** The balance an SMS reported: recorded on the pocket once the entry is saved. */
     val smsBalance: Long? = null,
+    /** Paying a fixed cost: the new entry pays this recurring item. */
+    val recurringId: Long? = null,
 )

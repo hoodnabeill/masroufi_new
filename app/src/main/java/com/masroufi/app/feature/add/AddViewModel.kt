@@ -56,6 +56,8 @@ data class AddForm(
     /** Set while the sheet edits a stored entry. */
     val edit: EditTarget? = null,
     val smsBalance: Long? = null,
+    /** Paying a fixed cost (a new entry); a stored entry keeps its own through [edit]. */
+    val recurringId: Long? = null,
     /** Last used first, then seed order. */
     val categories: List<CategoryEntity> = emptyList(),
     /** Not archived. */
@@ -158,6 +160,7 @@ class AddViewModel @Inject constructor(
                 roundUpOn = prefill?.edit?.let { it.roundUp > 0 } ?: true,
                 edit = prefill?.edit,
                 smsBalance = prefill?.smsBalance,
+                recurringId = prefill?.recurringId,
                 note = prefill?.note.orEmpty().take(NOTE_MAX_CHARS),
                 categories = old.categories,
                 pockets = old.pockets,
@@ -232,7 +235,7 @@ class AddViewModel @Inject constructor(
             categoryId = if (f.type == EntryKind.SPENT) f.categoryId else null,
             note = f.note.trim().ifEmpty { null },
             happenedAt = edit?.happenedAt ?: now,
-            recurringId = edit?.recurringId,
+            recurringId = edit?.recurringId ?: f.recurringId,
             fee = if (f.type == EntryKind.MOVED) f.fee.toPiastres() else 0,
             roundUp = f.roundUpOn,
         )

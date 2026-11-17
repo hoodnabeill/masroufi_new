@@ -13,3 +13,10 @@ import kotlinx.serialization.Serializable
 @Serializable data object Pockets
 @Serializable data class PocketDetail(val id: Long)
 @Serializable data object NewPocket
+@Serializable data class EnvelopeDetail(val id: Long)
+@Serializable data object NewEnvelope
+@Serializable data class EditEnvelope(val id: Long)
+@Serializable data object FixedCosts
+/** [id] 0 = a new fixed cost. */
+@Serializable data class FixedCostEdit(val id: Long)
+@Serializable data object Subscriptions

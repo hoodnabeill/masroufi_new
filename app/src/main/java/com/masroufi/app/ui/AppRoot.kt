@@ -47,6 +47,11 @@ import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.onboarding.OnboardingScreen
 import com.masroufi.app.feature.placeholder.TabPlaceholder
+import com.masroufi.app.feature.plan.EnvelopeDetailScreen
+import com.masroufi.app.feature.plan.EnvelopeFormScreen
+import com.masroufi.app.feature.plan.FixedCostFormScreen
+import com.masroufi.app.feature.plan.FixedCostsScreen
+import com.masroufi.app.feature.plan.PlanScreen
 import com.masroufi.app.feature.pockets.NewPocketScreen
 import com.masroufi.app.feature.pockets.PocketDetailScreen
 import com.masroufi.app.feature.pockets.PocketsScreen
@@ -58,6 +63,12 @@ import com.masroufi.app.ui.motion.LocalReduceMotion
 import com.masroufi.app.ui.motion.TzSpring
 import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.nav.CloseDay
+import com.masroufi.app.ui.nav.EditEnvelope
+import com.masroufi.app.ui.nav.EnvelopeDetail
+import com.masroufi.app.ui.nav.FixedCostEdit
+import com.masroufi.app.ui.nav.FixedCosts
+import com.masroufi.app.ui.nav.NewEnvelope
+import com.masroufi.app.ui.nav.Subscriptions
 import com.masroufi.app.ui.nav.Gallery
 import com.masroufi.app.ui.nav.Home
 import com.masroufi.app.ui.nav.NewPocket
@@ -100,7 +111,9 @@ private fun NavDestination?.tab(): TzTab? = when {
     else -> null
 }
 
-private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>() || hasRoute<Pockets>() || hasRoute<PocketDetail>() || hasRoute<NewPocket>()
+private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>() || hasRoute<Pockets>() || hasRoute<PocketDetail>() || hasRoute<NewPocket>() ||
+    hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
+    hasRoute<Subscriptions>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -192,7 +205,43 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                     )
                 }
                 composable<RollTab> { RollScreen(viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet) }
-                composable<PlanTab> { TabPlaceholder(R.string.tab_plan, onGallery = { nav.navigate(Gallery) }) }
+                composable<PlanTab> {
+                    PlanScreen(
+                        viewModel = hiltViewModel(),
+                        onOpenEnvelope = { nav.navigate(EnvelopeDetail(it)) },
+                        onEditEnvelope = { nav.navigate(EditEnvelope(it)) },
+                        onNewEnvelope = { nav.navigate(NewEnvelope) },
+                        onOpenSubscriptions = { nav.navigate(Subscriptions) },
+                        onOpenFixedCosts = { nav.navigate(FixedCosts) },
+                        onGallery = { nav.navigate(Gallery) },
+                    )
+                }
+                // Task 34 replaces this with the subscriptions screen.
+                composable<Subscriptions> { TabPlaceholder(R.string.subscriptions_title) }
+                composable<EnvelopeDetail> {
+                    EnvelopeDetailScreen(
+                        viewModel = hiltViewModel(),
+                        onBack = { nav.popBackStack() },
+                        onEdit = { nav.navigate(EditEnvelope(it)) },
+                        onOpenAddSheet = ::openAddSheet,
+                    )
+                }
+                composable<NewEnvelope> {
+                    EnvelopeFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onNewFixedCost = { nav.navigate(FixedCostEdit(0)) })
+                }
+                composable<EditEnvelope> {
+                    EnvelopeFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onNewFixedCost = { nav.navigate(FixedCostEdit(0)) })
+                }
+                composable<FixedCosts> {
+                    FixedCostsScreen(
+                        viewModel = hiltViewModel(),
+                        onBack = { nav.popBackStack() },
+                        onOpen = { nav.navigate(FixedCostEdit(it)) },
+                        onNew = { nav.navigate(FixedCostEdit(0)) },
+                        onOpenAddSheet = ::openAddSheet,
+                    )
+                }
+                composable<FixedCostEdit> { FixedCostFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 composable<PeopleTab> { TabPlaceholder(R.string.tab_people) }
                 composable<CloseDay> {
                     CloseDayScreen(

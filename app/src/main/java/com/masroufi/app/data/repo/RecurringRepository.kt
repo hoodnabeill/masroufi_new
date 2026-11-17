@@ -53,6 +53,8 @@ class RecurringRepository @Inject constructor(
         )
     }
 
+    suspend fun get(id: Long): RecurringEntity? = recurringDao.byId(id)
+
     suspend fun update(item: RecurringEntity) {
         require(item.amount > 0) { "amount must be > 0" }
         recurringDao.update(item.copy(updatedAt = clock.millis()))

@@ -74,6 +74,8 @@ fun EnvelopeCard(
     status: String? = null,
     sealedLabel: String = stringResource(R.string.paper_sealed),
     modifier: Modifier = Modifier,
+    /** Goes on the number: the plan's long-press-and-drag starts here. */
+    amountModifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomEnd = 22.dp, bottomStart = 22.dp)
     Box(modifier.clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).semantics(mergeDescendants = true) {}) {
@@ -90,7 +92,7 @@ fun EnvelopeCard(
             if (sealed) {
                 Text(sealedLabel, style = TzType.card, color = color)
             } else {
-                Odometer(leftPiastres, TzType.card.copy(color = color))
+                Odometer(leftPiastres, TzType.card.copy(color = color), amountModifier)
             }
             if (line != null) Text(line, style = TzType.caption, color = Tz.text2)
             TzProgressBar(listOf((if (sealed) 1f else bar) to color), Modifier.padding(top = 4.dp), height = 6.dp)
