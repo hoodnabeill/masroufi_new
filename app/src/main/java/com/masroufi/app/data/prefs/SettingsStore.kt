@@ -53,6 +53,8 @@ data class Settings(
     val lastRitualForEntryId: Long? = null,
     /** The user's "most important first" order of season ids; seasons not listed follow by date. */
     val seasonOrder: List<Long> = emptyList(),
+    /** Subscription id -> epoch day of the "remind me" before its trial ends (the notification itself is Phase 11). */
+    val trialReminders: Map<Long, Long> = emptyMap(),
 )
 
 @Singleton
@@ -79,6 +81,7 @@ class SettingsStore @Inject constructor(
     private val goldPriceDateKey = longPreferencesKey("goldPriceDate")
     private val lastRitualKey = longPreferencesKey("lastRitualForEntryId")
     private val seasonOrderKey = stringPreferencesKey("seasonOrder")
+    private val trialRemindersKey = stringPreferencesKey("trialReminders")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -119,6 +122,12 @@ class SettingsStore @Inject constructor(
             if (jarSharePercent == null) it.remove(lastJarSharePercentKey) else it[lastJarSharePercentKey] = jarSharePercent
         }
     }
+    suspend fun setTrialReminder(id: Long, epochDay: Long) {
+        store.edit {
+            val all = decodeReminders(it[trialRemindersKey]) + (id to epochDay)
+            it[trialRemindersKey] = all.entries.joinToString(",") { e -> "${e.key}:${e.value}" }
+        }
+    }
     suspend fun setSeasonOrder(ids: List<Long>) { store.edit { it[seasonOrderKey] = ids.joinToString(",") } }
     suspend fun setLastRitualForEntryId(id: Long) { store.edit { it[lastRitualKey] = id } }
     suspend fun setGoldPrice(perGram: Long, epochDay: Long) {
@@ -151,7 +160,13 @@ class SettingsStore @Inject constructor(
         goldPriceDate = p[goldPriceDateKey],
         lastRitualForEntryId = p[lastRitualKey],
         seasonOrder = p[seasonOrderKey]?.split(",")?.mapNotNull { it.toLongOrNull() } ?: emptyList(),
+        trialReminders = decodeReminders(p[trialRemindersKey]),
     )
+
+    private fun decodeReminders(s: String?): Map<Long, Long> = s?.split(",")?.mapNotNull {
+        val (a, b) = it.split(":").takeIf { x -> x.size == 2 } ?: return@mapNotNull null
+        (a.toLongOrNull() ?: return@mapNotNull null) to (b.toLongOrNull() ?: return@mapNotNull null)
+    }?.toMap() ?: emptyMap()
 
     private fun encode(v: Payday) = when (v) {
         is Payday.Day -> "day:${v.day}"
