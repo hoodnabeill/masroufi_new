@@ -75,17 +75,20 @@ fun Guilloche(
 @Composable
 fun Ticket(
     label: String,
-    amountLabel: String,
+    amountLabel: String?,
     leftPiastres: Long,
     subLine: String,
     holes: Int,
-    caption: String,
+    caption: String?,
     stub: @Composable () -> Unit,
     showQersh: Boolean = true,
     contentDescription: String,
     /** Qersh's scale, 0..1 (the new-ticket moment pops him in). */
     qershScale: () -> Float = { 1f },
     modifier: Modifier = Modifier,
+    /** The reveal (ObTicket.dc.html) has no punch row. */
+    showHoles: Boolean = true,
+    qershMood: QershMood = QershMood.Happy,
 ) {
     val reduce = LocalReduceMotion.current
     val fill = remember { Animatable(1f) }
@@ -124,12 +127,14 @@ fun Ticket(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(label, style = TzType.caption.copy(fontWeight = FontWeight.SemiBold), color = Tz.yellowInk2)
-                    Text(
-                        amountLabel,
-                        style = TzType.label.copy(fontSize = 14.sp),
-                        color = Tz.yellowInk,
-                        modifier = Modifier.padding(top = 10.dp),
-                    )
+                    if (amountLabel != null) {
+                        Text(
+                            amountLabel,
+                            style = TzType.label.copy(fontSize = 14.sp),
+                            color = Tz.yellowInk,
+                            modifier = Modifier.padding(top = 10.dp),
+                        )
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
                         Odometer(leftPiastres.coerceAtLeast(0), TzType.ticket.copy(color = Tz.night))
                         Text(
@@ -140,8 +145,8 @@ fun Ticket(
                         )
                     }
                     Text(subLine, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.yellowInk)
-                    Holes(holes, punching, { fill.value }, { dot.value }, reduce, Modifier.padding(top = 14.dp))
-                    Text(caption, style = TzType.caption, color = Tz.yellowInk2, modifier = Modifier.padding(top = 6.dp))
+                    if (showHoles) Holes(holes, punching, { fill.value }, { dot.value }, reduce, Modifier.padding(top = 14.dp))
+                    if (caption != null) Text(caption, style = TzType.caption, color = Tz.yellowInk2, modifier = Modifier.padding(top = 6.dp))
                 }
                 Perforation()
                 Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 18.dp)) { stub() }
@@ -149,7 +154,7 @@ fun Ticket(
         }
         if (showQersh) {
             Qersh(
-                QershMood.Happy, 76.dp,
+                qershMood, 76.dp,
                 Modifier.align(Alignment.TopEnd).padding(end = 22.dp).offset(y = (-40).dp).graphicsLayer { qershScale().let { scaleX = it; scaleY = it } },
             )
         }

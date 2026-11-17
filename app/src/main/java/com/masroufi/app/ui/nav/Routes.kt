@@ -2,6 +2,7 @@ package com.masroufi.app.ui.nav
 
 import kotlinx.serialization.Serializable
 
+@Serializable data object Onboarding
 @Serializable data object Home
 @Serializable data object RollTab
 @Serializable data object PlanTab

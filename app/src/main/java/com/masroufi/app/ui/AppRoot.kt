@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -44,6 +45,7 @@ import com.masroufi.app.feature.add.AddSheet
 import com.masroufi.app.feature.close.CloseDayScreen
 import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
+import com.masroufi.app.feature.onboarding.OnboardingScreen
 import com.masroufi.app.feature.placeholder.TabPlaceholder
 import com.masroufi.app.feature.proverb.ProverbRewardScreen
 import com.masroufi.app.ui.components.TzTab
@@ -54,6 +56,7 @@ import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.nav.CloseDay
 import com.masroufi.app.ui.nav.Gallery
 import com.masroufi.app.ui.nav.Home
+import com.masroufi.app.ui.nav.Onboarding
 import com.masroufi.app.ui.nav.PeopleTab
 import com.masroufi.app.ui.nav.PlanTab
 import com.masroufi.app.ui.nav.ProverbReward
@@ -110,6 +113,11 @@ private fun NavController.switchTab(tab: TzTab) {
 fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
     MasroufiTheme {
         val nav = rememberNavController()
+        val onboarded by hiltViewModel<AppRootViewModel>().onboarded.collectAsStateWithLifecycle()
+        // Decided once, from the stored value: finishing onboarding must not rebuild the graph under the navigation to Home.
+        var start by remember { mutableStateOf<Any?>(null) }
+        if (start == null && onboarded != null) start = if (onboarded == true) Home else Onboarding
+        val startDestination = start
         val entry by nav.currentBackStackEntryAsState()
         val current = entry?.destination
         var addSheetOpen by rememberSaveable { mutableStateOf(false) }
@@ -139,9 +147,10 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
             showTabBar = current.tab() != null,
             modifier = Modifier.graphicsLayer { scaleX = behind; scaleY = behind },
         ) {
-            NavHost(
+            // Night (the scaffold) until the stored value is read: no flash of Home before onboarding.
+            if (startDestination != null) NavHost(
                 nav,
-                startDestination = Home,
+                startDestination = startDestination,
                 // 05-MOTION "Tear": the reward cross-fades in over the torn ticket in 160 ms.
                 enterTransition = {
                     when {
@@ -157,6 +166,15 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                 popEnterTransition = { fadeIn(fade) },
                 popExitTransition = { if (initialState.destination.isPushed()) pushedOut() else fadeOut(fade) },
             ) {
+                composable<Onboarding> {
+                    OnboardingScreen(
+                        viewModel = hiltViewModel(),
+                        onFinished = {
+                            nav.navigate(Home) { popUpTo<Onboarding> { inclusive = true } }
+                            openAddSheet(null)
+                        },
+                    )
+                }
                 composable<Home> {
                     HomeScreen(
                         viewModel = hiltViewModel(),

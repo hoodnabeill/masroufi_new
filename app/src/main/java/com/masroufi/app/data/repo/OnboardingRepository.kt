@@ -12,6 +12,7 @@ import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.TicketCalc
 import com.masroufi.app.domain.TicketStatus
+import kotlinx.coroutines.flow.first
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
@@ -88,6 +89,16 @@ class OnboardingRepository @Inject constructor(
             }
         }
     }
+
+    /** The amount saved earlier, for resuming mid-flow; null when skipped or never answered. */
+    suspend fun savedMoney(): Long? {
+        if (settings.current().moneyUnknown) return null
+        val cash = pocketDao.firstCash() ?: return null
+        return pocketDao.balanceOf(cash.id).takeIf { it > 0 }
+    }
+
+    suspend fun savedFixedCosts(): List<FixedCost> =
+        recurringDao.all().first().filter { it.source == ONBOARDING_SOURCE }.map { FixedCost(it.name, it.amount, it.kind) }
 
     /** What printToday would print now; see [startAfterPayday] on [TicketRepository.basisToday]. Writes nothing. */
     suspend fun previewTicket(startAfterPayday: Boolean = false): TicketCalc =

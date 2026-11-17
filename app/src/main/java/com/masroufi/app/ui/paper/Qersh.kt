@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.semantics.contentDescription
@@ -62,6 +63,8 @@ fun Qersh(
     modifier: Modifier = Modifier,
     onYellow: Boolean = false,
     contentDescription: String? = null,
+    /** Waving only: degrees the arm is turned about its shoulder (read while drawing). */
+    armAngle: () -> Float = { 0f },
 ) {
     val blink = remember { Animatable(0f) }
     val reduce = LocalReduceMotion.current
@@ -81,12 +84,12 @@ fun Qersh(
     val big = size >= 120.dp
     Crossfade(mood, modifier.size(size).then(sem), animationSpec = tween(200), label = "qershMood") { m ->
         Canvas(Modifier.size(size)) {
-            scale(this.size.width / 72f, pivot = Offset.Zero) { drawQersh(m, onYellow, ring, big, blink.value) }
+            scale(this.size.width / 72f, pivot = Offset.Zero) { drawQersh(m, onYellow, ring, big, blink.value, armAngle()) }
         }
     }
 }
 
-private fun DrawScope.drawQersh(mood: QershMood, onYellow: Boolean, ring: Boolean, highlight: Boolean, blink: Float) {
+private fun DrawScope.drawQersh(mood: QershMood, onYellow: Boolean, ring: Boolean, highlight: Boolean, blink: Float, arm: Float) {
     // Everything below is in grid units; the caller scaled the canvas.
     val night = Tz.night
     val body = if (onYellow) Tz.qershOnYellow else Tz.yellow
@@ -124,5 +127,5 @@ private fun DrawScope.drawQersh(mood: QershMood, onYellow: Boolean, ring: Boolea
             drawPath(SadMouth, night, style = Round3)
         }
     }
-    if (mood == QershMood.Waving) drawPath(WaveArm, night, style = Round3)
+    if (mood == QershMood.Waving) rotate(arm, Offset(61f, 40f)) { drawPath(WaveArm, night, style = Round3) }
 }
