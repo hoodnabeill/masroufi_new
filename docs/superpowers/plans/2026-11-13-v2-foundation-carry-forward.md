@@ -62,6 +62,14 @@ Decisions made during Phase 3 (owner may override):
 - Dev installs need an uninstall and reinstall after Phase 3's v1 schema column changes (no migration exists yet).
 - New-ticket moment: `lastTicketShown` (epoch day) lives in `tazkara_settings`; it is written when the three steps end, so leaving Home mid-moment replays it.
 
+## Phase 6 notes (plan tab)
+
+- Bill model: each payment advances `nextDue` one period; deleting a payment moves it back one period; a bill is reserved while `nextDue` is before the next payday (unpaid overdue bills stay reserved). `paidThisCycle` is unused and the payday reset was removed (supersedes ruling 21 and the Phase 6 "Later phases" item).
+- Payday ritual "where it went" bar follows the mock colours (jar turquoise, tickets yellow), not the brief's text.
+- The roll shows "وزّع المرتب" under income rows on non-ticket days (always visible; tapping the row still opens the editor).
+- Skipping the ritual marks that income as offered; the roll link can still reopen it.
+- The fixed-costs step is numbered 2 until Phase 7 adds the debts step.
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
