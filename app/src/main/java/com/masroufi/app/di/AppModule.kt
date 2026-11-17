@@ -63,6 +63,7 @@ object AppModule {
     @Provides fun goalDao(db: TazkaraDatabase) = db.goalDao()
     @Provides fun proverbDao(db: TazkaraDatabase) = db.proverbDao()
     @Provides fun stampDao(db: TazkaraDatabase) = db.stampDao()
+    @Provides fun seasonDao(db: TazkaraDatabase) = db.seasonDao()
 
     @Provides @Singleton
     fun dataStore(@ApplicationContext context: Context): DataStore<Preferences> =

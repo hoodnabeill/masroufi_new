@@ -42,6 +42,15 @@ data class Settings(
     /** The last income split by the saved split and what no envelope took ("من غير ظرف"); null = never split. */
     val lastSplitIncome: Long? = null,
     val lastSplitUnassigned: Long? = null,
+    /** The salary of the last payday ritual; null = the ritual was never completed. */
+    val usualSalary: Long? = null,
+    /** The jar share chosen at the last ritual when it was a percent; null = an amount, or never. */
+    val lastJarSharePercent: Int? = null,
+    /** 21-karat price per gram typed by the user, and the epoch day it was typed; null = never typed. */
+    val goldPricePerGram: Long? = null,
+    val goldPriceDate: Long? = null,
+    /** The income entry the payday ritual was last offered for (offered once per income). */
+    val lastRitualForEntryId: Long? = null,
 )
 
 @Singleton
@@ -62,6 +71,11 @@ class SettingsStore @Inject constructor(
     private val firstOpenDayKey = longPreferencesKey("firstOpenDay")
     private val lastSplitIncomeKey = longPreferencesKey("lastSplitIncome")
     private val lastSplitUnassignedKey = longPreferencesKey("lastSplitUnassigned")
+    private val usualSalaryKey = longPreferencesKey("usualSalary")
+    private val lastJarSharePercentKey = intPreferencesKey("lastJarSharePercent")
+    private val goldPriceKey = longPreferencesKey("goldPricePerGram")
+    private val goldPriceDateKey = longPreferencesKey("goldPriceDate")
+    private val lastRitualKey = longPreferencesKey("lastRitualForEntryId")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -94,6 +108,22 @@ class SettingsStore @Inject constructor(
             it[lastSplitUnassignedKey] = unassigned
         }
     }
+    /** After a payday ritual: the salary, and the jar share percent (null = an amount was chosen). */
+    suspend fun setRitualDone(salary: Long, jarSharePercent: Int?) {
+        require(salary > 0) { "salary must be > 0" }
+        store.edit {
+            it[usualSalaryKey] = salary
+            if (jarSharePercent == null) it.remove(lastJarSharePercentKey) else it[lastJarSharePercentKey] = jarSharePercent
+        }
+    }
+    suspend fun setLastRitualForEntryId(id: Long) { store.edit { it[lastRitualKey] = id } }
+    suspend fun setGoldPrice(perGram: Long, epochDay: Long) {
+        require(perGram > 0) { "gold price must be > 0" }
+        store.edit {
+            it[goldPriceKey] = perGram
+            it[goldPriceDateKey] = epochDay
+        }
+    }
     suspend fun dismissFirstWeekCard(id: String) { store.edit { it[cardsDismissedKey] = (it[cardsDismissedKey] ?: emptySet()) + id } }
 
     private fun decode(p: Preferences) = Settings(
@@ -111,6 +141,11 @@ class SettingsStore @Inject constructor(
         firstOpenDay = p[firstOpenDayKey],
         lastSplitIncome = p[lastSplitIncomeKey],
         lastSplitUnassigned = p[lastSplitUnassignedKey],
+        usualSalary = p[usualSalaryKey],
+        lastJarSharePercent = p[lastJarSharePercentKey],
+        goldPricePerGram = p[goldPriceKey],
+        goldPriceDate = p[goldPriceDateKey],
+        lastRitualForEntryId = p[lastRitualKey],
     )
 
     private fun encode(v: Payday) = when (v) {

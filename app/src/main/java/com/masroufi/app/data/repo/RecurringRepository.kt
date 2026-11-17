@@ -86,13 +86,14 @@ class RecurringRepository @Inject constructor(
     }
 
     /**
-     * Payday: every item due before the new cycle moves to its next due date on or after the cycle start and is unpaid
-     * again. Idempotent: a second run finds nothing due before the start. Caller holds the transaction.
+     * Payday: an item paid this cycle moves to its next due date on or after the cycle start and is unpaid again. An
+     * unpaid overdue item is left as it is: it stays due (and reserved) until it is paid. Idempotent: a second run finds
+     * nothing paid and due before the start. Caller holds the transaction.
      */
     suspend fun resetForNewCycle(cycle: PayCycle) {
         val now = clock.millis()
         for (item in recurringDao.allNow()) {
-            if (!item.nextDue.isBefore(cycle.start)) continue
+            if (!item.paidThisCycle || !item.nextDue.isBefore(cycle.start)) continue
             val due = advanceDue(item.nextDue, item.scheduleDay, item.scheduleType, cycle.start)
             recurringDao.update(item.copy(nextDue = due, paidThisCycle = false, updatedAt = now))
         }

@@ -303,6 +303,8 @@ interface JarDao {
     @Query("SELECT COALESCE(SUM(amount), 0) FROM jar_movement WHERE pot = :pot") suspend fun totalNow(pot: Pot): Long
     @Query("SELECT * FROM jar_movement WHERE dayDate = :date") suspend fun forDay(date: LocalDate): List<JarMovementEntity>
     @Query("SELECT * FROM jar_movement WHERE entryId = :entryId") suspend fun forEntry(entryId: Long): List<JarMovementEntity>
+    @Query("SELECT * FROM jar_movement WHERE pot = :pot ORDER BY at, id") fun rows(pot: Pot): Flow<List<JarMovementEntity>>
+    @Query("SELECT * FROM jar_movement WHERE pot = :pot ORDER BY at, id") suspend fun rowsNow(pot: Pot): List<JarMovementEntity>
 }
 
 @Dao
@@ -310,6 +312,23 @@ interface GoalDao {
     @Insert suspend fun insert(goal: GoalEntity): Long
     @Update suspend fun update(goal: GoalEntity)
     @Query("SELECT * FROM goal") fun all(): Flow<List<GoalEntity>>
+    @Query("SELECT * FROM goal WHERE id = :id") suspend fun byId(id: Long): GoalEntity?
+    @Query("DELETE FROM goal WHERE id = :id") suspend fun delete(id: Long)
+}
+
+@Dao
+interface SeasonDao {
+    @Insert suspend fun insert(season: SeasonEntity): Long
+    @Update suspend fun update(season: SeasonEntity)
+    @Query("SELECT * FROM season ORDER BY id") fun all(): Flow<List<SeasonEntity>>
+    @Query("SELECT * FROM season ORDER BY id") suspend fun allNow(): List<SeasonEntity>
+    @Query("SELECT * FROM season WHERE id = :id") suspend fun byId(id: Long): SeasonEntity?
+    @Query("SELECT COUNT(*) FROM season") suspend fun count(): Int
+
+    @Insert suspend fun insertItem(item: SeasonItemEntity): Long
+    @Update suspend fun updateItem(item: SeasonItemEntity)
+    @Query("DELETE FROM season_item WHERE id = :id") suspend fun deleteItem(id: Long)
+    @Query("SELECT * FROM season_item ORDER BY id") fun items(): Flow<List<SeasonItemEntity>>
 }
 
 @Dao

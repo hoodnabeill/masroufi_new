@@ -34,6 +34,12 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val envelopes = EnvelopeRepository(
         db, db.envelopeDao(), db.entryDao(), db.recurringDao(), db.categoryDao(), settings, plus, clock,
     )
+    val jar = JarRepository(db, db.jarDao(), db.goalDao(), settings, clock)
+    val seasons = SeasonRepository(db, db.seasonDao(), db.jarDao(), clock)
+    val subscriptions = SubscriptionRepository(db.recurringDao(), db.dayTicketDao(), clock)
+    val ritual = PaydayRitualRepository(
+        db.entryDao(), db.pocketDao(), db.recurringDao(), db.dayTicketDao(), tickets, jar, envelopes, settings, clock,
+    )
     val roll = RollRepository(db.entryDao(), db.dayTicketDao(), clock)
     val pockets = PocketRepository(db, db.pocketDao(), db.entryDao(), db.recurringDao(), entries, clock)
     val seed = SeedData(db, db.pocketDao(), db.categoryDao(), clock)

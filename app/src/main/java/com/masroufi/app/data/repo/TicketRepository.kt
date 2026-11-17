@@ -135,8 +135,11 @@ class TicketRepository @Inject constructor(
         }
     }
 
-    /** Today's ticket calculation, shared by printToday and the onboarding preview; writes nothing. */
-    internal suspend fun basisToday(s: Settings, today: LocalDate, startAfterPayday: Boolean): TodayBasis {
+    /**
+     * Today's ticket calculation, shared by printToday, the onboarding preview and the payday ritual preview
+     * ([extraReserved]: a jar share not stored yet); writes nothing.
+     */
+    internal suspend fun basisToday(s: Settings, today: LocalDate, startAfterPayday: Boolean, extraReserved: Long = 0): TodayBasis {
         val punches = punchesOn(today)
         val spent = spentToday(punches)
         if (s.moneyUnknown) return TodayBasis(TicketCalc.Printed(STARTER_TICKET, STARTER_TICKET, 0), spent, punches.size)
@@ -145,7 +148,7 @@ class TicketRepository @Inject constructor(
             ?.leftover ?: 0L
         val cycle = cycleFor(s, today, startAfterPayday)
         val reserved = recurringDao.unpaidDueBefore(cycle.nextPayday) +
-            jarDao.totalNow(Pot.JAR).coerceAtLeast(0) + jarDao.totalNow(Pot.EMERGENCY).coerceAtLeast(0)
+            jarDao.totalNow(Pot.JAR).coerceAtLeast(0) + jarDao.totalNow(Pot.EMERGENCY).coerceAtLeast(0) + extraReserved
         // A round-up is in both spent and the reserved jar, so adding it back here nets to zero.
         val spendable = pocketDao.countingBalanceTotal() + spent
         val calc = computeTicket(spendable, reserved, carriedIn, cycle.daysLeft(maxOf(today, cycle.start)))

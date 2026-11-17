@@ -29,6 +29,7 @@ abstract class TazkaraDatabase : RoomDatabase() {
     abstract fun goalDao(): GoalDao
     abstract fun proverbDao(): ProverbDao
     abstract fun stampDao(): StampDao
+    abstract fun seasonDao(): SeasonDao
 
     companion object {
         const val FILE_NAME = "tazkara.db"

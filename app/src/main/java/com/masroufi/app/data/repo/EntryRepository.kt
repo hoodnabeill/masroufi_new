@@ -125,10 +125,21 @@ class EntryRepository @Inject constructor(
     /** paidThisCycle is about today's pay cycle; payday resets it (RecurringRepository.resetForNewCycle). */
     private suspend fun currentCycle() = entryDao.payCycleOn(LocalDate.now(clock), settings.current().payday, clock)
 
-    /** Only a payment dated in the current cycle marks its bill paid. Caller holds the transaction. */
+    /**
+     * Only a payment dated in the current cycle marks its bill paid. A late payment for a due date before this cycle
+     * also moves the bill's next due date past the cycle start (payday left it overdue). Caller holds the transaction.
+     */
     private suspend fun markBill(entry: NewEntry) {
         val rid = entry.recurringId ?: return
-        if (currentCycle().contains(clock.dayOf(entry.happenedAt))) recurringDao.setPaid(rid, true)
+        val cycle = currentCycle()
+        if (!cycle.contains(clock.dayOf(entry.happenedAt))) return
+        val item = recurringDao.byId(rid) ?: return
+        if (item.nextDue.isBefore(cycle.start)) {
+            val due = advanceDue(item.nextDue, item.scheduleDay, item.scheduleType, cycle.start)
+            recurringDao.update(item.copy(nextDue = due, paidThisCycle = true, updatedAt = clock.millis()))
+        } else {
+            recurringDao.setPaid(rid, true)
+        }
     }
 
     /**
