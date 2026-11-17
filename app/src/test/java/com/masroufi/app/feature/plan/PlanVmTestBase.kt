@@ -65,7 +65,7 @@ abstract class PlanVmTestBase {
 
     /** Builds a ViewModel and keeps its state hot, like a screen collecting it. */
     protected fun <T : ViewModel> make(cls: KClass<T>, state: (T) -> StateFlow<*>?, create: () -> T): T {
-        val vm = ViewModelProvider.create(store, viewModelFactory { initializer { create() } })[cls]
+        val vm = ViewModelProvider.create(store, viewModelFactory { initializer { create() } }).get(cls.java)
         state(vm)?.let { s -> vm.viewModelScope.launch { s.collect {} } }
         return vm
     }
