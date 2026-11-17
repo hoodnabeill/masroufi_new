@@ -132,11 +132,10 @@ class EntryRepository @Inject constructor(
 
     /**
      * An entry no longer pays its bill (deleted, or edited to another bill/none): the due date moves back one period,
-     * but only when it was the latest payment of the item. Caller holds the transaction and has already stored the change.
+     * (each payment counts for exactly one period). Caller holds the transaction and has already stored the change.
      */
     private suspend fun releaseBill(old: EntryEntity) {
         val item = old.recurringId?.let { recurringDao.byId(it) } ?: return
-        if (entryDao.countPaymentsAfter(item.id, old.happenedAt, old.id) > 0) return
         recurringDao.update(item.copy(nextDue = item.shiftedDue(-1), updatedAt = clock.millis()))
     }
 

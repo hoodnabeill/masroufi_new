@@ -120,10 +120,20 @@ class RecurringRepositoryTest {
         val second = f.entries.log(NewEntry(kind = EntryKind.SPENT, amount = 50_000, pocketId = cash, happenedAt = millis(d(11, 12), 11), recurringId = id))
         assertEquals(d(12, 20), item(id).nextDue)
         f.entries.delete(first)
-        assertEquals("not the latest payment: nothing moves", d(12, 20), item(id).nextDue)
+        assertEquals(d(11, 20), item(id).nextDue)
         f.entries.delete(second)
-        assertEquals("the latest one goes: back one period", d(11, 20), item(id).nextDue)
+        assertEquals(d(10, 20), item(id).nextDue)
         assertEquals("reserved again", 50_000L, reserved(d(11, 25)))
+    }
+
+    @Test fun deletingOlderPaymentMovesBack() = runTest {
+        setUp()
+        val id = bill(50_000, d(10, 20))
+        f.tickets.printToday()
+        val older = f.entries.log(pay(id, d(11, 12)))
+        f.entries.log(NewEntry(kind = EntryKind.SPENT, amount = 50_000, pocketId = cash, happenedAt = millis(d(11, 12), 11), recurringId = id))
+        f.entries.delete(older)
+        assertEquals("one payment left: one period past the start", d(11, 20), item(id).nextDue)
     }
 
     @Test fun normalPaymentReservesNextCycleAgain() = runTest {

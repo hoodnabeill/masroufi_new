@@ -126,10 +126,6 @@ interface EntryDao {
     /** Emits on every entry change; Home uses it to re-read today. */
     @Query("SELECT COUNT(*) FROM entry") fun countFlow(): Flow<Int>
 
-    /** Payments of the item made after the given one (later happenedAt, or same time and later id). */
-    @Query("SELECT COUNT(*) FROM entry WHERE recurringId = :recurringId AND (happenedAt > :at OR (happenedAt = :at AND id > :id))")
-    suspend fun countPaymentsAfter(recurringId: Long, at: Long, id: Long): Int
-
     @Query("SELECT COUNT(*) FROM entry WHERE recurringId = :recurringId") suspend fun countAllForRecurring(recurringId: Long): Int
 
     /** Envelopes: SPENT amounts per category from EGP pockets (counting or not), [start, end) epoch millis. */

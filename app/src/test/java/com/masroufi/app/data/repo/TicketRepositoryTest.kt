@@ -611,9 +611,9 @@ class TicketRepositoryTest {
         val first = entries.log(pay(10))
         val second = entries.log(pay(11))
         entries.delete(first)
-        assertEquals("deleting a non-latest payment moves nothing", 0L, db.recurringDao().unpaidDueBefore(nov25))
+        assertEquals("another entry in the cycle still pays it", 0L, db.recurringDao().unpaidDueBefore(nov25))
         entries.edit(second, pay(11, id = null))
-        assertEquals("edited to no bill: the latest payment goes, one period back", LocalDate.of(2026, 12, 20), db.recurringDao().byId(billId)?.nextDue)
+        assertEquals("edited to no bill: reserved again", 50_000L, db.recurringDao().unpaidDueBefore(nov25))
     }
 
     @Test fun entryInputChecksRejected() = runTest {
