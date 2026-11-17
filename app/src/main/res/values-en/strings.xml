@@ -175,8 +175,8 @@
     <string name="empty_roll_line">The first punch starts the story. Log anything you spent today, even a cup of tea.</string>
     <string name="empty_roll_action">Log the first thing</string>
     <string name="empty_jar_title">The jar is waiting for its first coin</string>
-    <string name="empty_jar_line">Tear off today's ticket tonight and what is left drops in here by itself. Even 5 pounds count.</string>
-    <string name="empty_jar_action">See today's ticket</string>
+    <string name="empty_jar_line">Tear off today\'s ticket tonight and what is left drops in here by itself. Even 5 pounds count.</string>
+    <string name="empty_jar_action">See today\'s ticket</string>
     <string name="empty_people_title">Nobody is owed anything</string>
     <string name="empty_people_line">And nobody owes you. Sleep easy. If you lend or borrow, log it here so it is not forgotten.</string>
     <string name="empty_people_action">Log a loan</string>
@@ -201,7 +201,7 @@
     <string name="empty_search_title">Found nothing by that name</string>
     <string name="empty_search_line">Try another word or another month.</string>
     <string name="empty_search_action">Clear search</string>
-    <string name="empty_caught_title">You're all caught up</string>
+    <string name="empty_caught_title">You\'re all caught up</string>
     <string name="empty_caught_line">No bills this week. Enjoy it.</string>
     <string name="empty_match_title">Your first match</string>
     <string name="empty_match_line">No opponent this week. Play at your own pace.</string>
