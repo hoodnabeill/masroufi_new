@@ -44,6 +44,18 @@ the decisions made during the build and what the next phases must pick up.
 
 ## Phase 3 notes (daily loop: Home, add sheet, close day, reward)
 
+Decisions made during Phase 3 (owner may override):
+
+- The payday line "هيفضل معاك حوالي Y يوم 25": Y = morning spendable − unpaid bills before payday − carry − today's base × days left. Jar and emergency money count as still yours.
+- Category icons: فواتير = bell, صحة = grid (no closer icon exists yet); seeded names and "الكاش" are stored in Arabic.
+- Proverb card colours by group: saving and patience turquoise, spending yellow, debt carnelian, work sky, people lilac.
+- One card per close: a rare card (45 first full week, 50 thirty-day streak) replaces that day's ordinary card; both rare in one day → 45 now, 50 next close.
+- Tomorrow's preview uses tomorrow's own pay cycle (fixes the day before payday).
+- Saves show on Home at once through `PendingPunches`; a failed save rolls back with "ماتسجّلتش. جرّب تاني."
+- Quick log and repeat chips log to the pocket of the chip / the lowest-id counting pocket.
+- The reward screen is skipped (back to Home) for a day that closed itself or has no card.
+- Reviews: from Task 15 on, tasks shipped on a green CI run without the two-reviewer loop (owner instruction, 2026-11-17).
+
 - Guessed copy to review (written by the builder, not in `07-COPY.md`): the TalkBack label of the streak; plural forms such as "في 1 مرات"; the transfer wording (حوّل / إلى / في / "من {from} لـ {to}"); the leftover destinations لبكره / للطوارئ / نادر; the share-failure toast; every English string in `values-en/`.
 - The add sheet rises from the bottom of the screen, not out of the + button.
 - `app/schemas/.../1.json` is still to be committed once a build is installed on a real phone (CI artifacts need a login to download); until then the comment in `TazkaraDatabase.kt` says schema v1 may change.
