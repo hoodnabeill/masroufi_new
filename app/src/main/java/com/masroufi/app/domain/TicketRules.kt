@@ -32,14 +32,33 @@ data class EntryForDay(
     val kind: EntryKind,
     val amount: Long,
     val roundUp: Long,
+    val fee: Long,
     val countsInTicket: Boolean,
     val recurringId: Long?,
 )
 
-/** Punches the ticket: spent, from a counting pocket, not a fixed bill. */
-val EntryForDay.punches: Boolean get() = kind == EntryKind.SPENT && countsInTicket && recurringId == null
+/**
+ * Punches the ticket (one hole): from a counting pocket, either spent and not a fixed bill, or a move that paid a fee
+ * (owner decision: the fee punches; the moved amount is a planned move, not spending).
+ */
+val EntryForDay.punches: Boolean get() = countsInTicket && when (kind) {
+    EntryKind.SPENT -> recurringId == null
+    EntryKind.MOVED -> fee > 0
+    EntryKind.RECEIVED -> false
+}
 
-fun spentToday(entries: List<EntryForDay>): Long = entries.filter { it.punches }.sumOf { it.amount + it.roundUp }
+/** What a punch takes from the ticket: a spend's amount + round-up, a move's fee. */
+val EntryForDay.punched: Long get() = when (kind) {
+    EntryKind.SPENT -> amount + roundUp
+    EntryKind.MOVED -> fee
+    EntryKind.RECEIVED -> 0
+}
+
+fun spentToday(entries: List<EntryForDay>): Long = entries.filter { it.punches }.sumOf { it.punched }
+
+/** Spendable left on payday if every remaining day spends its ticket; may be negative (the card hides it then). */
+fun projectedAtPayday(spendable: Long, reserved: Long, ticket: Long, daysLeft: Int): Long =
+    spendable - reserved - ticket * daysLeft
 
 fun overspendPerDay(overspend: Long, daysLeft: Int): Long {
     require(daysLeft >= 1) { "daysLeft must be >= 1" }

@@ -20,19 +20,26 @@ private const val BALANCE_EXPR = """p.openingBalance
     - COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.pocketId = p.id AND e.kind = 'MOVED'), 0)
     + COALESCE((SELECT SUM(e.amount) FROM entry e WHERE e.toPocketId = p.id AND e.kind = 'MOVED'), 0)"""
 
+// Primary currency only: the daily ticket is EGP (SQL cannot use PRIMARY_CURRENCY; keep 'EGP' in sync).
+private const val COUNTING_TOTAL =
+    "SELECT COALESCE(SUM($BALANCE_EXPR), 0) FROM pocket p WHERE p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"
+
+/** A repeated spend in the last days: same category, amount and pocket. */
+data class RepeatRow(val categoryId: Long?, val amount: Long, val pocketId: Long, val count: Int, val lastAt: Long)
+
 @Dao
 interface PocketDao {
     @Insert suspend fun insert(pocket: PocketEntity): Long
     @Update suspend fun update(pocket: PocketEntity)
     @Query("SELECT * FROM pocket") fun all(): Flow<List<PocketEntity>>
     @Query("SELECT * FROM pocket WHERE id = :id") suspend fun byId(id: Long): PocketEntity?
+    @Query("SELECT COUNT(*) FROM pocket") suspend fun count(): Int
 
     @Query("SELECT p.id AS pocketId, $BALANCE_EXPR AS balance FROM pocket p")
     fun balances(): Flow<List<PocketBalance>>
 
-    // Primary currency only: the daily ticket is EGP (SQL cannot use PRIMARY_CURRENCY; keep 'EGP' in sync).
-    @Query("SELECT COALESCE(SUM($BALANCE_EXPR), 0) FROM pocket p WHERE p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'")
-    suspend fun countingBalanceTotal(): Long
+    @Query(COUNTING_TOTAL) suspend fun countingBalanceTotal(): Long
+    @Query(COUNTING_TOTAL) fun countingBalanceTotalFlow(): Flow<Long>
 }
 
 @Dao
@@ -55,7 +62,7 @@ interface EntryDao {
 
     /** A day's entries, countsInTicket = the pocket counts in the EGP ticket, for spentToday; [start, end) epoch millis. */
     @Query(
-        """SELECT e.kind, e.amount, e.roundUp, (p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP') AS countsInTicket,
+        """SELECT e.kind, e.amount, e.roundUp, e.fee, (p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP') AS countsInTicket,
         e.recurringId FROM entry e
         JOIN pocket p ON p.id = e.pocketId WHERE e.happenedAt >= :start AND e.happenedAt < :end"""
     )
@@ -67,6 +74,15 @@ interface EntryDao {
         WHERE e.kind = 'RECEIVED' AND p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"""
     )
     suspend fun latestReceivedAt(): Long?
+
+    /** SPENT entries since `sinceMillis` repeated at least twice, most repeated first, then most recent; at most 3. */
+    @Query(
+        """SELECT categoryId, amount, pocketId, COUNT(*) AS count, MAX(happenedAt) AS lastAt FROM entry
+        WHERE kind = 'SPENT' AND happenedAt >= :sinceMillis
+        GROUP BY categoryId, amount, pocketId HAVING COUNT(*) >= 2
+        ORDER BY COUNT(*) DESC, MAX(happenedAt) DESC LIMIT 3"""
+    )
+    suspend fun repeatCandidates(sinceMillis: Long): List<RepeatRow>
 }
 
 @Dao
@@ -81,6 +97,10 @@ interface DayTicketDao {
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(ticket: DayTicketEntity): Long
     @Update suspend fun update(ticket: DayTicketEntity)
     @Query("SELECT * FROM day_ticket WHERE date = :date") suspend fun forDate(date: LocalDate): DayTicketEntity?
+    @Query("SELECT * FROM day_ticket WHERE date = :date") fun forDateFlow(date: LocalDate): Flow<DayTicketEntity?>
+
+    /** Emits on every day_ticket change; Home uses it to re-read today. */
+    @Query("SELECT COUNT(*) FROM day_ticket") fun countFlow(): Flow<Int>
 
     @Query("SELECT * FROM day_ticket WHERE status = 'OPEN' AND date < :date ORDER BY date")
     suspend fun openBefore(date: LocalDate): List<DayTicketEntity>

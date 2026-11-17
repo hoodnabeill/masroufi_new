@@ -1,6 +1,5 @@
 package com.masroufi.app.data.repo
 
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.masroufi.app.core.Payday
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -38,19 +37,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
-import java.io.File
-import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
-
-class TestClock(var instant: Instant, private val zoneId: ZoneId = ZoneId.of("Africa/Cairo")) : Clock() {
-    override fun getZone(): ZoneId = zoneId
-    override fun withZone(zone: ZoneId): Clock = TestClock(instant, zone)
-    override fun instant(): Instant = instant
-}
 
 /**
  * Payday Day(25). Unless a test says otherwise: one cash pocket with 3,900 EGP (390000 piastres), today 2026-11-12
@@ -83,12 +74,10 @@ class TicketRepositoryTest {
     private fun today(date: LocalDate) { clock.instant = at(date, 9) }
 
     private suspend fun TestScope.setUp(opening: Long = 390_000) {
-        settings = SettingsStore(PreferenceDataStoreFactory.create(scope = backgroundScope) { File(tmp.root, "s.preferences_pb") })
-        tickets = TicketRepository(
-            db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
-            db.stampDao(), settings, clock,
-        )
-        entries = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), tickets, settings, plus, clock)
+        val f = RepoFixture(db, backgroundScope, tmp.root, clock, plus)
+        settings = f.settings
+        tickets = f.tickets
+        entries = f.entries
         cash = db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, openingBalance = opening, color = 0))
     }
 
@@ -104,6 +93,29 @@ class TicketRepositoryTest {
 
     private fun assertTicket(what: String, amount: Long, base: Long, carriedIn: Long, actual: DayTicketEntity) =
         assertEquals(what, Triple(amount, base, carriedIn), Triple(actual.amount, actual.base, actual.carriedIn))
+
+    @Test fun printedRowHasNoEndOfMonthFields() = runTest {
+        setUp()
+        val t = tickets.printToday()
+        assertEquals("a printed ticket stores no end-of-month pool", null to null, t.eomPool to t.eomDaysLeft)
+    }
+
+    @Test fun preprintTransferFeeAddBack() = runTest {
+        setUp()
+        val tile = db.pocketDao().insert(PocketEntity(name = "tile", kind = PocketKind.UNDER_TILE, color = 0, countsInTicket = false))
+        fun move(amount: Long, fee: Long, hour: Int) =
+            NewEntry(kind = EntryKind.MOVED, amount = amount, pocketId = cash, toPocketId = tile, fee = fee, happenedAt = millis(nov12, hour))
+        entries.log(move(50_000, fee = 1_300, hour = 0)) // before the print
+        val t = tickets.printToday()
+        // Counting pool 390000 - 50000 - 1300 = 338700. Only the punched fee is added back: 340000 / 13 = 26153 -> 26100.
+        // Adding back the moved amount too would give 390000 / 13 = 30000; adding back nothing 338700 / 13 -> 26000.
+        assertTicket("morning ticket adds back the fee only", 26_100, 26_100, 0, t)
+        assertEquals("the pre-print fee punches one hole", 1_300L to 1, t.spent to t.entryCount)
+        entries.log(move(10_000, fee = 700, hour = 10))
+        entries.log(move(10_000, fee = 0, hour = 11))
+        assertEquals("a later fee punches, a free move does not: 1300 + 700", 2_000L to 2, row(nov12).let { it.spent to it.entryCount })
+        assertEquals("printed amount unchanged", 26_100L, row(nov12).amount)
+    }
 
     @Test fun printTodayIsIdempotent() = runTest {
         setUp()
@@ -145,6 +157,8 @@ class TicketRepositoryTest {
         val t = tickets.printToday()
         assertTrue("end-of-month row", t.endOfMonth)
         assertTicket("end-of-month prints no amount", 0, 0, 0, t)
+        assertEquals("stored pool 390000 - 390000 and 13 days left", 0L to 13, t.eomPool to t.eomDaysLeft)
+        assertEquals("pool and days left survive a re-read", 0L to 13, row(nov12).let { it.eomPool to it.eomDaysLeft })
     }
 
     @Test fun reservedSkipsPaidAndPaydayBills() = runTest {
@@ -358,6 +372,7 @@ class TicketRepositoryTest {
         val t = tickets.printToday()
         assertTrue(t.endOfMonth)
         assertTicket("end-of-month row", 0, 0, 0, t)
+        assertEquals("stored pool 1200 (nothing reserved) and 13 days left", 1_200L to 13, row(nov12).let { it.eomPool to it.eomDaysLeft })
         spend(500)
         assertEquals("nothing left of a zero ticket", 0L, tickets.closeDay(nov12, LeftoverDestination.JAR).leftover)
         assertEquals(0L, jarTotal())

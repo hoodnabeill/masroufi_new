@@ -8,9 +8,12 @@ class TicketRulesTest {
         amount: Long,
         kind: EntryKind = EntryKind.SPENT,
         roundUp: Long = 0,
+        fee: Long = 0,
         counts: Boolean = true,
         recurringId: Long? = null,
-    ) = EntryForDay(kind, amount, roundUp, counts, recurringId)
+    ) = EntryForDay(kind, amount, roundUp, fee, counts, recurringId)
+
+    private fun holes(entries: List<EntryForDay>) = entries.count { it.punches }
 
     @Test fun basic() =
         assertEquals(TicketCalc.Printed(24000, 24000, 0), computeTicket(587000, 275000, 0, 13))
@@ -38,6 +41,27 @@ class TicketRulesTest {
 
     @Test fun receivedAndMovedDoNotCount() =
         assertEquals(0L, spentToday(listOf(e(9000, EntryKind.RECEIVED), e(7000, EntryKind.MOVED))))
+
+    @Test fun transferFeePunches() {
+        val move = listOf(e(50000, EntryKind.MOVED, fee = 500))
+        assertEquals("a move's fee is spent, not its amount", 500L, spentToday(move))
+        assertEquals("the fee punches one hole", 1, holes(move))
+        val uncounted = listOf(e(50000, EntryKind.MOVED, fee = 500, counts = false))
+        assertEquals("a fee from a pocket outside the ticket does not punch", 0L to 0, spentToday(uncounted) to holes(uncounted))
+        val mixed = listOf(e(2500, roundUp = 500), e(50000, EntryKind.MOVED, fee = 500))
+        assertEquals("spend 2500 + round-up 500 + fee 500", 3500L to 2, spentToday(mixed) to holes(mixed))
+    }
+
+    @Test fun transferWithoutFeeDoesNotPunch() {
+        val move = listOf(e(50000, EntryKind.MOVED))
+        assertEquals("a free move is not spending", 0L to 0, spentToday(move) to holes(move))
+    }
+
+    @Test fun projection() {
+        assertEquals("587000 - 275000 - 24000 x 13 = 0", 0L, projectedAtPayday(587000, 275000, 24000, 13))
+        assertEquals("100000 - 20000 - 10000 x 5 = 30000", 30000L, projectedAtPayday(100000, 20000, 10000, 5))
+        assertEquals("100000 - 0 - 30000 x 4 = -20000 (may be negative)", -20000L, projectedAtPayday(100000, 0, 30000, 4))
+    }
 
     @Test fun overspendSpread() = assertEquals(300L, overspendPerDay(3500, 12))
 

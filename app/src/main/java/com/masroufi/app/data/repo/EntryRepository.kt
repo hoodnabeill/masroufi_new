@@ -1,7 +1,6 @@
 package com.masroufi.app.data.repo
 
 import androidx.room.withTransaction
-import com.masroufi.app.core.payCycleFor
 import com.masroufi.app.data.db.EntryDao
 import com.masroufi.app.data.db.EntryEntity
 import com.masroufi.app.data.db.JarDao
@@ -129,7 +128,7 @@ class EntryRepository @Inject constructor(
     private suspend fun releaseBill(old: EntryEntity) {
         val rid = old.recurringId ?: return
         val day = clock.dayOf(old.happenedAt)
-        val cycle = payCycleFor(day, settings.current().payday, entryDao.latestReceivedAt()?.let(clock::dayOf))
+        val cycle = entryDao.payCycleOn(day, settings.current().payday, clock)
         fun startMillis(d: LocalDate) = d.atStartOfDay(clock.zone).toInstant().toEpochMilli()
         val still = entryDao.countForRecurring(rid, startMillis(cycle.start), startMillis(cycle.nextPayday))
         if (still == 0) recurringDao.setPaid(rid, false)
@@ -142,7 +141,7 @@ class EntryRepository @Inject constructor(
     private suspend fun activeStep(): Int? =
         if (entitlements.isPlus.value) settings.current().roundUpStep.takeIf { it > 0 } else null
 
-    /** Only an entry that punches the ticket rounds up. Caller holds the transaction. */
+    /** Only a spend that punches the ticket rounds up (a move's fee punches but never rounds up). Caller holds the transaction. */
     private suspend fun qualifies(entry: NewEntry): Boolean =
         entry.kind == EntryKind.SPENT && entry.recurringId == null && pocketDao.byId(entry.pocketId)?.punchesTicket == true
 

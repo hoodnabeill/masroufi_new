@@ -83,6 +83,9 @@ data class DayTicketEntity(
     val destination: LeftoverDestination? = null,
     val proverbNumber: Int? = null,
     val endOfMonth: Boolean = false,
+    /** End-of-month rows only: Spendable - Reserved and the days left when it printed. */
+    val eomPool: Long? = null,
+    val eomDaysLeft: Int? = null,
     val updatedAt: Long = 0,
 )
 
