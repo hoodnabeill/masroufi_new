@@ -127,6 +127,7 @@ data class RecurringEntity(
     val scheduleDay: Int,
     val nextDue: LocalDate,
     val envelopeId: Long? = null,
+    /** Legacy, unused since v6: "paid" is derived (nextDue >= the next payday). Kept to avoid a migration. */
     val paidThisCycle: Boolean = false,
     val kind: RecurringKind,
     /** "onboarding" for items the first-run flow created (it replaces them on a redo); null otherwise. */

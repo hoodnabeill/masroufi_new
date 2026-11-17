@@ -193,7 +193,7 @@ class TicketRepositoryTest {
 
     @Test fun reservedSkipsPaidAndPaydayBills() = runTest {
         setUp()
-        db.recurringDao().insert(bill(10_000, LocalDate.of(2026, 11, 15), paid = true))
+        db.recurringDao().insert(bill(10_000, LocalDate.of(2026, 12, 15))) // paid: next due is after payday
         db.recurringDao().insert(bill(50_000, LocalDate.of(2026, 11, 25))) // due on payday: next cycle's
         assertTicket("nothing reserved: 390000 / 13", 30_000, 30_000, 0, tickets.printToday())
     }
@@ -611,9 +611,9 @@ class TicketRepositoryTest {
         val first = entries.log(pay(10))
         val second = entries.log(pay(11))
         entries.delete(first)
-        assertEquals("another entry in the cycle still pays it", 0L, db.recurringDao().unpaidDueBefore(nov25))
+        assertEquals("deleting a non-latest payment moves nothing", 0L, db.recurringDao().unpaidDueBefore(nov25))
         entries.edit(second, pay(11, id = null))
-        assertEquals("edited to no bill: reserved again", 50_000L, db.recurringDao().unpaidDueBefore(nov25))
+        assertEquals("edited to no bill: the latest payment goes, one period back", LocalDate.of(2026, 12, 20), db.recurringDao().byId(billId)?.nextDue)
     }
 
     @Test fun entryInputChecksRejected() = runTest {

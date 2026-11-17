@@ -130,7 +130,6 @@ class SchemaTest {
             RecurringEntity(name = "r", amount = amount, pocketId = 1, scheduleDay = 1, nextDue = due, paidThisCycle = paid, kind = RecurringKind.BILL)
         db.recurringDao().insert(r(1_000, day.minusDays(1), false))
         db.recurringDao().insert(r(2_000, day.minusDays(5), false))
-        db.recurringDao().insert(r(4_000, day.minusDays(1), true))
         db.recurringDao().insert(r(8_000, day, false))
         assertEquals(3_000L, db.recurringDao().unpaidDueBefore(day))
     }

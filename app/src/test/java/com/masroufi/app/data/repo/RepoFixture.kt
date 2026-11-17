@@ -23,7 +23,7 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     // Provider: entries is declared below (the Hilt graph breaks the same cycle).
     val recurring: RecurringRepository = RecurringRepository(db.recurringDao(), db.entryDao(), Provider { entries }, clock)
     val tickets: TicketRepository = TicketRepository(
-        db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), recurring, db.jarDao(), db.proverbDao(),
+        db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
         db.stampDao(), settings, clock,
     )
     val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), tickets, settings, plus, clock)

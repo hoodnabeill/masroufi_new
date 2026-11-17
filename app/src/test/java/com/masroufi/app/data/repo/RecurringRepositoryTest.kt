@@ -3,7 +3,6 @@ package com.masroufi.app.data.repo
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.masroufi.app.core.PayCycle
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.PocketKind
 import com.masroufi.app.data.db.RecurringEntity
@@ -17,7 +16,6 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -59,10 +57,10 @@ class RecurringRepositoryTest {
         cash = db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, openingBalance = 390_000, color = 0))
     }
 
-    private suspend fun bill(amount: Long, due: LocalDate, pocket: Long = cash, paid: Boolean = false, day: Int = due.dayOfMonth) =
+    private suspend fun bill(amount: Long, due: LocalDate, pocket: Long = cash, day: Int = due.dayOfMonth) =
         db.recurringDao().insert(
             RecurringEntity(
-                name = "bill", amount = amount, pocketId = pocket, scheduleDay = day, nextDue = due, paidThisCycle = paid,
+                name = "bill", amount = amount, pocketId = pocket, scheduleDay = day, nextDue = due,
                 kind = RecurringKind.BILL,
             ),
         )
@@ -84,80 +82,70 @@ class RecurringRepositoryTest {
         assertEquals("only the counting EGP pocket's bill is reserved", 50_000L, db.recurringDao().unpaidDueBefore(d(11, 25)))
     }
 
-    @Test fun paidAdvancesAtPayday() = runTest {
-        setUp()
-        val paid = bill(50_000, d(11, 20), paid = true)
-        val endOfMonth = bill(30_000, d(10, 31), day = 31, paid = true)
-        f.tickets.printToday() // 11-12: first print, nothing due before 10-25
-        assertEquals("nothing moves inside the cycle", d(11, 20) to true, item(paid).let { it.nextDue to it.paidThisCycle })
+    private suspend fun reserved(before: LocalDate) = db.recurringDao().unpaidDueBefore(before)
 
-        today(d(11, 25))
+    @Test fun overdueBillStaysReservedUntilPaid() = runTest {
+        setUp()
+        val id = bill(50_000, d(11, 5))
         f.tickets.printToday()
-        assertEquals("paid bill: next month, unpaid again", d(12, 20) to false, item(paid).let { it.nextDue to it.paidThisCycle })
-        assertEquals("day 31 clamps to 30 November", d(11, 30) to false, item(endOfMonth).let { it.nextDue to it.paidThisCycle })
-        assertEquals("both reserved in the new cycle", 80_000L, db.recurringDao().unpaidDueBefore(d(12, 25)))
-    }
+        assertEquals("overdue: reserved", 50_000L, reserved(d(11, 25)))
+        f.recurring.markPaid(id, cash)
+        assertEquals("paid: next due is December", d(12, 5), item(id).nextDue)
+        assertEquals("not reserved any more", 0L, reserved(d(11, 25)))
 
-    @Test fun unpaidOverdueStaysReserved() = runTest {
-        setUp()
-        val unpaid = bill(50_000, d(11, 20))
-        today(d(11, 25))
+        val carried = bill(30_000, d(11, 20))
+        today(d(11, 26)) // payday passed with it unpaid
         f.tickets.printToday()
-        assertEquals("unpaid at payday: stays due", d(11, 20) to false, item(unpaid).let { it.nextDue to it.paidThisCycle })
-        assertEquals("still reserved in the new cycle", 50_000L, db.recurringDao().unpaidDueBefore(d(12, 25)))
+        assertEquals("unpaid across payday: still due", d(11, 20), item(carried).nextDue)
+        assertEquals("both still reserved in the new cycle (30,000 overdue + 50,000 due 12-05)", 80_000L, reserved(d(12, 25)))
     }
 
-    @Test fun lateBillPaymentAdvances() = runTest {
+    @Test fun latePaymentClearsOnlyThatMonth() = runTest {
         setUp()
-        val late = bill(50_000, d(11, 20))
-        today(d(11, 26)) // cycle 11-25..12-25
+        val id = bill(50_000, d(10, 20)) // October overdue, November due before payday 11-25
         f.tickets.printToday()
-        f.entries.log(pay(late, d(11, 26)))
-        assertEquals("paid late: due date moves past the cycle start, still paid", d(12, 20) to true, item(late).let { it.nextDue to it.paidThisCycle })
-        assertEquals("nothing reserved for it now", 0L, db.recurringDao().unpaidDueBefore(d(12, 25)))
+        f.recurring.markPaid(id, cash)
+        assertEquals(d(11, 20), item(id).nextDue)
+        assertEquals("paid October: November still reserved", 50_000L, reserved(d(11, 25)))
+        f.recurring.markPaid(id, cash)
+        assertEquals(d(12, 20), item(id).nextDue)
+        assertEquals("paid both: none reserved", 0L, reserved(d(11, 25)))
+    }
 
-        today(d(12, 26))
+    @Test fun deletingPaymentRestoresDue() = runTest {
+        setUp()
+        val id = bill(50_000, d(10, 20))
         f.tickets.printToday()
-        assertEquals("next payday: next month, unpaid", LocalDate.of(2027, 1, 20) to false, item(late).let { it.nextDue to it.paidThisCycle })
+        val first = f.entries.log(pay(id, d(11, 12)))
+        val second = f.entries.log(NewEntry(kind = EntryKind.SPENT, amount = 50_000, pocketId = cash, happenedAt = millis(d(11, 12), 11), recurringId = id))
+        assertEquals(d(12, 20), item(id).nextDue)
+        f.entries.delete(first)
+        assertEquals("not the latest payment: nothing moves", d(12, 20), item(id).nextDue)
+        f.entries.delete(second)
+        assertEquals("the latest one goes: back one period", d(11, 20), item(id).nextDue)
+        assertEquals("reserved again", 50_000L, reserved(d(11, 25)))
     }
 
-    @Test fun advanceDueBySchedule() {
-        assertEquals(d(12, 31), advanceDue(d(11, 30), 31, ScheduleType.MONTHLY, d(12, 25)))
-        assertEquals("several months at once", d(2, 28).plusYears(1), advanceDue(d(10, 31), 31, ScheduleType.MONTHLY, LocalDate.of(2027, 2, 1)))
-        assertEquals(LocalDate.of(2027, 3, 1), advanceDue(d(3, 1), 1, ScheduleType.YEARLY, d(11, 25)))
-        assertEquals("already due later: unchanged", d(12, 5), advanceDue(d(12, 5), 5, ScheduleType.MONTHLY, d(11, 25)))
-    }
-
-    @Test fun resetIdempotent() = runTest {
+    @Test fun normalPaymentReservesNextCycleAgain() = runTest {
         setUp()
-        bill(50_000, d(10, 20), paid = true)
-        bill(30_000, d(9, 30), day = 31, paid = true)
-        bill(20_000, d(12, 1))
-        bill(10_000, d(11, 1))
-        val cycle = PayCycle(d(11, 25), d(12, 25))
-        f.recurring.resetForNewCycle(cycle)
-        val once = db.recurringDao().allNow()
-        assertEquals(
-            "paid ones advance past the start; the later and the unpaid overdue untouched",
-            listOf(d(12, 20), d(11, 30), d(12, 1), d(11, 1)), once.map { it.nextDue },
-        )
-        assertTrue("all unpaid", once.none { it.paidThisCycle })
-        f.recurring.resetForNewCycle(cycle)
-        assertEquals("a second run changes nothing", once, db.recurringDao().allNow())
+        val id = bill(50_000, d(11, 20))
+        f.tickets.printToday()
+        f.entries.log(pay(id, d(11, 12)))
+        assertEquals(d(12, 20), item(id).nextDue)
+        assertEquals("paid in November: not reserved now", 0L, reserved(d(11, 25)))
+
+        today(d(11, 26)) // new cycle 11-25..12-25
+        f.tickets.printToday()
+        assertEquals("December's due date is before the next payday: reserved", 50_000L, reserved(d(12, 25)))
     }
 
-    @Test fun oldCyclePaymentDoesNotMarkCurrent() = runTest {
-        setUp()
-        today(d(11, 26)) // cycle 11-25..12-25
-        val id = bill(50_000, d(12, 20))
-        val old = f.entries.log(pay(id, d(11, 20)))
-        assertFalse("a payment dated last cycle does not mark this cycle", item(id).paidThisCycle)
-        val current = f.entries.log(pay(id, d(11, 26)))
-        assertTrue(item(id).paidThisCycle)
-        f.entries.delete(old)
-        assertTrue("deleting an old-cycle payment never un-marks the current cycle", item(id).paidThisCycle)
-        f.entries.edit(current, pay(id, d(11, 24)))
-        assertFalse("moved back into the old cycle: this cycle is unpaid", item(id).paidThisCycle)
+    @Test fun shiftedDueBySchedule() {
+        fun r(due: LocalDate, day: Int, type: ScheduleType = ScheduleType.MONTHLY) =
+            RecurringEntity(name = "r", amount = 1, pocketId = 1, scheduleDay = day, nextDue = due, scheduleType = type, kind = RecurringKind.BILL)
+        assertEquals("31 clamps to 30 November", d(11, 30), r(d(10, 31), 31).shiftedDue(1))
+        assertEquals("and back to 31 December", d(12, 31), r(d(11, 30), 31).shiftedDue(1))
+        assertEquals(d(10, 31), r(d(11, 30), 31).shiftedDue(-1))
+        assertEquals(LocalDate.of(2027, 3, 1), r(d(3, 1), 1, ScheduleType.YEARLY).shiftedDue(1))
     }
 
     @Test fun markPaidLogsWithoutPunching() = runTest {
@@ -168,10 +156,9 @@ class RecurringRepositoryTest {
         val entryId = f.recurring.markPaid(id, cash)
         val entry = checkNotNull(db.entryDao().byId(entryId))
         assertEquals(Triple(EntryKind.SPENT, 50_000L, id), Triple(entry.kind, entry.amount, entry.recurringId))
-        assertTrue("marked paid", item(id).paidThisCycle)
         assertEquals("reserved money: no punch", 0L, checkNotNull(db.dayTicketDao().forDate(d(11, 12))).spent)
         val row = f.recurring.observe().first().single()
-        assertEquals(Triple("cash", d(11, 20), true), Triple(row.pocketName, row.nextDue, row.paidThisCycle))
+        assertEquals(Pair("cash", d(12, 20)), Pair(row.pocketName, row.nextDue))
     }
 
     @Test fun deleteArchivesWhilePaid() = runTest {

@@ -1,6 +1,5 @@
 package com.masroufi.app.data.repo
 
-import com.masroufi.app.core.PayCycle
 import com.masroufi.app.data.db.EntryDao
 import com.masroufi.app.data.db.RecurringDao
 import com.masroufi.app.data.db.RecurringEntity
@@ -17,20 +16,12 @@ import javax.inject.Provider
 import javax.inject.Singleton
 
 /**
- * The first due date on or after [cycleStart], stepping from [nextDue] by the schedule. A monthly item keeps its
- * [scheduleDay], clamped to short months (31 -> 30 Nov -> 31 Dec).
+ * The due date [periods] schedule periods from the item's own (negative = back). A monthly item keeps its
+ * scheduleDay, clamped to short months (31 -> 30 Nov -> 31 Dec).
  */
-internal fun advanceDue(nextDue: LocalDate, scheduleDay: Int, type: ScheduleType, cycleStart: LocalDate): LocalDate {
-    var due = nextDue
-    var n = 0L
-    while (due.isBefore(cycleStart)) {
-        n++
-        due = when (type) {
-            ScheduleType.MONTHLY -> YearMonth.from(nextDue).plusMonths(n).let { it.atDay(minOf(scheduleDay, it.lengthOfMonth())) }
-            ScheduleType.YEARLY -> nextDue.plusYears(n)
-        }
-    }
-    return due
+internal fun RecurringEntity.shiftedDue(periods: Long): LocalDate = when (scheduleType) {
+    ScheduleType.MONTHLY -> YearMonth.from(nextDue).plusMonths(periods).let { it.atDay(minOf(scheduleDay, it.lengthOfMonth())) }
+    ScheduleType.YEARLY -> nextDue.plusYears(periods)
 }
 
 @Singleton
@@ -77,25 +68,11 @@ class RecurringRepository @Inject constructor(
         }
     }
 
-    /** Logs the payment (a SPENT entry paying the item: reserved, so it never punches) and so marks it paid. */
+    /** Logs the payment (a SPENT entry paying the item: reserved, so it never punches) and so moves its due date on one period. */
     suspend fun markPaid(id: Long, pocketId: Long, amount: Long? = null): Long {
         val item = checkNotNull(recurringDao.byId(id)) { "no recurring item $id" }
         return entries.get().log(
             NewEntry(kind = EntryKind.SPENT, amount = amount ?: item.amount, pocketId = pocketId, happenedAt = clock.millis(), recurringId = id),
         )
-    }
-
-    /**
-     * Payday: an item paid this cycle moves to its next due date on or after the cycle start and is unpaid again. An
-     * unpaid overdue item is left as it is: it stays due (and reserved) until it is paid. Idempotent: a second run finds
-     * nothing paid and due before the start. Caller holds the transaction.
-     */
-    suspend fun resetForNewCycle(cycle: PayCycle) {
-        val now = clock.millis()
-        for (item in recurringDao.allNow()) {
-            if (!item.paidThisCycle || !item.nextDue.isBefore(cycle.start)) continue
-            val due = advanceDue(item.nextDue, item.scheduleDay, item.scheduleType, cycle.start)
-            recurringDao.update(item.copy(nextDue = due, paidThisCycle = false, updatedAt = now))
-        }
     }
 }

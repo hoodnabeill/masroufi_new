@@ -147,7 +147,7 @@ class HomeRepositoryTest {
             kind = RecurringKind.BILL,
         )
         db.recurringDao().insert(bill(50_000, LocalDate.of(2026, 11, 20)))
-        db.recurringDao().insert(bill(10_000, LocalDate.of(2026, 11, 15), paid = true))
+        db.recurringDao().insert(bill(10_000, LocalDate.of(2026, 12, 15))) // paid: next due is after payday
         db.recurringDao().insert(bill(70_000, LocalDate.of(2026, 11, 25))) // due on payday: next cycle's
         val h = f.home.observeHome().first()
         assertEquals("unpaid bills due before payday 11-25", 50_000L, h.unpaidBills)
@@ -285,7 +285,6 @@ class HomeRepositoryTest {
         db.recurringDao().insert(bill(10_000, LocalDate.of(2026, 11, 20))) // still unpaid from the old cycle: stays reserved
         db.recurringDao().insert(bill(20_000, LocalDate.of(2026, 12, 5))) // due in the new cycle
         db.recurringDao().insert(bill(40_000, LocalDate.of(2026, 12, 28))) // after the new cycle's payday
-        db.recurringDao().insert(bill(80_000, LocalDate.of(2026, 11, 22), paid = true))
         assertEquals(TomorrowBasis(30, 30_000), f.home.tomorrowBasis(nov24))
     }
 }

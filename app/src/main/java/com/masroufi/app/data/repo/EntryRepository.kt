@@ -91,8 +91,10 @@ class EntryRepository @Inject constructor(
             entryDao.update(old.with(entry, rounded, now))
             val movement = jarDao.forEntry(id).firstOrNull { it.source == JarSource.ROUND_UP }
             jarDao.sync(movement, rounded, now) { roundUpMovement(id, rounded, now) }
-            releaseBill(old)
-            markBill(entry)
+            if (old.recurringId != entry.recurringId) { // same bill: the period count does not change
+                releaseBill(old)
+                markBill(entry)
+            }
             val oldDay = clock.dayOf(old.happenedAt)
             val newDay = clock.dayOf(entry.happenedAt)
             tickets.recalcDay(newDay)
@@ -122,38 +124,20 @@ class EntryRepository @Inject constructor(
         }
     }
 
-    /** paidThisCycle is about today's pay cycle; payday resets it (RecurringRepository.resetForNewCycle). */
-    private suspend fun currentCycle() = entryDao.payCycleOn(LocalDate.now(clock), settings.current().payday, clock)
-
-    /**
-     * Only a payment dated in the current cycle marks its bill paid. A late payment for a due date before this cycle
-     * also moves the bill's next due date past the cycle start (payday left it overdue). Caller holds the transaction.
-     */
+    /** Each payment of a recurring item moves its due date on one period (an item is paid up once nextDue reaches the next payday). */
     private suspend fun markBill(entry: NewEntry) {
-        val rid = entry.recurringId ?: return
-        val cycle = currentCycle()
-        if (!cycle.contains(clock.dayOf(entry.happenedAt))) return
-        val item = recurringDao.byId(rid) ?: return
-        if (item.nextDue.isBefore(cycle.start)) {
-            val due = advanceDue(item.nextDue, item.scheduleDay, item.scheduleType, cycle.start)
-            recurringDao.update(item.copy(nextDue = due, paidThisCycle = true, updatedAt = clock.millis()))
-        } else {
-            recurringDao.setPaid(rid, true)
-        }
+        val item = entry.recurringId?.let { recurringDao.byId(it) } ?: return
+        recurringDao.update(item.copy(nextDue = item.shiftedDue(1), updatedAt = clock.millis()))
     }
 
     /**
-     * An entry no longer pays its bill (deleted, or edited to another bill/none): the bill is unpaid again unless
-     * another entry in the current pay cycle still pays it. An old-cycle payment never un-marks the current cycle.
-     * Caller holds the transaction and has already stored the change.
+     * An entry no longer pays its bill (deleted, or edited to another bill/none): the due date moves back one period,
+     * but only when it was the latest payment of the item. Caller holds the transaction and has already stored the change.
      */
     private suspend fun releaseBill(old: EntryEntity) {
-        val rid = old.recurringId ?: return
-        val cycle = currentCycle()
-        if (!cycle.contains(clock.dayOf(old.happenedAt))) return
-        fun startMillis(d: LocalDate) = d.atStartOfDay(clock.zone).toInstant().toEpochMilli()
-        val still = entryDao.countForRecurring(rid, startMillis(cycle.start), startMillis(cycle.nextPayday))
-        if (still == 0) recurringDao.setPaid(rid, false)
+        val item = old.recurringId?.let { recurringDao.byId(it) } ?: return
+        if (entryDao.countPaymentsAfter(item.id, old.happenedAt, old.id) > 0) return
+        recurringDao.update(item.copy(nextDue = item.shiftedDue(-1), updatedAt = clock.millis()))
     }
 
     private fun requireNotFuture(entry: NewEntry) =

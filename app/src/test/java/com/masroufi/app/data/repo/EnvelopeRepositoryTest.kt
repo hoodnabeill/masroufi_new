@@ -96,8 +96,8 @@ class EnvelopeRepositoryTest {
         val billsId = envelope("bills", 50_000, bills, kind = EnvelopeKind.FIXED)
         db.recurringDao().insert(
             RecurringEntity(
-                name = "net", amount = 50_000, pocketId = cash, scheduleDay = 20, nextDue = d(11, 20), envelopeId = billsId,
-                paidThisCycle = true, kind = RecurringKind.BILL,
+                name = "net", amount = 50_000, pocketId = cash, scheduleDay = 20, nextDue = d(12, 20), envelopeId = billsId,
+                kind = RecurringKind.BILL,
             ),
         )
         spend(90_000, food, d(11, 1))

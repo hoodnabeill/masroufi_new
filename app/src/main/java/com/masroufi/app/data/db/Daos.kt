@@ -70,7 +70,6 @@ data class RecurringRow(
     val pocketId: Long,
     val pocketName: String,
     val nextDue: LocalDate,
-    val paidThisCycle: Boolean,
     val envelopeId: Long?,
 )
 
@@ -127,9 +126,9 @@ interface EntryDao {
     /** Emits on every entry change; Home uses it to re-read today. */
     @Query("SELECT COUNT(*) FROM entry") fun countFlow(): Flow<Int>
 
-    /** Entries paying this recurring item with happenedAt in [start, end) epoch millis. */
-    @Query("SELECT COUNT(*) FROM entry WHERE recurringId = :recurringId AND happenedAt >= :start AND happenedAt < :end")
-    suspend fun countForRecurring(recurringId: Long, start: Long, end: Long): Int
+    /** Payments of the item made after the given one (later happenedAt, or same time and later id). */
+    @Query("SELECT COUNT(*) FROM entry WHERE recurringId = :recurringId AND (happenedAt > :at OR (happenedAt = :at AND id > :id))")
+    suspend fun countPaymentsAfter(recurringId: Long, at: Long, id: Long): Int
 
     @Query("SELECT COUNT(*) FROM entry WHERE recurringId = :recurringId") suspend fun countAllForRecurring(recurringId: Long): Int
 
@@ -271,26 +270,24 @@ interface RecurringDao {
     @Query("DELETE FROM recurring WHERE id = :id") suspend fun delete(id: Long)
 
     @Query(
-        """SELECT r.id, r.name, r.amount, r.kind, r.pocketId, p.name AS pocketName, r.nextDue, r.paidThisCycle, r.envelopeId
+        """SELECT r.id, r.name, r.amount, r.kind, r.pocketId, p.name AS pocketName, r.nextDue, r.envelopeId
         FROM recurring r JOIN pocket p ON p.id = r.pocketId WHERE r.archived = 0 ORDER BY r.nextDue, r.id"""
     )
     fun rows(): Flow<List<RecurringRow>>
 
-    /** Reserved bills: only items paid from a pocket that punches the EGP ticket (same predicate as COUNTING_TOTAL). */
+    /** Reserved bills (still due before [date], overdue included): only items paid from a pocket that punches the EGP ticket (same predicate as COUNTING_TOTAL). */
     @Query(
         """SELECT COALESCE(SUM(r.amount), 0) FROM recurring r JOIN pocket p ON p.id = r.pocketId
-        WHERE r.paidThisCycle = 0 AND r.archived = 0 AND r.nextDue < :date
+        WHERE r.archived = 0 AND r.nextDue < :date
         AND p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"""
     )
     suspend fun unpaidDueBefore(date: LocalDate): Long
 
-    @Query("UPDATE recurring SET paidThisCycle = :paid WHERE id = :id") suspend fun setPaid(id: Long, paid: Boolean)
-
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE pocketId = :pocketId AND paidThisCycle = 0 AND archived = 0 AND nextDue < :date")
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE pocketId = :pocketId AND archived = 0 AND nextDue < :date")
     suspend fun unpaidFromPocketDueBefore(pocketId: Long, date: LocalDate): Long
 
     /** The soonest unpaid payment from the pocket due before [date]. */
-    @Query("SELECT * FROM recurring WHERE pocketId = :pocketId AND paidThisCycle = 0 AND archived = 0 AND nextDue < :date ORDER BY nextDue, id LIMIT 1")
+    @Query("SELECT * FROM recurring WHERE pocketId = :pocketId AND archived = 0 AND nextDue < :date ORDER BY nextDue, id LIMIT 1")
     suspend fun nextUnpaidFromPocket(pocketId: Long, date: LocalDate): RecurringEntity?
 }
 

@@ -130,7 +130,6 @@ class PocketRepositoryTest {
             RecurringEntity(name = "r", amount = amount, pocketId = from, scheduleDay = due.dayOfMonth, nextDue = due, paidThisCycle = paid, kind = RecurringKind.BILL)
         db.recurringDao().insert(bill(50_000, wallet, LocalDate.of(2026, 11, 25)))
         db.recurringDao().insert(bill(1_000_000, wallet, LocalDate.of(2026, 12, 5))) // next month
-        db.recurringDao().insert(bill(1_000_000, wallet, LocalDate.of(2026, 11, 20), paid = true))
         db.recurringDao().insert(bill(1_000_000, bank, LocalDate.of(2026, 11, 20))) // another pocket
         log(EntryKind.MOVED, 200_000, wallet, 3, to = cash)
         assertNull("no limit typed", f.pockets.limitWarning(wallet))

@@ -128,7 +128,7 @@ class EnvelopeRepository @Inject constructor(
             val spent = cats.sumOf { now[it] ?: 0L }
             val left = envelopeLeft(monthly, spent)
             val bills = snap.recurring.filter { it.envelopeId == env.id && !it.archived }
-            val sealed = env.kind == EnvelopeKind.FIXED && bills.isNotEmpty() && bills.all { it.paidThisCycle }
+            val sealed = env.kind == EnvelopeKind.FIXED && bills.isNotEmpty() && bills.all { !it.nextDue.isBefore(cycle.nextPayday) }
             // OnPace: spent / elapsed <= monthly / cycleDays, without fractions.
             val line = if (sealed) null else runsOutDay(left, spent, daysWithData, today, cycle.nextPayday)?.let { EnvelopeLine.RunsOut(it) }
                 ?: EnvelopeLine.OnPace.takeIf { spent * cycleDays <= monthly * elapsed }
