@@ -108,7 +108,7 @@ class PeopleViewModelTest : PlanVmTestBase() {
         val p2 = person("منى")
         settle("persons") { state.persons.size == 2 }
         vm.openSplit()
-        assertTrue(state.sheet is PeopleSheet.Split)
+        settle("split sheet") { state.sheet is PeopleSheet.Split }
         assertEquals(cash, state.split.pocketId)
         listOf(3, 0, 0).forEach(vm::splitDigit)
         vm.toggleParticipant(p1)
@@ -163,6 +163,7 @@ class PeopleViewModelTest : PlanVmTestBase() {
         val (_, _, kiosk) = scenario()
         settle("rows") { state.rows.size == 3 }
         vm.onAction(state.rows.first { it.row.person.id == kiosk }.row)
+        settle("sheet") { state.sheet is PeopleSheet.SettleTab }
         val sheet = state.sheet as PeopleSheet.SettleTab
         assertEquals(12_000L, sheet.amount)
         vm.settleTab(kiosk, sheet.name, cash)
@@ -182,7 +183,7 @@ class PeopleViewModelTest : PlanVmTestBase() {
         assertEquals(150_000L, balance())
         settle("rows") { state.rows.size == 1 }
         vm.onAction(state.rows.single().row)
-        assertTrue(state.sheet is PeopleSheet.Repay)
+        settle("sheet") { state.sheet is PeopleSheet.Repay }
         vm.repayAll(mama, cash)
         settle("repaid") { state.notice?.kind == NoticeKind.REPAID }
         assertEquals(100_000L, balance())

@@ -37,7 +37,7 @@ class PersonDetailViewModelTest : PlanVmTestBase() {
         val vm = detail(ahmed)
         assertEquals(50_000L, vm.state.value.row?.owedToMe)
         vm.settleDebt(runBlocking { db.peopleDao().debtById(debt)!! }, 20_000, cash)
-        settle("received") { vm.state.value.notice?.kind == NoticeKind.RECEIVED }
+        settle("received") { vm.state.value.notice?.kind == NoticeKind.RECEIVED && vm.state.value.row?.owedToMe == 30_000L && vm.state.value.history.size == 2 }
         val ui = vm.state.value
         assertEquals(30_000L, ui.row?.owedToMe)
         assertEquals(100_000L - 50_000 + 20_000, balance())
@@ -53,7 +53,7 @@ class PersonDetailViewModelTest : PlanVmTestBase() {
         val debt = runBlocking { f.people.borrow(mama, 50_000, cash) }
         val vm = detail(mama)
         vm.settleDebt(runBlocking { db.peopleDao().debtById(debt)!! }, 50_000, cash)
-        settle("repaid") { vm.state.value.notice?.kind == NoticeKind.REPAID }
+        settle("repaid") { vm.state.value.notice?.kind == NoticeKind.REPAID && vm.state.value.row?.iOweLoans == 0L && vm.state.value.history.size == 2 }
         assertEquals(100_000L, balance())
         assertEquals(0L, vm.state.value.row?.iOweLoans)
         assertEquals(false, (vm.state.value.history.first() as HistoryItem.Repayment).toMe)
@@ -68,9 +68,9 @@ class PersonDetailViewModelTest : PlanVmTestBase() {
         val vm = detail(kiosk)
         assertEquals(6_000L, vm.state.value.row?.onTab)
         vm.openSettle()
-        assertEquals(DetailSheet.Settle, vm.state.value.sheet)
+        settle("sheet") { vm.state.value.sheet == DetailSheet.Settle }
         vm.settleTab(cash)
-        settle("settled") { vm.state.value.notice?.kind == NoticeKind.TAB_SETTLED }
+        settle("settled") { vm.state.value.notice?.kind == NoticeKind.TAB_SETTLED && vm.state.value.row?.onTab == 0L }
         assertEquals("كشك", vm.state.value.notice?.name)
         assertEquals(94_000L, balance())
         assertEquals(0L, vm.state.value.row?.onTab)
@@ -86,7 +86,7 @@ class PersonDetailViewModelTest : PlanVmTestBase() {
         assertEquals("0100", vm.state.value.person?.phone)
         assertEquals(PersonKind.SHOP, vm.state.value.person?.kind)
         vm.openDelete()
-        assertEquals(DetailSheet.Delete, vm.state.value.sheet)
+        settle("sheet") { vm.state.value.sheet == DetailSheet.Delete }
         vm.delete()
         settle("gone") { vm.state.value.missing }
         assertNull(runBlocking { db.peopleDao().personById(ahmed) })
