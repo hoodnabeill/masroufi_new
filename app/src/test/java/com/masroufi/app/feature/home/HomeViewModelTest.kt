@@ -101,7 +101,7 @@ class HomeViewModelTest {
         val factory = viewModelFactory {
             initializer {
                 HomeViewModel(
-                    f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, FeedbackBus(), f.settings,
+                    f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, FeedbackBus(), f.settings, f.onboarding,
                 )
             }
         }

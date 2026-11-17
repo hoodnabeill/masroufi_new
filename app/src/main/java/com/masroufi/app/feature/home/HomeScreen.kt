@@ -84,6 +84,8 @@ fun HomeScreen(
         onOpenProverb = onOpenProverb,
         feedback = feedback,
         onTicketShown = viewModel::markTicketShown,
+        onDismissCard = viewModel::dismissCard,
+        onSetMoney = viewModel::setMoney,
     )
 }
 
@@ -102,6 +104,8 @@ fun HomeContent(
     modifier: Modifier = Modifier,
     feedback: PunchFeedback.Saved? = null,
     onTicketShown: (epochDay: Long) -> Unit = {},
+    onDismissCard: (String) -> Unit = {},
+    onSetMoney: (Long) -> Unit = {},
 ) {
     var skeletonDue by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -125,7 +129,7 @@ fun HomeContent(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown)
+                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney)
                 }
             }
         }
@@ -145,6 +149,8 @@ private fun ReadyContent(
     onOpenProverb: (Long) -> Unit,
     feedback: PunchFeedback.Saved?,
     onTicketShown: (Long) -> Unit,
+    onDismissCard: (String) -> Unit,
+    onSetMoney: (Long) -> Unit,
 ) {
     val epochDay = s.today.toEpochDay()
     HomeHeader(s.today, s.greeting, s.streak)
@@ -174,6 +180,9 @@ private fun ReadyContent(
         }
     }
     if (feedback != null && s.ticket != null) PunchFeedbackLines(feedback, spread = s.cycle.daysLeft > 1)
+    var moneySheet by remember { mutableStateOf(false) }
+    s.firstWeekCard?.let { c -> FirstWeekCardView(c, onDismiss = { onDismissCard(c.id) }, onMoney = { moneySheet = true }) }
+    if (moneySheet) MoneySheet(onDone = { onSetMoney(it); moneySheet = false }, onDismiss = { moneySheet = false })
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         QuickLogField(quickText, onQuickText, onSubmitQuickLog, onMic)
         if (saveFailed) SaveFailedLine()

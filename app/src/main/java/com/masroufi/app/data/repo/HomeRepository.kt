@@ -50,6 +50,10 @@ data class HomeData(
     val tomorrow: TomorrowBasis,
     /** Epoch day of the last ticket shown with the new-ticket moment (null = never). */
     val lastTicketShown: Long?,
+    val entryCount: Int,
+    val moneyUnknown: Boolean,
+    val dismissedCards: Set<String>,
+    val firstOpenDay: Long?,
 )
 
 /** The day's biggest punch: [categoryName] is null when that entry has no (or a deleted) category. */
@@ -111,11 +115,11 @@ class HomeRepository @Inject constructor(
         }
         // recurring rows only trigger: unpaid bills are read below once the cycle is known.
         val settingsAndCategories = combine(settings.settings, categoryDao.all(), recurringDao.all()) { s, c, _ -> s to c }
-        val pots = combine(jarDao.total(Pot.JAR), jarDao.total(Pot.EMERGENCY), ::Pair)
+        val pots = combine(jarDao.total(Pot.JAR), jarDao.total(Pot.EMERGENCY), entryDao.countFlow(), ::Triple)
         // Spendable re-emits on every entry change, which also refreshes the cycle anchor and the repeat chips.
         return combine(
             days, pots, proverbDao.countFlow(), pocketDao.countingBalanceTotalFlow(), settingsAndCategories,
-        ) { d, (jar, emergency), collected, spendable, (s, categories) ->
+        ) { d, (jar, emergency, entries), collected, spendable, (s, categories) ->
             val names = categories.associate { it.id to it.name }
             val since = today.minusDays(REPEAT_DAYS - 1).atStartOfDay(clock.zone).toInstant().toEpochMilli()
             // The query already skips missing categories; this only covers a delete racing the read.
@@ -136,6 +140,10 @@ class HomeRepository @Inject constructor(
                 repeats = repeats,
                 tomorrow = tomorrowBasis(today, s.payday),
                 lastTicketShown = s.lastTicketShown,
+                entryCount = entries,
+                moneyUnknown = s.moneyUnknown,
+                dismissedCards = s.firstWeekCardsDismissed,
+                firstOpenDay = s.firstOpenDay,
             )
         }
     }

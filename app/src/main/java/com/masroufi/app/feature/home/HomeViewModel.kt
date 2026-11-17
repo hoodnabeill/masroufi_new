@@ -17,6 +17,7 @@ import com.masroufi.app.data.repo.HomeData
 import com.masroufi.app.data.repo.HomeRepository
 import com.masroufi.app.data.repo.NOTE_MAX_CHARS
 import com.masroufi.app.data.repo.NewEntry
+import com.masroufi.app.data.repo.OnboardingRepository
 import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.data.repo.TicketRepository
 import com.masroufi.app.data.repo.punchesTicket
@@ -99,6 +100,8 @@ sealed interface HomeUiState {
         val collected: Int,
         /** First open of this day's ticket: Home plays the new-ticket moment, then calls markTicketShown. */
         val newTicket: Boolean = false,
+        /** The one first-week card to show under the ticket section, if any. */
+        val firstWeekCard: FirstWeekCard? = null,
     ) : HomeUiState
 }
 
@@ -119,6 +122,7 @@ class HomeViewModel @Inject constructor(
     private val clock: Clock,
     feedbackBus: FeedbackBus,
     private val settings: SettingsStore,
+    private val onboarding: OnboardingRepository,
 ) : ViewModel() {
     private val failure = MutableStateFlow<Throwable?>(null)
     private val _saveFailed = MutableStateFlow(false)
@@ -236,6 +240,16 @@ class HomeViewModel @Inject constructor(
     private fun fail(e: Throwable) {
         Log.e(TAG, "home failed", e)
         failure.value = e
+    }
+
+    /** Closing a first-week card is forever. */
+    fun dismissCard(id: String) {
+        viewModelScope.launch { settings.dismissFirstWeekCard(id) }
+    }
+
+    /** The money card's sheet: the balance becomes [piastres]; the card goes with moneyUnknown. */
+    fun setMoney(piastres: Long) {
+        viewModelScope.launch { onboarding.setMoney(piastres) }
     }
 
     fun punchRepeat(chip: RepeatChip) {
@@ -362,5 +376,6 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int): HomeUiState
         ),
         collected = d.collected,
         newTicket = open && d.lastTicketShown != today.toEpochDay(),
+        firstWeekCard = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, row.endOfMonth),
     )
 }

@@ -68,8 +68,11 @@ import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.domain.ProverbCatalog
 import com.masroufi.app.feature.add.PunchFeedback
+import com.masroufi.app.ui.components.RowSkeleton
+import com.masroufi.app.ui.components.SkeletonBlock
 import com.masroufi.app.ui.components.TzCard
 import com.masroufi.app.ui.components.TzProgressBar
+import com.masroufi.app.ui.components.skeletonPulse
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -430,41 +433,23 @@ internal fun ProverbTeaser(collected: Int) {
 /** EmptyStates.dc.html loading shape: ticket outline with a blank number block, then two rows. Pulses unless motion is reduced. */
 @Composable
 internal fun HomeSkeleton(modifier: Modifier = Modifier) {
-    val reduce = LocalReduceMotion.current
-    val pulse = if (reduce) null else {
-        rememberInfiniteTransition(label = "skeleton").animateFloat(
-            0.6f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "skeletonAlpha",
-        )
-    }
     Column(
-        modifier.fillMaxSize().testTag(HomeSkeletonTag).graphicsLayer { alpha = pulse?.value ?: 1f },
+        modifier.fillMaxSize().testTag(HomeSkeletonTag).skeletonPulse(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Column(Modifier.padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(Modifier.size(width = 110.dp, height = 12.dp).clip(RoundedCornerShape(6.dp)).background(Tz.line))
-            Box(Modifier.size(width = 140.dp, height = 28.dp).clip(RoundedCornerShape(8.dp)).background(Tz.raised))
+            SkeletonBlock(Modifier.size(width = 110.dp, height = 12.dp), Tz.line, RoundedCornerShape(6.dp))
+            SkeletonBlock(Modifier.size(width = 140.dp, height = 28.dp))
         }
         val ticket = RoundedCornerShape(TzRadius.hero)
         Box(Modifier.padding(top = 26.dp).fillMaxWidth().height(330.dp).border(1.5.dp, Tz.line, ticket).padding(20.dp)) {
-            Box(Modifier.padding(top = 36.dp).size(width = 150.dp, height = 96.dp).clip(RoundedCornerShape(TzRadius.tile)).background(Tz.raised))
+            SkeletonBlock(Modifier.padding(top = 36.dp).size(width = 150.dp, height = 96.dp), shape = RoundedCornerShape(TzRadius.tile))
         }
         TzCard(Modifier.fillMaxWidth()) {
-            SkeletonRow(0.6f, 0.36f, 44.dp)
+            RowSkeleton(0.6f, 0.36f, 44.dp)
             Spacer(Modifier.height(14.dp))
-            SkeletonRow(0.44f, 0.52f, 36.dp)
+            RowSkeleton(0.44f, 0.52f, 36.dp)
         }
-    }
-}
-
-@Composable
-private fun SkeletonRow(top: Float, bottom: Float, end: Dp) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(40.dp).clip(CircleShape).background(Tz.raised))
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(Modifier.fillMaxWidth(top).height(12.dp).clip(RoundedCornerShape(6.dp)).background(Tz.line))
-            Box(Modifier.fillMaxWidth(bottom).height(10.dp).clip(RoundedCornerShape(5.dp)).background(Tz.raised))
-        }
-        Box(Modifier.size(width = end, height = 16.dp).clip(RoundedCornerShape(8.dp)).background(Tz.line))
     }
 }
 
