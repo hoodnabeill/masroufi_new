@@ -6,8 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.masroufi.app.entitlements.Entitlements
-import com.masroufi.app.feature.gallery.GalleryScreen
-import com.masroufi.app.ui.theme.MasroufiTheme
+import com.masroufi.app.ui.AppRoot
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -22,10 +21,7 @@ class MainActivity : AppCompatActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         setContent {
-            MasroufiTheme {
-                // shortcut: gallery is the start screen until Phase 3 builds Home; replace then.
-                GalleryScreen(entitlements)
-            }
+            AppRoot(entitlements)
         }
     }
 }

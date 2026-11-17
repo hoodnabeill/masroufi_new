@@ -1,0 +1,148 @@
+package com.masroufi.app.ui
+
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.masroufi.app.R
+import com.masroufi.app.entitlements.Entitlements
+import com.masroufi.app.feature.gallery.GalleryScreen
+import com.masroufi.app.feature.placeholder.TabPlaceholder
+import com.masroufi.app.ui.components.TzSheet
+import com.masroufi.app.ui.components.TzTab
+import com.masroufi.app.ui.components.TzTabBar
+import com.masroufi.app.ui.motion.LocalReduceMotion
+import com.masroufi.app.ui.motion.TzSpring
+import com.masroufi.app.ui.motion.motionSpec
+import com.masroufi.app.ui.nav.CloseDay
+import com.masroufi.app.ui.nav.Gallery
+import com.masroufi.app.ui.nav.Home
+import com.masroufi.app.ui.nav.PeopleTab
+import com.masroufi.app.ui.nav.PlanTab
+import com.masroufi.app.ui.nav.ProverbReward
+import com.masroufi.app.ui.nav.RollTab
+import com.masroufi.app.ui.theme.MasroufiTheme
+import com.masroufi.app.ui.theme.Tz
+
+/** Tab bar floats over [content]; content gets bottom padding for it (72 dp bar + 8 dp margin + nav inset). */
+@Composable
+fun AppScaffold(
+    selectedTab: TzTab?,
+    onTab: (TzTab) -> Unit,
+    onAdd: () -> Unit,
+    showTabBar: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier.fillMaxSize().background(Tz.night)) {
+        Box(Modifier.fillMaxSize().then(if (showTabBar) Modifier.navigationBarsPadding().padding(bottom = 80.dp) else Modifier)) {
+            content()
+        }
+        if (showTabBar) {
+            TzTabBar(selectedTab ?: TzTab.Today, onTab, onAdd, Modifier.align(Alignment.BottomCenter))
+        }
+    }
+}
+
+private fun NavDestination?.tab(): TzTab? = when {
+    this == null -> null
+    hasRoute<Home>() -> TzTab.Today
+    hasRoute<RollTab>() -> TzTab.Roll
+    hasRoute<PlanTab>() -> TzTab.Plan
+    hasRoute<PeopleTab>() -> TzTab.People
+    else -> null
+}
+
+private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>()
+
+private fun NavController.switchTab(tab: TzTab) {
+    val route: Any = when (tab) {
+        TzTab.Today -> Home
+        TzTab.Roll -> RollTab
+        TzTab.Plan -> PlanTab
+        TzTab.People -> PeopleTab
+    }
+    navigate(route) {
+        popUpTo<Home> { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+@Composable
+fun AppRoot(entitlements: Entitlements) {
+    MasroufiTheme {
+        val nav = rememberNavController()
+        val entry by nav.currentBackStackEntryAsState()
+        val current = entry?.destination
+        var addSheetOpen by rememberSaveable { mutableStateOf(false) }
+        val reduce = LocalReduceMotion.current
+        // Leading edge = start edge: right in RTL, left in LTR.
+        val sign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) 1 else -1
+        val move = motionSpec<IntOffset>(TzSpring.Move)
+        val fade = tween<Float>(if (reduce) 120 else 140)
+
+        fun AnimatedContentTransitionScope<NavBackStackEntry>.pushedIn(): EnterTransition =
+            if (reduce) fadeIn(tween(120)) else slideInHorizontally(move) { sign * it }
+        fun AnimatedContentTransitionScope<NavBackStackEntry>.pushedOut(): ExitTransition =
+            if (reduce) fadeOut(tween(120)) else slideOutHorizontally(move) { sign * it }
+
+        AppScaffold(
+            selectedTab = current.tab(),
+            onTab = nav::switchTab,
+            onAdd = { addSheetOpen = true },
+            showTabBar = current.tab() != null,
+        ) {
+            NavHost(
+                nav,
+                startDestination = Home,
+                enterTransition = { if (targetState.destination.isPushed()) pushedIn() else fadeIn(fade) },
+                exitTransition = { fadeOut(fade) },
+                popEnterTransition = { fadeIn(fade) },
+                popExitTransition = { if (initialState.destination.isPushed()) pushedOut() else fadeOut(fade) },
+            ) {
+                composable<Home> { TabPlaceholder(R.string.tab_today) } // Task 17 replaces this
+                composable<RollTab> { TabPlaceholder(R.string.tab_roll) }
+                composable<PlanTab> { TabPlaceholder(R.string.tab_plan, onGallery = { nav.navigate(Gallery) }) }
+                composable<PeopleTab> { TabPlaceholder(R.string.tab_people) }
+                composable<CloseDay> { TabPlaceholder(R.string.tab_today) } // Task 19 replaces this
+                composable<ProverbReward> { TabPlaceholder(R.string.tab_today) } // Task 20 replaces this
+                composable<Gallery> { GalleryScreen(entitlements) }
+            }
+        }
+        if (addSheetOpen) {
+            TzSheet(onDismiss = { addSheetOpen = false }) {
+                Box(Modifier.height(200.dp)) // Task 18 replaces this
+            }
+        }
+    }
+}
