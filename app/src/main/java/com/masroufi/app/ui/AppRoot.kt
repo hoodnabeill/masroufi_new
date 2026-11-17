@@ -42,7 +42,7 @@ import com.masroufi.app.ui.components.TzTab
 import com.masroufi.app.ui.components.TzTabBar
 import com.masroufi.app.ui.motion.LocalReduceMotion
 import com.masroufi.app.ui.motion.TzSpring
-import com.masroufi.app.ui.motion.motionSpec
+import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.nav.CloseDay
 import com.masroufi.app.ui.nav.Gallery
 import com.masroufi.app.ui.nav.Home
@@ -108,7 +108,7 @@ fun AppRoot(entitlements: Entitlements) {
         val reduce = LocalReduceMotion.current
         // Leading edge = start edge: right in RTL, left in LTR.
         val sign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) 1 else -1
-        val move = motionSpec<IntOffset>(TzSpring.Move)
+        val move = TzSpring.Move.spec<IntOffset>() // reduce motion never slides, so no tween fallback
         val fade = tween<Float>(if (reduce) 120 else 140)
 
         fun AnimatedContentTransitionScope<NavBackStackEntry>.pushedIn(): EnterTransition =
