@@ -88,7 +88,7 @@ class CloseDayViewModelTest {
     private fun category(name: String) = runBlocking { db.categoryDao().insert(CategoryEntity(name = name, icon = "grid", color = 0)) }
 
     /** Prints the day's ticket, then opens the screen's view model for it. */
-    private fun open(date: LocalDate = nov12): CloseDayViewModel {
+    private fun vm(date: LocalDate = nov12): CloseDayViewModel {
         runBlocking { f.tickets.printToday() }
         return CloseDayViewModel(f.home, f.tickets, SavedStateHandle(mapOf("date" to date.toEpochDay())))
     }
@@ -108,20 +108,20 @@ class CloseDayViewModelTest {
 
     @Test fun biggestEntryLine() {
         sixPunches()
-        val s = open().ready()
+        val s = vm().ready()
         assertEquals(BiggestPunch("بقالة", 9_000), s.biggest)
         assertEquals(listOf(16_800L, 6, 13_200L), listOf(s.spent, s.holes, s.leftover))
     }
 
     @Test fun noEntriesNoBiggest() {
-        val s = open().ready()
+        val s = vm().ready()
         assertEquals(null, s.biggest)
         assertEquals(30_000L, s.leftover)
     }
 
     @Test fun tomorrowLineNumbers() {
         sixPunches()
-        val s = open().ready()
+        val s = vm().ready()
         // Spendable 3,732. Carried: 132 + (3,732 - 132) / 12 = 432. In a pot: (3,732 - 132) / 12 = 300.
         assertEquals(43_200L, s.tomorrowWith)
         assertEquals(30_000L, s.tomorrowWithout)
@@ -130,18 +130,18 @@ class CloseDayViewModelTest {
 
     @Test fun destinationDefaultsFromSettings() {
         runBlocking { f.settings.setLeftoverDefault(LeftoverDestination.EMERGENCY) }
-        assertEquals(LeftoverDestination.EMERGENCY, open().ready().defaultDestination)
+        assertEquals(LeftoverDestination.EMERGENCY, vm().ready().defaultDestination)
     }
 
     @Test fun zeroLeftoverHidesDestinations() {
         spend(30_000)
-        val s = open().ready()
+        val s = vm().ready()
         assertEquals(listOf(0L, 0L), listOf(s.leftover, s.over))
     }
 
     @Test fun overCopyUsesSpread() {
         spend(33_500)
-        val s = open().ready()
+        val s = vm().ready()
         // 35 over, 12 days after today in the cycle: ceil(35 / 12) = 3 a day.
         assertEquals(listOf(3_500L, 12, 300L, 0L), listOf(s.over, s.spreadDays, s.spreadPerDay, s.leftover))
     }
@@ -150,18 +150,18 @@ class CloseDayViewModelTest {
         val nov24 = LocalDate.of(2026, 11, 24)
         clock.instant = at(nov24, 9)
         spend(391_000) // the morning ticket is the whole 3,900 (one day left): 10 over
-        val s = open(nov24).ready()
+        val s = vm(nov24).ready()
         assertEquals(listOf(1_000L, 0, 0L), listOf(s.over, s.spreadDays, s.spreadPerDay))
     }
 
     @Test fun tearTwiceOneCard() {
         sixPunches()
-        val vm = open()
-        vm.ready()
-        vm.tear(LeftoverDestination.JAR)
-        vm.tear(LeftoverDestination.JAR)
-        settle("done") { vm.tear.value == TearState.Done }
-        vm.tear(LeftoverDestination.JAR)
+        val model = vm()
+        model.ready()
+        model.tear(LeftoverDestination.JAR)
+        model.tear(LeftoverDestination.JAR)
+        settle("done") { model.tear.value == TearState.Done }
+        model.tear(LeftoverDestination.JAR)
         main.scheduler.runCurrent()
         val moves = runBlocking { db.jarDao().forDay(nov12) }.filter { it.source == JarSource.TICKET_LEFTOVER }
         assertEquals(1, moves.size)
