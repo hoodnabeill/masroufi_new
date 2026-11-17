@@ -110,7 +110,7 @@ class GameyaRepositoryTest {
         val v = view(id)
         assertTrue(v.myPaidThisMonth)
         assertEquals("the item moved on a month", LocalDate.of(2026, 12, 5), db.recurringDao().byId(checkNotNull(v.gameya.recurringId))?.nextDue)
-        assertEquals("a fixed cost never punches", 0L, db.entryDao().forDayWithPocket(0, Long.MAX_VALUE).count { it.punches })
+        assertEquals("a fixed cost never punches", 0, db.entryDao().forDayWithPocket(0, Long.MAX_VALUE).count { it.punches })
     }
 
     @Test fun swapTurnsWithAMember() = runTest {
