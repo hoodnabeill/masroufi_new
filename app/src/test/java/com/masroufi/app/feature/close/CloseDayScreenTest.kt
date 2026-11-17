@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.data.repo.BiggestPunch
 import com.masroufi.app.domain.LeftoverDestination
@@ -49,7 +50,7 @@ class CloseDayScreenTest {
     @Test fun buttonTearsToTheChosenCard() {
         val torn = mutableListOf<LeftoverDestination>()
         show(under, torn)
-        rule.onNodeWithText("ظرف الطوارئ", substring = true).performClick()
+        rule.onNodeWithText("ظرف الطوارئ", substring = true).performScrollTo().performClick()
         rule.onNodeWithText("اقطع التذكرة").performClick()
         rule.onNodeWithText("اقطع التذكرة").performClick() // a second tap is ignored
         assertEquals(listOf(LeftoverDestination.EMERGENCY), torn)

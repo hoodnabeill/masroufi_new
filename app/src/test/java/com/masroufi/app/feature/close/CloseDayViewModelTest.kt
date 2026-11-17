@@ -110,7 +110,9 @@ class CloseDayViewModelTest {
         sixPunches()
         val s = vm().ready()
         assertEquals(BiggestPunch("بقالة", 9_000), s.biggest)
-        assertEquals(listOf(16_800L, 6, 13_200L), listOf(s.spent, s.holes, s.leftover))
+        assertEquals(16_800L, s.spent)
+        assertEquals(6, s.holes)
+        assertEquals(13_200L, s.leftover)
     }
 
     @Test fun noEntriesNoBiggest() {
@@ -136,14 +138,18 @@ class CloseDayViewModelTest {
     @Test fun zeroLeftoverHidesDestinations() {
         spend(30_000)
         val s = vm().ready()
-        assertEquals(listOf(0L, 0L), listOf(s.leftover, s.over))
+        assertEquals(0L, s.leftover)
+        assertEquals(0L, s.over)
     }
 
     @Test fun overCopyUsesSpread() {
         spend(33_500)
         val s = vm().ready()
         // 35 over, 12 days after today in the cycle: ceil(35 / 12) = 3 a day.
-        assertEquals(listOf(3_500L, 12, 300L, 0L), listOf(s.over, s.spreadDays, s.spreadPerDay, s.leftover))
+        assertEquals(3_500L, s.over)
+        assertEquals(12, s.spreadDays)
+        assertEquals(300L, s.spreadPerDay)
+        assertEquals(0L, s.leftover)
     }
 
     @Test fun overOnLastDayNoSpread() {
@@ -151,7 +157,9 @@ class CloseDayViewModelTest {
         clock.instant = at(nov24, 9)
         spend(391_000) // the morning ticket is the whole 3,900 (one day left): 10 over
         val s = vm(nov24).ready()
-        assertEquals(listOf(1_000L, 0, 0L), listOf(s.over, s.spreadDays, s.spreadPerDay))
+        assertEquals(1_000L, s.over)
+        assertEquals(0, s.spreadDays)
+        assertEquals(0L, s.spreadPerDay)
     }
 
     @Test fun tearTwiceOneCard() {
