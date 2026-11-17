@@ -120,7 +120,7 @@ class DailyLoopTest {
                 initializer {
                     HomeViewModel(
                         f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, bus,
-                        f.settings,
+                        f.settings, f.onboarding,
                     )
                 }
             },
