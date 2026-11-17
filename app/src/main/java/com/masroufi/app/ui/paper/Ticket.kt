@@ -4,7 +4,9 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -89,6 +91,8 @@ fun Ticket(
     /** The reveal (ObTicket.dc.html) has no punch row. */
     showHoles: Boolean = true,
     qershMood: QershMood = QershMood.Happy,
+    /** Tapping the ticket body (Home opens the pockets). */
+    onClick: (() -> Unit)? = null,
 ) {
     val reduce = LocalReduceMotion.current
     val fill = remember { Animatable(1f) }
@@ -122,6 +126,7 @@ fun Ticket(
             Column {
                 Column(
                     Modifier.fillMaxWidth()
+                        .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
                         .clearAndSetSemantics { this.contentDescription = contentDescription }
                         .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 18.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),

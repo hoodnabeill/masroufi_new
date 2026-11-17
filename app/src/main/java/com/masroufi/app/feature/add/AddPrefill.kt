@@ -18,4 +18,6 @@ data class AddPrefill(
     val toPocketId: Long? = null,
     val fee: Long = 0,
     val edit: EditTarget? = null,
+    /** The balance an SMS reported: recorded on the pocket once the entry is saved. */
+    val smsBalance: Long? = null,
 )

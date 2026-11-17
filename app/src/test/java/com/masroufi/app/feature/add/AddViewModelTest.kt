@@ -32,6 +32,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -126,6 +127,15 @@ class AddViewModelTest {
     }
 
     private fun typeAmount(text: String) = text.forEach { if (it == '.') vm.point() else vm.digit(it.digitToInt()) }
+
+    @Test fun smsBalanceIsRecordedOnlyAfterTheEntrySaves() {
+        newVm()
+        opened(AddPrefill(amount = 4_000, categoryId = null, note = null, pocketId = cash, smsBalance = 115_000))
+        assertNull("opening the sheet records nothing", runBlocking { db.pocketDao().byId(cash) }?.lastSmsBalance)
+        assertTrue(vm.save())
+        settle("stored") { entries().size == 1 }
+        settle("recorded") { runBlocking { db.pocketDao().byId(cash) }?.lastSmsBalance == 115_000L }
+    }
 
     @Test fun doubleTapLogsOnce() {
         newVm()

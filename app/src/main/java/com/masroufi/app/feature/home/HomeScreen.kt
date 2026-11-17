@@ -48,6 +48,7 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onCloseDay: (epochDay: Long) -> Unit,
     onOpenProverb: (epochDay: Long) -> Unit,
+    onOpenPockets: () -> Unit = {},
     onOpenAddSheet: (AddPrefill?) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -82,6 +83,7 @@ fun HomeScreen(
         onChip = viewModel::punchRepeat,
         onCloseDay = onCloseDay,
         onOpenProverb = onOpenProverb,
+        onOpenPockets = onOpenPockets,
         feedback = feedback,
         onTicketShown = viewModel::markTicketShown,
         onDismissCard = viewModel::dismissCard,
@@ -106,6 +108,7 @@ fun HomeContent(
     onTicketShown: (epochDay: Long) -> Unit = {},
     onDismissCard: (String) -> Unit = {},
     onSetMoney: (Long) -> Unit = {},
+    onOpenPockets: () -> Unit = {},
 ) {
     var skeletonDue by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -129,7 +132,7 @@ fun HomeContent(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney)
+                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets)
                 }
             }
         }
@@ -151,6 +154,7 @@ private fun ReadyContent(
     onTicketShown: (Long) -> Unit,
     onDismissCard: (String) -> Unit,
     onSetMoney: (Long) -> Unit,
+    onOpenPockets: () -> Unit,
 ) {
     val epochDay = s.today.toEpochDay()
     HomeHeader(s.today, s.greeting, s.streak)
@@ -173,6 +177,7 @@ private fun ReadyContent(
                 ),
                 qershScale = qershScale,
                 modifier = Modifier.graphicsLayer(slide),
+                onClick = onOpenPockets,
             )
             }
         } else if (s.tomorrow != null) {

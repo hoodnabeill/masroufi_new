@@ -105,6 +105,7 @@ import com.masroufi.app.ui.motion.LocalReduceMotion
 import com.masroufi.app.ui.motion.TzSpring
 import com.masroufi.app.ui.motion.motionSpec
 import com.masroufi.app.ui.motion.spec
+import com.masroufi.app.ui.paper.BlankSheet
 import com.masroufi.app.ui.paper.Qersh
 import com.masroufi.app.ui.paper.QershMood
 import com.masroufi.app.ui.theme.Lalezar
@@ -144,7 +145,7 @@ fun RollScreen(viewModel: RollViewModel, onOpenAddSheet: (AddPrefill?) -> Unit) 
     )
 }
 
-private fun EntryRow.editPrefill() = AddPrefill(
+internal fun EntryRow.editPrefill() = AddPrefill(
     amount = amount,
     categoryId = categoryId,
     note = note,
@@ -242,7 +243,7 @@ private fun Entries(
         !state.loading && state.days.isEmpty() ->
             if (state.filter == RollFilter.ALL) {
                 EmptyState(
-                    { Qersh(QershMood.Sleepy, 96.dp) }, R.string.empty_roll_title, R.string.empty_roll_line,
+                    { BlankSheet(width = 150.dp) }, R.string.empty_roll_title, R.string.empty_roll_line,
                     R.string.empty_roll_action, onAdd, primaryAction = true,
                 )
             } else {
@@ -592,7 +593,7 @@ private fun entrySub(e: EntryRow): String {
 private fun categoryColor(c: CategoryEntity?): Color = c?.color?.takeIf { it ushr 24 != 0 }?.let { Color(it) } ?: Tz.turquoise
 
 @Composable
-private fun EntryLine(
+internal fun EntryLine(
     e: EntryRow,
     categories: Map<Long, CategoryEntity>,
     salaryDay: Boolean,

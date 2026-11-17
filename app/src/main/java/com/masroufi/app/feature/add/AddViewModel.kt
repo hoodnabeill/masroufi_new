@@ -55,6 +55,7 @@ data class AddForm(
     val roundUpOn: Boolean = true,
     /** Set while the sheet edits a stored entry. */
     val edit: EditTarget? = null,
+    val smsBalance: Long? = null,
     /** Last used first, then seed order. */
     val categories: List<CategoryEntity> = emptyList(),
     /** Not archived. */
@@ -156,6 +157,7 @@ class AddViewModel @Inject constructor(
                 fee = AmountInput.of(prefill?.fee ?: 0),
                 roundUpOn = prefill?.edit?.let { it.roundUp > 0 } ?: true,
                 edit = prefill?.edit,
+                smsBalance = prefill?.smsBalance,
                 note = prefill?.note.orEmpty().take(NOTE_MAX_CHARS),
                 categories = old.categories,
                 pockets = old.pockets,
@@ -265,6 +267,15 @@ class AddViewModel @Inject constructor(
                 keepDraft = true
                 feedback.emit(PunchFeedback.Failed)
                 return@launch
+            }
+            f.smsBalance?.let { balance ->
+                try {
+                    pocketDao.recordSms(entry.pocketId, balance, clock.millis())
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "recordSms failed", e)
+                }
             }
             if (pendingId == null) return@launch
             if (left != null) feedback.emit(PunchFeedback.Saved(left, firstOfDay = holesBefore == 0))

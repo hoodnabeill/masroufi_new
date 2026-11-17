@@ -47,6 +47,9 @@ import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.onboarding.OnboardingScreen
 import com.masroufi.app.feature.placeholder.TabPlaceholder
+import com.masroufi.app.feature.pockets.NewPocketScreen
+import com.masroufi.app.feature.pockets.PocketDetailScreen
+import com.masroufi.app.feature.pockets.PocketsScreen
 import com.masroufi.app.feature.proverb.ProverbRewardScreen
 import com.masroufi.app.feature.roll.RollScreen
 import com.masroufi.app.ui.components.TzTab
@@ -57,9 +60,12 @@ import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.nav.CloseDay
 import com.masroufi.app.ui.nav.Gallery
 import com.masroufi.app.ui.nav.Home
+import com.masroufi.app.ui.nav.NewPocket
 import com.masroufi.app.ui.nav.Onboarding
 import com.masroufi.app.ui.nav.PeopleTab
 import com.masroufi.app.ui.nav.PlanTab
+import com.masroufi.app.ui.nav.PocketDetail
+import com.masroufi.app.ui.nav.Pockets
 import com.masroufi.app.ui.nav.ProverbReward
 import com.masroufi.app.ui.nav.RollTab
 import com.masroufi.app.ui.theme.MasroufiTheme
@@ -94,7 +100,7 @@ private fun NavDestination?.tab(): TzTab? = when {
     else -> null
 }
 
-private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>()
+private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>() || hasRoute<Pockets>() || hasRoute<PocketDetail>() || hasRoute<NewPocket>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -181,6 +187,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         viewModel = hiltViewModel(),
                         onCloseDay = { nav.navigate(CloseDay(it)) },
                         onOpenProverb = { nav.navigate(ProverbReward(it)) },
+                        onOpenPockets = { nav.navigate(Pockets) },
                         onOpenAddSheet = ::openAddSheet,
                     )
                 }
@@ -199,6 +206,24 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                     // Back and "تمام، لبكره" both land on Home.
                     ProverbRewardScreen(hiltViewModel(), onHome = { nav.popBackStack<Home>(inclusive = false) })
                 }
+                composable<Pockets> {
+                    PocketsScreen(
+                        viewModel = hiltViewModel(),
+                        onBack = { nav.popBackStack() },
+                        onOpenPocket = { nav.navigate(PocketDetail(it)) },
+                        onNewPocket = { nav.navigate(NewPocket) },
+                        onOpenAddSheet = ::openAddSheet,
+                    )
+                }
+                composable<PocketDetail> {
+                    PocketDetailScreen(
+                        viewModel = hiltViewModel(),
+                        onBack = { nav.popBackStack() },
+                        onOpenRoll = { nav.switchTab(TzTab.Roll) },
+                        onOpenAddSheet = ::openAddSheet,
+                    )
+                }
+                composable<NewPocket> { NewPocketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }) }
             }
         }

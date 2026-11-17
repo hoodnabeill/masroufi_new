@@ -28,7 +28,7 @@ internal val DEFAULT_CATEGORIES = listOf(
 private val YELLOW = 0xFFFFC72C.toInt() // Tz.yellow
 
 /** Category colours cycle through the five data colours in this order. */
-private val CATEGORY_COLORS = listOf(
+internal val CATEGORY_COLORS = listOf(
     0xFF8FB4FF.toInt(), // Tz.sky
     0xFFE7A6FF.toInt(), // Tz.lilac
     0xFF35E0D0.toInt(), // Tz.turquoise

@@ -157,6 +157,10 @@ interface EntryDao {
 
     @Query("$ENTRY_ROW ORDER BY e.happenedAt DESC, e.id DESC") fun allRows(): Flow<List<EntryRow>>
 
+    /** The newest entries from or into a pocket. */
+    @Query("$ENTRY_ROW WHERE e.pocketId = :pocketId OR e.toPocketId = :pocketId ORDER BY e.happenedAt DESC, e.id DESC LIMIT :limit")
+    fun rowsForPocket(pocketId: Long, limit: Int): Flow<List<EntryRow>>
+
     @Query("SELECT happenedAt FROM entry") fun allHappenedAt(): Flow<List<Long>>
 
     /**
@@ -230,6 +234,10 @@ interface RecurringDao {
 
     @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE pocketId = :pocketId AND paidThisCycle = 0 AND nextDue < :date")
     suspend fun unpaidFromPocketDueBefore(pocketId: Long, date: LocalDate): Long
+
+    /** The soonest unpaid payment from the pocket due before [date]. */
+    @Query("SELECT * FROM recurring WHERE pocketId = :pocketId AND paidThisCycle = 0 AND nextDue < :date ORDER BY nextDue, id LIMIT 1")
+    suspend fun nextUnpaidFromPocket(pocketId: Long, date: LocalDate): RecurringEntity?
 }
 
 @Dao

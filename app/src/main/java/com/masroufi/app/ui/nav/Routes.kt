@@ -10,3 +10,6 @@ import kotlinx.serialization.Serializable
 @Serializable data class CloseDay(val date: Long)
 @Serializable data class ProverbReward(val date: Long)
 @Serializable data object Gallery
+@Serializable data object Pockets
+@Serializable data class PocketDetail(val id: Long)
+@Serializable data object NewPocket

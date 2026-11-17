@@ -6,6 +6,7 @@ import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.PocketKind
 import com.masroufi.app.data.db.RecurringDao
+import com.masroufi.app.data.db.RecurringEntity
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.domain.EntryKind
 import kotlinx.coroutines.flow.Flow
@@ -98,6 +99,10 @@ class PocketRepository @Inject constructor(
         val due = recurringDao.unpaidFromPocketDueBefore(pocketId, YearMonth.now(clock).plusMonths(1).atDay(1))
         return if (moved + due > limit) limit - moved else null
     }
+
+    /** The soonest unpaid recurring payment from this pocket due by the month's end, or null. */
+    suspend fun upcomingPayment(pocketId: Long): RecurringEntity? =
+        recurringDao.nextUnpaidFromPocket(pocketId, YearMonth.now(clock).plusMonths(1).atDay(1))
 
     private fun thisMonth(): Pair<Long, Long> {
         val m = YearMonth.now(clock)
