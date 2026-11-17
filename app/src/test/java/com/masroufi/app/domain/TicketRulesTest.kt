@@ -58,9 +58,12 @@ class TicketRulesTest {
     }
 
     @Test fun projection() {
-        assertEquals("587000 - 275000 - 24000 x 13 = 0", 0L, projectedAtPayday(587000, 275000, 24000, 13))
-        assertEquals("100000 - 20000 - 10000 x 5 = 30000", 30000L, projectedAtPayday(100000, 20000, 10000, 5))
-        assertEquals("100000 - 0 - 30000 x 4 = -20000 (may be negative)", -20000L, projectedAtPayday(100000, 0, 30000, 4))
+        assertEquals("mock: 587000 - bills 275000 - 24000 x 13 = 0", 0L, projectedAtPayday(587000, 275000, 24000, 0, 13))
+        // 50000 more in the pockets, held in the jar: the ticket is still (637000 - 275000 - 50000) / 13 = 24000.
+        assertEquals("the reserved jar stays the user's at payday", 50000L, projectedAtPayday(637000, 275000, 24000, 0, 13))
+        assertEquals(TicketCalc.Printed(16400, 9200, 7200), computeTicket(100000, 0, 7200, 10))
+        assertEquals("100000 - carry 7200 - 9200 x 10 = 800", 800L, projectedAtPayday(100000, 0, 9200, 7200, 10))
+        assertEquals("may be negative: 100000 - 30000 x 4", -20000L, projectedAtPayday(100000, 0, 30000, 0, 4))
     }
 
     @Test fun overspendSpread() = assertEquals(300L, overspendPerDay(3500, 12))

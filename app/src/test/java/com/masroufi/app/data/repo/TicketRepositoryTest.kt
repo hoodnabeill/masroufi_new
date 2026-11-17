@@ -117,6 +117,34 @@ class TicketRepositoryTest {
         assertEquals("printed amount unchanged", 26_100L, row(nov12).amount)
     }
 
+    @Test fun countingToCountingFeeKeepsMorningTicket() = runTest {
+        setUp()
+        val wallet = db.pocketDao().insert(PocketEntity(name = "wallet", kind = PocketKind.MOBILE_WALLET, color = 0))
+        entries.log(
+            NewEntry(kind = EntryKind.MOVED, amount = 50_000, pocketId = cash, toPocketId = wallet, fee = 500, happenedAt = millis(nov12, 0)),
+        )
+        val t = tickets.printToday()
+        // Counting pool 390000 - 500 = 389500 (the move stays inside); the fee added back: 390000 / 13 = 30000.
+        // Without the add-back: 389500 / 13 = 29961 -> 29900.
+        assertTicket("morning ticket unchanged by the pre-print fee", 30_000, 30_000, 0, t)
+        assertEquals("the fee punches", 500L to 1, t.spent to t.entryCount)
+    }
+
+    @Test fun uncountedSourceFeeDoesNotPunch() = runTest {
+        setUp()
+        val tile = db.pocketDao().insert(
+            PocketEntity(name = "tile", kind = PocketKind.UNDER_TILE, openingBalance = 50_000, color = 0, countsInTicket = false),
+        )
+        entries.log(
+            NewEntry(kind = EntryKind.MOVED, amount = 10_000, pocketId = tile, toPocketId = cash, fee = 500, happenedAt = millis(nov12, 0)),
+        )
+        val t = tickets.printToday()
+        // Counting pool 390000 + 10000 = 400000, nothing added back: 400000 / 13 = 30769 -> 30700.
+        // A wrong punch + add-back would give 400500 / 13 = 30807 -> 30800.
+        assertTicket("the fee left a pocket outside the ticket", 30_700, 30_700, 0, t)
+        assertEquals("no punch", 0L to 0, t.spent to t.entryCount)
+    }
+
     @Test fun printTodayIsIdempotent() = runTest {
         setUp()
         val first = tickets.printToday()

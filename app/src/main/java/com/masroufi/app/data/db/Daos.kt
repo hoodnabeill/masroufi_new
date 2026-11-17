@@ -25,7 +25,7 @@ private const val COUNTING_TOTAL =
     "SELECT COALESCE(SUM($BALANCE_EXPR), 0) FROM pocket p WHERE p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"
 
 /** A repeated spend in the last days: same category, amount and pocket. */
-data class RepeatRow(val categoryId: Long?, val amount: Long, val pocketId: Long, val count: Int, val lastAt: Long)
+data class RepeatRow(val categoryId: Long, val amount: Long, val pocketId: Long, val count: Int, val lastAt: Long)
 
 @Dao
 interface PocketDao {
@@ -48,6 +48,9 @@ interface EntryDao {
     @Update suspend fun update(entry: EntryEntity)
     @Query("DELETE FROM entry WHERE id = :id") suspend fun delete(id: Long)
     @Query("SELECT * FROM entry WHERE id = :id") suspend fun byId(id: Long): EntryEntity?
+
+    /** Emits on every entry change; Home uses it to re-read today. */
+    @Query("SELECT COUNT(*) FROM entry") fun countFlow(): Flow<Int>
 
     /** Entries paying this recurring item with happenedAt in [start, end) epoch millis. */
     @Query("SELECT COUNT(*) FROM entry WHERE recurringId = :recurringId AND happenedAt >= :start AND happenedAt < :end")
@@ -75,10 +78,15 @@ interface EntryDao {
     )
     suspend fun latestReceivedAt(): Long?
 
-    /** SPENT entries since `sinceMillis` repeated at least twice, most repeated first, then most recent; at most 3. */
+    /**
+     * SPENT entries since `sinceMillis` repeated at least twice, most repeated first, then most recent; at most 3.
+     * Only an existing category (so never null) and a pocket that exists and is not archived: a group that cannot
+     * become a chip never takes one of the 3 places.
+     */
     @Query(
         """SELECT categoryId, amount, pocketId, COUNT(*) AS count, MAX(happenedAt) AS lastAt FROM entry
         WHERE kind = 'SPENT' AND happenedAt >= :sinceMillis
+        AND categoryId IN (SELECT id FROM category) AND pocketId IN (SELECT id FROM pocket WHERE archived = 0)
         GROUP BY categoryId, amount, pocketId HAVING COUNT(*) >= 2
         ORDER BY COUNT(*) DESC, MAX(happenedAt) DESC LIMIT 3"""
     )
@@ -155,6 +163,7 @@ interface ProverbDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insert(collected: ProverbCollectedEntity)
     @Query("SELECT * FROM proverb_collected") fun all(): Flow<List<ProverbCollectedEntity>>
     @Query("SELECT number FROM proverb_collected") suspend fun numbers(): List<Int>
+    @Query("SELECT COUNT(*) FROM proverb_collected") fun countFlow(): Flow<Int>
 }
 
 @Dao

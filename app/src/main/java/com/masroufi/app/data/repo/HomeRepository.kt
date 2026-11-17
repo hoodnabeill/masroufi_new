@@ -9,6 +9,7 @@ import com.masroufi.app.data.db.JarDao
 import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.db.Pot
 import com.masroufi.app.data.db.ProverbDao
+import com.masroufi.app.data.db.RecurringDao
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.DayResult
 import com.masroufi.app.domain.streak
@@ -18,12 +19,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
-data class RepeatChip(val categoryId: Long?, val categoryName: String, val amount: Long, val pocketId: Long)
+data class RepeatChip(val categoryId: Long, val categoryName: String, val amount: Long, val pocketId: Long)
 
 data class HomeData(
     val today: DayTicketEntity?,
@@ -33,6 +35,8 @@ data class HomeData(
     val collected: Int,
     val spendable: Long,
     val cycle: PayCycle,
+    /** Unpaid bills due before the next payday (for projectedAtPayday). */
+    val unpaidBills: Long,
     val repeats: List<RepeatChip>,
 )
 
@@ -52,14 +56,18 @@ class HomeRepository @Inject constructor(
     private val ticketDao: DayTicketDao,
     private val jarDao: JarDao,
     private val proverbDao: ProverbDao,
+    private val recurringDao: RecurringDao,
     private val settings: SettingsStore,
     private val clock: Clock,
 ) {
     /**
-     * Cold. Today is re-read from the clock on every day_ticket change, so a collector that crosses midnight follows
-     * the new day once Home re-prints at midnight (Task 17) and writes the new row.
+     * Cold. Today is re-read from the clock whenever any source can emit, so a collector that crosses midnight
+     * re-keys to the new day on its next change; Home also re-prints at midnight (Task 17).
      */
-    fun observeHome(): Flow<HomeData> = ticketDao.countFlow()
+    fun observeHome(): Flow<HomeData> = merge<Any>(
+        ticketDao.countFlow(), entryDao.countFlow(), pocketDao.countingBalanceTotalFlow(), jarDao.total(Pot.JAR),
+        proverbDao.countFlow(), categoryDao.all(), recurringDao.all(), settings.settings,
+    )
         .map { LocalDate.now(clock) }
         .distinctUntilChanged()
         .flatMapLatest(::homeOn)
@@ -73,25 +81,28 @@ class HomeRepository @Inject constructor(
         ) { row, weekRows, recent ->
             Days(row, weekRows, streak(recent.map { DayResult(it.date, it.status, it.amount, it.spent) }, today))
         }
-        val settingsAndCategories = combine(settings.settings, categoryDao.all(), ::Pair)
+        // recurring rows only trigger: unpaid bills are read below once the cycle is known.
+        val settingsAndCategories = combine(settings.settings, categoryDao.all(), recurringDao.all()) { s, c, _ -> s to c }
         // Spendable re-emits on every entry change, which also refreshes the cycle anchor and the repeat chips.
         return combine(
-            days, jarDao.total(Pot.JAR), proverbDao.all(), pocketDao.countingBalanceTotalFlow(), settingsAndCategories,
-        ) { d, jar, proverbs, spendable, (s, categories) ->
+            days, jarDao.total(Pot.JAR), proverbDao.countFlow(), pocketDao.countingBalanceTotalFlow(), settingsAndCategories,
+        ) { d, jar, collected, spendable, (s, categories) ->
             val names = categories.associate { it.id to it.name }
             val since = today.minusDays(REPEAT_DAYS - 1).atStartOfDay(clock.zone).toInstant().toEpochMilli()
-            // A chip whose category is gone (or never set) has no name to show, so it is left out.
+            // The query already skips missing categories; this only covers a delete racing the read.
             val repeats = entryDao.repeatCandidates(since).mapNotNull { r ->
-                r.categoryId?.let { names[it] }?.let { RepeatChip(r.categoryId, it, r.amount, r.pocketId) }
+                names[r.categoryId]?.let { RepeatChip(r.categoryId, it, r.amount, r.pocketId) }
             }
+            val cycle = entryDao.payCycleOn(today, s.payday, clock)
             HomeData(
                 today = d.today,
                 week = d.week,
                 jarTotal = jar,
                 streak = d.streak,
-                collected = proverbs.size,
+                collected = collected,
                 spendable = spendable,
-                cycle = entryDao.payCycleOn(today, s.payday, clock),
+                cycle = cycle,
+                unpaidBills = recurringDao.unpaidDueBefore(cycle.nextPayday),
                 repeats = repeats,
             )
         }

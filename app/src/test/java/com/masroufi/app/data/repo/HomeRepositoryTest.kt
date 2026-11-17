@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.core.PayCycle
+import com.masroufi.app.core.Payday
 import com.masroufi.app.data.db.CategoryEntity
 import com.masroufi.app.data.db.DayTicketEntity
 import com.masroufi.app.data.db.JarMovementEntity
@@ -13,6 +14,8 @@ import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.PocketKind
 import com.masroufi.app.data.db.Pot
 import com.masroufi.app.data.db.ProverbCollectedEntity
+import com.masroufi.app.data.db.RecurringEntity
+import com.masroufi.app.data.db.RecurringKind
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.TicketStatus
@@ -93,12 +96,37 @@ class HomeRepositoryTest {
                 val first = seen.receive()
                 assertEquals("fresh ticket: nothing spent, no holes", 0L to 0, first.today?.let { it.spent to it.entryCount })
                 spend(5_000, categoryId = null)
-                // Upstreams re-emit one by one; wait for the emission that carries the punched row.
+                // Upstreams re-emit one by one; wait for the emission that carries both the punched row and the balance.
                 var next = seen.receive()
-                while (next.today?.spent != 5_000L) next = seen.receive()
+                while (next.today?.spent != 5_000L || next.spendable != 385_000L) next = seen.receive()
                 assertEquals("one hole for the spend", 1, next.today?.entryCount)
                 assertEquals("ticket amount unchanged", 30_000L, next.today?.amount)
-                assertEquals("spendable follows the spend: 390000 - 5000", 385_000L, next.spendable)
+            } }
+        } finally {
+            job.cancelAndJoin()
+        }
+    }
+
+    @Test fun todayRekeysAfterMidnightOnLog() = runTest {
+        setUp()
+        val nov13 = nov12.plusDays(1)
+        val nov14 = nov12.plusDays(2)
+        f.settings.setPayday(Payday.Day(14)) // so the cycle changes when the day does
+        clock.instant = at(nov13, 23)
+        f.tickets.printToday()
+        val seen = Channel<HomeData>(Channel.UNLIMITED)
+        val job = launch(Dispatchers.IO) { f.home.observeHome().collect { seen.send(it) } }
+        try {
+            withContext(Dispatchers.Default) { withTimeout(10_000) {
+                var h = seen.receive()
+                while (h.today?.date != nov13) h = seen.receive()
+                assertEquals("Friday 11-13: cycle 10-14..11-14", PayCycle(LocalDate.of(2026, 10, 14), nov14), h.cycle)
+                clock.instant = at(nov14, 0).plusSeconds(60) // 00:01 Saturday, no new ticket printed yet
+                spend(5_000, categoryId = null, date = nov14, hour = 0)
+                while (h.cycle.start != nov14) h = seen.receive()
+                assertEquals("payday 11-14 starts the new cycle", PayCycle(nov14, LocalDate.of(2026, 12, 14)), h.cycle)
+                assertEquals("new week from Saturday 11-14 has no rows yet", emptyList<DayTicketEntity>(), h.week)
+                assertEquals("no ticket for 11-14 yet, and 11-13's row is not today's", null, h.today)
             } }
         } finally {
             job.cancelAndJoin()
@@ -113,7 +141,15 @@ class HomeRepositoryTest {
         db.jarDao().insert(JarMovementEntity(pot = Pot.EMERGENCY, amount = 999, source = JarSource.MANUAL, at = 0))
         db.proverbDao().insert(ProverbCollectedEntity(number = 3, collectedOn = nov12))
         db.proverbDao().insert(ProverbCollectedEntity(number = 7, collectedOn = nov12))
+        fun bill(amount: Long, due: LocalDate, paid: Boolean = false) = RecurringEntity(
+            name = "bill", amount = amount, pocketId = cash, scheduleDay = due.dayOfMonth, nextDue = due, paidThisCycle = paid,
+            kind = RecurringKind.BILL,
+        )
+        db.recurringDao().insert(bill(50_000, LocalDate.of(2026, 11, 20)))
+        db.recurringDao().insert(bill(10_000, LocalDate.of(2026, 11, 15), paid = true))
+        db.recurringDao().insert(bill(70_000, LocalDate.of(2026, 11, 25))) // due on payday: next cycle's
         val h = f.home.observeHome().first()
+        assertEquals("unpaid bills due before payday 11-25", 50_000L, h.unpaidBills)
         assertEquals("11-09..11-11 closed by hand; 11-08 auto-closed ends it", 3, h.streak)
         assertEquals("jar pot only, not the emergency pot", 7_200L, h.jarTotal)
         assertEquals("two proverbs collected", 2, h.collected)
@@ -150,7 +186,8 @@ class HomeRepositoryTest {
         spend(1_500, categoryId = 999, hour = 12)
         spend(1_200, categoryId = null, hour = 13) // no category
         spend(1_200, categoryId = null, hour = 14)
-        f.entries.log(NewEntry(kind = EntryKind.RECEIVED, amount = 2_500, pocketId = cash, categoryId = coffee, happenedAt = millis(nov12, 15)))
+        // Would pair with the single coffee 3000 spend if income counted.
+        f.entries.log(NewEntry(kind = EntryKind.RECEIVED, amount = 3_000, pocketId = cash, categoryId = coffee, happenedAt = millis(nov12, 15)))
         val repeats = f.home.observeHome().first().repeats
         assertEquals(
             "only coffee 2500 repeats in the window with a category that still exists",
@@ -180,6 +217,29 @@ class HomeRepositoryTest {
         )
     }
 
+    @Test fun nullCategoryDoesNotTakeASlot() = runTest {
+        setUp()
+        val a = category("a")
+        val b = category("b")
+        val c = category("c")
+        for (h in 8..11) spend(1_200, categoryId = null, hour = h) // the most repeated group, but no category
+        for (cat in listOf(a, b, c)) for (h in 12..13) spend(1_000 * cat, cat, hour = h)
+        val repeats = f.home.observeHome().first().repeats
+        assertEquals("three named chips, none lost to the nameless group", listOf("a", "b", "c"), repeats.map { it.categoryName }.sorted())
+    }
+
+    @Test fun archivedPocketChipHidden() = runTest {
+        setUp()
+        val coffee = category("قهوة")
+        val wallet = db.pocketDao().insert(PocketEntity(name = "wallet", kind = PocketKind.MOBILE_WALLET, openingBalance = 10_000, color = 0))
+        for (h in 8..9) f.entries.log(
+            NewEntry(kind = EntryKind.SPENT, amount = 2_500, pocketId = wallet, categoryId = coffee, happenedAt = millis(nov12, h)),
+        )
+        assertEquals("the pair shows while the pocket is live", 1, f.home.observeHome().first().repeats.size)
+        db.pocketDao().update(checkNotNull(db.pocketDao().byId(wallet)).copy(archived = true))
+        assertEquals("no chip for an archived pocket", emptyList<RepeatChip>(), f.home.observeHome().first().repeats)
+    }
+
     @Test fun seedIsIdempotent() = runTest {
         val seed = SeedData(db, db.pocketDao(), db.categoryDao(), clock) // empty database: no setUp()
         (1..3).map { async(Dispatchers.IO) { seed.ensureSeeded() } }.awaitAll()
@@ -202,12 +262,12 @@ class HomeRepositoryTest {
         )
         assertEquals(
             "icons by TzIcons name",
-            listOf("coffee", "transport", "food", "groceries", "roll", "shop", "add", "glasses", "grid"),
+            listOf("coffee", "transport", "food", "groceries", "bell", "shop", "grid", "glasses", "grid"),
             cats.map { it.icon },
         )
         val iconNames = TzIcons.all.map { it.name }.toSet()
         assertTrue("every icon exists in TzIcons: ${cats.map { it.icon } - iconNames}", cats.all { it.icon in iconNames })
         val palette = listOf(Tz.sky, Tz.lilac, Tz.turquoise, Tz.yellow, Tz.carnelian).map { it.toArgb() }
-        assertEquals("colours cycle sky, lilac, turquoise, yellow, carnelian", List(9) { palette[it % 5] }, cats.map { it.color })
+        assertEquals("colours cycle sky, lilac, turquoise, yellow, carnelian (copies of Tz)", List(9) { palette[it % 5] }, cats.map { it.color })
     }
 }

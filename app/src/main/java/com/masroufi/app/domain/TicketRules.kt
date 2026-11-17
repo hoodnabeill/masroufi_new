@@ -56,9 +56,13 @@ val EntryForDay.punched: Long get() = when (kind) {
 
 fun spentToday(entries: List<EntryForDay>): Long = entries.filter { it.punches }.sumOf { it.punched }
 
-/** Spendable left on payday if every remaining day spends its ticket; may be negative (the card hides it then). */
-fun projectedAtPayday(spendable: Long, reserved: Long, ticket: Long, daysLeft: Int): Long =
-    spendable - reserved - ticket * daysLeft
+/**
+ * What stays with the user at payday if they spend exactly the base ticket every remaining day (today's carry too).
+ * Jar and emergency money stay theirs; only unpaid bills leave. `morningSpendable` = current Spendable + today's
+ * punched spent. May be negative (the card hides it then).
+ */
+fun projectedAtPayday(morningSpendable: Long, unpaidBillsBeforePayday: Long, base: Long, carry: Long, daysLeft: Int): Long =
+    morningSpendable - unpaidBillsBeforePayday - carry - base * daysLeft
 
 fun overspendPerDay(overspend: Long, daysLeft: Int): Long {
     require(daysLeft >= 1) { "daysLeft must be >= 1" }
