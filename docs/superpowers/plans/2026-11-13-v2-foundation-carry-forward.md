@@ -70,6 +70,17 @@ Decisions made during Phase 3 (owner may override):
 - Skipping the ritual marks that income as offered; the roll link can still reopen it.
 - The fixed-costs step is numbered 2 until Phase 7 adds the debts step.
 
+## Phase 7 notes (people)
+
+- `debt.amount` is what is still open; a partial repayment lowers it, a full one sets `settled`; the history is the DEBT entries linked by `debtId`. A split's one DEBT entry has `debtId` null (it covers several debts).
+- Tab items count on the "I owe" side (totals and per-person balance) and are also reported apart as "on the tab".
+- The user is not a `gameya_member` row: participants = members + 1; a `gameya_payment` with `memberId` null is the user's own.
+- Shared-subscription debts go to a person named "{sub} · {N−1} صحاب" (found or created by name); editing or deleting the payment re-syncs the debt only while it is unsettled and unchanged.
+- DEBT counts as moved money for a pocket's monthly limit; ADJUST does not.
+- Deleting a person deletes their debts, tab items and gifts; money entries stay, unlinked.
+- The gameya statement text and the shared-subscription person name are Arabic literals in data code (no Context in repositories).
+- The ritual preview does not check that the pocket covers the ticked repayments.
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
