@@ -101,6 +101,8 @@ data class Settings(
     /** Installment id -> month (yyyymm) its early-payoff suggestion was dismissed; id -> the due epoch day last logged by itself. */
     val earlyPayoffMonths: Map<Long, Long> = emptyMap(),
     val installmentLogged: Map<Long, Long> = emptyMap(),
+    /** Kids' child screen (phase 9b): the child the app is pinned to; null = the normal app. Cleared only by [com.masroufi.app.core.ChildMode]. */
+    val childModeId: Long? = null,
 ) {
     /**
      * The mode is on at [date]: switched on, started by then and not past its payday. With [nextPayday] (the date's pay
@@ -168,6 +170,7 @@ class SettingsStore @Inject constructor(
     private val selfKeptMonthKey = longPreferencesKey("selfKeptMonth")
     private val earlyPayoffKey = stringPreferencesKey("earlyPayoffMonths")
     private val installmentLoggedKey = stringPreferencesKey("installmentLogged")
+    private val childModeKey = longPreferencesKey("childModeId")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -300,6 +303,8 @@ class SettingsStore @Inject constructor(
     suspend fun setInstallmentLogged(planId: Long, dueEpochDay: Long) {
         store.edit { it[installmentLoggedKey] = encodeMap(decodeReminders(it[installmentLoggedKey]) + (planId to dueEpochDay)) }
     }
+    /** Persists the child screen mode (null = off); callers go through ChildMode, which checks the PIN first. */
+    suspend fun setChildMode(childId: Long?) { store.edit { if (childId == null) it.remove(childModeKey) else it[childModeKey] = childId } }
     suspend fun setSuggestionDismissed(month: String) { store.edit { it[suggestionDismissedKey] = month } }
     suspend fun setProfileName(v: String?) { store.edit { if (v.isNullOrBlank()) it.remove(profileNameKey) else it[profileNameKey] = v.trim() } }
     suspend fun setBirthday(v: LocalDate?) { store.edit { if (v == null) it.remove(birthdayKey) else it[birthdayKey] = v.toEpochDay() } }
@@ -384,6 +389,7 @@ class SettingsStore @Inject constructor(
         selfKeptMonth = p[selfKeptMonthKey],
         earlyPayoffMonths = decodeReminders(p[earlyPayoffKey]),
         installmentLogged = decodeReminders(p[installmentLoggedKey]),
+        childModeId = p[childModeKey],
     )
 
     private fun encodeMap(m: Map<Long, Long>) = m.entries.joinToString(",") { e -> "${e.key}:${e.value}" }

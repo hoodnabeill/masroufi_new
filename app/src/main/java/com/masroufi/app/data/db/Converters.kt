@@ -46,4 +46,8 @@ class Converters {
     @TypeConverter fun stringToGiftDirection(v: String): GiftDirection = GiftDirection.valueOf(v)
     @TypeConverter fun wishAnswerToString(v: WishAnswer): String = v.name
     @TypeConverter fun stringToWishAnswer(v: String): WishAnswer = WishAnswer.valueOf(v)
+    @TypeConverter fun advanceAnswerToString(v: AdvanceAnswer): String = v.name
+    @TypeConverter fun stringToAdvanceAnswer(v: String): AdvanceAnswer = AdvanceAnswer.valueOf(v)
+    @TypeConverter fun childJarKindToString(v: ChildJarKind): String = v.name
+    @TypeConverter fun stringToChildJarKind(v: String): ChildJarKind = ChildJarKind.valueOf(v)
 }

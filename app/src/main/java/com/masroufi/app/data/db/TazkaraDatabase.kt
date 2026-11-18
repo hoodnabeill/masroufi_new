@@ -16,8 +16,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         PersonEntity::class, DebtEntity::class, TabItemEntity::class, OccasionEntity::class, GiftEntity::class,
         GameyaEntity::class, GameyaMemberEntity::class, GameyaPaymentEntity::class, GameyaPlanEntity::class,
         WishEntity::class, TrackedItemEntity::class, ClientJobEntity::class,
+        MonthStoryEntity::class, ChildEntity::class, ChoreEntity::class, ChoreTickEntity::class, ChildAdvanceEntity::class,
+        ChildJarMoveEntity::class, ChildSpendEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -39,6 +41,8 @@ abstract class TazkaraDatabase : RoomDatabase() {
     abstract fun wishDao(): WishDao
     abstract fun trackedItemDao(): TrackedItemDao
     abstract fun clientJobDao(): ClientJobDao
+    abstract fun storyDao(): StoryDao
+    abstract fun kidsDao(): KidsDao
 
     companion object {
         const val FILE_NAME = "tazkara.db"
@@ -164,5 +168,45 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
             "CREATE TABLE IF NOT EXISTS `client_job` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `client` TEXT NOT NULL, " +
                 "`label` TEXT NOT NULL, `amount` INTEGER NOT NULL, `dueDate` INTEGER NOT NULL, `paidEntryId` INTEGER)",
         )
+    }
+}
+
+/** v8 (Phase 9b): the monthly stories and the kids' allowance. */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `month_story` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `cycleStart` INTEGER NOT NULL, " +
+                "`cycleEnd` INTEGER NOT NULL, `payload` TEXT NOT NULL, `shownAt` INTEGER)",
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_month_story_cycleStart` ON `month_story` (`cycleStart`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `child` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
+                "`birthYear` INTEGER NOT NULL, `color` INTEGER NOT NULL, `weekly` INTEGER NOT NULL, `jarLabel` TEXT, `jarTarget` INTEGER, " +
+                "`matchPer` INTEGER, `matchAdd` INTEGER, `archived` INTEGER NOT NULL, `handedOver` INTEGER NOT NULL, `handedAt` INTEGER NOT NULL)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `chore` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `label` TEXT NOT NULL, " +
+                "`bonus` INTEGER NOT NULL, `childId` INTEGER)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `chore_tick` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `choreId` INTEGER NOT NULL, " +
+                "`childId` INTEGER NOT NULL, `weekStart` INTEGER NOT NULL)",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_chore_tick_weekStart` ON `chore_tick` (`weekStart`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `child_advance` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `childId` INTEGER NOT NULL, " +
+                "`amount` INTEGER NOT NULL, `requestedAt` INTEGER NOT NULL, `answer` TEXT NOT NULL, `weekStart` INTEGER NOT NULL)",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_child_advance_childId` ON `child_advance` (`childId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `child_jar_move` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `childId` INTEGER NOT NULL, " +
+                "`amount` INTEGER NOT NULL, `at` INTEGER NOT NULL, `kind` TEXT NOT NULL)",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_child_jar_move_childId` ON `child_jar_move` (`childId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `child_spend` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `childId` INTEGER NOT NULL, " +
+                "`amount` INTEGER NOT NULL, `at` INTEGER NOT NULL, `note` TEXT)",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_child_spend_childId` ON `child_spend` (`childId`)")
     }
 }

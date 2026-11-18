@@ -102,6 +102,7 @@ class TicketRepository @Inject constructor(
     // Providers: both log entries through EntryRepository, which needs this repository.
     private val installments: Provider<InstallmentRepository>,
     private val freelance: Provider<FreelanceRepository>,
+    private val story: StoryRepository,
 ) {
     /**
      * Today's ticket: printed once, after auto-closing every earlier open day. Days in a gap get no row (design
@@ -135,6 +136,9 @@ class TicketRepository @Inject constructor(
                 }
                 close(open, TicketStatus.CLOSED_AUTO, dest, proverbNumber = null)
             }
+
+            // The first print of a new pay cycle tells the cycle that just ended (idempotent; the days above are closed by now).
+            story.buildIfDue(today, s)
 
             val (calc, spent, entryCount) = basisToday(s, today, startAfterPayday)
             val now = clock.millis()

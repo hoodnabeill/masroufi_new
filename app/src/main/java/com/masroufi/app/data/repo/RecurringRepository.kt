@@ -17,11 +17,12 @@ import javax.inject.Singleton
 
 /**
  * The due date [periods] schedule periods from the item's own (negative = back). A monthly item keeps its
- * scheduleDay, clamped to short months (31 -> 30 Nov -> 31 Dec).
+ * scheduleDay, clamped to short months (31 -> 30 Nov -> 31 Dec); a weekly one moves 7 days a period.
  */
 internal fun RecurringEntity.shiftedDue(periods: Long): LocalDate = when (scheduleType) {
     ScheduleType.MONTHLY -> YearMonth.from(nextDue).plusMonths(periods).let { it.atDay(minOf(scheduleDay, it.lengthOfMonth())) }
     ScheduleType.YEARLY -> nextDue.plusYears(periods)
+    ScheduleType.WEEKLY -> nextDue.plusWeeks(periods)
 }
 
 @Singleton

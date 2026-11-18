@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.RecurringEntity
 import com.masroufi.app.data.db.RecurringKind
+import com.masroufi.app.data.db.ScheduleType
 import com.masroufi.app.data.repo.PocketRepository
 import com.masroufi.app.data.repo.RecurringRepository
 import com.masroufi.app.feature.add.AmountInput
@@ -109,11 +110,13 @@ class FixedCostFormViewModel @Inject constructor(
                 } else {
                     // The same period, on the new day.
                     val period = YearMonth.from(old.nextDue)
-                    val due = if (f.day == old.scheduleDay) old.nextDue else period.atDay(minOf(f.day, period.lengthOfMonth()))
+                    // The kids' handover is weekly: its scheduleDay is a day of the week, which this form must not read as a day of the month.
+                    val weekly = old.scheduleType == ScheduleType.WEEKLY
+                    val due = if (weekly || f.day == old.scheduleDay) old.nextDue else period.atDay(minOf(f.day, period.lengthOfMonth()))
                     recurring.update(
                         old.copy(
                             name = f.name.trim(), amount = f.amount.toPiastres(), pocketId = checkNotNull(f.pocketId),
-                            scheduleDay = f.day, nextDue = due, kind = f.kind,
+                            scheduleDay = if (weekly) old.scheduleDay else f.day, nextDue = due, kind = f.kind,
                         ),
                     )
                 }

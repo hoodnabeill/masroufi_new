@@ -53,6 +53,7 @@ data class SubscriptionsView(
 internal fun RecurringEntity.monthly(): Long = when (scheduleType) {
     ScheduleType.YEARLY -> (yearlyPrice ?: amount) / 12
     ScheduleType.MONTHLY -> amount
+    ScheduleType.WEEKLY -> amount * 52 / 12
 }
 
 internal fun RecurringEntity.answerList(): List<SubscriptionAnswer> =

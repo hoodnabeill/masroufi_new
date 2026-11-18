@@ -18,7 +18,11 @@ import com.masroufi.app.data.db.MIGRATION_3_4
 import com.masroufi.app.data.db.MIGRATION_4_5
 import com.masroufi.app.data.db.MIGRATION_5_6
 import com.masroufi.app.data.db.MIGRATION_6_7
+import com.masroufi.app.data.db.MIGRATION_7_8
 import com.masroufi.app.data.db.TazkaraDatabase
+import com.masroufi.app.core.KeystoreCipher
+import com.masroufi.app.core.PinStore
+import com.masroufi.app.core.SecretCipher
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.entitlements.ReleaseEntitlements
@@ -55,7 +59,7 @@ object AppModule {
 
     @Provides @Singleton
     fun database(@ApplicationContext context: Context): TazkaraDatabase =
-        Room.databaseBuilder(context, TazkaraDatabase::class.java, TazkaraDatabase.FILE_NAME).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
+        Room.databaseBuilder(context, TazkaraDatabase::class.java, TazkaraDatabase.FILE_NAME).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
 
     @Provides fun pocketDao(db: TazkaraDatabase) = db.pocketDao()
     @Provides fun entryDao(db: TazkaraDatabase) = db.entryDao()
@@ -74,6 +78,8 @@ object AppModule {
     @Provides fun wishDao(db: TazkaraDatabase) = db.wishDao()
     @Provides fun trackedItemDao(db: TazkaraDatabase) = db.trackedItemDao()
     @Provides fun clientJobDao(db: TazkaraDatabase) = db.clientJobDao()
+    @Provides fun storyDao(db: TazkaraDatabase) = db.storyDao()
+    @Provides fun kidsDao(db: TazkaraDatabase) = db.kidsDao()
 
     @Provides @Singleton
     fun dataStore(@ApplicationContext context: Context): DataStore<Preferences> =
@@ -82,6 +88,11 @@ object AppModule {
         PreferenceDataStoreFactory.create(corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }) {
             context.preferencesDataStoreFile("tazkara_settings")
         }
+
+    /** The PIN's secret box: an Android Keystore key (Robolectric has none, so tests pass their own SecretCipher). */
+    @Provides @Singleton fun secretCipher(): SecretCipher = KeystoreCipher()
+
+    @Provides @Singleton fun pinStore(store: DataStore<Preferences>, cipher: SecretCipher, clock: Clock) = PinStore(store, cipher, clock)
 
     @Provides @Singleton
     fun entitlements(): Entitlements = if (BuildConfig.DEBUG) DebugEntitlements() else ReleaseEntitlements()

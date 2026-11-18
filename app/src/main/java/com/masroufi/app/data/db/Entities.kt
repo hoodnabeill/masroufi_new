@@ -13,10 +13,11 @@ import java.time.LocalDate
 
 enum class PocketKind { CASH, MOBILE_WALLET, BANK, UNDER_TILE, VAULT }
 enum class EnvelopeKind { SPENDING, FIXED, EMERGENCY }
-enum class RecurringKind { BILL, INSTALLMENT, SUBSCRIPTION, GAMEYA }
+enum class RecurringKind { BILL, INSTALLMENT, SUBSCRIPTION, GAMEYA, KIDS }
 enum class Pot { JAR, EMERGENCY }
 enum class JarSource { TICKET_LEFTOVER, ROUND_UP, MANUAL, CHANGED_MIND }
-enum class ScheduleType { MONTHLY, YEARLY }
+/** WEEKLY (the kids' handover): scheduleDay is the ISO day of week (1 = Monday), nextDue moves 7 days a payment. */
+enum class ScheduleType { MONTHLY, YEARLY, WEEKLY }
 enum class SeasonKind { RAMADAN, EID_AL_FITR, EID_AL_ADHA, SUMMER, SCHOOL, PERSONAL }
 enum class SplitKind { FIXED, PERCENT }
 enum class PersonKind { PERSON, SHOP }
@@ -24,6 +25,8 @@ enum class DebtDirection { THEY_OWE, I_OWE }
 enum class OccasionOwner { MINE, THEIRS }
 enum class GiftDirection { RECEIVED, GIVEN }
 enum class WishAnswer { WAITING, BOUGHT, CHANGED_MIND }
+enum class AdvanceAnswer { WAITING, APPROVED, DECLINED }
+enum class ChildJarKind { SAVE, MATCH, WITHDRAW }
 
 // Money is Long piastres. updatedAt is epoch millis, set by callers from the injected Clock.
 
@@ -370,4 +373,85 @@ data class ClientJobEntity(
     val amount: Long,
     val dueDate: LocalDate,
     val paidEntryId: Long? = null,
+)
+
+/**
+ * A pay cycle's saved story (Phase 9b decision 1): [cycleStart] and [cycleEnd] are the cycle's first day and the payday
+ * that closed it (exclusive, as PayCycle.nextPayday); [payload] is JSON; [shownAt] null = never opened.
+ */
+@Entity(tableName = "month_story", indices = [Index("cycleStart", unique = true)])
+data class MonthStoryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val cycleStart: LocalDate,
+    val cycleEnd: LocalDate,
+    val payload: String,
+    val shownAt: Long? = null,
+)
+
+/**
+ * A child. [handedOver] and [handedAt] (epoch millis) are what the last handover gave the child and when: "left until
+ * handover" counts from there. [matchPer] and [matchAdd] come together or not at all.
+ */
+@Entity(tableName = "child")
+data class ChildEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val birthYear: Int,
+    val color: Int,
+    val weekly: Long,
+    val jarLabel: String? = null,
+    val jarTarget: Long? = null,
+    val matchPer: Long? = null,
+    val matchAdd: Long? = null,
+    val archived: Boolean = false,
+    val handedOver: Long = 0,
+    val handedAt: Long = 0,
+)
+
+/** A job that adds [bonus] to the handover; [childId] null = any child. */
+@Entity(tableName = "chore")
+data class ChoreEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val label: String,
+    val bonus: Long,
+    val childId: Long? = null,
+)
+
+/** [weekStart] is the week's key: the day of the handover that opened it (the item's nextDue minus 7). */
+@Entity(tableName = "chore_tick", indices = [Index("weekStart")])
+data class ChoreTickEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val choreId: Long,
+    val childId: Long,
+    val weekStart: LocalDate,
+)
+
+@Entity(tableName = "child_advance", indices = [Index("childId")])
+data class ChildAdvanceEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val childId: Long,
+    val amount: Long,
+    val requestedAt: Long,
+    val answer: AdvanceAnswer = AdvanceAnswer.WAITING,
+    val weekStart: LocalDate,
+)
+
+/** SAVE and MATCH are positive, WITHDRAW is positive too and subtracts: the kind carries the sign. */
+@Entity(tableName = "child_jar_move", indices = [Index("childId")])
+data class ChildJarMoveEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val childId: Long,
+    val amount: Long,
+    val at: Long,
+    val kind: ChildJarKind,
+)
+
+/** What the child spent out of the handover (not an entry: the parent already paid it). */
+@Entity(tableName = "child_spend", indices = [Index("childId")])
+data class ChildSpendEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val childId: Long,
+    val amount: Long,
+    val at: Long,
+    val note: String? = null,
 )

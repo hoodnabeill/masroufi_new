@@ -14,6 +14,9 @@ import java.time.LocalDate
 /** One spend with what the habit facts need: when, how much, and the kind of pocket it left. */
 data class SpendRow(val amount: Long, val happenedAt: Long, val pocketKind: PocketKind)
 
+/** One spend as the monthly story reads it. */
+data class StorySpend(val categoryId: Long?, val amount: Long, val happenedAt: Long, val note: String?, val recurringId: Long?)
+
 data class PocketBalance(val pocketId: Long, val balance: Long)
 
 // Opening + received + adjustments and debts (signed) - spent - every fee - moved out + moved in. Round-ups are not deducted: the
@@ -82,6 +85,10 @@ data class RepeatRow(val categoryId: Long, val amount: Long, val pocketId: Long,
 // An installment plan whose paid count (paidBefore + entries against it) reached its total reserves nothing any more.
 private const val NOT_FINISHED =
     "(r.totalCount IS NULL OR r.paidBefore + (SELECT COUNT(*) FROM entry e WHERE e.recurringId = r.id) < r.totalCount)"
+
+// A weekly item (the kids' handover) falls due every 7 days: every handover before :date is reserved, not only the first.
+// nextDue and :date are epoch days and the term is only used where nextDue < :date, so a weekly item counts at least once.
+private const val PAYMENTS_DUE = "CASE WHEN r.scheduleType = 'WEEKLY' THEN ((:date - 1 - r.nextDue) / 7 + 1) ELSE 1 END"
 
 @Dao
 interface PocketDao {
@@ -153,6 +160,14 @@ interface EntryDao {
     /** Every spend that names a tracked item and a unit price, oldest first. */
     @Query("SELECT * FROM entry WHERE kind = 'SPENT' AND trackedItemId IS NOT NULL AND unitPrice IS NOT NULL ORDER BY happenedAt, id")
     suspend fun pricedEntries(): List<EntryEntity>
+
+    /** The story's spends: every EGP SPENT entry (fees apart) in [start, end) epoch millis, with its category and note. */
+    @Query(
+        """SELECT e.categoryId, e.amount, e.happenedAt, e.note, e.recurringId FROM entry e JOIN pocket p ON p.id = e.pocketId
+        WHERE e.kind = 'SPENT' AND e.isFee = 0 AND p.currency = 'EGP' AND e.happenedAt >= :start AND e.happenedAt < :end
+        ORDER BY e.happenedAt, e.id"""
+    )
+    suspend fun storySpends(start: Long, end: Long): List<StorySpend>
 
     /** EGP spends that are not fixed bills (habits), [start, end) epoch millis. */
     @Query(
@@ -239,6 +254,7 @@ interface CategoryDao {
     @Insert suspend fun insert(category: CategoryEntity): Long
     @Update suspend fun update(category: CategoryEntity)
     @Query("SELECT * FROM category") fun all(): Flow<List<CategoryEntity>>
+    @Query("SELECT * FROM category ORDER BY id") suspend fun allNow(): List<CategoryEntity>
 }
 
 @Dao
@@ -277,6 +293,9 @@ interface EnvelopeDao {
     @Query("SELECT * FROM envelope") fun all(): Flow<List<EnvelopeEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun link(link: EnvelopeCategoryEntity)
     @Query("SELECT * FROM envelope_category") fun links(): Flow<List<EnvelopeCategoryEntity>>
+    @Query("SELECT * FROM envelope_category") suspend fun linksNow(): List<EnvelopeCategoryEntity>
+    @Query("SELECT * FROM envelope ORDER BY id") suspend fun allNow(): List<EnvelopeEntity>
+    @Query("SELECT * FROM envelope_move") suspend fun movesNow(): List<EnvelopeMoveEntity>
     @Query("SELECT * FROM envelope WHERE id = :id") suspend fun byId(id: Long): EnvelopeEntity?
     @Query("SELECT COUNT(*) FROM envelope WHERE archived = 0") suspend fun activeCount(): Int
     @Query("DELETE FROM envelope_category WHERE envelopeId = :envelopeId") suspend fun unlinkAll(envelopeId: Long)
@@ -308,7 +327,7 @@ interface RecurringDao {
 
     /** Reserved bills (still due before [date], overdue included): only items paid from a pocket that punches the EGP ticket (same predicate as COUNTING_TOTAL). */
     @Query(
-        """SELECT COALESCE(SUM(r.amount), 0) FROM recurring r JOIN pocket p ON p.id = r.pocketId
+        """SELECT COALESCE(SUM(r.amount * $PAYMENTS_DUE), 0) FROM recurring r JOIN pocket p ON p.id = r.pocketId
         WHERE r.archived = 0 AND r.nextDue < :date AND $NOT_FINISHED
         AND p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"""
     )
@@ -323,7 +342,7 @@ interface RecurringDao {
     suspend fun unpaidItemsDueBefore(date: LocalDate): List<RecurringEntity>
 
     @Query(
-        """SELECT COALESCE(SUM(r.amount), 0) FROM recurring r
+        """SELECT COALESCE(SUM(r.amount * $PAYMENTS_DUE), 0) FROM recurring r
         WHERE r.pocketId = :pocketId AND r.archived = 0 AND r.nextDue < :date AND $NOT_FINISHED"""
     )
     suspend fun unpaidFromPocketDueBefore(pocketId: Long, date: LocalDate): Long
@@ -387,6 +406,8 @@ interface ProverbDao {
     @Query("SELECT * FROM proverb_collected") fun all(): Flow<List<ProverbCollectedEntity>>
     @Query("SELECT number FROM proverb_collected") suspend fun numbers(): List<Int>
     @Query("SELECT COUNT(*) FROM proverb_collected") fun countFlow(): Flow<Int>
+    @Query("SELECT COUNT(*) FROM proverb_collected WHERE collectedOn >= :from AND collectedOn < :to")
+    suspend fun countBetween(from: LocalDate, to: LocalDate): Int
 }
 
 @Dao

@@ -23,9 +23,12 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     // Provider: entries is declared below (the Hilt graph breaks the same cycle).
     val recurring: RecurringRepository = RecurringRepository(db.recurringDao(), db.entryDao(), Provider { entries }, clock)
     val stamps = StampAwarder(db.stampDao(), db.jarDao(), db.peopleDao(), clock)
+    val story = StoryRepository(
+        db.storyDao(), db.dayTicketDao(), db.entryDao(), db.categoryDao(), db.envelopeDao(), db.jarDao(), db.proverbDao(), clock,
+    )
     val tickets: TicketRepository = TicketRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
-        db.stampDao(), settings, clock, stamps, Provider { eom }, Provider { installments }, Provider { freelance },
+        db.stampDao(), settings, clock, stamps, Provider { eom }, Provider { installments }, Provider { freelance }, story,
     )
     val eom = EndOfMonthRepository(
         settings, tickets, db.dayTicketDao(), db.entryDao(), db.categoryDao(), db.recurringDao(), db.pocketDao(), db.jarDao(),
@@ -39,6 +42,9 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     )
     val envelopes = EnvelopeRepository(
         db, db.envelopeDao(), db.entryDao(), db.recurringDao(), db.categoryDao(), settings, plus, clock,
+    )
+    val kids = KidsRepository(
+        db, db.kidsDao(), db.recurringDao(), db.pocketDao(), db.entryDao(), db.envelopeDao(), db.categoryDao(), entries, plus, clock,
     )
     val jar = JarRepository(db, db.jarDao(), db.goalDao(), settings, clock, stamps)
     val installments = InstallmentRepository(
