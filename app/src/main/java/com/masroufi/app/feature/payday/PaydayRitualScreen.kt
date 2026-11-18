@@ -241,7 +241,11 @@ private fun FixedStep(number: Int, view: RitualView, salary: Long, onEdit: () ->
                 view.fixedItems.forEach {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(
-                            stringResource(R.string.payday_fixed_row, it.name, it.day),
+                            when {
+                                it.count == 0 -> stringResource(R.string.payday_fixed_row, it.name, it.day)
+                                it.count == 1 -> it.name
+                                else -> stringResource(R.string.payday_fixed_times, it.name, it.count)
+                            },
                             style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Normal), color = Tz.text2, modifier = Modifier.weight(1f),
                         )
                         Text(formatPounds(it.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)

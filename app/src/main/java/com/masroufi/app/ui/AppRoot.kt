@@ -1,5 +1,6 @@
 package com.masroufi.app.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -79,6 +80,9 @@ import com.masroufi.app.feature.pockets.NewPocketScreen
 import com.masroufi.app.feature.pockets.PocketDetailScreen
 import com.masroufi.app.feature.pockets.PocketsScreen
 import com.masroufi.app.feature.proverb.ProverbRewardScreen
+import com.masroufi.app.feature.kids.ChildFormScreen
+import com.masroufi.app.feature.kids.ChildScreen
+import com.masroufi.app.feature.kids.KidsScreen
 import com.masroufi.app.feature.story.StoryListScreen
 import com.masroufi.app.feature.story.StoryScreen
 import com.masroufi.app.feature.roll.RollScreen
@@ -123,6 +127,8 @@ import com.masroufi.app.ui.nav.Zakat
 import com.masroufi.app.ui.nav.PocketDetail
 import com.masroufi.app.ui.nav.Pockets
 import com.masroufi.app.ui.nav.ProverbReward
+import com.masroufi.app.ui.nav.ChildEdit
+import com.masroufi.app.ui.nav.Kids
 import com.masroufi.app.ui.nav.Story
 import com.masroufi.app.ui.nav.StoryList
 import com.masroufi.app.ui.nav.RollTab
@@ -163,7 +169,7 @@ private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<Proverb
     hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>() ||
     hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>() ||
     hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<EndOfMonth>() || hasRoute<AppSettings>() ||
-    hasRoute<Installments>() || hasRoute<InstallmentEdit>() || hasRoute<Freelance>() || hasRoute<Story>() || hasRoute<StoryList>()
+    hasRoute<Installments>() || hasRoute<InstallmentEdit>() || hasRoute<Freelance>() || hasRoute<Story>() || hasRoute<StoryList>() || hasRoute<Kids>() || hasRoute<ChildEdit>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -182,14 +188,27 @@ private fun NavController.switchTab(tab: TzTab) {
 @Composable
 fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
     MasroufiTheme {
-        val nav = rememberNavController()
         val root = hiltViewModel<AppRootViewModel>()
-        val onboarded by root.onboarded.collectAsStateWithLifecycle()
+        val mode by root.mode.collectAsStateWithLifecycle()
+        // The child screen replaces the whole app (no nav graph, tab bar, add sheet or ritual behind it); back goes nowhere.
+        when (val m = mode) {
+            null -> Box(Modifier.fillMaxSize().background(Tz.night)) // night until the stored value is read: no flash of Home
+            is RootMode.Child -> {
+                BackHandler(enabled = true) {}
+                ChildScreen(viewModel = hiltViewModel())
+            }
+            else -> MainApp(root, entitlements, sampleData, startAtOnboarding = m == RootMode.Onboarding)
+        }
+    }
+}
+
+@Composable
+private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleData: DebugSampleData?, startAtOnboarding: Boolean) {
+    run {
+        val nav = rememberNavController()
         val endOfMonth by root.endOfMonth.collectAsStateWithLifecycle()
         // Decided once, from the stored value: finishing onboarding must not rebuild the graph under the navigation to Home.
-        var start by remember { mutableStateOf<Any?>(null) }
-        if (start == null && onboarded != null) start = if (onboarded == true) Home else Onboarding
-        val startDestination = start
+        val startDestination: Any = remember { if (startAtOnboarding) Onboarding else Home }
         val entry by nav.currentBackStackEntryAsState()
         val current = entry?.destination
         var addSheetOpen by rememberSaveable { mutableStateOf(false) }
@@ -223,8 +242,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                 showTabBar = current.tab() != null,
                 modifier = Modifier.graphicsLayer { scaleX = behind; scaleY = behind },
             ) {
-                // Night (the scaffold) until the stored value is read: no flash of Home before onboarding.
-                if (startDestination != null) NavHost(
+                NavHost(
                     nav,
                     startDestination = startDestination,
                     // 05-MOTION "Tear": the reward cross-fades in over the torn ticket in 160 ms.
@@ -369,6 +387,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                             onOpen = { nav.navigate(FixedCostEdit(it)) },
                             onNew = { nav.navigate(FixedCostEdit(0)) },
                             onOpenAddSheet = ::openAddSheet,
+                            onOpenKids = { nav.navigate(Kids) },
                         )
                     }
                     composable<FixedCostEdit> { FixedCostFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
@@ -379,8 +398,16 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                             onOpenDuty = { nav.navigate(DutyLedger) },
                             onOpenGameya = { nav.navigate(GameyaScreen) },
                             onNewGameya = { nav.navigate(GameyaForm(0)) },
+                            onOpenKids = { nav.navigate(Kids) },
                         )
                     }
+                    composable<Kids> {
+                        KidsScreen(
+                            viewModel = hiltViewModel(), onBack = { nav.popBackStack() },
+                            onNewChild = { nav.navigate(ChildEdit(0)) }, onEditChild = { nav.navigate(ChildEdit(it)) },
+                        )
+                    }
+                    composable<ChildEdit> { ChildFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                     composable<PersonDetail> { PersonDetailScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                     composable<DutyLedger> { DutyLedgerScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                     composable<GameyaScreen> {

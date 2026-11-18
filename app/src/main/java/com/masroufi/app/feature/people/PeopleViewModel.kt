@@ -9,6 +9,7 @@ import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.repo.DutyRepository
 import com.masroufi.app.data.repo.GameyaRepository
 import com.masroufi.app.data.repo.GameyaView
+import com.masroufi.app.data.repo.KidsRepository
 import com.masroufi.app.data.repo.PeopleFilter
 import com.masroufi.app.data.repo.PeopleRepository
 import com.masroufi.app.data.repo.PeopleTotals
@@ -98,6 +99,9 @@ data class SplitDraft(
 internal fun parsePiastres(text: String): Long =
     text.fold(AmountInput()) { a, c -> if (c.isDigit()) a.digit(c.digitToInt()) else if (c == '.') a.point() else a }.toPiastres()
 
+/** The kids card: how many children and what they cost a month (0 children = the card invites the first). */
+data class KidsCardUi(val children: Int = 0, val monthEstimate: Long = 0)
+
 data class PeopleUi(
     val loading: Boolean = true,
     val filter: PeopleFilter = PeopleFilter.ALL,
@@ -108,6 +112,7 @@ data class PeopleUi(
     val plus: Boolean = false,
     val duty: DutyCardUi = DutyCardUi(),
     val gameya: GameyaView? = null,
+    val kids: KidsCardUi = KidsCardUi(),
     val sheet: PeopleSheet? = null,
     val split: SplitDraft = SplitDraft(),
     val notice: PeopleNotice? = null,
@@ -122,6 +127,7 @@ class PeopleViewModel @Inject constructor(
     duty: DutyRepository,
     gameyas: GameyaRepository,
     pocketRepo: PocketRepository,
+    kidsRepo: KidsRepository,
     entitlements: Entitlements,
     private val clock: Clock,
 ) : ViewModel() {
@@ -156,8 +162,10 @@ class PeopleViewModel @Inject constructor(
 
     private val overlay = combine(sheet, split, notice) { s, d, n -> Triple(s, d, n) }
 
-    val state: StateFlow<PeopleUi> = combine(content, cards, overlay) { c, (plus, dutyCard, gameya), (s, d, n) ->
-        c.copy(plus = plus, duty = dutyCard, gameya = gameya, sheet = s, split = d, notice = n)
+    private val kidsCard = kidsRepo.observe().map { KidsCardUi(it.children.size, it.monthEstimate) }
+
+    val state: StateFlow<PeopleUi> = combine(content, cards, overlay, kidsCard) { c, (plus, dutyCard, gameya), (s, d, n), k ->
+        c.copy(plus = plus, duty = dutyCard, gameya = gameya, kids = k, sheet = s, split = d, notice = n)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PeopleUi())
 
     fun setFilter(f: PeopleFilter) {

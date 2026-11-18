@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.formatDayDate
 import com.masroufi.app.core.formatPounds
+import com.masroufi.app.data.db.RecurringRow
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.pockets.DashedRow
 import com.masroufi.app.feature.pockets.PushedHeader
@@ -49,6 +50,7 @@ fun FixedCostsScreen(
     onOpen: (Long) -> Unit,
     onNew: () -> Unit,
     onOpenAddSheet: (AddPrefill?) -> Unit,
+    onOpenKids: () -> Unit = {},
 ) {
     val s by viewModel.state.collectAsStateWithLifecycle()
     Column(
@@ -59,12 +61,13 @@ fun FixedCostsScreen(
         PushedHeader(stringResource(R.string.fixed_title), onBack)
         when {
             s.loading -> repeat(3) { RowSkeleton() }
-            s.items.isEmpty() -> AllCaughtUpRow()
+            s.items.isEmpty() && s.kids == null -> AllCaughtUpRow()
             else -> TzCard(padding = 0.dp) {
                 s.items.forEachIndexed { i, item ->
                     if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
                     FixedCostRow(item, onOpen = { onOpen(item.row.id) }, onPay = { onOpenAddSheet(viewModel.payPrefill(item.row)) })
                 }
+                s.kids?.let { KidsRow(it, first = s.items.isEmpty(), onOpenKids) }
             }
         }
         if (!s.loading) DashedRow(stringResource(R.string.fixed_add), onNew)
@@ -98,5 +101,24 @@ private fun FixedCostRow(item: FixedCostUi, onOpen: () -> Unit, onPay: () -> Uni
             Text(label, style = TzType.caption.copy(fontSize = 12.sp), color = color)
         }
         if (item.due != DueState.Paid) TextLink(stringResource(R.string.fixed_pay), { haptics.perform(HapticLevel.Tap); onPay() })
+    }
+}
+
+/** The kids' handover is paid with its own button on the kids screen, not as a plain payment: this row opens that screen. */
+@Composable
+private fun KidsRow(row: RecurringRow, first: Boolean, onOpen: () -> Unit) {
+    val haptics = LocalHaptics.current
+    if (!first) Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
+    Row(
+        Modifier.fillMaxWidth().clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpen() }.padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(row.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
+            Text(stringResource(R.string.fixed_kids_sub), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2, maxLines = 1)
+        }
+        Text(formatPounds(row.amount), style = TzType.titleTab.copy(fontSize = 18.sp), color = Tz.text)
+        TextLink(stringResource(R.string.fixed_kids_open), onOpen)
     }
 }

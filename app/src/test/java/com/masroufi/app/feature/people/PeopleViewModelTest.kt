@@ -32,7 +32,7 @@ class PeopleViewModelTest : PlanVmTestBase() {
 
     @Before fun open() {
         cash = runBlocking { db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, openingBalance = 100_000, color = 0)) }
-        vm = make(PeopleViewModel::class, { it.state }) { PeopleViewModel(f.people, f.duty, f.gameyas, f.pockets, plus, clock) }
+        vm = make(PeopleViewModel::class, { it.state }) { PeopleViewModel(f.people, f.duty, f.gameyas, f.pockets, f.kids, plus, clock) }
         settle("pockets") { state.pockets.isNotEmpty() }
     }
 

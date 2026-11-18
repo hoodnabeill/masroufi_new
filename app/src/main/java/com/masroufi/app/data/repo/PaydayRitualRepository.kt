@@ -4,6 +4,7 @@ import com.masroufi.app.data.db.DayTicketDao
 import com.masroufi.app.data.db.EntryDao
 import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.db.RecurringDao
+import com.masroufi.app.data.db.ScheduleType
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.TicketCalc
@@ -40,7 +41,8 @@ sealed interface JarShare {
  * is left goes to the tickets. [ticket] is today's ticket with the share reserved (0 at end of month); [lastCycleTicket]
  * is the first ordinary ticket of the previous cycle, for "أكتر من الشهر اللي فات بـ N".
  */
-data class RitualFixed(val name: String, val day: Int, val amount: Long)
+/** [amount] is all that is reserved for the item; [count] > 0 for a weekly item (the kids' handover): how many handovers fall before payday. */
+data class RitualFixed(val name: String, val day: Int, val amount: Long, val count: Int = 0)
 
 data class RitualView(
     val jarShare: Long,
@@ -111,7 +113,11 @@ class PaydayRitualRepository @Inject constructor(
             forTickets = (salary - jarShare - debts - fixed).coerceAtLeast(0),
             ticket = (calc as? TicketCalc.Printed)?.amount ?: 0L,
             lastCycleTicket = lastTicket,
-            fixedItems = recurringDao.unpaidItemsDueBefore(cycle.nextPayday).map { RitualFixed(it.name, it.nextDue.dayOfMonth, it.amount) },
+            fixedItems = recurringDao.unpaidItemsDueBefore(cycle.nextPayday).map {
+                // The same count PAYMENTS_DUE reserves: every weekly handover before payday, so the list adds up to [fixed].
+                val times = if (it.scheduleType == ScheduleType.WEEKLY) ChronoUnit.DAYS.between(it.nextDue, cycle.nextPayday.minusDays(1)).toInt() / 7 + 1 else 0
+                RitualFixed(it.name, it.nextDue.dayOfMonth, it.amount * maxOf(times, 1), times)
+            },
             days = ChronoUnit.DAYS.between(today, cycle.nextPayday).toInt(),
             nextPayday = cycle.nextPayday,
         )

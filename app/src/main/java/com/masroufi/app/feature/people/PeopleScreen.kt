@@ -53,6 +53,7 @@ import com.masroufi.app.ui.components.EmptyState
 import com.masroufi.app.ui.components.PlusComingSheet
 import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.RowSkeleton
+import com.masroufi.app.ui.components.TzCard
 import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
@@ -75,7 +76,7 @@ private val CardShape = RoundedCornerShape(24.dp)
 
 /** الناس (People.dc.html): the two totals, filter chips, the people, the duty-ledger card, the gameya card and the quick-split hint. */
 @Composable
-fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpenDuty: () -> Unit, onOpenGameya: () -> Unit, onNewGameya: () -> Unit) {
+fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpenDuty: () -> Unit, onOpenGameya: () -> Unit, onNewGameya: () -> Unit, onOpenKids: () -> Unit = {}) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val haptics = LocalHaptics.current
     val remind = rememberReminder(viewModel::reminded)
@@ -113,6 +114,7 @@ fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpe
             else PlusLocked(R.string.people_duty_plus, { plusSheet = true }) { DutyCard(DutyCardUi(), {}) }
         }
         item(key = "gameya") { GameyaCard(ui.gameya, if (ui.gameya == null) onNewGameya else onOpenGameya) }
+        item(key = "kids") { KidsCard(ui.kids, onOpenKids) }
         item(key = "split") { SplitHint(viewModel::openSplit) }
     }
     PeopleSheets(ui, viewModel)
@@ -341,5 +343,22 @@ private fun SplitHint(onOpen: () -> Unit) {
     ) {
         Text(stringResource(R.string.people_split_title), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
         Text(stringResource(R.string.people_split_line), style = TzType.caption.copy(fontSize = 12.sp, lineHeight = 20.sp), color = Tz.text2)
+    }
+}
+
+/** The way into مصروف العيال: the monthly cost and the handover line, or an invitation to add the first child. */
+@Composable
+private fun KidsCard(kids: KidsCardUi, onOpen: () -> Unit) {
+    TzCard(onClick = onOpen) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.kids_title), style = TzType.cardHeading, color = Tz.text)
+                Text(
+                    if (kids.children == 0) stringResource(R.string.people_kids_empty) else stringResource(R.string.kids_month_line, formatPounds(kids.monthEstimate)),
+                    style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2,
+                )
+            }
+            TzIcon(TzIcons.chevron, 20.dp, null, tint = Tz.text2)
+        }
     }
 }

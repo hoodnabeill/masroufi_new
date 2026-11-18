@@ -89,9 +89,10 @@ sealed interface PinResult {
 
 /** 11-DATA "Lock": 5 wrong tries = 30 s, then the wait doubles for every further wrong try, up to 15 minutes. */
 fun pinWaitMillis(failures: Int): Long =
-    if (failures < WRONG_BEFORE_WAIT) 0L else minOf(FIRST_WAIT_MS shl minOf(failures - WRONG_BEFORE_WAIT, 20), MAX_WAIT_MS)
+    if (failures < PIN_TRIES_BEFORE_WAIT) 0L else minOf(FIRST_WAIT_MS shl minOf(failures - PIN_TRIES_BEFORE_WAIT, 20), MAX_WAIT_MS)
 
-private const val WRONG_BEFORE_WAIT = 5
+/** Wrong tries in a row before the first wait. */
+const val PIN_TRIES_BEFORE_WAIT = 5
 private const val FIRST_WAIT_MS = 30_000L
 private const val MAX_WAIT_MS = 15 * 60_000L
 
@@ -119,6 +120,11 @@ class PinStore(
         requireValid(pin)
         check(!isSet()) { "a PIN is set already: use change" }
         write(pin)
+    }
+
+    /** Forgets the PIN (after the parent proved themself another way, e.g. the PIN cannot be read any more). */
+    suspend fun clear() {
+        store.edit { it.remove(blobKey); it.remove(failsKey); it.remove(untilKey) }
     }
 
     /** Replaces the PIN after the old one verified; the result says how that went ([PinResult.Ok] = changed). */
@@ -217,4 +223,10 @@ class ChildMode @Inject constructor(private val settings: SettingsStore, private
 
     /** Only for the success callback of the system biometric prompt (the app never sees biometric data). */
     suspend fun leaveAfterBiometric() = settings.setChildMode(null)
+
+    /** The PIN cannot be read: after the parent's biometric or device credential, forget it and leave; the next hand-over asks for a new one. */
+    suspend fun resetPinAfterBiometric() {
+        pin.clear()
+        settings.setChildMode(null)
+    }
 }

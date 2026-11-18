@@ -2,6 +2,7 @@ package com.masroufi.app.feature.plan
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.masroufi.app.data.db.RecurringKind
 import com.masroufi.app.data.db.RecurringRow
 import com.masroufi.app.data.repo.EnvelopeRepository
 import com.masroufi.app.data.repo.RecurringRepository
@@ -26,7 +27,8 @@ sealed interface DueState {
 
 data class FixedCostUi(val row: RecurringRow, val due: DueState)
 
-data class FixedCostsUi(val loading: Boolean = true, val items: List<FixedCostUi> = emptyList())
+/** [kids] is the kids' weekly handover: it is not a plain payment, so it is not in [items]; its row opens the kids screen. */
+data class FixedCostsUi(val loading: Boolean = true, val items: List<FixedCostUi> = emptyList(), val kids: RecurringRow? = null)
 
 internal fun dueState(nextDue: LocalDate, today: LocalDate, nextPayday: LocalDate): DueState = when {
     !nextDue.isBefore(nextPayday) -> DueState.Paid
@@ -44,7 +46,10 @@ class FixedCostsViewModel @Inject constructor(
     val state: StateFlow<FixedCostsUi> = recurring.observe().mapLatest { rows ->
         val today = LocalDate.now(clock)
         val payday = envelopes.cycle().nextPayday
-        FixedCostsUi(false, rows.map { FixedCostUi(it, dueState(it.nextDue, today, payday)) })
+        FixedCostsUi(
+            false, rows.filter { it.kind != RecurringKind.KIDS }.map { FixedCostUi(it, dueState(it.nextDue, today, payday)) },
+            rows.firstOrNull { it.kind == RecurringKind.KIDS },
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FixedCostsUi())
 
     /** "ادفعها": the add sheet for the payment; saving it marks the cost paid and moves its due date on. */

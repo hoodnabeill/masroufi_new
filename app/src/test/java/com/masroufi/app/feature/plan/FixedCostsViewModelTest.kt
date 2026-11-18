@@ -126,6 +126,15 @@ class FixedCostsViewModelTest {
         settle("paid") { due("rent") == DueState.Paid }
     }
 
+    @Test fun theKidsHandoverIsNotAPlainPaymentItsRowOpensTheKidsScreen() {
+        item("rent", LocalDate.of(2026, 11, 20), amount = 250_000)
+        val job = io.launch { f.kids.addChild("ملك", 2017, 3, 7_000) }
+        settle("child added") { job.isCompleted }
+        settle("listed") { vm.state.value.kids != null && vm.state.value.items.size == 1 }
+        assertEquals(listOf("rent"), vm.state.value.items.map { it.row.name })
+        assertEquals(listOf(RecurringKind.KIDS, 7_000L), vm.state.value.kids!!.let { listOf(it.kind, it.amount) })
+    }
+
     @Test fun aNewCostIsDueOnItsNextDayOfTheMonth() {
         assertEquals(LocalDate.of(2026, 11, 20), nextDueOn(20, today))
         assertEquals("today counts", today, nextDueOn(17, today))

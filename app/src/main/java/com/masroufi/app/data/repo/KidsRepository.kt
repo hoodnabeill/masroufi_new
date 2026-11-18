@@ -45,6 +45,8 @@ const val KIDS_ENVELOPE = "العيال"
 const val KIDS_NEW_ENVELOPE = "ظرف العيال"
 const val KIDS_ITEM_NAME = "مصروف العيال"
 private const val KIDS_CATEGORY_ICON = "people"
+/** The note a jar saving carries in child_spend: it takes money out of "left" but is not a punch. */
+const val JAR_SPEND_NOTE = "jar"
 private val KIDS_COLOR = 0xFFE7A6FF.toInt() // Tz.lilac, as the data layer's other copies of Tz colours
 
 /** The handover day until the parent picks one ("المصروف بيتسلّم كل سبت"). */
@@ -92,6 +94,10 @@ data class ChildView(
     val jar: ChildJar?,
     val waitingAdvance: ChildAdvanceEntity?,
     val handover: ChildHandover,
+    /** Spends since the last handover that were not jar savings: the punches row. */
+    val punches: Int = 0,
+    /** When the latest of them happened (epoch millis); null = none. */
+    val lastSpendAt: Long? = null,
 )
 
 /** [tickedBy] is the child who did the chore this week; null = not yet. */
@@ -156,16 +162,20 @@ class KidsRepository @Inject constructor(
             val moves = kidsDao.jarMovesOf(c.id)
             val handover = handoverOf(c, w, moves)
             val approved = w.advances.filter { it.childId == c.id && it.answer == AdvanceAnswer.APPROVED }.sumOf { it.amount }
+            val spent = kidsDao.spendsSince(c.id, c.handedAt)
+            val punched = spent.filter { it.note != JAR_SPEND_NOTE }
             ChildView(
                 child = c,
                 editable = c.id in editable,
                 age = today.year - c.birthYear,
-                left = (c.handedOver + approved - kidsDao.spendsSince(c.id, c.handedAt).sumOf { it.amount }).coerceAtLeast(0),
+                left = (c.handedOver + approved - spent.sumOf { it.amount }).coerceAtLeast(0),
                 handedOver = c.handedOver,
                 daysIntoWeek = w.key?.let { ChronoUnit.DAYS.between(it, today).toInt().coerceIn(0, 7) } ?: 0,
                 jar = jarOf(c, moves),
                 waitingAdvance = w.advances.firstOrNull { it.childId == c.id && it.answer == AdvanceAnswer.WAITING },
                 handover = handover,
+                punches = punched.size,
+                lastSpendAt = punched.maxOfOrNull { it.at },
             )
         }
         val total = views.sumOf { it.handover.amount }
@@ -385,6 +395,25 @@ class KidsRepository @Inject constructor(
             val left = (child.handedOver + approved - kidsDao.spendsSince(childId, child.handedAt).sumOf { it.amount }).coerceAtLeast(0)
             if (amount > left) throw AboveLeft(left)
             kidsDao.insertSpend(ChildSpendEntity(childId = childId, amount = amount, at = clock.millis(), note = note?.trim()?.ifEmpty { null }))
+        }
+    }
+
+    /**
+     * The child puts [amount] of what is left into their jar: one jar saving (so the match follows) and one spend marked
+     * [JAR_SPEND_NOTE], so the money is not counted twice. Above what is left: [AboveLeft], nothing recorded.
+     */
+    suspend fun saveFromLeft(childId: Long, amount: Long) {
+        require(amount > 0) { "amount must be > 0" }
+        db.withTransaction {
+            val child = editable(childId)
+            val key = kidsItem()?.nextDue?.minusDays(7)
+            val approved = key?.let { k -> kidsDao.advancesIn(k).filter { it.childId == childId && it.answer == AdvanceAnswer.APPROVED }.sumOf { it.amount } } ?: 0L
+            val left = (child.handedOver + approved - kidsDao.spendsSince(childId, child.handedAt).sumOf { it.amount }).coerceAtLeast(0)
+            if (amount > left) throw AboveLeft(left)
+            val now = clock.millis()
+            kidsDao.insertSpend(ChildSpendEntity(childId = childId, amount = amount, at = now, note = JAR_SPEND_NOTE))
+            kidsDao.insertJarMove(ChildJarMoveEntity(childId = childId, amount = amount, at = now, kind = ChildJarKind.SAVE))
+            syncItem()
         }
     }
 

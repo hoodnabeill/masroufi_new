@@ -105,6 +105,17 @@ class PaydayRitualRepositoryTest {
         assertEquals("never below zero", 0L, f.ritual.preview(1_000_000, JarShare.Amount(2_000_000)).forTickets)
     }
 
+    @Test fun theKidsHandoversAreListedWithTheirCountAndAddUpToTheReservedSum() = runTest {
+        setUp()
+        f.kids.addChild("ملك", 2017, 3, 7_000)
+        income(1_000_000)
+        // Saturdays 11-28, 12-05, 12-12 and 12-19 fall before payday 12-25: four handovers of 70.
+        val view = f.ritual.preview(1_000_000, JarShare.Percent(10))
+        assertEquals(RitualFixed(KIDS_ITEM_NAME, 28, 28_000, 4), view.fixedItems.single { it.name == KIDS_ITEM_NAME })
+        assertEquals(50_000L + 28_000L, view.fixed)
+        assertEquals("the list adds up to the reserved sum", view.fixed, view.fixedItems.sumOf { it.amount })
+    }
+
     @Test fun applyStoresShareAndReprints() = runTest {
         setUp()
         assertEquals("before the salary: 500 / 30 -> 16 EGP", 1_600L, f.tickets.printToday().amount)

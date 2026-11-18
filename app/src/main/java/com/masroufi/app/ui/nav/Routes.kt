@@ -60,3 +60,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class Story(val id: Long)
 /** الحكايات: the saved months (Task 50). */
 @Serializable data object StoryList
+/** مصروف العيال (Task 51). */
+@Serializable data object Kids
+/** [id] 0 = a new child. */
+@Serializable data class ChildEdit(val id: Long)
