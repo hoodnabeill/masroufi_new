@@ -25,6 +25,9 @@ fun homeCardOrder(goal: MainGoal?): List<HomeCard> {
 const val DEFAULT_BIRTHDAY_TARGET = 100_000L // 1,000 EGP
 private const val BASE_HOUSEHOLD = 4
 
+/** The school-season suggestion per child in school, piastres; 0 until a real default exists (no invented amounts). */
+const val SCHOOL_PER_CHILD_BASE = 0L
+
 /** [perDay] piastres, rounded up so the target is met by the birthday. */
 data class BirthdayPlan(val days: Int, val perDay: Long, val target: Long)
 

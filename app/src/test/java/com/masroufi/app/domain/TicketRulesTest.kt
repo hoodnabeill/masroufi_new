@@ -88,4 +88,12 @@ class TicketRulesTest {
         assertEquals(0L, overspendPerDay(0, 5))
         assertEquals(0L, overspendPerDay(-100, 5))
     }
+
+    @Test fun tomorrowPreviewHonoursTheBasketRaiseAndKeepsACarry() {
+        // 10,000 EGP over 10 days with 50 carried: the base is 995, so 1,045 without a raise.
+        assertEquals(104_500L, TomorrowBasis(10, 0).preview(1_000_000, 0, 0, 5_000))
+        assertEquals("the raise lifts the base; the carry adds on top", 155_000L, TomorrowBasis(10, 0, raise = 150_000).preview(1_000_000, 0, 0, 5_000))
+        assertEquals("a raise below the base changes nothing", 104_500L, TomorrowBasis(10, 0, raise = 50_000).preview(1_000_000, 0, 0, 5_000))
+        assertEquals("an end-of-month day stays 0", 0L, TomorrowBasis(10, 0, raise = 150_000).preview(0, 0, 0, 0))
+    }
 }

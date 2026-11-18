@@ -33,6 +33,7 @@ import com.masroufi.app.domain.earnedStamps
 import com.masroufi.app.domain.leftover
 import com.masroufi.app.domain.nextProverb
 import com.masroufi.app.domain.punches
+import com.masroufi.app.domain.raisedTo
 import com.masroufi.app.domain.streak
 import com.masroufi.app.domain.spentToday
 import java.time.Clock
@@ -147,11 +148,7 @@ class TicketRepository @Inject constructor(
         val computed = computeTicket(spendable, reserved, carriedIn, cycle.daysLeft(maxOf(today, cycle.start)))
         // A raise the user accepted from the basket's suggestion lifts the printed base until that payday.
         val raise = s.ticketRaise?.takeIf { today.toEpochDay() < (s.ticketRaiseUntil ?: 0) }
-        val calc = if (computed is TicketCalc.Printed && raise != null && raise > computed.base) {
-            computed.copy(amount = raise + computed.carriedIn, base = raise)
-        } else {
-            computed
-        }
+        val calc = if (computed is TicketCalc.Printed) computed.raisedTo(raise) else computed
         return TodayBasis(calc, spent, punches.size)
     }
 

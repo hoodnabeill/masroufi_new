@@ -42,9 +42,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object Match
 /** قبل ما تشتري and the wishlist (Task 43). */
 @Serializable data object BeforeYouBuy
-/** Stub until Task 44's basket replaces it. */
+/** سلّتك (Task 44). */
 @Serializable data object Basket
-/** Stub until Task 44's profile replaces it. */
+/** ملفك (Task 44). */
 @Serializable data object Profile
 /** Stub until Phase 11's settings replace it. */
 @Serializable data object AppSettings

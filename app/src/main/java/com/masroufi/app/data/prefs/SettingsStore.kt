@@ -72,6 +72,8 @@ data class Settings(
     /** A raised daily amount the user accepted from the basket's suggestion, and the epoch day (payday) it stops holding. */
     val ticketRaise: Long? = null,
     val ticketRaiseUntil: Long? = null,
+    /** "yyyy-MM" of the month the user dismissed the basket's ticket suggestion ("سيبها"). */
+    val suggestionDismissedMonth: String? = null,
     /** The match score last shown (task 42: goals since then animate). */
     val matchSeen: MatchSeen? = null,
 )
@@ -111,6 +113,7 @@ class SettingsStore @Inject constructor(
     private val milestonesSeenKey = stringSetPreferencesKey("milestonesSeen")
     private val ticketRaiseKey = longPreferencesKey("ticketRaise")
     private val ticketRaiseUntilKey = longPreferencesKey("ticketRaiseUntil")
+    private val suggestionDismissedKey = stringPreferencesKey("suggestionDismissedMonth")
     private val matchSeenKey = stringPreferencesKey("matchSeen")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
@@ -174,6 +177,7 @@ class SettingsStore @Inject constructor(
             it[ticketRaiseUntilKey] = untilEpochDay
         }
     }
+    suspend fun setSuggestionDismissed(month: String) { store.edit { it[suggestionDismissedKey] = month } }
     suspend fun setProfileName(v: String?) { store.edit { if (v.isNullOrBlank()) it.remove(profileNameKey) else it[profileNameKey] = v.trim() } }
     suspend fun setBirthday(v: LocalDate?) { store.edit { if (v == null) it.remove(birthdayKey) else it[birthdayKey] = v.toEpochDay() } }
     suspend fun setWorkKind(v: WorkKind?) { store.edit { if (v == null) it.remove(workKindKey) else it[workKindKey] = v.name } }
@@ -236,6 +240,7 @@ class SettingsStore @Inject constructor(
         milestonesSeen = p[milestonesSeenKey] ?: emptySet(),
         ticketRaise = p[ticketRaiseKey],
         ticketRaiseUntil = p[ticketRaiseUntilKey],
+        suggestionDismissedMonth = p[suggestionDismissedKey],
         matchSeen = p[matchSeenKey]?.split(",")?.mapNotNull { it.toLongOrNull() }?.takeIf { it.size == 3 }
             ?.let { MatchSeen(it[0], it[1].toInt(), it[2].toInt()) },
     )

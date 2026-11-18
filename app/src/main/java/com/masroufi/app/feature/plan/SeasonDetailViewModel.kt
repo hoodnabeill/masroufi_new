@@ -7,8 +7,10 @@ import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.db.SeasonKind
 import com.masroufi.app.data.repo.AboveFreeJar
 import com.masroufi.app.data.repo.JarRepository
+import com.masroufi.app.data.repo.ProfileRepository
 import com.masroufi.app.data.repo.SeasonRepository
 import com.masroufi.app.data.repo.SeasonView
+import com.masroufi.app.domain.SCHOOL_PER_CHILD_BASE
 import com.masroufi.app.feature.add.AmountInput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -52,6 +54,7 @@ internal fun nextMonthDay(month: Int, day: Int, today: LocalDate): LocalDate {
 class SeasonDetailViewModel @Inject constructor(
     private val seasons: SeasonRepository,
     private val jar: JarRepository,
+    private val profile: ProfileRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
 ) : ViewModel() {
@@ -83,7 +86,9 @@ class SeasonDetailViewModel @Inject constructor(
                 _view.value = v
                 if (v != null && !_form.value.loaded) {
                     val d = v.season.gregorianDate ?: v.date
-                    _form.value = SeasonForm(true, v.season.name, d.monthValue, d.dayOfMonth, AmountInput.of(v.season.target))
+                    // A school season nobody gave a target starts from the household's suggestion; it saves only when the user does.
+                    val target = if (v.season.kind == SeasonKind.SCHOOL && v.season.target == 0L) profile.schoolSuggestion(SCHOOL_PER_CHILD_BASE) else v.season.target
+                    _form.value = SeasonForm(true, v.season.name, d.monthValue, d.dayOfMonth, AmountInput.of(target))
                 }
             }
         }

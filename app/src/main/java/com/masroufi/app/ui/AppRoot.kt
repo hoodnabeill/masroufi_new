@@ -44,11 +44,13 @@ import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.AddSheet
 import com.masroufi.app.feature.album.AlbumScreen
+import com.masroufi.app.feature.basket.BasketScreen
 import com.masroufi.app.feature.buy.BeforeBuyScreen
 import com.masroufi.app.feature.close.CloseDayScreen
 import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.match.MatchScreen
+import com.masroufi.app.feature.profile.ProfileScreen
 import com.masroufi.app.feature.placeholder.ComingSoonScreen
 import com.masroufi.app.feature.add.AddViewModel
 import com.masroufi.app.feature.onboarding.OnboardingScreen
@@ -257,8 +259,8 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                 composable<Match> {
                     MatchScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onContinue = { nav.popBackStack<Home>(inclusive = false) })
                 }
-                composable<Basket> { ComingSoonScreen(R.string.soon_basket) { nav.popBackStack() } }
-                composable<Profile> { ComingSoonScreen(R.string.soon_profile) { nav.popBackStack() } }
+                composable<Basket> { BasketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                composable<Profile> { ProfileScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 composable<AppSettings> { ComingSoonScreen(R.string.soon_settings) { nav.popBackStack() } }
                 composable<RollTab> {
                     RollScreen(viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet, onPayday = { nav.navigate(PaydayRitual(it)) })

@@ -287,4 +287,11 @@ class HomeRepositoryTest {
         db.recurringDao().insert(bill(40_000, LocalDate.of(2026, 12, 28))) // after the new cycle's payday
         assertEquals(TomorrowBasis(30, 30_000), f.home.tomorrowBasis(nov24))
     }
+
+    @Test fun tomorrowPreviewCarriesTheBasketRaiseUntilPayday() = runTest {
+        setUp()
+        f.settings.setTicketRaise(50_000, LocalDate.of(2026, 11, 25).toEpochDay())
+        assertEquals("tomorrow is before payday: the raise holds", TomorrowBasis(12, 0, raise = 50_000), f.home.tomorrowBasis(nov12))
+        assertEquals("tomorrow is payday: the raise has lapsed", TomorrowBasis(30, 0), f.home.tomorrowBasis(LocalDate.of(2026, 11, 24)))
+    }
 }

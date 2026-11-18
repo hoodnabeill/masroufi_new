@@ -22,6 +22,7 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,6 +40,9 @@ data class BasketItemView(
     val lastPlace: String?,
     val cheapest: CheapestPlace?,
     val timesPerMonth: Int?,
+    /** The first price in the 3-month window (what the change starts from), and how many days the window covers. */
+    val firstPrice: Long? = null,
+    val windowDays: Int? = null,
 )
 
 /** The usual monthly quantities at the first price in the window ([then]) and at today's ([now]), piastres. */
@@ -56,6 +60,8 @@ data class BasketData(
     val change: BasketChange?,
     val suggestion: SuggestedTicket?,
     val habits: HabitFacts,
+    /** The day of the earliest priced entry the basket change starts from; null without a change. */
+    val since: LocalDate? = null,
 )
 
 sealed interface BasketResult {
@@ -99,7 +105,7 @@ class BasketRepository @Inject constructor(
 
     /** Locked without Plus; never throws for a read. */
     fun observe(): Flow<BasketResult> =
-        combine(entitlements.isPlus, entryDao.countFlow(), trackedDao.all()) { plus, _, _ -> plus }.map { plus ->
+        combine(entitlements.isPlus, entryDao.countFlow(), trackedDao.all(), settings.settings) { plus, _, _, _ -> plus }.map { plus ->
             if (plus) BasketResult.Ready(load()) else BasketResult.Locked
         }
 
@@ -125,7 +131,11 @@ class BasketRepository @Inject constructor(
         return suggested
     }
 
+    /** "سيبها": no suggestion for the rest of this month. */
+    suspend fun dismissSuggestion() = settings.setSuggestionDismissed(YearMonth.from(LocalDate.now(clock)).toString())
+
     private suspend fun load(): BasketData {
+        val cfg = settings.current()
         val today = LocalDate.now(clock)
         val windowStart = today.minusMonths(WINDOW_MONTHS).atStartOfDay(clock.zone).toInstant().toEpochMilli()
         val tomorrow = today.plusDays(1).atStartOfDay(clock.zone).toInstant().toEpochMilli()
@@ -134,11 +144,14 @@ class BasketRepository @Inject constructor(
             .filter { it.addedByUser || (byItem[it.id]?.size ?: 0) >= 2 }
             .map { it to ItemStats(byItem[it.id].orEmpty(), windowStart, today, clock) }
         val items = stats.map { (item, s) ->
-            BasketItemView(item, s.lastPrice, s.changePercent, s.lastPlace, s.cheapest, s.timesPerMonth)
+            BasketItemView(item, s.lastPrice, s.changePercent, s.lastPlace, s.cheapest, s.timesPerMonth, s.firstInWindow, s.windowDays)
         }
         val change = basketChange(stats.map { it.second })
         val row = ticketDao.forDate(today)?.takeIf { !it.endOfMonth && it.base > 0 }
-        val suggestion = if (change != null && row != null && change.now > change.then) {
+        // Held back while an accepted raise holds (the printed base already includes it) and once dismissed this month.
+        val raised = cfg.ticketRaise != null && today.toEpochDay() < (cfg.ticketRaiseUntil ?: 0)
+        val dismissed = cfg.suggestionDismissedMonth == YearMonth.from(today).toString()
+        val suggestion = if (change != null && row != null && change.now > change.then && !raised && !dismissed) {
             (row.base * change.now / change.then).floorToPound().takeIf { it > row.base }?.let { SuggestedTicket(row.base, it) }
         } else {
             null
@@ -150,7 +163,7 @@ class BasketRepository @Inject constructor(
             lateNight = lateNightFact(entryDao.habitSpends(month, tomorrow), clock),
             cashVsWalletPercent = cashVsWallet(windowSpends),
         )
-        return BasketData(items, change, suggestion, habits)
+        return BasketData(items, change, suggestion, habits, stats.mapNotNull { it.second.firstDate }.minOrNull().takeIf { change != null })
     }
 }
 
@@ -160,6 +173,8 @@ internal fun normalizeItem(name: String): String = normalize(name).trim().replac
 internal class ItemStats(all: List<EntryEntity>, windowStart: Long, today: LocalDate, clock: Clock) {
     private val inWindow = all.filter { it.happenedAt >= windowStart }
     val lastPrice: Long? = all.lastOrNull()?.unitPrice
+    val firstDate: LocalDate? = inWindow.firstOrNull()?.let { Instant.ofEpochMilli(it.happenedAt).atZone(clock.zone).toLocalDate() }
+    val windowDays: Int? = firstDate?.let { ChronoUnit.DAYS.between(it, today).toInt() }
     val firstInWindow: Long? = inWindow.firstOrNull()?.unitPrice
     val lastInWindow: Long? = inWindow.lastOrNull()?.unitPrice
     val comparable: Boolean = inWindow.size >= 2

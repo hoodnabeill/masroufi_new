@@ -1,7 +1,6 @@
 package com.masroufi.app.data.repo
 
 import com.masroufi.app.core.PayCycle
-import com.masroufi.app.core.Payday
 import com.masroufi.app.data.db.CategoryDao
 import com.masroufi.app.data.db.DayTicketDao
 import com.masroufi.app.data.db.DayTicketEntity
@@ -11,6 +10,7 @@ import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.db.Pot
 import com.masroufi.app.data.db.ProverbDao
 import com.masroufi.app.data.db.RecurringDao
+import com.masroufi.app.data.prefs.Settings
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.DayResult
 import com.masroufi.app.domain.LeftoverDestination
@@ -141,7 +141,7 @@ class HomeRepository @Inject constructor(
                 cycle = cycle,
                 unpaidBills = recurringDao.unpaidDueBefore(cycle.nextPayday),
                 repeats = repeats,
-                tomorrow = tomorrowBasis(today, s.payday),
+                tomorrow = tomorrowBasis(today, s),
                 lastTicketShown = s.lastTicketShown,
                 entryCount = entries,
                 moneyUnknown = s.moneyUnknown,
@@ -153,13 +153,15 @@ class HomeRepository @Inject constructor(
     }
 
     /** Tomorrow's pay cycle: bills still unpaid from the old cycle stay reserved (`unpaidDueBefore`). */
-    private suspend fun tomorrowBasis(today: LocalDate, payday: Payday): TomorrowBasis {
+    private suspend fun tomorrowBasis(today: LocalDate, s: Settings): TomorrowBasis {
         val tomorrow = today.plusDays(1)
-        val cycle = entryDao.payCycleOn(tomorrow, payday, clock)
-        return TomorrowBasis(cycle.daysLeft(tomorrow), recurringDao.unpaidDueBefore(cycle.nextPayday))
+        val cycle = entryDao.payCycleOn(tomorrow, s.payday, clock)
+        // The basket raise holds until the next payday, as in TicketRepository.basisToday.
+        val raise = s.ticketRaise?.takeIf { tomorrow.toEpochDay() < (s.ticketRaiseUntil ?: 0) }
+        return TomorrowBasis(cycle.daysLeft(tomorrow), recurringDao.unpaidDueBefore(cycle.nextPayday), raise)
     }
 
-    suspend fun tomorrowBasis(today: LocalDate): TomorrowBasis = tomorrowBasis(today, settings.current().payday)
+    suspend fun tomorrowBasis(today: LocalDate): TomorrowBasis = tomorrowBasis(today, settings.current())
 
     /** The printed ticket of [date] with what the close screen needs; throws when no ticket was printed for it. */
     suspend fun closeDayData(date: LocalDate): CloseDayData {
@@ -183,7 +185,7 @@ class HomeRepository @Inject constructor(
             spendable = pocketDao.countingBalanceTotal(),
             jarTotal = jarDao.totalNow(Pot.JAR),
             emergencyTotal = jarDao.totalNow(Pot.EMERGENCY),
-            tomorrow = tomorrowBasis(date, s.payday),
+            tomorrow = tomorrowBasis(date, s),
             leftoverDefault = s.leftoverDefault,
         )
     }
