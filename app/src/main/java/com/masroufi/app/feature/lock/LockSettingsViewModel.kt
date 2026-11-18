@@ -118,8 +118,8 @@ class LockSettingsViewModel @Inject constructor(
     }
 
     private suspend fun turnOn() {
+        appLock.unlock() // first: turned on from inside the app, it locks at the next cold start or long absence, not now
         settings.setLockOn(true)
-        appLock.unlock() // turned on from inside the app: it locks at the next cold start or long absence, not now
         done()
     }
 

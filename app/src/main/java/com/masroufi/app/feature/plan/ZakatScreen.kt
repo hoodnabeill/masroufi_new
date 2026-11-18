@@ -69,7 +69,7 @@ private fun ZakatBody(ui: ZakatUi, vm: ZakatViewModel) {
         TzCard {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 ValueRow(stringResource(R.string.zakat_held), poundsText(ui.zakatable)) { vm.open(ZakatSheet.Money) }
-                ValueRow(stringResource(R.string.zakat_nisab), ui.nisab?.let(::formatPounds) ?: stringResource(R.string.zakat_nisab_prompt)) { vm.open(ZakatSheet.Nisab) }
+                ValueRow(stringResource(R.string.zakat_nisab), ui.nisab?.let { poundsText(it) } ?: stringResource(R.string.zakat_nisab_prompt)) { vm.open(ZakatSheet.Nisab) }
                 Text(stringResource(R.string.zakat_nisab_note), style = TzType.caption, color = Tz.text2)
             }
         }

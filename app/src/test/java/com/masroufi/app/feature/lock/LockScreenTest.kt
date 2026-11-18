@@ -21,7 +21,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 @RunWith(AndroidJUnit4::class)
-@Config(qualifiers = "ar")
+// A phone-sized screen: the lock screen is taller than Robolectric's default 320x470.
+@Config(qualifiers = "ar-w390dp-h844dp")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class LockScreenTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()

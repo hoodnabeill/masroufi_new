@@ -7,18 +7,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -98,13 +102,16 @@ fun LockContent(
         if (ui.shake > 0 && !reduce) for (t in floatArrayOf(-12f, 12f, -8f, 8f, 0f)) shake.animateTo(t, tween(50))
     }
     val quiet = ui.waitMillis > 0
-    Box(Modifier.fillMaxSize().background(Tz.night)) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Tz.night)) {
+        val screenHeight = maxHeight
         Canvas(Modifier.fillMaxSize()) {
             val c = Offset(size.width - 40.dp.toPx(), 40.dp.toPx())
             for (r in listOf(70, 100, 130, 160, 190)) drawCircle(Tz.raised, r.dp.toPx(), c, style = Stroke(1.5.dp.toPx()))
         }
         Column(
-            Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
+            // Scrolls on a short screen (the keys must never be squeezed away); on a tall one the keys sit at the bottom.
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).heightIn(min = screenHeight).statusBarsPadding().navigationBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {

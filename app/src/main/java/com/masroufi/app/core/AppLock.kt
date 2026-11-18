@@ -27,13 +27,14 @@ class AppLock @Inject constructor(
     @ProcessLifecycle lifecycle: Lifecycle,
 ) {
     private val unlocked = MutableStateFlow(false)
+    private val wiping = MutableStateFlow(false)
     private var stoppedAt: Long? = null
 
     /** The setting: the lock is on. */
     val lockOn: Flow<Boolean> = settings.settings.map { it.lockOn }.distinctUntilChanged()
 
     /** On and not yet unlocked since the last cold start or long absence. */
-    val locked: Flow<Boolean> = combine(lockOn, unlocked) { on, open -> on && !open }
+    val locked: Flow<Boolean> = combine(lockOn, unlocked, wiping) { on, open, erasing -> erasing || (on && !open) }
 
     init {
         lifecycle.addObserver(
@@ -53,4 +54,7 @@ class AppLock @Inject constructor(
 
     /** The PIN or fingerprint proved it, or the user has just turned the lock on from inside the app. */
     fun unlock() { unlocked.value = true }
+
+    /** While the forgotten-PIN erase runs the lock screen stays up (the erase turns the lock setting off), so it can relaunch the app. */
+    fun holdForWipe(on: Boolean) { wiping.value = on }
 }

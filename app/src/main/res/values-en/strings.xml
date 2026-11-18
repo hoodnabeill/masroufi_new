@@ -1573,4 +1573,5 @@
     <string name="locks_wait">Wait %1$s seconds and try again.</string>
     <string name="locks_unreadable">The PIN cannot be read any more. From the lock screen you can clear it with your fingerprint or screen lock.</string>
     <string name="settings_lock_on">On</string>
+    <string name="settings_lock_off">Off</string>
 </resources>

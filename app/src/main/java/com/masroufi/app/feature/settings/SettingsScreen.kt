@@ -143,7 +143,7 @@ fun SettingsContent(ui: SettingsUi, vm: SettingsActions, nav: SettingsNav, suppo
         }
 
         Group(R.string.settings_group_safety) {
-            ValueRow(R.string.settings_lock, stringResource(if (ui.lockOn) R.string.settings_lock_on else R.string.settings_off), onClick = nav.onLock)
+            ValueRow(R.string.settings_lock, stringResource(if (ui.lockOn) R.string.settings_lock_on else R.string.settings_lock_off), onClick = nav.onLock)
             ValueRow(R.string.settings_backup, stringResource(R.string.settings_backup_none), onClick = nav.onBackup)
             Row(
                 Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).alpha(0.6f).padding(horizontal = 16.dp, vertical = 8.dp),

@@ -123,13 +123,23 @@ class LockViewModel @Inject constructor(
         if (_state.value.wiped) return
         launchSafe {
             ticker?.cancel()
-            dataWipe.wipe()
+            appLock.holdForWipe(true)
+            var erased = false
+            try {
+                dataWipe.wipe()
+                erased = true
+            } finally {
+                if (!erased) appLock.holdForWipe(false)
+            }
             _state.update { it.copy(forgot = false, wiped = true) }
         }
     }
 
     private fun open() {
         haptic.trySend(HapticLevel.Tap)
+        ticker?.cancel()
+        // The next time the lock appears it starts clean (this ViewModel lives as long as the activity).
+        _state.value = LockUi()
         appLock.unlock()
     }
 

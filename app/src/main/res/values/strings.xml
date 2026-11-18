@@ -1640,4 +1640,5 @@
     <string name="locks_wait">استنى %1$s ثانية وجرّب تاني.</string>
     <string name="locks_unreadable">الرقم السري ماعادش ينفع يتقري. من شاشة القفل تقدر تمسحه بالبصمة أو بقفل الموبايل.</string>
     <string name="settings_lock_on">شغّال</string>
+    <string name="settings_lock_off">مش شغّال</string>
 </resources>

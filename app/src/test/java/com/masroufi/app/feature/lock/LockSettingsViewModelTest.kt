@@ -1,10 +1,12 @@
 package com.masroufi.app.feature.lock
 
+import androidx.lifecycle.viewModelScope
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.core.PinResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import kotlinx.coroutines.launch
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -32,6 +34,8 @@ class LockSettingsViewModelTest : LockTestBase() {
 
     @Test fun turningOnAsksForAPinTwiceAndAMismatchStartsOver() {
         screen()
+        val seen = mutableListOf<Boolean?>()
+        gate.viewModelScope.launch { gate.locked.collect { seen += it } }
         vm.toggleLock(true)
         settle("asks") { ui.step == LockStep.Create }
         assertFalse(call { f.pin.isSet() })
@@ -49,6 +53,7 @@ class LockSettingsViewModelTest : LockTestBase() {
         settle("on") { ui.lockOn && ui.step == LockStep.None }
         assertEquals(PinResult.Ok, call { f.pin.verify("1234") })
         settle("not locked out of the app it was turned on in") { locked == false }
+        assertFalse("the app never flashed to the lock screen", seen.contains(true))
     }
 
     @Test fun aPinShorterThanFourDigitsIsNotTaken() {

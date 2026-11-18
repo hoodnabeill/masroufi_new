@@ -117,6 +117,8 @@ class LockViewModelTest : LockTestBase() {
         vm.openForgot()
         vm.confirmWipe()
         settle("wiped") { ui.wiped }
+        main.scheduler.runCurrent()
+        assertEquals("the lock screen stays up so it can relaunch the app", true, locked)
         assertFalse(call { f.settings.current().onboarded })
         assertFalse(call { f.settings.current().lockOn })
     }
