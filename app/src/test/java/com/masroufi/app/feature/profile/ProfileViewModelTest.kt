@@ -259,7 +259,7 @@ class ProfileViewModelTest {
         assertNull("the confirm sheet is gone", vm.state.value.sheet)
 
         val store = ViewModelStore().also { stores += it }
-        val root = ViewModelProvider.create(store, viewModelFactory { initializer { AppRootViewModel(f.settings) } })[AppRootViewModel::class]
+        val root = ViewModelProvider.create(store, viewModelFactory { initializer { AppRootViewModel(f.settings, f.eomMode) } })[AppRootViewModel::class]
         root.viewModelScope.launch { root.onboarded.collect {} }
         settle("onboarding") { root.onboarded.value == false }
 

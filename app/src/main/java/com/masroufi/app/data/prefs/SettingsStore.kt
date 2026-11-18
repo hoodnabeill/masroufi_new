@@ -202,13 +202,12 @@ class SettingsStore @Inject constructor(
             it[ticketRaiseUntilKey] = untilEpochDay
         }
     }
-    /** Switches the mode on from [since] to [until] with a fresh challenge and no paused habit. */
+    /** Switches the mode on from [since] to [until] with a fresh challenge; habits paused before it stay paused. */
     suspend fun eomSwitchOn(since: Long, until: Long) {
         store.edit {
             it[eomOnKey] = true
             it[eomSinceKey] = since
             it[eomUntilKey] = until
-            it.remove(eomPausedKey)
             it.remove(eomNoSpendKey)
         }
     }

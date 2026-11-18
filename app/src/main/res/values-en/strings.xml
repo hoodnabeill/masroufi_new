@@ -1044,4 +1044,48 @@
     <string name="profile_share_head">Level %1$s · %2$s on Masroufi</string>
     <string name="profile_share_head_named">%1$s · Level %2$s · %3$s on Masroufi</string>
     <string name="profile_share_stats">%1$s day streak · %2$s proverbs · won %3$s of %4$s matches</string>
+
+    <!-- Task 46: end-of-month screen (LastDays.dc.html) and its Home wiring. -->
+    <string name="eom_title">End-of-month mode</string>
+    <plurals name="eom_days_left">
+        <item quantity="one">1 day to payday, and you have</item>
+        <item quantity="other">%1$d days to payday, and you have</item>
+    </plurals>
+    <plurals name="eom_days_left_short">
+        <item quantity="one">1 day to payday, and you are short</item>
+        <item quantity="other">%1$d days to payday, and you are short</item>
+    </plurals>
+    <string name="eom_unit">EGP</string>
+    <string name="eom_hero_line">That\'s %1$s EGP a day. Doable, and I\'m with you.</string>
+    <string name="eom_short_line">That is what is missing for what must be paid. See below where it could come from, and we\'ll sort it out.</string>
+    <plurals name="eom_tickets">
+        <item quantity="one">1 small ticket</item>
+        <item quantity="other">%1$d small tickets</item>
+    </plurals>
+    <string name="eom_each">%1$s each</string>
+    <string name="eom_bill">On the %1$s there is the %2$s bill (%3$s), reserved from now, outside the %4$s.</string>
+    <plurals name="eom_bill_more">
+        <item quantity="one">And 1 more bill is reserved too.</item>
+        <item quantity="other">And %1$d more bills are reserved too.</item>
+    </plurals>
+    <string name="eom_bill_day_cd">A bill is due on the %1$s</string>
+    <string name="eom_habits_title">The two things that drain you most</string>
+    <string name="eom_habit_line">%1$s this month · pause it until payday</string>
+    <string name="eom_habit_cd">Pause %1$s</string>
+    <string name="eom_habits_note">If you log something paused, I\'ll only remind you, no judgment.</string>
+    <string name="eom_challenge_title">Challenge: a day with no spending</string>
+    <string name="eom_challenge_count">%1$d / %2$d</string>
+    <string name="eom_challenge_line">Every day that passes with no spending adds %1$s EGP a day to the tickets left. Get through two days and earn the \"Tight fist\" stamp.</string>
+    <string name="eom_challenge_line_flat">Get through two days with no spending and earn the \"Tight fist\" stamp.</string>
+    <string name="eom_challenge_done">You earned the \"Tight fist\" stamp. Keep going.</string>
+    <string name="eom_rescue_title">If you get stuck</string>
+    <string name="eom_rescue_jar">The jar</string>
+    <string name="eom_rescue_jar_value">%1$s · you can take from it</string>
+    <string name="eom_rescue_owed">%1$s owes you</string>
+    <string name="eom_rescue_owed_value">%1$s · remind them</string>
+    <string name="eom_rescue_emergency">Emergency envelope</string>
+    <string name="eom_switch_on">Switch on until the %1$s</string>
+    <string name="eom_switch_off">Switch the mode off</string>
+    <string name="eom_offer_text">Money to payday is getting tight. Want me to split it into small tickets and get through these days together?</string>
+    <string name="eom_offer_on">Switch it on</string>
 </resources>

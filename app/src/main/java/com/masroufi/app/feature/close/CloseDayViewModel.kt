@@ -84,7 +84,8 @@ class CloseDayViewModel @Inject constructor(
         val spreadDays = d.cycle.daysLeft(date) - 1
         // A leftover sent to a pot is reserved tomorrow; carried, it is added to the ticket instead.
         val without = d.tomorrow.preview(d.spendable, d.jarTotal + left, d.emergencyTotal, 0)
-        val with = d.tomorrow.preview(d.spendable, d.jarTotal, d.emergencyTotal, left)
+        // In the mode the leftover stays in the pool that Spendable already holds: no carry on top.
+        val with = d.tomorrow.preview(d.spendable, d.jarTotal, d.emergencyTotal, if (d.endOfMonthMode) 0 else left)
         return CloseDayUi.Ready(
             date = date,
             ticket = d.row.amount,

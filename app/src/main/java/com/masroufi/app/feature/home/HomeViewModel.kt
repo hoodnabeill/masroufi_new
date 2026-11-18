@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.db.CategoryDao
 import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.prefs.SettingsStore
+import com.masroufi.app.data.repo.EndOfMonthRepository
 import com.masroufi.app.data.repo.EntryRepository
 import com.masroufi.app.data.repo.HomeData
 import com.masroufi.app.data.repo.HomeRepository
@@ -54,6 +55,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -117,6 +120,11 @@ sealed interface HomeUiState {
          * a first-week card (that one goes first) and never in end-of-month mode. Not part of [cardOrder].
          */
         val dueWish: WishEntity? = null,
+        /**
+         * The end-of-month offer card, in the first-week card's slot: after a first-week card (that one goes first) and
+         * before the 48-hour question, so never two cards at once. Not part of [cardOrder].
+         */
+        val endOfMonthOffer: Boolean = false,
     ) : HomeUiState
 }
 
@@ -140,6 +148,7 @@ class HomeViewModel @Inject constructor(
     private val onboarding: OnboardingRepository,
     private val pendingDeletes: PendingDeletes,
     private val wishes: WishRepository,
+    private val eom: EndOfMonthRepository,
 ) : ViewModel() {
     private val failure = MutableStateFlow<Throwable?>(null)
     private val _saveFailed = MutableStateFlow(false)
@@ -180,7 +189,10 @@ class HomeViewModel @Inject constructor(
 
     private val dueWishes: Flow<List<WishEntity>> = wishes.dueForAnswer().catch { Log.e(TAG, "wishes failed", it); emit(emptyList()) }
 
-    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure, pendingDeletes.pending, dueWishes) { d, pending, f, deleted, due ->
+    private val offer: Flow<Boolean> = eom.observe().map { it.offer }.distinctUntilChanged()
+        .catch { Log.e(TAG, "offer failed", it); emit(false) }
+
+    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure, pendingDeletes.pending, combine(dueWishes, offer, ::Pair)) { d, pending, f, deleted, (due, offered) ->
         val row = d?.today
         when {
             f != null -> HomeUiState.Error
@@ -188,7 +200,7 @@ class HomeViewModel @Inject constructor(
             else -> {
                 // The add sheet's placeholders stop counting once this row holds them; then they can go.
                 pendingPunches.prune(row.entryCount)
-                homeUi(d.withoutDeleted(deleted.values), pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour, due)
+                homeUi(d.withoutDeleted(deleted.values), pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour, due, offered)
             }
         }
     }
@@ -278,6 +290,24 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { settings.dismissFirstWeekCard(id) }
     }
 
+    /** The offer card's "شغّله": the mode goes on until payday and today's open ticket is re-printed. */
+    fun switchOnEndOfMonth() = launchEom { eom.switchOn() }
+
+    /** The offer card's close: hidden until the next payday. */
+    fun dismissOffer() = launchEom { eom.dismissOffer() }
+
+    private fun launchEom(block: suspend () -> Unit) {
+        viewModelScope.launch {
+            try {
+                block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "end-of-month action failed", e)
+            }
+        }
+    }
+
     /** The money card's sheet: the balance becomes [piastres]; the card goes with moneyUnknown. */
     fun setMoney(piastres: Long) {
         viewModelScope.launch { onboarding.setMoney(piastres) }
@@ -359,7 +389,7 @@ private fun HomeData.withoutDeleted(deleted: Collection<PendingDelete>): HomeDat
     )
 }
 
-internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: List<WishEntity> = emptyList()): HomeUiState.Ready {
+internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: List<WishEntity> = emptyList(), offer: Boolean = false): HomeUiState.Ready {
     val row = checkNotNull(d.today)
     val today = row.date
     val daysLeft = d.cycle.daysLeft(today)
@@ -377,7 +407,8 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: L
     }
 
     val tomorrow = if (open) null else {
-        val carry = if (row.destination == LeftoverDestination.TOMORROW) row.leftover else 0L
+        // In the mode the leftover stays in the pool, which Spendable already holds: carrying it adds it twice.
+        val carry = if (row.destination == LeftoverDestination.TOMORROW && !d.endOfMonthMode) row.leftover else 0L
         val amount = d.tomorrow.preview(spendable, d.jarTotal, d.emergencyTotal, carry)
         TomorrowUi(amount, row.proverbNumber)
     }
@@ -402,6 +433,7 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: L
 
     val firstWeek = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, row.endOfMonth || d.endOfMonthMode)
 
+    val offerCard = offer && firstWeek == null
     return HomeUiState.Ready(
         today = today,
         greeting = greetingFor(today, hour, d.cycle),
@@ -423,6 +455,7 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: L
         cardOrder = homeCardOrder(d.mainGoal),
         newTicket = open && d.lastTicketShown != today.toEpochDay(),
         firstWeekCard = firstWeek,
-        dueWish = dueWishes.minWithOrNull(compareBy<WishEntity>({ it.parkedAt }, { it.id }))?.takeIf { firstWeek == null && !row.endOfMonth && !d.endOfMonthMode },
+        dueWish = dueWishes.minWithOrNull(compareBy<WishEntity>({ it.parkedAt }, { it.id }))?.takeIf { firstWeek == null && !offerCard && !row.endOfMonth && !d.endOfMonthMode },
+        endOfMonthOffer = offerCard,
     )
 }

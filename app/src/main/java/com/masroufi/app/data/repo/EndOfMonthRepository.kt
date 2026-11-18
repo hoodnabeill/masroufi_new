@@ -35,7 +35,7 @@ data class BillDay(val date: LocalDate, val name: String, val amount: Long)
 data class SmallTicketDay(val date: LocalDate, val amount: Long, val bills: List<BillDay>)
 
 /** An optional (non-essential) category and what it took this cycle. */
-data class Habit(val categoryId: Long, val name: String, val spent: Long, val paused: Boolean)
+data class Habit(val categoryId: Long, val name: String, val spent: Long, val paused: Boolean, val icon: String = "")
 
 data class OwedToMe(val personId: Long, val name: String, val amount: Long)
 
@@ -148,7 +148,7 @@ class EndOfMonthRepository @Inject constructor(
         val spend = entryDao.spentByCategory(start.startMillis(), today.plusDays(1).startMillis()).associate { it.categoryId to it.total }
         return categoryDao.all().first().filter { !it.essential && (spend[it.id] ?: 0L) > 0 }
             .sortedWith(compareByDescending<CategoryEntity> { spend[it.id] }.thenBy { it.id })
-            .take(2).map { Habit(it.id, it.name, spend.getValue(it.id), it.id in s.eomPaused) }
+            .take(2).map { Habit(it.id, it.name, spend.getValue(it.id), it.id in s.eomPaused, it.icon) }
     }
 
     private suspend fun rescue(): RescueSources {

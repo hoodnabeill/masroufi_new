@@ -1,6 +1,7 @@
 package com.masroufi.app.ui.components
 
 import androidx.compose.material3.Text
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -27,5 +28,17 @@ class PlusLockedTest {
         rule.onNodeWithText("الدهب بالسعر اللي تكتبه، مع بلس.").assertExists()
         rule.onNodeWithText("جرّب بلس").performClick()
         assertEquals(1, taps)
+    }
+
+    @Test fun theButtonIsLeftOutWhileEndOfMonthModeIsOn() {
+        var taps = 0
+        rule.setContent {
+            MasroufiTheme {
+                CompositionLocalProvider(LocalEndOfMonthMode provides true) { PlusLocked(R.string.jar_lock_gold, { taps++ }) { Text("secret content") } }
+            }
+        }
+        rule.onNodeWithText("الدهب بالسعر اللي تكتبه، مع بلس.").assertExists()
+        rule.onNodeWithText("جرّب بلس").assertDoesNotExist()
+        assertEquals(0, taps)
     }
 }

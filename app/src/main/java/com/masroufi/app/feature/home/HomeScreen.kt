@@ -55,6 +55,7 @@ fun HomeScreen(
     onOpenPockets: () -> Unit = {},
     onOpenAlbum: () -> Unit = {},
     onOpenMatch: () -> Unit = {},
+    onOpenEndOfMonth: () -> Unit = {},
     onOpenAddSheet: (AddPrefill?) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -93,6 +94,9 @@ fun HomeScreen(
         onOpenPockets = onOpenPockets,
         onOpenAlbum = onOpenAlbum,
         onOpenMatch = onOpenMatch,
+        onOpenEndOfMonth = onOpenEndOfMonth,
+        onSwitchOnEndOfMonth = viewModel::switchOnEndOfMonth,
+        onDismissOffer = viewModel::dismissOffer,
         feedback = feedback,
         onTicketShown = viewModel::markTicketShown,
         onDismissCard = viewModel::dismissCard,
@@ -123,6 +127,9 @@ fun HomeContent(
     onOpenPockets: () -> Unit = {},
     onOpenAlbum: () -> Unit = {},
     onOpenMatch: () -> Unit = {},
+    onOpenEndOfMonth: () -> Unit = {},
+    onSwitchOnEndOfMonth: () -> Unit = {},
+    onDismissOffer: () -> Unit = {},
     onWishChangedMind: (WishEntity) -> Unit = {},
     onWishBought: (Long) -> Unit = {},
 ) {
@@ -148,7 +155,7 @@ fun HomeContent(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets, onOpenAlbum, onOpenMatch, onWishChangedMind, onWishBought)
+                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets, onOpenAlbum, onOpenMatch, onWishChangedMind, onWishBought, onOpenEndOfMonth, onSwitchOnEndOfMonth, onDismissOffer)
                 }
             }
         }
@@ -175,6 +182,9 @@ private fun ReadyContent(
     onOpenMatch: () -> Unit,
     onWishChangedMind: (WishEntity) -> Unit,
     onWishBought: (Long) -> Unit,
+    onOpenEndOfMonth: () -> Unit,
+    onSwitchOnEndOfMonth: () -> Unit,
+    onDismissOffer: () -> Unit,
 ) {
     val epochDay = s.today.toEpochDay()
     HomeHeader(s.today, s.greeting, s.streak, onOpenAlbum)
@@ -206,10 +216,11 @@ private fun ReadyContent(
     }
     if (feedback != null && s.ticket != null) PunchFeedbackLines(feedback, spread = s.cycle.daysLeft > 1)
     var moneySheet by remember { mutableStateOf(false) }
-    // One Qersh card at a time: a first-week card first, else the 48-hour question (never both).
+    // One Qersh card at a time: a first-week card first, then the end-of-month offer, then the 48-hour question.
     val fw = s.firstWeekCard
     val wish = s.dueWish
     if (fw != null) FirstWeekCardView(fw, onDismiss = { onDismissCard(fw.id) }, onMoney = { moneySheet = true })
+    else if (s.endOfMonthOffer) EndOfMonthOfferCard(onSwitchOn = onSwitchOnEndOfMonth, onDismiss = onDismissOffer)
     else if (wish != null) WishQuestionCard(wish, onChangedMind = { onWishChangedMind(wish) }, onBought = { onWishBought(wish.id) })
     if (moneySheet) MoneySheet(onDone = { onSetMoney(it); moneySheet = false }, onDismiss = { moneySheet = false })
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -221,7 +232,7 @@ private fun ReadyContent(
         when (card) {
             HomeCard.WEEK -> WeekCard(s.week, s.closedUnder, onOpenMatch)
             HomeCard.JAR -> JarCard(s.jarTotal)
-            HomeCard.CYCLE -> CycleCard(s.cycle)
+            HomeCard.CYCLE -> CycleCard(s.cycle, onOpenEndOfMonth)
             HomeCard.PEOPLE, HomeCard.SEASONS -> Unit // no Home card for these yet
         }
     }

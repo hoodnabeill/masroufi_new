@@ -1075,4 +1075,64 @@
     <string name="profile_share_head">مستوى %1$s · %2$s على مصروفي</string>
     <string name="profile_share_head_named">%1$s · مستوى %2$s · %3$s على مصروفي</string>
     <string name="profile_share_stats">%1$s يوم سلسلة · %2$s مثل · كسبت %3$s ماتش من %4$s</string>
+
+    <!-- Task 46: end-of-month screen (LastDays.dc.html) and its Home wiring. -->
+    <string name="eom_title">وضع آخر الشهر</string>
+    <plurals name="eom_days_left">
+        <item quantity="zero">فاضل %1$d يوم على المرتب ومعاك</item>
+        <item quantity="one">فاضل يوم على المرتب ومعاك</item>
+        <item quantity="two">فاضل يومين على المرتب ومعاك</item>
+        <item quantity="few">فاضل %1$d أيام على المرتب ومعاك</item>
+        <item quantity="many">فاضل %1$d يوم على المرتب ومعاك</item>
+        <item quantity="other">فاضل %1$d يوم على المرتب ومعاك</item>
+    </plurals>
+    <plurals name="eom_days_left_short">
+        <item quantity="zero">فاضل %1$d يوم على المرتب، وناقصك</item>
+        <item quantity="one">فاضل يوم على المرتب، وناقصك</item>
+        <item quantity="two">فاضل يومين على المرتب، وناقصك</item>
+        <item quantity="few">فاضل %1$d أيام على المرتب، وناقصك</item>
+        <item quantity="many">فاضل %1$d يوم على المرتب، وناقصك</item>
+        <item quantity="other">فاضل %1$d يوم على المرتب، وناقصك</item>
+    </plurals>
+    <string name="eom_unit">جنيه</string>
+    <string name="eom_hero_line">يعني %1$s جنيه في اليوم. تتعمل، وأنا معاك.</string>
+    <string name="eom_short_line">ده الناقص عن اللي لازم يتدفع. شوف تحت ممكن تجيبه منين، ونرتّبها سوا.</string>
+    <plurals name="eom_tickets">
+        <item quantity="zero">%1$d تذكرة صغيرة</item>
+        <item quantity="one">تذكرة صغيرة</item>
+        <item quantity="two">تذكرتين صغيرتين</item>
+        <item quantity="few">%1$d تذاكر صغيرة</item>
+        <item quantity="many">%1$d تذكرة صغيرة</item>
+        <item quantity="other">%1$d تذكرة صغيرة</item>
+    </plurals>
+    <string name="eom_each">كل واحدة بـ %1$s</string>
+    <string name="eom_bill">يوم %1$s فيه فاتورة %2$s (%3$s)، ومحجوزة من دلوقتي برّه الـ %4$s.</string>
+    <plurals name="eom_bill_more">
+        <item quantity="zero">وفيه %1$d فاتورة تانية محجوزة برضه.</item>
+        <item quantity="one">وفيه فاتورة تانية محجوزة برضه.</item>
+        <item quantity="two">وفيه فاتورتين تانيتين محجوزتين برضه.</item>
+        <item quantity="few">وفيه %1$d فواتير تانية محجوزة برضه.</item>
+        <item quantity="many">وفيه %1$d فاتورة تانية محجوزة برضه.</item>
+        <item quantity="other">وفيه %1$d فاتورة تانية محجوزة برضه.</item>
+    </plurals>
+    <string name="eom_bill_day_cd">يوم %1$s فيه فاتورة</string>
+    <string name="eom_habits_title">أكتر حاجتين بيسحبوا منك</string>
+    <string name="eom_habit_line">%1$s الشهر ده · وقّفها لحد المرتب</string>
+    <string name="eom_habit_cd">وقّف %1$s</string>
+    <string name="eom_habits_note">لو سجّلت حاجة موقّفة هفكّرك بس، من غير زعل.</string>
+    <string name="eom_challenge_title">تحدي: يوم من غير صرف</string>
+    <string name="eom_challenge_count">%1$d / %2$d</string>
+    <string name="eom_challenge_line">كل يوم يعدّي من غير صرف بيزوّد باقي التذاكر %1$s جنيه لكل يوم. عدّي يومين وخد ختم «إيد ماسكة».</string>
+    <string name="eom_challenge_line_flat">عدّي يومين من غير صرف وخد ختم «إيد ماسكة».</string>
+    <string name="eom_challenge_done">خدت ختم «إيد ماسكة». كمّل كده.</string>
+    <string name="eom_rescue_title">لو اتزنقت</string>
+    <string name="eom_rescue_jar">الحصّالة</string>
+    <string name="eom_rescue_jar_value">%1$s · تقدر تفكّ منها</string>
+    <string name="eom_rescue_owed">ليك عند %1$s</string>
+    <string name="eom_rescue_owed_value">%1$s · فكّره</string>
+    <string name="eom_rescue_emergency">ظرف الطوارئ</string>
+    <string name="eom_switch_on">شغّل الوضع لحد يوم %1$s</string>
+    <string name="eom_switch_off">وقّف الوضع</string>
+    <string name="eom_offer_text">الفلوس لحد المرتب بقت ضيّقة. تحب أقسّمها على تذاكر صغيرة ونعدّي الأيام دي سوا؟</string>
+    <string name="eom_offer_on">شغّله</string>
 </resources>

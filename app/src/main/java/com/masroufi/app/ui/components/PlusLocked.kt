@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -32,12 +33,19 @@ import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
 
 /**
+ * End-of-month mode is on (plan decision 8, 09-PREMIUM): the paywall never shows, so [PlusLocked] keeps its card and
+ * leaves out "جرّب بلس". AppRoot provides the live value once; every Plus-locked card reads it here.
+ */
+val LocalEndOfMonthMode = staticCompositionLocalOf { false }
+
+/**
  * The Plus-locked pattern (decision 1): [content] is drawn blurred (alpha 0.15 below API 31), not interactive and hidden
  * from TalkBack, under one bubble-style card with the [what] line and "جرّب بلس".
  */
 @Composable
 fun PlusLocked(@StringRes what: Int, onTryPlus: () -> Unit, content: @Composable () -> Unit) {
     val haptics = LocalHaptics.current
+    val endOfMonth = LocalEndOfMonthMode.current
     val look = if (Build.VERSION.SDK_INT >= 31) Modifier.blur(12.dp) else Modifier.alpha(0.15f)
     val shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomEnd = 20.dp, bottomStart = 6.dp)
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -54,7 +62,7 @@ fun PlusLocked(@StringRes what: Int, onTryPlus: () -> Unit, content: @Composable
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(stringResource(what), style = TzType.body.copy(textAlign = TextAlign.Center), color = Tz.text2)
-            PrimaryButton(stringResource(R.string.env_plus_try), { haptics.perform(HapticLevel.Tap); onTryPlus() }, height = 48.dp)
+            if (!endOfMonth) PrimaryButton(stringResource(R.string.env_plus_try), { haptics.perform(HapticLevel.Tap); onTryPlus() }, height = 48.dp)
         }
     }
 }

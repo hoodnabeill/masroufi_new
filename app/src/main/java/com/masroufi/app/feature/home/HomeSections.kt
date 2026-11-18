@@ -70,6 +70,7 @@ import com.masroufi.app.domain.ProverbCatalog
 import com.masroufi.app.feature.add.PunchFeedback
 import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.SkeletonBlock
+import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzCard
 import com.masroufi.app.ui.components.TzProgressBar
 import com.masroufi.app.ui.components.skeletonPulse
@@ -93,7 +94,7 @@ import java.time.LocalDate
 const val HomeSkeletonTag = "home_skeleton"
 
 /** Dashed outline drawn inside the bounds (CSS `border: dashed`). */
-private fun Modifier.dashedBorder(width: Dp, color: Color, radius: Dp) = drawBehind {
+internal fun Modifier.dashedBorder(width: Dp, color: Color, radius: Dp) = drawBehind {
     val w = width.toPx()
     drawRoundRect(
         color, Offset(w / 2f, w / 2f), Size(size.width - w, size.height - w), CornerRadius(radius.toPx() - w / 2f),
@@ -387,9 +388,14 @@ internal fun JarCard(total: Long) {
 }
 
 @Composable
-internal fun CycleCard(cycle: CycleUi) {
+internal fun CycleCard(cycle: CycleUi, onOpenEndOfMonth: () -> Unit = {}) {
+    val haptics = LocalHaptics.current
     TzCard(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.home_cycle_title, cycle.daysLeft.toString()), style = TzType.cardHeading, color = Tz.text)
+        // 04-SCREENS "Main" 7: the title, and a link to end-of-month mode at its end (Main.dc.html).
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.home_cycle_title, cycle.daysLeft.toString()), style = TzType.cardHeading, color = Tz.text)
+            TextLink(stringResource(R.string.eom_title), { haptics.perform(HapticLevel.Tap); onOpenEndOfMonth() })
+        }
         Spacer(Modifier.height(10.dp))
         TzProgressBar(listOf(cycle.progress to Tz.turquoise), height = 10.dp)
         val projected = cycle.projected

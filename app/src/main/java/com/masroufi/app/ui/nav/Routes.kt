@@ -46,5 +46,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object Basket
 /** ملفك (Task 44). */
 @Serializable data object Profile
+/** وضع آخر الشهر (Task 46). */
+@Serializable data object EndOfMonth
 /** Stub until Phase 11's settings replace it. */
 @Serializable data object AppSettings

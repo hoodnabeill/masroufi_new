@@ -75,6 +75,8 @@ data class CloseDayData(
     val emergencyTotal: Long,
     val tomorrow: TomorrowBasis,
     val leftoverDefault: LeftoverDestination,
+    /** End-of-month mode is on for the day: its leftover stays in the pool, so no carry is added on top. */
+    val endOfMonthMode: Boolean = false,
 )
 
 /** The streak counts back over at most this many days. */
@@ -191,6 +193,7 @@ class HomeRepository @Inject constructor(
             tomorrow = tomorrowBasis(date, s),
             // In the mode the leftover stays in the pool ("tomorrow" carries nothing there); the jar is still offered.
             leftoverDefault = if (s.eomActiveOn(date)) LeftoverDestination.TOMORROW else s.leftoverDefault,
+            endOfMonthMode = s.eomActiveOn(date),
         )
     }
 }

@@ -130,6 +130,15 @@ class CloseDayViewModelTest {
         assertEquals(13_200L, s.jarAfter)
     }
 
+    @Test fun tomorrowWithDoesNotCarryTheLeftoverOnTopInTheMode() {
+        runBlocking { f.tickets.printToday(); f.eom.switchOn() }
+        sixPunches()
+        val s = vm().ready()
+        // Spendable 3,732 over 12 days = 311: the 132 leftover is already in it (carried on top it would show 432).
+        assertEquals(31_100L, s.tomorrowWith)
+        assertEquals("in a pot: (3,732 - 132) / 12", 30_000L, s.tomorrowWithout)
+    }
+
     @Test fun destinationDefaultsFromSettings() {
         runBlocking { f.settings.setLeftoverDefault(LeftoverDestination.EMERGENCY) }
         assertEquals(LeftoverDestination.EMERGENCY, vm().ready().defaultDestination)

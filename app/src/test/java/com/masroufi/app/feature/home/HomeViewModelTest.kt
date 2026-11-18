@@ -13,6 +13,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.data.db.CategoryEntity
+import com.masroufi.app.data.db.DayTicketEntity
 import com.masroufi.app.data.db.EntryEntity
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.PocketKind
@@ -24,6 +25,7 @@ import com.masroufi.app.data.repo.RepoFixture
 import com.masroufi.app.data.repo.TestClock
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
+import com.masroufi.app.domain.TicketStatus
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.feature.roll.PendingDeletes
 import com.masroufi.app.feature.add.AddPrefill
@@ -67,6 +69,7 @@ class HomeViewModelTest {
     private val zone = ZoneId.of("Africa/Cairo")
     private val nov12 = LocalDate.of(2026, 11, 12)
     private val nov13 = nov12.plusDays(1)
+    private val nov25 = LocalDate.of(2026, 11, 25)
     private val clock = TestClock(at(nov12, 9), zone)
     private val main = StandardTestDispatcher()
     private val io = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -104,7 +107,7 @@ class HomeViewModelTest {
             initializer {
                 HomeViewModel(
                     f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, FeedbackBus(), f.settings, f.onboarding,
-                    PendingDeletes(f.entries, io), f.wishes,
+                    PendingDeletes(f.entries, io), f.wishes, f.eom,
                 )
             }
         }
@@ -301,5 +304,69 @@ class HomeViewModelTest {
         vm.wishJarAnswer(true)
         settle("answered with 1,800 in the jar") { ready?.jarTotal == 180_000L && ready?.dueWish?.id == b }
         assertEquals(180_000L, runBlocking { db.wishDao().byId(a) }!!.movedToJar)
+    }
+
+    /** Three printed days of 600 before today: today's 300 is under 60% of their average. */
+    private fun printedBefore() = runBlocking {
+        (1L..3L).forEach {
+            db.dayTicketDao().insert(
+                DayTicketEntity(date = nov12.minusDays(it), amount = 60_000, base = 60_000, status = TicketStatus.CLOSED_AUTO),
+            )
+        }
+    }
+
+    /** DataStore reads and edits run on an IO thread: the main thread is only ever pumped by [settle]. */
+    private fun <T> onIo(block: suspend () -> T): T = runBlocking(Dispatchers.IO) { block() }
+
+    @Test fun offerCardShowsUnderSixtyPercentAndIsDismissedForTheCycle() {
+        printedBefore()
+        newVm()
+        settle("the offer card") { ready?.endOfMonthOffer == true }
+        assertEquals(30_000L, ready?.ticket?.amount)
+        vm.dismissOffer()
+        settle("the offer is gone") { ready?.endOfMonthOffer == false }
+        assertEquals(nov25.toEpochDay(), onIo { f.settings.current().eomOfferDismissedFor })
+    }
+
+    @Test fun noOfferWithoutThreePrintedDays() {
+        newVm()
+        settle("ready") { ready?.ticket != null }
+        assertEquals(false, ready?.endOfMonthOffer)
+    }
+
+    @Test fun offerTakesTheFirstWeekCardSlotAfterAFirstWeekCardAndBeforeTheWishQuestion() {
+        printedBefore()
+        parkedBefore()
+        newVm()
+        settle("the offer card") { ready?.endOfMonthOffer == true }
+        assertNull("the offer goes before the 48-hour question", ready?.dueWish)
+        spend(1_000) // the first entry: the first-week "first entry" card shows and goes first
+        settle("a first-week card") { ready?.firstWeekCard != null }
+        assertEquals("never two cards at once", false, ready?.endOfMonthOffer)
+        vm.dismissCard(ready!!.firstWeekCard!!.id)
+        settle("the offer is back") { ready?.firstWeekCard == null && ready?.endOfMonthOffer == true }
+        assertNull(ready?.dueWish)
+        vm.dismissOffer()
+        settle("the wish question after the offer") { ready?.endOfMonthOffer == false && ready?.dueWish != null }
+    }
+
+    @Test fun theOfferSwitchesTheModeOnAndTheCardGoes() {
+        printedBefore()
+        newVm()
+        settle("the offer card") { ready?.endOfMonthOffer == true }
+        vm.switchOnEndOfMonth()
+        settle("switched on") { ready?.endOfMonthOffer == false && onIo { f.settings.current().eomOn } }
+        assertEquals("3,900 over 13 days", 30_000L, ready?.ticket?.amount)
+    }
+
+    @Test fun tomorrowDoesNotCarryTheLeftoverOnTopInTheMode() {
+        runBlocking { f.tickets.printToday(); f.eom.switchOn() }
+        spend(1_000)
+        newVm()
+        settle("ready") { ready?.ticket != null }
+        onIo { f.tickets.closeDay(nov12, LeftoverDestination.TOMORROW) }
+        settle("tomorrow's preview") { ready?.tomorrow != null }
+        // 3,890 over 12 days = 324: the 290 leftover is already in the 3,890 (carried on top it would show 590).
+        assertEquals(32_400L, ready?.tomorrow?.amount)
     }
 }

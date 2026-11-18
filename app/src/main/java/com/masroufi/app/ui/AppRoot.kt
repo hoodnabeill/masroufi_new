@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -47,6 +48,7 @@ import com.masroufi.app.feature.album.AlbumScreen
 import com.masroufi.app.feature.basket.BasketScreen
 import com.masroufi.app.feature.buy.BeforeBuyScreen
 import com.masroufi.app.feature.close.CloseDayScreen
+import com.masroufi.app.feature.endofmonth.EndOfMonthScreen
 import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.match.MatchScreen
@@ -75,6 +77,7 @@ import com.masroufi.app.feature.pockets.PocketDetailScreen
 import com.masroufi.app.feature.pockets.PocketsScreen
 import com.masroufi.app.feature.proverb.ProverbRewardScreen
 import com.masroufi.app.feature.roll.RollScreen
+import com.masroufi.app.ui.components.LocalEndOfMonthMode
 import com.masroufi.app.ui.components.TzTab
 import com.masroufi.app.ui.components.TzTabBar
 import com.masroufi.app.ui.motion.LocalReduceMotion
@@ -89,6 +92,7 @@ import com.masroufi.app.ui.nav.Match
 import com.masroufi.app.ui.nav.Profile
 import com.masroufi.app.ui.nav.DutyLedger
 import com.masroufi.app.ui.nav.EditEnvelope
+import com.masroufi.app.ui.nav.EndOfMonth
 import com.masroufi.app.ui.nav.GameyaForm
 import com.masroufi.app.ui.nav.GameyaScreen
 import com.masroufi.app.ui.nav.PersonDetail
@@ -148,7 +152,7 @@ private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<Proverb
     hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<NewGoal>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
     hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>() ||
     hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>() ||
-    hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<AppSettings>()
+    hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<EndOfMonth>() || hasRoute<AppSettings>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -168,7 +172,9 @@ private fun NavController.switchTab(tab: TzTab) {
 fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
     MasroufiTheme {
         val nav = rememberNavController()
-        val onboarded by hiltViewModel<AppRootViewModel>().onboarded.collectAsStateWithLifecycle()
+        val root = hiltViewModel<AppRootViewModel>()
+        val onboarded by root.onboarded.collectAsStateWithLifecycle()
+        val endOfMonth by root.endOfMonth.collectAsStateWithLifecycle()
         // Decided once, from the stored value: finishing onboarding must not rebuild the graph under the navigation to Home.
         var start by remember { mutableStateOf<Any?>(null) }
         if (start == null && onboarded != null) start = if (onboarded == true) Home else Onboarding
@@ -198,185 +204,192 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
         fun AnimatedContentTransitionScope<NavBackStackEntry>.pushedOut(): ExitTransition =
             if (reduce) fadeOut(tween(120)) else slideOutHorizontally(move) { sign * it }
 
-        AppScaffold(
-            selectedTab = current.tab(),
-            onTab = nav::switchTab,
-            onAdd = { openAddSheet(null) },
-            showTabBar = current.tab() != null,
-            modifier = Modifier.graphicsLayer { scaleX = behind; scaleY = behind },
-        ) {
-            // Night (the scaffold) until the stored value is read: no flash of Home before onboarding.
-            if (startDestination != null) NavHost(
-                nav,
-                startDestination = startDestination,
-                // 05-MOTION "Tear": the reward cross-fades in over the torn ticket in 160 ms.
-                enterTransition = {
-                    when {
-                        initialState.destination.hasRoute<CloseDay>() && targetState.destination.hasRoute<ProverbReward>() -> fadeIn(tween(160))
-                        targetState.destination.isPushed() -> pushedIn()
-                        else -> fadeIn(fade)
-                    }
-                },
-                exitTransition = {
-                    if (initialState.destination.hasRoute<CloseDay>() && targetState.destination.hasRoute<ProverbReward>()) fadeOut(tween(160))
-                    else fadeOut(fade)
-                },
-                popEnterTransition = { fadeIn(fade) },
-                popExitTransition = { if (initialState.destination.isPushed()) pushedOut() else fadeOut(fade) },
+        CompositionLocalProvider(LocalEndOfMonthMode provides endOfMonth) {
+            AppScaffold(
+                selectedTab = current.tab(),
+                onTab = nav::switchTab,
+                onAdd = { openAddSheet(null) },
+                showTabBar = current.tab() != null,
+                modifier = Modifier.graphicsLayer { scaleX = behind; scaleY = behind },
             ) {
-                composable<Onboarding> {
-                    OnboardingScreen(
-                        viewModel = hiltViewModel(),
-                        onFinished = {
-                            nav.navigate(Home) { popUpTo<Onboarding> { inclusive = true } }
-                            openAddSheet(null)
-                        },
-                    )
+                // Night (the scaffold) until the stored value is read: no flash of Home before onboarding.
+                if (startDestination != null) NavHost(
+                    nav,
+                    startDestination = startDestination,
+                    // 05-MOTION "Tear": the reward cross-fades in over the torn ticket in 160 ms.
+                    enterTransition = {
+                        when {
+                            initialState.destination.hasRoute<CloseDay>() && targetState.destination.hasRoute<ProverbReward>() -> fadeIn(tween(160))
+                            targetState.destination.isPushed() -> pushedIn()
+                            else -> fadeIn(fade)
+                        }
+                    },
+                    exitTransition = {
+                        if (initialState.destination.hasRoute<CloseDay>() && targetState.destination.hasRoute<ProverbReward>()) fadeOut(tween(160))
+                        else fadeOut(fade)
+                    },
+                    popEnterTransition = { fadeIn(fade) },
+                    popExitTransition = { if (initialState.destination.isPushed()) pushedOut() else fadeOut(fade) },
+                ) {
+                    composable<Onboarding> {
+                        OnboardingScreen(
+                            viewModel = hiltViewModel(),
+                            onFinished = {
+                                nav.navigate(Home) { popUpTo<Onboarding> { inclusive = true } }
+                                openAddSheet(null)
+                            },
+                        )
+                    }
+                    composable<Home> {
+                        HomeScreen(
+                            viewModel = hiltViewModel(),
+                            onCloseDay = { nav.navigate(CloseDay(it)) },
+                            onOpenProverb = { nav.navigate(ProverbReward(it)) },
+                            onOpenPockets = { nav.navigate(Pockets) },
+                            onOpenAlbum = { nav.navigate(Album) },
+                            onOpenMatch = { nav.navigate(Match) },
+                            onOpenEndOfMonth = { nav.navigate(EndOfMonth) },
+                            onOpenAddSheet = ::openAddSheet,
+                        )
+                    }
+                    composable<Album> {
+                        AlbumScreen(
+                            viewModel = hiltViewModel(),
+                            onBack = { nav.popBackStack() },
+                            onToday = { nav.popBackStack<Home>(inclusive = false) },
+                            onOpenRoll = { nav.switchTab(TzTab.Roll) },
+                            onOpenBasket = { nav.navigate(Basket) },
+                            onOpenPockets = { nav.navigate(Pockets) },
+                            onOpenSettings = { nav.navigate(AppSettings) },
+                            onOpenProfile = { nav.navigate(Profile) },
+                        )
+                    }
+                    composable<Match> {
+                        MatchScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onContinue = { nav.popBackStack<Home>(inclusive = false) })
+                    }
+                    composable<EndOfMonth> {
+                        // The jar's withdraw sheet lives on the Plan tab.
+                        EndOfMonthScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpenJar = { nav.switchTab(TzTab.Plan) })
+                    }
+                    composable<Basket> { BasketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<Profile> { ProfileScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<AppSettings> { ComingSoonScreen(R.string.soon_settings) { nav.popBackStack() } }
+                    composable<RollTab> {
+                        RollScreen(viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet, onPayday = { nav.navigate(PaydayRitual(it)) })
+                    }
+                    composable<PaydayRitual> {
+                        PaydayRitualScreen(
+                            viewModel = hiltViewModel(),
+                            onHome = { nav.popBackStack<Home>(inclusive = false) },
+                            onFixedCosts = { nav.navigate(FixedCosts) },
+                        )
+                    }
+                    composable<PlanTab> {
+                        PlanScreen(
+                            viewModel = hiltViewModel(),
+                            onOpenEnvelope = { nav.navigate(EnvelopeDetail(it)) },
+                            onEditEnvelope = { nav.navigate(EditEnvelope(it)) },
+                            onNewEnvelope = { nav.navigate(NewEnvelope) },
+                            onOpenSubscriptions = { nav.navigate(Subscriptions) },
+                            onOpenFixedCosts = { nav.navigate(FixedCosts) },
+                            onOpenBeforeBuy = { nav.navigate(BeforeYouBuy) },
+                            onNewGoal = { nav.navigate(NewGoal) },
+                            onOpenSeason = { nav.navigate(SeasonEdit(it)) },
+                            onZakat = { nav.navigate(Zakat) },
+                            onToday = { nav.switchTab(TzTab.Today) },
+                            onGallery = { nav.navigate(Gallery) },
+                        )
+                    }
+                    composable<BeforeYouBuy> { BeforeBuyScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpenAddSheet = ::openAddSheet) }
+                    composable<SeasonEdit> { SeasonDetailScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<Zakat> { ZakatScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<NewGoal> { NewGoalScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<Subscriptions> {
+                        SubscriptionsScreen(
+                            viewModel = hiltViewModel(),
+                            onBack = { nav.popBackStack() },
+                            onOpen = { nav.navigate(SubscriptionEdit(it)) },
+                            onNew = { nav.navigate(SubscriptionEdit(0, it)) },
+                            onOpenPerson = { nav.navigate(PersonDetail(it)) },
+                        )
+                    }
+                    composable<SubscriptionEdit> { SubscriptionFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<EnvelopeDetail> {
+                        EnvelopeDetailScreen(
+                            viewModel = hiltViewModel(),
+                            onBack = { nav.popBackStack() },
+                            onEdit = { nav.navigate(EditEnvelope(it)) },
+                            onOpenAddSheet = ::openAddSheet,
+                        )
+                    }
+                    composable<NewEnvelope> {
+                        EnvelopeFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onNewFixedCost = { nav.navigate(FixedCostEdit(0)) })
+                    }
+                    composable<EditEnvelope> {
+                        EnvelopeFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onNewFixedCost = { nav.navigate(FixedCostEdit(0)) })
+                    }
+                    composable<FixedCosts> {
+                        FixedCostsScreen(
+                            viewModel = hiltViewModel(),
+                            onBack = { nav.popBackStack() },
+                            onOpen = { nav.navigate(FixedCostEdit(it)) },
+                            onNew = { nav.navigate(FixedCostEdit(0)) },
+                            onOpenAddSheet = ::openAddSheet,
+                        )
+                    }
+                    composable<FixedCostEdit> { FixedCostFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<PeopleTab> {
+                        PeopleScreen(
+                            viewModel = hiltViewModel(),
+                            onOpenPerson = { nav.navigate(PersonDetail(it)) },
+                            onOpenDuty = { nav.navigate(DutyLedger) },
+                            onOpenGameya = { nav.navigate(GameyaScreen) },
+                            onNewGameya = { nav.navigate(GameyaForm(0)) },
+                        )
+                    }
+                    composable<PersonDetail> { PersonDetailScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<DutyLedger> { DutyLedgerScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<GameyaScreen> {
+                        GameyaMainScreen(
+                            viewModel = hiltViewModel(), onBack = { nav.popBackStack() },
+                            onNew = { nav.navigate(GameyaForm(0)) }, onEdit = { nav.navigate(GameyaForm(it)) },
+                        )
+                    }
+                    composable<GameyaForm> { GameyaFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<CloseDay> {
+                        CloseDayScreen(
+                            viewModel = hiltViewModel(),
+                            onBack = { nav.popBackStack() },
+                            // The reward replaces this screen, so back from it lands on Home.
+                            onDone = { nav.navigate(ProverbReward(it)) { popUpTo<CloseDay> { inclusive = true } } },
+                        )
+                    }
+                    composable<ProverbReward> {
+                        // Back and "تمام، لبكره" both land on Home.
+                        ProverbRewardScreen(hiltViewModel(), onHome = { nav.popBackStack<Home>(inclusive = false) })
+                    }
+                    composable<Pockets> {
+                        PocketsScreen(
+                            viewModel = hiltViewModel(),
+                            onBack = { nav.popBackStack() },
+                            onOpenPocket = { nav.navigate(PocketDetail(it)) },
+                            onNewPocket = { nav.navigate(NewPocket) },
+                            onOpenAddSheet = ::openAddSheet,
+                        )
+                    }
+                    composable<PocketDetail> {
+                        PocketDetailScreen(
+                            viewModel = hiltViewModel(),
+                            onBack = { nav.popBackStack() },
+                            onOpenRoll = { nav.switchTab(TzTab.Roll) },
+                            onOpenAddSheet = ::openAddSheet,
+                        )
+                    }
+                    composable<NewPocket> { NewPocketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }) }
                 }
-                composable<Home> {
-                    HomeScreen(
-                        viewModel = hiltViewModel(),
-                        onCloseDay = { nav.navigate(CloseDay(it)) },
-                        onOpenProverb = { nav.navigate(ProverbReward(it)) },
-                        onOpenPockets = { nav.navigate(Pockets) },
-                        onOpenAlbum = { nav.navigate(Album) },
-                        onOpenMatch = { nav.navigate(Match) },
-                        onOpenAddSheet = ::openAddSheet,
-                    )
-                }
-                composable<Album> {
-                    AlbumScreen(
-                        viewModel = hiltViewModel(),
-                        onBack = { nav.popBackStack() },
-                        onToday = { nav.popBackStack<Home>(inclusive = false) },
-                        onOpenRoll = { nav.switchTab(TzTab.Roll) },
-                        onOpenBasket = { nav.navigate(Basket) },
-                        onOpenPockets = { nav.navigate(Pockets) },
-                        onOpenSettings = { nav.navigate(AppSettings) },
-                        onOpenProfile = { nav.navigate(Profile) },
-                    )
-                }
-                composable<Match> {
-                    MatchScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onContinue = { nav.popBackStack<Home>(inclusive = false) })
-                }
-                composable<Basket> { BasketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<Profile> { ProfileScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<AppSettings> { ComingSoonScreen(R.string.soon_settings) { nav.popBackStack() } }
-                composable<RollTab> {
-                    RollScreen(viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet, onPayday = { nav.navigate(PaydayRitual(it)) })
-                }
-                composable<PaydayRitual> {
-                    PaydayRitualScreen(
-                        viewModel = hiltViewModel(),
-                        onHome = { nav.popBackStack<Home>(inclusive = false) },
-                        onFixedCosts = { nav.navigate(FixedCosts) },
-                    )
-                }
-                composable<PlanTab> {
-                    PlanScreen(
-                        viewModel = hiltViewModel(),
-                        onOpenEnvelope = { nav.navigate(EnvelopeDetail(it)) },
-                        onEditEnvelope = { nav.navigate(EditEnvelope(it)) },
-                        onNewEnvelope = { nav.navigate(NewEnvelope) },
-                        onOpenSubscriptions = { nav.navigate(Subscriptions) },
-                        onOpenFixedCosts = { nav.navigate(FixedCosts) },
-                        onOpenBeforeBuy = { nav.navigate(BeforeYouBuy) },
-                        onNewGoal = { nav.navigate(NewGoal) },
-                        onOpenSeason = { nav.navigate(SeasonEdit(it)) },
-                        onZakat = { nav.navigate(Zakat) },
-                        onToday = { nav.switchTab(TzTab.Today) },
-                        onGallery = { nav.navigate(Gallery) },
-                    )
-                }
-                composable<BeforeYouBuy> { BeforeBuyScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpenAddSheet = ::openAddSheet) }
-                composable<SeasonEdit> { SeasonDetailScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<Zakat> { ZakatScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<NewGoal> { NewGoalScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<Subscriptions> {
-                    SubscriptionsScreen(
-                        viewModel = hiltViewModel(),
-                        onBack = { nav.popBackStack() },
-                        onOpen = { nav.navigate(SubscriptionEdit(it)) },
-                        onNew = { nav.navigate(SubscriptionEdit(0, it)) },
-                        onOpenPerson = { nav.navigate(PersonDetail(it)) },
-                    )
-                }
-                composable<SubscriptionEdit> { SubscriptionFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<EnvelopeDetail> {
-                    EnvelopeDetailScreen(
-                        viewModel = hiltViewModel(),
-                        onBack = { nav.popBackStack() },
-                        onEdit = { nav.navigate(EditEnvelope(it)) },
-                        onOpenAddSheet = ::openAddSheet,
-                    )
-                }
-                composable<NewEnvelope> {
-                    EnvelopeFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onNewFixedCost = { nav.navigate(FixedCostEdit(0)) })
-                }
-                composable<EditEnvelope> {
-                    EnvelopeFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onNewFixedCost = { nav.navigate(FixedCostEdit(0)) })
-                }
-                composable<FixedCosts> {
-                    FixedCostsScreen(
-                        viewModel = hiltViewModel(),
-                        onBack = { nav.popBackStack() },
-                        onOpen = { nav.navigate(FixedCostEdit(it)) },
-                        onNew = { nav.navigate(FixedCostEdit(0)) },
-                        onOpenAddSheet = ::openAddSheet,
-                    )
-                }
-                composable<FixedCostEdit> { FixedCostFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<PeopleTab> {
-                    PeopleScreen(
-                        viewModel = hiltViewModel(),
-                        onOpenPerson = { nav.navigate(PersonDetail(it)) },
-                        onOpenDuty = { nav.navigate(DutyLedger) },
-                        onOpenGameya = { nav.navigate(GameyaScreen) },
-                        onNewGameya = { nav.navigate(GameyaForm(0)) },
-                    )
-                }
-                composable<PersonDetail> { PersonDetailScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<DutyLedger> { DutyLedgerScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<GameyaScreen> {
-                    GameyaMainScreen(
-                        viewModel = hiltViewModel(), onBack = { nav.popBackStack() },
-                        onNew = { nav.navigate(GameyaForm(0)) }, onEdit = { nav.navigate(GameyaForm(it)) },
-                    )
-                }
-                composable<GameyaForm> { GameyaFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<CloseDay> {
-                    CloseDayScreen(
-                        viewModel = hiltViewModel(),
-                        onBack = { nav.popBackStack() },
-                        // The reward replaces this screen, so back from it lands on Home.
-                        onDone = { nav.navigate(ProverbReward(it)) { popUpTo<CloseDay> { inclusive = true } } },
-                    )
-                }
-                composable<ProverbReward> {
-                    // Back and "تمام، لبكره" both land on Home.
-                    ProverbRewardScreen(hiltViewModel(), onHome = { nav.popBackStack<Home>(inclusive = false) })
-                }
-                composable<Pockets> {
-                    PocketsScreen(
-                        viewModel = hiltViewModel(),
-                        onBack = { nav.popBackStack() },
-                        onOpenPocket = { nav.navigate(PocketDetail(it)) },
-                        onNewPocket = { nav.navigate(NewPocket) },
-                        onOpenAddSheet = ::openAddSheet,
-                    )
-                }
-                composable<PocketDetail> {
-                    PocketDetailScreen(
-                        viewModel = hiltViewModel(),
-                        onBack = { nav.popBackStack() },
-                        onOpenRoll = { nav.switchTab(TzTab.Roll) },
-                        onOpenAddSheet = ::openAddSheet,
-                    )
-                }
-                composable<NewPocket> { NewPocketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }) }
             }
+            if (addSheetOpen) AddSheet(addPrefill, onDismiss = { addSheetOpen = false })
         }
-        if (addSheetOpen) AddSheet(addPrefill, onDismiss = { addSheetOpen = false })
     }
 }
