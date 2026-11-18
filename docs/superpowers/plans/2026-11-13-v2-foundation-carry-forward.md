@@ -108,6 +108,10 @@ Decisions made during Phase 3 (owner may override):
 
 - Task 46: Home card slot order is first-week card, then the end-of-month offer, then the 48-hour wish question. The Home ticket keeps its look in the mode (carnelian only on the screen's hero). Jar rescue row opens the Plan tab; person row opens the gentle-reminder share. Bill line = first bill by name + "وفيه N فاتورة تانية محجوزة برضه.". Switching the mode on keeps paused habits (supersedes Task 45). `PlusLocked` hides its button in the mode (via `LocalEndOfMonthMode`); the envelope-limit Plus sheet is not `PlusLocked` and still shows "جرّب بلس" (fix with Phase 10's paywall rules). Guessed copy: "وقّف الوضع", the offer text, the shortfall hero.
 
+## Phase 9a notes (installments, freelancer)
+
+- Task 47: DB v7 (`MIGRATION_6_7`). Installment per day rounds half down (1,335 → 44). Finished plans reserve nothing. Day-of logging and the self-payday move run inside `printToday`'s transaction (an extra suspension point before it hung a main-thread Home test; cause not fully understood). One logged payment per plan per print (a plan months behind catches up one per open). Open-ended "قسط" items from onboarding now log themselves on their due day. Safe-until = today + whole months + 15 days for a half. The freelance daily ticket uses the next cycle's real length (7,000 in a 31-day month = 225, the mock shows 233). An empty vault on self-payday makes no entry and reports short. Lower suggestion amount = the average rounded down to 500, only when below the salary. Deleting a job's income entry un-pays the job. Arabic literals in data code: "الخزنة", the job note "client · label".
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
