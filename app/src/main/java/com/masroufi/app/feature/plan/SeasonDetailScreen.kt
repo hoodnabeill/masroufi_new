@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.db.SeasonKind
 import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.feature.pockets.CircleButton
@@ -99,7 +99,7 @@ fun SeasonDetailScreen(viewModel: SeasonDetailViewModel, onBack: () -> Unit) {
                 live.items.forEach { item ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(item.label, style = TzType.body.copy(fontSize = 15.sp), color = Tz.text, modifier = Modifier.weight(1f))
-                        Text(formatPounds(item.amount), style = TzType.rowNumber, color = Tz.text)
+                        Text(poundsText(item.amount), style = TzType.rowNumber, color = Tz.text)
                         Box(
                             Modifier.size(44.dp).clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); viewModel.removeItem(item.id) },
                             contentAlignment = Alignment.Center,
@@ -109,7 +109,7 @@ fun SeasonDetailScreen(viewModel: SeasonDetailViewModel, onBack: () -> Unit) {
                 val sum = live.items.sumOf { it.amount }
                 if (sum > 0) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.season_items_total, formatPounds(sum)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text2)
+                        Text(stringResource(R.string.season_items_total, poundsText(sum)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text2)
                         if (sum != f.target.toPiastres()) TextLink(stringResource(R.string.season_items_as_target), viewModel::targetFromChecklist)
                     }
                 }
@@ -117,7 +117,7 @@ fun SeasonDetailScreen(viewModel: SeasonDetailViewModel, onBack: () -> Unit) {
             }
             FormBlock(R.string.season_q_saved) {
                 Text(
-                    stringResource(R.string.jar_goal_amounts, formatPounds(live.saved), formatPounds(live.season.target)),
+                    stringResource(R.string.jar_goal_amounts, poundsText(live.saved), poundsText(live.season.target)),
                     style = TzType.hero.copy(fontSize = 32.sp), color = Tz.text,
                 )
                 SecondaryButton(stringResource(R.string.season_put), { viewModel.open(SeasonSheet.Money) }, Modifier.fillMaxWidth(), height = 52.dp)
@@ -135,7 +135,7 @@ fun SeasonDetailScreen(viewModel: SeasonDetailViewModel, onBack: () -> Unit) {
         SeasonSheet.Money -> {
             val live = view
             if (live != null) AmountSheet(live.season.name, viewModel::dismiss) { amount ->
-                if (amount > free) Text(stringResource(R.string.jar_free_only, formatPounds(free)), style = TzType.label, color = Tz.carnelianText)
+                if (amount > free) Text(stringResource(R.string.jar_free_only, poundsText(free)), style = TzType.label, color = Tz.carnelianText)
                 PrimaryButton(stringResource(R.string.season_put), { haptics.perform(HapticLevel.Confirm); viewModel.earmark(amount) }, Modifier.fillMaxWidth(), enabled = amount in 1..free, height = 52.dp)
                 if (live.saved > 0) SecondaryButton(
                     stringResource(R.string.season_release),

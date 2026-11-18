@@ -50,6 +50,7 @@ import com.masroufi.app.R
 import com.masroufi.app.data.repo.SubscriptionAnswer
 import com.masroufi.app.data.repo.SubscriptionView
 import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.EmptyState
@@ -144,14 +145,14 @@ private fun Hero(s: SubscriptionsUi) {
     ) {
         Text(stringResource(R.string.subs_hero_label), style = TzType.label.copy(fontSize = 13.sp), color = Tz.text2)
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(formatPounds(s.monthlyTotal), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.text)
+            Text(poundsText(s.monthlyTotal), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.text)
             Text(stringResource(R.string.paper_currency), style = TzType.titlePushed.copy(fontSize = 20.sp), color = Tz.text2, modifier = Modifier.padding(bottom = 8.dp))
         }
         Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (s.tickets > 0) {
                 StatTile(stringResource(R.string.subs_tickets, s.tickets.toString()), stringResource(R.string.subs_tickets_line), Tz.yellow, Tz.night, Tz.night, Modifier.weight(1f))
             }
-            StatTile(formatPounds(s.perYear), stringResource(R.string.subs_year_line), Tz.night, Tz.text, Tz.text2, Modifier.weight(1f))
+            StatTile(poundsText(s.perYear), stringResource(R.string.subs_year_line), Tz.night, Tz.text, Tz.text2, Modifier.weight(1f))
         }
     }
 }
@@ -193,7 +194,7 @@ private fun TrialCard(t: TrialCardUi, onRemind: () -> Unit, onKeep: () -> Unit) 
                 )
                 Text(v.item.name, style = TzType.cardHeading, color = Tz.text)
             }
-            Text(stringResource(R.string.subs_trial_price, formatPounds(v.item.amount)), style = TzType.cardHeading.copy(fontSize = 22.sp), color = Tz.carnelianText)
+            Text(stringResource(R.string.subs_trial_price, poundsText(v.item.amount)), style = TzType.cardHeading.copy(fontSize = 22.sp), color = Tz.carnelianText)
         }
         Text(
             stringResource(R.string.subs_trial_body, end.dayOfMonth.toString()),
@@ -229,8 +230,8 @@ private fun QuestionCard(question: QuestionCardUi?, onAnswer: (Long, Subscriptio
             }
             v.stopSaving?.let { save ->
                 Text(
-                    if (q.grams != null) stringResource(R.string.subs_q_save_gold, formatPounds(save), q.grams.toString())
-                    else stringResource(R.string.subs_q_save_plain, formatPounds(save)),
+                    if (q.grams != null) stringResource(R.string.subs_q_save_gold, poundsText(save), q.grams.toString())
+                    else stringResource(R.string.subs_q_save_plain, poundsText(save)),
                     style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Color(0xFFF0E3B5),
                 )
             }
@@ -277,7 +278,7 @@ internal fun SubscriptionRow(row: SubRowUi, onOpen: () -> Unit, onRemindFriends:
         soon -> stringResource(R.string.subs_after, row.daysTo.toString(), day)
         else -> stringResource(R.string.subs_day, day)
     }
-    v.yearlySaving?.let { sub = stringResource(R.string.subs_yearly_cheaper, sub, formatPounds(it)) }
+    v.yearlySaving?.let { sub = stringResource(R.string.subs_yearly_cheaper, sub, poundsText(it)) }
     val (bg, ink) = TileColors[(item.id % TileColors.size).toInt()]
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onOpen), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -288,7 +289,7 @@ internal fun SubscriptionRow(row: SubRowUi, onOpen: () -> Unit, onRemindFriends:
                 Text(item.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
                 Text(sub, style = TzType.caption.copy(fontSize = 12.sp), color = if (soon && !shared) Tz.yellow else Tz.text2, maxLines = 2)
             }
-            Text(formatPounds(item.amount), style = TzType.rowNumber, color = Tz.text)
+            Text(poundsText(item.amount), style = TzType.rowNumber, color = Tz.text)
         }
         if (shared) {
             Row(
@@ -297,7 +298,7 @@ internal fun SubscriptionRow(row: SubRowUi, onOpen: () -> Unit, onRemindFriends:
                 horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    stringResource(R.string.subs_share_note, formatPounds(v.userShare), formatPounds(v.othersOwe), (item.sharedWith - 1).toString()),
+                    stringResource(R.string.subs_share_note, poundsText(v.userShare), poundsText(v.othersOwe), (item.sharedWith - 1).toString()),
                     style = TzType.caption.copy(fontSize = 12.sp), color = Tz.turquoiseDimText, modifier = Modifier.weight(1f),
                 )
                 Text(

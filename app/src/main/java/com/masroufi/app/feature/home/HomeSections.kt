@@ -64,7 +64,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.R
 import com.masroufi.app.core.formatDayDate
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.domain.ProverbCatalog
 import com.masroufi.app.feature.add.PunchFeedback
@@ -142,9 +142,9 @@ internal fun HomeHeader(today: LocalDate, greeting: Greeting, streak: Int, onOpe
 @Composable
 internal fun subLineText(s: SubLine): String = when (s) {
     SubLine.None -> stringResource(R.string.home_ticket_none)
-    is SubLine.Spent -> stringResource(R.string.home_ticket_sub, formatPounds(s.ticket), formatPounds(s.spent), s.count.toString())
-    is SubLine.Over -> stringResource(if (s.spread) R.string.home_ticket_over else R.string.home_ticket_over_last, formatPounds(s.over))
-    is SubLine.Short -> stringResource(R.string.home_ticket_short, formatPounds(s.short))
+    is SubLine.Spent -> stringResource(R.string.home_ticket_sub, poundsText(s.ticket), poundsText(s.spent), s.count.toString())
+    is SubLine.Over -> stringResource(if (s.spread) R.string.home_ticket_over else R.string.home_ticket_over_last, poundsText(s.over))
+    is SubLine.Short -> stringResource(R.string.home_ticket_short, poundsText(s.short))
 }
 
 /** The stub under the perforation (Main.dc.html): two lines and the night "قفّل اليوم" pill. */
@@ -177,7 +177,7 @@ internal fun TomorrowPreview(tomorrow: TomorrowUi, onOpenProverb: () -> Unit) {
     val haptics = LocalHaptics.current
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            stringResource(R.string.home_tomorrow, formatPounds(tomorrow.amount)),
+            stringResource(R.string.home_tomorrow, poundsText(tomorrow.amount)),
             style = TzType.hero.copy(fontSize = 44.sp),
             color = Tz.night,
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(TzRadius.hero)).background(Tz.yellow)
@@ -266,9 +266,9 @@ internal fun PunchFeedbackLines(f: PunchFeedback.Saved, spread: Boolean) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         val text = when {
-            f.left >= 0 -> stringResource(R.string.home_punch_saved, formatPounds(f.left))
-            spread -> stringResource(R.string.home_punch_over, formatPounds(-f.left))
-            else -> stringResource(R.string.home_punch_over_last, formatPounds(-f.left))
+            f.left >= 0 -> stringResource(R.string.home_punch_saved, poundsText(f.left))
+            spread -> stringResource(R.string.home_punch_over, poundsText(-f.left))
+            else -> stringResource(R.string.home_punch_over_last, poundsText(-f.left))
         }
         Text(text, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text, modifier = Modifier.padding(horizontal = 4.dp))
         if (f.pausedHabit) {
@@ -304,7 +304,7 @@ internal fun RepeatChips(repeats: List<RepeatChip>, onChip: (RepeatChip) -> Unit
                     verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
                 ) {
                     Text(chip.categoryName, style = TzType.label, color = Tz.text, maxLines = 1)
-                    Text(formatPounds(chip.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.yellow)
+                    Text(poundsText(chip.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.yellow)
                 }
             }
         }
@@ -348,10 +348,10 @@ private fun WeekStubBox(stub: WeekStub) {
     val number = TzType.rowNumber.copy(fontSize = 15.sp)
     when (stub.kind) {
         StubKind.Under -> Box(box.clip(shape).background(Tz.turquoise), contentAlignment = Alignment.Center) {
-            Text("+${formatPounds(stub.amount)}", style = number, color = Tz.turquoiseInk, maxLines = 1)
+            Text("+${poundsText(stub.amount)}", style = number, color = Tz.turquoiseInk, maxLines = 1)
         }
         StubKind.Over -> Box(box.clip(shape).background(Tz.carnelianDim), contentAlignment = Alignment.Center) {
-            Text("-${formatPounds(stub.amount)}", style = number, color = Tz.carnelianText, maxLines = 1)
+            Text("-${poundsText(stub.amount)}", style = number, color = Tz.carnelianText, maxLines = 1)
         }
         StubKind.Today -> Box(box.border(2.dp, Tz.yellow, shape), contentAlignment = Alignment.Center) {
             Text(
@@ -376,9 +376,10 @@ internal fun JarCard(total: Long) {
         Text(stringResource(R.string.home_jar_title), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
         Spacer(Modifier.height(6.dp))
         val unit = stringResource(R.string.home_jar_unit)
+        val totalText = poundsText(total)
         Text(
             buildAnnotatedString {
-                append(formatPounds(total))
+                append(totalText)
                 append(" ")
                 withStyle(SpanStyle(fontSize = 15.sp, color = Tz.text2)) { append(unit) }
             },
@@ -402,8 +403,8 @@ internal fun CycleCard(cycle: CycleUi, onOpenEndOfMonth: () -> Unit = {}) {
         val projected = cycle.projected
         if (projected != null) {
             Spacer(Modifier.height(10.dp))
-            val have = formatPounds(cycle.spendable)
-            val y = formatPounds(projected)
+            val have = poundsText(cycle.spendable)
+            val y = poundsText(projected)
             val line = stringResource(R.string.home_cycle_line, have, y, cycle.paydayDay.toString())
             // Y follows the balance in both languages; search after it so an equal balance is not matched.
             val at = line.indexOf(y, line.indexOf(have) + have.length)

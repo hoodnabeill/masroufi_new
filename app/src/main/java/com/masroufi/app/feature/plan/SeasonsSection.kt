@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.repo.SeasonView
 import com.masroufi.app.feature.pockets.pocketColor
 import com.masroufi.app.ui.components.EmptyState
@@ -110,9 +110,9 @@ private fun SeasonHero(v: SeasonView, note: LedgerNote?, onClick: () -> Unit) {
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-            Text(formatPounds(v.saved), style = TzType.hero, color = Tz.night)
+            Text(poundsText(v.saved), style = TzType.hero, color = Tz.night)
             Text(
-                stringResource(R.string.seasons_of, formatPounds(s.target)),
+                stringResource(R.string.seasons_of, poundsText(s.target)),
                 style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.yellowInk, modifier = Modifier.padding(bottom = 8.dp),
             )
         }
@@ -122,13 +122,13 @@ private fun SeasonHero(v: SeasonView, note: LedgerNote?, onClick: () -> Unit) {
             Box(Modifier.fillMaxWidth(fraction).fillMaxHeight().background(Tz.night, bar))
         }
         if (v.perDayNeeded > 0) {
-            Text(stringResource(R.string.seasons_per_day, formatPounds(v.perDayNeeded)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.night)
+            Text(stringResource(R.string.seasons_per_day, poundsText(v.perDayNeeded)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.night)
         }
-        if (note != null) Text(stringResource(R.string.season_ledger_line, note.person, formatPounds(note.amount)), style = TzType.caption.copy(fontWeight = FontWeight.SemiBold), color = Tz.night)
+        if (note != null) Text(stringResource(R.string.season_ledger_line, note.person, poundsText(note.amount)), style = TzType.caption.copy(fontWeight = FontWeight.SemiBold), color = Tz.night)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 4.dp)) {
             v.items.forEach {
                 Text(
-                    stringResource(R.string.seasons_chip, it.label, formatPounds(it.amount)),
+                    stringResource(R.string.seasons_chip, it.label, poundsText(it.amount)),
                     style = TzType.caption.copy(fontWeight = FontWeight.SemiBold), color = Tz.night,
                     modifier = Modifier.border(1.5.dp, Tz.night, RoundedCornerShape(14.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
                 )
@@ -180,12 +180,12 @@ private fun SeasonRow(v: SeasonView, note: LedgerNote?, reordering: Boolean, can
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(v.items.joinToString("، ") { it.label }, style = TzType.body.copy(fontSize = 13.sp), color = Tz.text2, modifier = Modifier.weight(1f))
                     Text(
-                        stringResource(R.string.jar_goal_amounts, formatPounds(v.saved), formatPounds(s.target)),
+                        stringResource(R.string.jar_goal_amounts, poundsText(v.saved), poundsText(s.target)),
                         style = TzType.body.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold), color = Tz.text,
                     )
                 }
                 if (s.target > 0) TzProgressBar(listOf((v.saved.toFloat() / s.target) to pocketColor(s.color)), height = 6.dp)
-                if (note != null) Text(stringResource(R.string.season_ledger_line, note.person, formatPounds(note.amount)), style = TzType.caption, color = Tz.text2)
+                if (note != null) Text(stringResource(R.string.season_ledger_line, note.person, poundsText(note.amount)), style = TzType.caption, color = Tz.text2)
             }
             if (reordering) {
                 Column {
@@ -214,8 +214,8 @@ private fun Together(ui: SeasonsUi, needed: Long, usual: Long, over: Boolean, vm
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Tz.turquoiseDim).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.seasons_together_title), style = TzType.cardHeading, color = Tz.text)
         val lead = stringResource(R.string.seasons_together_lead, ui.togetherCount)
-        val need = stringResource(R.string.seasons_together_need, formatPounds(needed))
-        val tail = if (over) stringResource(R.string.seasons_together_over, formatPounds(usual)) else stringResource(R.string.seasons_together_ok)
+        val need = stringResource(R.string.seasons_together_need, poundsText(needed))
+        val tail = if (over) stringResource(R.string.seasons_together_over, poundsText(usual)) else stringResource(R.string.seasons_together_ok)
         Text(
             buildAnnotatedString {
                 append("$lead ")

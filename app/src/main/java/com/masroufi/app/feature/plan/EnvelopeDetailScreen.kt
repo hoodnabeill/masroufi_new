@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
@@ -70,7 +70,7 @@ fun EnvelopeDetailScreen(
         TzCard {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Odometer(v.left, TzType.hero.copy(color = color))
-                Text(stringResource(R.string.env_left_of, formatPounds(v.monthly)), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2)
+                Text(stringResource(R.string.env_left_of, poundsText(v.monthly)), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2)
                 TzProgressBar(listOf((if (card.line is CardLine.Sealed) 1f else v.bar) to color), height = 8.dp)
                 when (val l = card.line) {
                     is CardLine.Sealed -> Text(stringResource(R.string.env_sealed_note), style = TzType.caption, color = Tz.text2)

@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.db.GameyaPlanEntity
 import com.masroufi.app.data.repo.GameyaView
 import com.masroufi.app.data.repo.SlotState
@@ -190,7 +190,7 @@ private fun Wheel(v: GameyaView) {
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(R.string.gameya_payout), style = TzType.label.copy(fontSize = 16.sp), color = Tz.text2)
-                Text(formatPounds(v.payout), style = TzType.hero.copy(fontSize = 44.sp), color = Tz.text)
+                Text(poundsText(v.payout), style = TzType.hero.copy(fontSize = 44.sp), color = Tz.text)
                 Text(
                     if (v.finished) stringResource(R.string.people_gameya_done) else stringResource(R.string.gameya_month_of, v.monthNumber.coerceAtLeast(1).toString(), v.people.toString()),
                     style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2,
@@ -264,7 +264,7 @@ private fun TurnCard(v: GameyaView) {
             style = TzType.label.copy(fontWeight = FontWeight.Bold), color = Tz.night,
         )
         Text(big, style = TzType.hero.copy(fontSize = 52.sp, lineHeight = 52.sp), color = Tz.night)
-        Text(stringResource(R.string.gameya_saved_line, formatPounds(v.myPaidSoFar), formatPounds(v.payout)), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.yellowInk)
+        Text(stringResource(R.string.gameya_saved_line, poundsText(v.myPaidSoFar), poundsText(v.payout)), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.yellowInk)
     }
 }
 
@@ -277,11 +277,11 @@ private fun InstallmentCard(v: GameyaView, vm: GameyaViewModel) {
     val month = v.thisMonth.label(locale)
     val meName = stringResource(R.string.gameya_me)
     val unpaid = v.unpaidMembers.map { it.name } + if (v.myPaidThisMonth) emptyList() else listOf(meName)
-    val remindText = stringResource(R.string.gameya_remind_text, v.gameya.name, formatPounds(v.gameya.monthly), v.unpaidMembers.joinToString("، ") { it.name })
+    val remindText = stringResource(R.string.gameya_remind_text, v.gameya.name, poundsText(v.gameya.monthly), v.unpaidMembers.joinToString("، ") { it.name })
     val remindTitle = stringResource(R.string.gameya_remind)
     Column(Modifier.fillMaxWidth().clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.gameya_installment, month, formatPounds(v.gameya.monthly)), style = TzType.cardHeading, color = Tz.text, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.gameya_installment, month, poundsText(v.gameya.monthly)), style = TzType.cardHeading, color = Tz.text, modifier = Modifier.weight(1f))
             if (v.myPaidThisMonth) {
                 Text(
                     stringResource(R.string.gameya_i_paid), style = TzType.label.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold), color = Tz.turquoise,
@@ -330,7 +330,7 @@ private fun InstallmentCard(v: GameyaView, vm: GameyaViewModel) {
 private fun PlanCard(v: GameyaView, vm: GameyaViewModel) {
     val haptics = LocalHaptics.current
     Column(Modifier.fillMaxWidth().clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.gameya_plan_title, formatPounds(v.payout)), style = TzType.cardHeading, color = Tz.text)
+        Text(stringResource(R.string.gameya_plan_title, poundsText(v.payout)), style = TzType.cardHeading, color = Tz.text)
         if (v.plan.isNotEmpty()) {
             Row(Modifier.fillMaxWidth().height(14.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 v.plan.forEachIndexed { i, row ->
@@ -345,10 +345,10 @@ private fun PlanCard(v: GameyaView, vm: GameyaViewModel) {
                 ) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(PlanColors[i % PlanColors.size]))
                     Text(row.label, style = TzType.body.copy(fontSize = 14.sp), color = Tz.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(formatPounds(row.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
+                    Text(poundsText(row.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
                 }
             }
-            if (v.unplanned > 0) Text(stringResource(R.string.gameya_plan_left, formatPounds(v.unplanned)), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
+            if (v.unplanned > 0) Text(stringResource(R.string.gameya_plan_left, poundsText(v.unplanned)), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
         }
         Text(stringResource(R.string.gameya_plan_hint), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
         TextLink(stringResource(R.string.gameya_plan_add), { vm.openPlan() })

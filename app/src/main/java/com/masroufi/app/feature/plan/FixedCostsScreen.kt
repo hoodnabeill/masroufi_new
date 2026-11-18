@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.formatDayDate
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.db.RecurringRow
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.pockets.DashedRow
@@ -97,7 +97,7 @@ private fun FixedCostRow(item: FixedCostUi, onOpen: () -> Unit, onPay: () -> Uni
             )
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(formatPounds(row.amount), style = TzType.titleTab.copy(fontSize = 18.sp), color = Tz.text)
+            Text(poundsText(row.amount), style = TzType.titleTab.copy(fontSize = 18.sp), color = Tz.text)
             Text(label, style = TzType.caption.copy(fontSize = 12.sp), color = color)
         }
         if (item.due != DueState.Paid) TextLink(stringResource(R.string.fixed_pay), { haptics.perform(HapticLevel.Tap); onPay() })
@@ -118,7 +118,7 @@ private fun KidsRow(row: RecurringRow, first: Boolean, onOpen: () -> Unit) {
             Text(row.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
             Text(stringResource(R.string.fixed_kids_sub), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2, maxLines = 1)
         }
-        Text(formatPounds(row.amount), style = TzType.titleTab.copy(fontSize = 18.sp), color = Tz.text)
+        Text(poundsText(row.amount), style = TzType.titleTab.copy(fontSize = 18.sp), color = Tz.text)
         TextLink(stringResource(R.string.fixed_kids_open), onOpen)
     }
 }

@@ -257,7 +257,7 @@ private fun AmountBlock(state: AddUiState, scale: Float, onTap: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
-            Odometer(state.amount, AmountStyle, showPiastres = f.amount.hasPoint)
+            Odometer(state.amount, AmountStyle, showPiastres = f.amount.hasPoint, maskable = false)
             // Lalezar's baseline sits about a sixth of the 84 sp line above its bottom.
             Text(
                 stringResource(R.string.add_unit),

@@ -109,6 +109,9 @@ data class Settings(
     val vibration: Boolean = true,
     val ticketSounds: Boolean = false,
     val hideAmounts: Boolean = false,
+    /** App lock (Task 55): on or off, and whether the fingerprint key is offered beside the PIN pad. */
+    val lockOn: Boolean = false,
+    val lockFingerprint: Boolean = true,
     /** Plus trial (phase 10): the epoch day it started and its last day of Plus (inclusive); null = never started. */
     val trialStartDay: Long? = null,
     val trialEndDay: Long? = null,
@@ -186,6 +189,8 @@ class SettingsStore @Inject constructor(
     private val vibrationKey = booleanPreferencesKey("vibration")
     private val ticketSoundsKey = booleanPreferencesKey("ticketSounds")
     private val hideAmountsKey = booleanPreferencesKey("hideAmounts")
+    private val lockOnKey = booleanPreferencesKey("lockOn")
+    private val lockFingerprintKey = booleanPreferencesKey("lockFingerprint")
     private val trialStartKey = longPreferencesKey("trialStartDay")
     private val trialEndKey = longPreferencesKey("trialEndDay")
     private val lastPaywallKey = longPreferencesKey("lastPaywallDay")
@@ -327,6 +332,8 @@ class SettingsStore @Inject constructor(
     suspend fun setVibration(v: Boolean) { store.edit { it[vibrationKey] = v } }
     suspend fun setTicketSounds(v: Boolean) { store.edit { it[ticketSoundsKey] = v } }
     suspend fun setHideAmounts(v: Boolean) { store.edit { it[hideAmountsKey] = v } }
+    suspend fun setLockOn(v: Boolean) { store.edit { it[lockOnKey] = v } }
+    suspend fun setLockFingerprint(v: Boolean) { store.edit { it[lockFingerprintKey] = v } }
     /** Starts the one trial; false (and nothing written) when a trial already started. */
     suspend fun startTrial(startDay: Long, endDay: Long): Boolean {
         var started = false
@@ -429,6 +436,8 @@ class SettingsStore @Inject constructor(
         vibration = p[vibrationKey] ?: true,
         ticketSounds = p[ticketSoundsKey] ?: false,
         hideAmounts = p[hideAmountsKey] ?: false,
+        lockOn = p[lockOnKey] ?: false,
+        lockFingerprint = p[lockFingerprintKey] ?: true,
         trialStartDay = p[trialStartKey],
         trialEndDay = p[trialEndKey],
         lastPaywallDay = p[lastPaywallKey],

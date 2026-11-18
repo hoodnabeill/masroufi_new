@@ -32,7 +32,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.PunchFeedback
@@ -236,7 +236,7 @@ private fun ReadyContent(
                 stub = { TicketStub { onCloseDay(epochDay) } },
                 contentDescription = stringResource(
                     R.string.home_ticket_cd,
-                    formatPounds(t.left.coerceAtLeast(0)), formatPounds(t.amount), formatPounds(t.spent), t.holes.toString(),
+                    poundsText(t.left.coerceAtLeast(0)), poundsText(t.amount), poundsText(t.spent), t.holes.toString(),
                 ),
                 qershScale = qershScale,
                 modifier = Modifier.graphicsLayer(slide),

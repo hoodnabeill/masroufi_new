@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
@@ -68,7 +68,7 @@ private fun ZakatBody(ui: ZakatUi, vm: ZakatViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         TzCard {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                ValueRow(stringResource(R.string.zakat_held), formatPounds(ui.zakatable)) { vm.open(ZakatSheet.Money) }
+                ValueRow(stringResource(R.string.zakat_held), poundsText(ui.zakatable)) { vm.open(ZakatSheet.Money) }
                 ValueRow(stringResource(R.string.zakat_nisab), ui.nisab?.let(::formatPounds) ?: stringResource(R.string.zakat_nisab_prompt)) { vm.open(ZakatSheet.Nisab) }
                 Text(stringResource(R.string.zakat_nisab_note), style = TzType.caption, color = Tz.text2)
             }
@@ -76,7 +76,7 @@ private fun ZakatBody(ui: ZakatUi, vm: ZakatViewModel) {
         ui.zakat?.let { zakat ->
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(Tz.yellow).padding(20.dp)) {
                 Text(
-                    if (zakat > 0) stringResource(R.string.zakat_result, formatPounds(zakat)) else stringResource(R.string.zakat_none),
+                    if (zakat > 0) stringResource(R.string.zakat_result, poundsText(zakat)) else stringResource(R.string.zakat_none),
                     style = TzType.titleTab, color = Tz.night,
                 )
             }
@@ -90,8 +90,8 @@ private fun ZakatBody(ui: ZakatUi, vm: ZakatViewModel) {
                     Text(ui.people.toString(), style = TzType.rowNumber, color = Tz.text, modifier = Modifier.defaultMinSize(minWidth = 28.dp))
                     CircleButton(TzIcons.add, stringResource(R.string.zakat_people_more)) { vm.stepPeople(1) }
                 }
-                ValueRow(stringResource(R.string.zakat_per_person), formatPounds(ui.perPerson)) { vm.open(ZakatSheet.PerPerson) }
-                Text(stringResource(R.string.zakat_fitr_result, formatPounds(ui.fitr)), style = TzType.cardHeading, color = Tz.yellow, modifier = Modifier.padding(top = 8.dp))
+                ValueRow(stringResource(R.string.zakat_per_person), poundsText(ui.perPerson)) { vm.open(ZakatSheet.PerPerson) }
+                Text(stringResource(R.string.zakat_fitr_result, poundsText(ui.fitr)), style = TzType.cardHeading, color = Tz.yellow, modifier = Modifier.padding(top = 8.dp))
             }
         }
     }

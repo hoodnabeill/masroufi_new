@@ -37,7 +37,7 @@ import kotlin.math.floor
 /**
  * A number whose digits roll. Lalezar has proportional digits and no tnum, so every digit sits in a fixed cell as
  * wide as the widest digit and changing values never shift the layout. [valuePiastres] shows as whole pounds
- * (floored) unless [showPiastres]. Digits run left to right even inside RTL. A digit that changes rolls over 300 ms,
+ * (floored) unless [showPiastres]; dots while amounts are hidden ([maskable]). Digits run left to right even inside RTL. A digit that changes rolls over 300 ms,
  * up when the value rose and down when it fell, and carries on from where it is when retargeted. Reduced motion is
  * a 120 ms cross-fade. Read as one number by TalkBack.
  */
@@ -47,7 +47,13 @@ fun Odometer(
     style: TextStyle,
     modifier: Modifier = Modifier,
     showPiastres: Boolean = false,
+    /** False for the amount the user is typing: hide amounts must never mask an input. */
+    maskable: Boolean = true,
 ) {
+    if (maskable && LocalHideAmounts.current) {
+        Text(HIDDEN_AMOUNT, modifier.clearAndSetSemantics { text = AnnotatedString(HIDDEN_AMOUNT) }, style = if (style.color.isSpecified) style else style.copy(color = Tz.text))
+        return
+    }
     val prev = remember { LongArray(1) { valuePiastres } }
     val rising = valuePiastres >= prev[0]
     SideEffect { prev[0] = valuePiastres }

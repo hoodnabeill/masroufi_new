@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.db.PersonKind
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.feature.add.AmountInput
@@ -111,7 +111,7 @@ internal fun PocketPaySheet(
             if (editable) {
                 AmountKeypad(input, { input = input.digit(it) }, { input = input.point() }, { input = input.backspace() })
             } else {
-                Text(formatPounds(amount) + " " + stringResource(R.string.paper_currency), style = TzType.hero, color = Tz.text)
+                Text(poundsText(amount) + " " + stringResource(R.string.paper_currency), style = TzType.hero, color = Tz.text)
             }
             Text(stringResource(pocketQuestion), style = TzType.caption, color = Tz.text2)
             PocketPicker(pockets, pocket, allowNone) { pocket = it }

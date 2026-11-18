@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.repo.GoldView
 import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.ui.components.ChipStyle
@@ -114,7 +114,7 @@ private fun JarHero(total: Long, growth: Long, biggestGoal: Long) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(stringResource(R.string.jar_total_label), style = TzType.label, color = Tz.text2)
                 Odometer(total, TzType.hero)
-                if (growth > 0) Text(stringResource(R.string.jar_growth, formatPounds(growth)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.turquoise)
+                if (growth > 0) Text(stringResource(R.string.jar_growth, poundsText(growth)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.turquoise)
                 Text(stringResource(R.string.jar_honesty), style = TzType.caption.copy(lineHeight = 19.sp), color = Tz.text2, modifier = Modifier.padding(top = 6.dp))
             }
         }
@@ -174,9 +174,9 @@ private fun GoldCard(gold: GoldView?, onEdit: () -> Unit) {
         Box(Modifier.fillMaxWidth().height(10.dp).clip(bar).background(Tz.yellowRule2)) {
             Box(Modifier.fillMaxWidth((gold.gramsHundredths % 100) / 100f).fillMaxHeight().background(Tz.night, bar))
         }
-        val left = gold.leftToFirstGram?.let { stringResource(R.string.jar_gold_left, formatPounds(it)) }
+        val left = gold.leftToFirstGram?.let { stringResource(R.string.jar_gold_left, poundsText(it)) }
         val label = stringResource(R.string.jar_gold_price_label)
-        val price = stringResource(R.string.jar_gold_per_gram, formatPounds(gold.pricePerGram))
+        val price = stringResource(R.string.jar_gold_per_gram, poundsText(gold.pricePerGram))
         Text(
             buildAnnotatedString {
                 if (left != null) append("$left ")
@@ -226,7 +226,7 @@ private fun SourcesCard(leftoverCount: Int, leftovers: Long, roundUps: Long, man
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(10.dp).background(c, CircleShape))
                     Text(label, style = TzType.body.copy(fontSize = 14.sp), color = Tz.text, modifier = Modifier.weight(1f))
-                    Text(formatPounds(v), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
+                    Text(poundsText(v), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
                 }
             }
         }
@@ -248,7 +248,7 @@ private fun GoalsCard(ui: JarUi, onNew: () -> Unit, onGoal: (Long) -> Unit, onSe
                 Column(Modifier.fillMaxWidth().clickable(role = Role.Button) { onGoal(goal.id) }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(goal.name, style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
-                        Text(stringResource(R.string.jar_goal_amounts, formatPounds(g.view.earmarked), formatPounds(goal.target)), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
+                        Text(stringResource(R.string.jar_goal_amounts, poundsText(g.view.earmarked), poundsText(goal.target)), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
                     }
                     TzProgressBar(listOf(g.view.earmarked.toFloat() / goal.target to Tz.yellow))
                     g.eta?.let { Text(stringResource(R.string.jar_goal_eta, month.format(it)), style = TzType.caption, color = Tz.text2) }
@@ -259,7 +259,7 @@ private fun GoalsCard(ui: JarUi, onNew: () -> Unit, onGoal: (Long) -> Unit, onSe
                 Column(Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onSeasons), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(s.season.name, style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
-                        Text(stringResource(R.string.jar_season_link, formatPounds(s.saved), formatPounds(s.season.target)), style = TzType.label, color = Tz.yellow)
+                        Text(stringResource(R.string.jar_season_link, poundsText(s.saved), poundsText(s.season.target)), style = TzType.label, color = Tz.yellow)
                     }
                     TzProgressBar(listOf(s.saved.toFloat() / s.season.target to Tz.turquoise))
                 }
@@ -277,7 +277,7 @@ private fun JarSheets(ui: JarUi, vm: JarViewModel) {
             PrimaryButton(stringResource(R.string.jar_deposit), { haptics.perform(HapticLevel.Confirm); vm.deposit(amount) }, Modifier.fillMaxWidth(), enabled = amount > 0, height = 52.dp)
         }
         JarSheet.Withdraw -> AmountSheet(stringResource(R.string.jar_withdraw_title), vm::dismiss) { amount ->
-            if (amount > jar.free) Text(stringResource(R.string.jar_free_only, formatPounds(jar.free)), style = TzType.label, color = Tz.carnelianText)
+            if (amount > jar.free) Text(stringResource(R.string.jar_free_only, poundsText(jar.free)), style = TzType.label, color = Tz.carnelianText)
             PrimaryButton(stringResource(R.string.jar_withdraw), { haptics.perform(HapticLevel.Confirm); vm.withdraw(amount) }, Modifier.fillMaxWidth(), enabled = amount in 1..jar.free, height = 52.dp)
         }
         JarSheet.Gold -> AmountSheet(stringResource(R.string.jar_gold_prompt), vm::dismiss, AmountInput.of(jar.gold?.pricePerGram ?: 0)) { amount ->
@@ -286,7 +286,7 @@ private fun JarSheets(ui: JarUi, vm: JarViewModel) {
         is JarSheet.Goal -> {
             val g = ui.goals.firstOrNull { it.view.goal.id == sheet.id }?.view
             if (g != null) AmountSheet(g.goal.name, vm::dismiss) { amount ->
-                if (amount > jar.free) Text(stringResource(R.string.jar_free_only, formatPounds(jar.free)), style = TzType.label, color = Tz.carnelianText)
+                if (amount > jar.free) Text(stringResource(R.string.jar_free_only, poundsText(jar.free)), style = TzType.label, color = Tz.carnelianText)
                 PrimaryButton(stringResource(R.string.jar_goal_put), { haptics.perform(HapticLevel.Confirm); vm.earmark(g.goal.id, amount) }, Modifier.fillMaxWidth(), enabled = amount in 1..jar.free, height = 52.dp)
                 if (g.earmarked > 0) SecondaryButton(
                     stringResource(R.string.jar_goal_release),

@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.PRIMARY_CURRENCY
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.ui.components.Odometer
 import com.masroufi.app.ui.components.PrimaryButton
@@ -154,7 +154,7 @@ private fun CashCard(cash: PocketRowUi, s: PocketsUi, onStep: (Int, Int) -> Unit
             }
             Column(horizontalAlignment = Alignment.End) {
                 Odometer(cash.view.balance, TzType.card.copy(fontSize = 34.sp, color = Tz.night))
-                Text(stringResource(R.string.pockets_counter_counted, formatPounds(s.counter.total)), style = TzType.caption, color = Tz.yellowInk2)
+                Text(stringResource(R.string.pockets_counter_counted, poundsText(s.counter.total)), style = TzType.caption, color = Tz.yellowInk2)
             }
         }
         NoteCounter(s.counter, onStep, onChange)
@@ -187,7 +187,7 @@ private fun PocketRow(r: PocketRowUi, today: LocalDate, onClick: () -> Unit) {
             Text(p.name, style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
             Text(caption, style = TzType.caption, color = Tz.text2)
         }
-        Text(formatPounds(r.view.balance), style = TzType.rowNumber, color = Tz.text)
+        Text(poundsText(r.view.balance), style = TzType.rowNumber, color = Tz.text)
     }
 }
 
@@ -232,7 +232,7 @@ private fun SmsCard(sms: SmsState, onPaste: () -> Unit, onLog: () -> Unit) {
 
 @Composable
 private fun ColumnScope.SmsPreviewLines(p: SmsPreview) {
-    val parts = listOfNotNull(p.categoryName ?: p.parsed.party, formatPounds(p.parsed.amount), p.pocket?.name).joinToString(" · ")
+    val parts = listOfNotNull(p.categoryName ?: p.parsed.party, poundsText(p.parsed.amount), p.pocket?.name).joinToString(" · ")
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(
             buildAnnotatedString {

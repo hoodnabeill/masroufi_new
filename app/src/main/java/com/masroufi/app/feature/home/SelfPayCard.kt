@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
@@ -64,8 +64,8 @@ fun SelfPayCardView(
     val close = stringResource(R.string.fw_close)
     val text = when {
         card.entryId == null -> stringResource(R.string.home_selfpay_empty)
-        card.short -> stringResource(R.string.home_selfpay_short, formatPounds(card.paid), formatPounds(card.salary))
-        else -> stringResource(R.string.home_selfpay_full, formatPounds(card.paid))
+        card.short -> stringResource(R.string.home_selfpay_short, poundsText(card.paid), poundsText(card.salary))
+        else -> stringResource(R.string.home_selfpay_full, poundsText(card.paid))
     }
     Row(
         modifier.fillMaxWidth().testTag(SelfPayCardTag),

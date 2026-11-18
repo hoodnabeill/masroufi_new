@@ -90,6 +90,7 @@ import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.feature.home.HomeError
 import com.masroufi.app.feature.home.HomeSkeleton
 import com.masroufi.app.ui.components.Odometer
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
@@ -572,7 +573,7 @@ private fun DestinationCard(
 private fun NumberLine(template: String, piastres: Long, style: TextStyle) {
     val before = template.substringBefore(MARK)
     val after = template.substringAfter(MARK, "")
-    val plain = template.replace(MARK, formatPounds(piastres))
+    val plain = template.replace(MARK, poundsText(piastres))
     Row(Modifier.clearAndSetSemantics { text = AnnotatedString(plain) }, verticalAlignment = Alignment.CenterVertically) {
         Text(before, style = style, color = Tz.text2)
         Odometer(piastres, style.copy(color = Tz.text2))

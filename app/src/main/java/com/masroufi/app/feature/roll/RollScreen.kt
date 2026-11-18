@@ -79,7 +79,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.formatDayDate
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.db.CategoryEntity
 import com.masroufi.app.data.db.EntryRow
 import com.masroufi.app.data.repo.RollDay
@@ -338,8 +338,8 @@ private fun SearchField(query: String, onQuery: (String) -> Unit) {
 @Composable
 private fun Tiles(s: RollSummary) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Tile(R.string.roll_tile_spent, formatPounds(s.spent), Tz.text, Modifier.weight(1f))
-        Tile(R.string.roll_tile_received, formatPounds(s.received), Tz.turquoise, Modifier.weight(1f))
+        Tile(R.string.roll_tile_spent, poundsText(s.spent), Tz.text, Modifier.weight(1f))
+        Tile(R.string.roll_tile_received, poundsText(s.received), Tz.turquoise, Modifier.weight(1f))
         Tile(R.string.roll_tile_closed, stringResource(R.string.roll_tile_closed_value, s.ticketsUnder, s.ticketsClosed), Tz.yellow, Modifier.weight(1f))
     }
 }
@@ -515,8 +515,8 @@ internal fun DayStub(
 
 @Composable
 private fun TodayHeader(spent: Long, amount: Long) {
-    val spentText = formatPounds(spent)
-    val text = stringResource(R.string.roll_today_of, spentText, formatPounds(amount))
+    val spentText = poundsText(spent)
+    val text = stringResource(R.string.roll_today_of, spentText, poundsText(amount))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
         Text(stringResource(R.string.roll_today_label), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
         Text(
@@ -533,17 +533,17 @@ private fun TodayHeader(spent: Long, amount: Long) {
 @Composable
 private fun ClosedHeader(day: RollDay, tone: Tone, lineColor: Color, expanded: Boolean) {
     val t = checkNotNull(day.ticket)
-    val spent = formatPounds(t.spent)
+    val spent = poundsText(t.spent)
     val first = when (t.entryCount) {
         0 -> stringResource(R.string.roll_day_none)
         1 -> stringResource(R.string.roll_day_spent_once, spent)
         else -> stringResource(R.string.roll_day_spent, spent, t.entryCount)
     }
     val second = when {
-        tone == Tone.Over -> stringResource(R.string.roll_over, formatPounds(t.spent - t.amount))
+        tone == Tone.Over -> stringResource(R.string.roll_over, poundsText(t.spent - t.amount))
         t.spent == t.amount -> stringResource(R.string.roll_exact)
         else -> {
-            val x = formatPounds(t.amount - t.spent)
+            val x = poundsText(t.amount - t.spent)
             when (t.destination) {
                 LeftoverDestination.JAR -> stringResource(R.string.roll_under_jar, x)
                 LeftoverDestination.TOMORROW -> stringResource(R.string.roll_under_tomorrow, x)
@@ -605,8 +605,8 @@ private fun entrySub(e: EntryRow): String {
             .format(Instant.ofEpochMilli(e.happenedAt).atZone(ZoneId.systemDefault()))
     }
     var s = stringResource(R.string.roll_entry_sub, e.pocketName, time)
-    if (e.roundUp > 0) s += " · " + stringResource(R.string.roll_entry_roundup, formatPounds(e.roundUp))
-    if (e.fee > 0) s += " · " + stringResource(R.string.roll_entry_fee, formatPounds(e.fee))
+    if (e.roundUp > 0) s += " · " + stringResource(R.string.roll_entry_roundup, poundsText(e.roundUp))
+    if (e.fee > 0) s += " · " + stringResource(R.string.roll_entry_fee, poundsText(e.fee))
     return s
 }
 
@@ -638,9 +638,9 @@ internal fun EntryLine(
         EntryKind.DEBT -> TzIcons.people
     }
     val amount = when (e.kind) {
-        EntryKind.RECEIVED -> "+" + formatPounds(e.amount)
-        EntryKind.ADJUST, EntryKind.DEBT -> (if (e.amount < 0) "-" else "+") + formatPounds(abs(e.amount))
-        else -> formatPounds(e.amount)
+        EntryKind.RECEIVED -> "+" + poundsText(e.amount)
+        EntryKind.ADJUST, EntryKind.DEBT -> (if (e.amount < 0) "-" else "+") + poundsText(abs(e.amount))
+        else -> poundsText(e.amount)
     }
     // An adjustment or a debt entry is the app's own record (a debt is edited from People), not something to edit or delete here.
     val open = if (e.kind == EntryKind.ADJUST || e.kind == EntryKind.DEBT) Modifier else Modifier.clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onEntry(e) }

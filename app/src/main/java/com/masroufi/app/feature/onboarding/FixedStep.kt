@@ -78,7 +78,7 @@ fun FixedStep(state: OnboardingUi, actions: OnboardingActions) {
             ) {
                 Text(stringResource(R.string.ob_fixed_amount_title, stringResource(open.label)), style = TzType.cardHeading.copy(color = Tz.text))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.Bottom) {
-                    Odometer(amount, TzType.hero.copy(fontSize = 48.sp, lineHeight = 1.em, color = Tz.yellow), showPiastres = state.fixedInput.hasPoint)
+                    Odometer(amount, TzType.hero.copy(fontSize = 48.sp, lineHeight = 1.em, color = Tz.yellow), showPiastres = state.fixedInput.hasPoint, maskable = false)
                     Text(stringResource(R.string.paper_currency), Modifier.padding(bottom = 6.dp), style = TzType.button.copy(fontSize = 18.sp, color = Tz.text2))
                 }
                 Keypad(actions::digit, actions::point, actions::backspace)

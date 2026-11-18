@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.db.GiftDirection
 import com.masroufi.app.data.db.OccasionOwner
 import com.masroufi.app.data.db.PersonKind
@@ -130,7 +130,7 @@ private fun OccasionCard(v: OccasionView, vm: DutyLedgerViewModel) {
             Text(listOfNotNull(formatShortDate(o.date), v.person?.name).joinToString(" · "), style = TzType.caption, color = Tz.text2)
             if (o.whose == OccasionOwner.MINE && v.givers > 0) {
                 Text(
-                    stringResource(R.string.people_duty_own, formatPounds(v.receivedTotal), v.givers.toString()),
+                    stringResource(R.string.people_duty_own, poundsText(v.receivedTotal), v.givers.toString()),
                     style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.turquoise,
                 )
             }
@@ -151,7 +151,7 @@ private fun GiftLine(g: GiftRow, onClick: () -> Unit) {
             Text(g.person?.name.orEmpty(), style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
             Text(stringResource(if (received) R.string.duty_received else R.string.duty_given), style = TzType.caption, color = Tz.text2)
         }
-        Text(formatPounds(g.gift.amount), style = TzType.rowNumber, color = if (received) Tz.turquoise else Tz.text)
+        Text(poundsText(g.gift.amount), style = TzType.rowNumber, color = if (received) Tz.turquoise else Tz.text)
     }
 }
 

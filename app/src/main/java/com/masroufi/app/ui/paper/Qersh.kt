@@ -29,7 +29,7 @@ import com.masroufi.app.ui.theme.Tz
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-enum class QershMood { Happy, Delighted, Thinking, Surprised, Sleepy, Sad, Waving }
+enum class QershMood { Happy, Delighted, Thinking, Surprised, Sleepy, Sad, Waving, Guard }
 
 // Paths in the 72 grid, copied from the mocks (Main, Album, Paywall, BeforeBuy, Onboarding, EmptyStates).
 private fun p(d: String): Path = PathParser().parsePathString(d).toPath()
@@ -40,6 +40,8 @@ private val DelightedEyes = p("M24 38 q4 -5 8 0M40 38 q4 -5 8 0")
 private val DelightedMouth = p("M26 46 Q36 58 46 46 Z")
 private val ThinkingMouth = p("M29 49 h14")
 private val SadBrows = p("M23 33 l8 3M49 33 l-8 3")
+private val GuardBrows = p("M23 35l9 3M49 35l-9 3")
+private val GuardMouth = p("M29 52h14")
 private val SadMouth = p("M28 52 Q36 45 44 52")
 private val SleepyEyes = p("M24 38 q4 4 8 0M40 38 q4 4 8 0")
 private val SleepyMouth = p("M29 51 Q36 55 43 51")
@@ -102,7 +104,7 @@ private fun DrawScope.drawQersh(mood: QershMood, onYellow: Boolean, ring: Boolea
     }
     val dotEyes = mood != QershMood.Delighted && mood != QershMood.Sleepy
     if (dotEyes) {
-        val y = if (mood == QershMood.Sad) 39f else 38f
+        val y = when (mood) { QershMood.Sad -> 39f; QershMood.Guard -> 41f; else -> 38f }
         val ry = 3.5f * (1f - 0.85f * blink)
         for (x in floatArrayOf(28f, 44f)) {
             drawOval(night, Offset(x - 3.5f, y - ry), Size(7f, ry * 2f))
@@ -121,6 +123,10 @@ private fun DrawScope.drawQersh(mood: QershMood, onYellow: Boolean, ring: Boolea
             drawPath(SleepyEyes, night, style = Round3)
             drawPath(SleepyMouth, night, style = Round3)
             drawPath(SleepyZ, Tz.text2, style = Round26)
+        }
+        QershMood.Guard -> {
+            drawPath(GuardBrows, night, style = Round3)
+            drawPath(GuardMouth, night, style = Round3)
         }
         QershMood.Sad -> {
             drawPath(SadBrows, night, style = Round26)

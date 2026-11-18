@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.db.DebtDirection
 import com.masroufi.app.data.db.PersonKind
 import com.masroufi.app.data.repo.PersonRow
@@ -134,11 +134,11 @@ private fun DetailTotals(row: PersonRow) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Column(Modifier.weight(1f).clip(shape).background(Tz.turquoise).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.people_detail_owed), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.turquoiseInk)
-            Text(formatPounds(row.owedToMe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.turquoiseInk)
+            Text(poundsText(row.owedToMe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.turquoiseInk)
         }
         Column(Modifier.weight(1f).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.people_detail_owe), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.text2)
-            Text(formatPounds(row.iOweLoans + row.onTab), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.text)
+            Text(poundsText(row.iOweLoans + row.onTab), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.text)
         }
     }
 }
@@ -154,11 +154,11 @@ private fun HistoryRow(h: HistoryItem, first: Boolean, last: Boolean, onMoney: (
     when (h) {
         is HistoryItem.Loan -> {
             val d = h.debt
-            title = stringResource(if (d.direction == DebtDirection.THEY_OWE) R.string.people_h_lent else R.string.people_h_borrowed, formatPounds(d.amount))
+            title = stringResource(if (d.direction == DebtDirection.THEY_OWE) R.string.people_h_lent else R.string.people_h_borrowed, poundsText(d.amount))
             sub = listOfNotNull(d.reason, formatShortDate(d.date), d.dueDate?.let { stringResource(R.string.people_ctx_due, formatShortDate(it)) }).joinToString(" · ")
         }
         is HistoryItem.Repayment -> {
-            title = stringResource(if (h.toMe) R.string.people_h_repaid_to_me else R.string.people_h_repaid_by_me, formatPounds(h.amount))
+            title = stringResource(if (h.toMe) R.string.people_h_repaid_to_me else R.string.people_h_repaid_by_me, poundsText(h.amount))
             sub = formatShortDate(h.date)
         }
         is HistoryItem.TabLine -> {
@@ -180,14 +180,14 @@ private fun HistoryRow(h: HistoryItem, first: Boolean, last: Boolean, onMoney: (
                 Text(stringResource(R.string.people_h_done), style = TzType.caption, color = Tz.text2)
             } else {
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(R.string.people_h_left, formatPounds(h.debt.amount)), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
+                    Text(stringResource(R.string.people_h_left, poundsText(h.debt.amount)), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
                     val theyOwe = h.debt.direction == DebtDirection.THEY_OWE
                     SmallPill(stringResource(if (theyOwe) R.string.people_act_received else R.string.people_act_repay), !theyOwe, { onMoney(h.debt) })
                 }
             }
             is HistoryItem.TabLine -> {
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(formatPounds(h.item.amount), style = TzType.rowNumber, color = Tz.text)
+                    Text(poundsText(h.item.amount), style = TzType.rowNumber, color = Tz.text)
                     if (h.item.settled) Text(stringResource(R.string.people_h_tab_done), style = TzType.caption, color = Tz.text2)
                 }
             }

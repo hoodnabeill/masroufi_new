@@ -33,7 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.feature.add.Keypad
 import com.masroufi.app.feature.pockets.pocketColor
@@ -56,8 +56,8 @@ fun PlanEnvelopeCard(ui: EnvelopeCardUi, modifier: Modifier = Modifier, amountMo
     val v = ui.view
     val l = ui.line
     val sealed = l is CardLine.Sealed
-    val line = if (l is CardLine.Sealed) stringResource(R.string.env_sealed_amount, formatPounds(l.amount), l.day.toString())
-    else stringResource(R.string.env_left_of, formatPounds(v.monthly))
+    val line = if (l is CardLine.Sealed) stringResource(R.string.env_sealed_amount, poundsText(l.amount), l.day.toString())
+    else stringResource(R.string.env_left_of, poundsText(v.monthly))
     val status = when (l) {
         is CardLine.Sealed -> stringResource(R.string.env_sealed_note)
         is CardLine.RunsOut -> stringResource(R.string.env_runs_out, l.day.toString())

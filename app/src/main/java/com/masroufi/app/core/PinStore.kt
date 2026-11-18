@@ -109,8 +109,12 @@ class PinStore(
     private val blobKey = stringPreferencesKey("pinBlob")
     private val failsKey = intPreferencesKey("pinFailures")
     private val untilKey = longPreferencesKey("pinWaitUntil")
+    private val lengthKey = intPreferencesKey("pinLength")
 
     suspend fun isSet(): Boolean = store.data.first()[blobKey] != null
+
+    /** How many digits the PIN has (the lock screen submits by itself at that length); null when none is set or it was set before this was kept. */
+    suspend fun length(): Int? = store.data.first()[lengthKey]
 
     /** Milliseconds still to wait before a PIN is checked; 0 = none. */
     suspend fun waitRemaining(): Long = ((store.data.first()[untilKey] ?: 0L) - clock.millis()).coerceAtLeast(0L)
@@ -124,7 +128,7 @@ class PinStore(
 
     /** Forgets the PIN (after the parent proved themself another way, e.g. the PIN cannot be read any more). */
     suspend fun clear() {
-        store.edit { it.remove(blobKey); it.remove(failsKey); it.remove(untilKey) }
+        store.edit { it.remove(blobKey); it.remove(lengthKey); it.remove(failsKey); it.remove(untilKey) }
     }
 
     /** Replaces the PIN after the old one verified; the result says how that went ([PinResult.Ok] = changed). */
@@ -150,7 +154,7 @@ class PinStore(
         }
         val ok = isValid(pin) && MessageDigest.isEqual(hash(pin, record.salt, record.iterations), record.hash)
         if (ok) {
-            store.edit { it.remove(failsKey); it.remove(untilKey) }
+            store.edit { it.remove(failsKey); it.remove(untilKey); it[lengthKey] = pin.length }
             return PinResult.Ok
         }
         val failures = (prefs[failsKey] ?: 0) + 1
@@ -168,6 +172,7 @@ class PinStore(
         val blob = Base64.encodeToString(cipher.encrypt(record.toBytes()), Base64.NO_WRAP)
         store.edit {
             it[blobKey] = blob
+            it[lengthKey] = pin.length
             it.remove(failsKey)
             it.remove(untilKey)
         }

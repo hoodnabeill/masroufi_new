@@ -90,6 +90,11 @@ import com.masroufi.app.feature.story.StoryListScreen
 import com.masroufi.app.feature.story.StoryScreen
 import com.masroufi.app.feature.roll.RollScreen
 import com.masroufi.app.ui.components.LocalEndOfMonthMode
+import com.masroufi.app.ui.components.LocalHideAmounts
+import com.masroufi.app.feature.lock.LockGateViewModel
+import com.masroufi.app.feature.lock.LockScreen
+import com.masroufi.app.feature.lock.LockSettingsScreen
+import com.masroufi.app.feature.lock.SecureWindow
 import com.masroufi.app.ui.components.LocalOpenPaywall
 import com.masroufi.app.ui.components.TzTab
 import com.masroufi.app.ui.components.TzTabBar
@@ -211,14 +216,27 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null, bil
         LaunchedEffect(feel, haptics) {
             (haptics as? AndroidHaptics)?.let { it.enabled = feel.first; it.sounds = feel.second }
         }
-        // The child screen replaces the whole app (no nav graph, tab bar, add sheet or ritual behind it); back goes nowhere.
-        when (val m = mode) {
-            null -> Box(Modifier.fillMaxSize().background(Tz.night)) // night until the stored value is read: no flash of Home
-            is RootMode.Child -> {
-                BackHandler(enabled = true) {}
-                ChildScreen(viewModel = hiltViewModel())
+        val hideAmounts by root.hideAmounts.collectAsStateWithLifecycle()
+        val gate = hiltViewModel<LockGateViewModel>()
+        val lockOn by gate.lockOn.collectAsStateWithLifecycle()
+        val locked by gate.locked.collectAsStateWithLifecycle()
+        SecureWindow(lockOn)
+        CompositionLocalProvider(LocalHideAmounts provides hideAmounts) {
+            // The child screen replaces the whole app (no nav graph, tab bar, add sheet or ritual behind it); back goes nowhere.
+            // It wins over the lock: it has its own exit with the same PIN.
+            when (val m = mode) {
+                null -> Box(Modifier.fillMaxSize().background(Tz.night)) // night until the stored value is read: no flash of Home
+                is RootMode.Child -> {
+                    BackHandler(enabled = true) {}
+                    ChildScreen(viewModel = hiltViewModel())
+                }
+                else -> when (locked) {
+                    null -> Box(Modifier.fillMaxSize().background(Tz.night))
+                    // Only the lock screen is composed: nothing of the app is behind it, and it starts again at Home once unlocked.
+                    true -> LockScreen(viewModel = hiltViewModel())
+                    false -> MainApp(root, entitlements, sampleData, billing, startAtOnboarding = m == RootMode.Onboarding)
+                }
             }
-            else -> MainApp(root, entitlements, sampleData, billing, startAtOnboarding = m == RootMode.Onboarding)
         }
     }
 }
@@ -366,7 +384,7 @@ private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleDa
                     }
                     composable<Legal> { LegalScreen(onBack = { nav.popBackStack() }) }
                     composable<Licences> { LicencesScreen(onBack = { nav.popBackStack() }) }
-                    composable<LockSettings> { ComingSoonScreen(R.string.soon_lock) { nav.popBackStack() } }
+                    composable<LockSettings> { LockSettingsScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                     composable<BackupSettings> { ComingSoonScreen(R.string.soon_backup) { nav.popBackStack() } }
                     composable<NotificationSettings> { ComingSoonScreen(R.string.soon_notifications) { nav.popBackStack() } }
                     composable<RollTab> {

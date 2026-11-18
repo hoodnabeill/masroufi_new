@@ -1609,4 +1609,35 @@
         <item>لو الشروط اتغيّرت</item>
         <item>النسخة الجديدة هتظهر في التطبيق وعلى صفحته في Google Play بتاريخ جديد. استمرارك في الاستخدام معناه إنك موافق عليها.</item>
     </string-array>
+    <!-- Task 55: app lock and hide amounts -->
+    <string name="lock_title">وريني إنك إنت</string>
+    <string name="lock_sub">البصمة أو رقمك السري. فلوسك مش لأي حد.</string>
+    <string name="lock_wrong">مش هو. جرّب تاني.</string>
+    <string name="lock_wait">استنى %1$s ثانية</string>
+    <string name="lock_wait_min">استنى %1$s دقيقة</string>
+    <string name="lock_unreadable">الرقم السري ماعادش ينفع يتقري. افتح بالبصمة أو بقفل الموبايل.</string>
+    <string name="lock_guard_cd">قرش واقف حارس</string>
+    <string name="lock_fingerprint_cd">افتح بالبصمة</string>
+    <string name="lock_delete_cd">امسح</string>
+    <string name="lock_prompt_title">افتح مصروفي</string>
+    <string name="lock_forgot">نسيت الرقم؟ رجّع من نسختك الاحتياطية</string>
+    <string name="lock_forgot_title">نسيت الرقم؟</string>
+    <string name="lock_forgot_body">الطريقة الوحيدة إنك تمسح بيانات الموبايل ده وترجّع نسخة احتياطية بكلمة سر النسخة.</string>
+    <string name="lock_forgot_erase">امسح بيانات الموبايل ده</string>
+    <string name="lock_forgot_back">لأ، ارجع</string>
+    <string name="locks_title">القفل والبصمة</string>
+    <string name="locks_group">القفل</string>
+    <string name="locks_switch">قفل التطبيق</string>
+    <string name="locks_switch_sub">رقم سري أو بصمة قبل ما حد يشوف فلوسك.</string>
+    <string name="locks_change">غيّر الرقم السري</string>
+    <string name="locks_fingerprint">افتح بالبصمة</string>
+    <string name="locks_fingerprint_sub">مع الرقم السري، مش بدله.</string>
+    <string name="locks_when">بيتقفل لما تفتح التطبيق من الأول، وبعد دقيقة من ما تسيبه.</string>
+    <string name="locks_new">اكتب رقم سري من 4 لـ 6 أرقام.</string>
+    <string name="locks_repeat">اكتبه تاني للتأكيد.</string>
+    <string name="locks_current">اكتب رقمك السري الحالي.</string>
+    <string name="locks_mismatch">الرقمين مش زي بعض. ابدأ من الأول.</string>
+    <string name="locks_wait">استنى %1$s ثانية وجرّب تاني.</string>
+    <string name="locks_unreadable">الرقم السري ماعادش ينفع يتقري. من شاشة القفل تقدر تمسحه بالبصمة أو بقفل الموبايل.</string>
+    <string name="settings_lock_on">شغّال</string>
 </resources>

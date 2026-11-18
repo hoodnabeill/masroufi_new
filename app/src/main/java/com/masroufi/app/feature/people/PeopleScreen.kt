@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.data.repo.GameyaView
 import com.masroufi.app.data.repo.PeopleFilter
 import com.masroufi.app.data.repo.PeopleTotals
@@ -124,15 +124,15 @@ private fun Totals(t: PeopleTotals) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Column(Modifier.weight(1f).clip(CardShape).background(Tz.turquoise).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.people_owed_title), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.turquoiseInk)
-            Text(formatPounds(t.theyOwe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.turquoiseInk)
+            Text(poundsText(t.theyOwe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.turquoiseInk)
             Text(fromPeople(t.theyOweCount), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.turquoiseInk)
         }
         Column(Modifier.weight(1f).clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.people_owe_title), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.text2)
-            Text(formatPounds(t.iOwe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.text)
+            Text(poundsText(t.iOwe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.text)
             Text(
                 when {
-                    t.onTab > 0 -> stringResource(R.string.people_owe_on_tab, formatPounds(t.onTab))
+                    t.onTab > 0 -> stringResource(R.string.people_owe_on_tab, poundsText(t.onTab))
                     t.iOwe == 0L -> stringResource(R.string.people_owe_none)
                     else -> ""
                 },
@@ -214,8 +214,8 @@ private fun PersonRowCard(ui: PersonRowUi, first: Boolean, last: Boolean, onOpen
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 when {
-                    r.balance > 0 -> stringResource(R.string.people_they_owe, formatPounds(r.balance))
-                    r.balance < 0 -> stringResource(R.string.people_i_owe, formatPounds(abs(r.balance)))
+                    r.balance > 0 -> stringResource(R.string.people_they_owe, poundsText(r.balance))
+                    r.balance < 0 -> stringResource(R.string.people_i_owe, poundsText(abs(r.balance)))
                     else -> stringResource(R.string.people_even)
                 },
                 style = TzType.rowNumber, color = if (r.balance > 0) Tz.turquoise else Tz.text,
@@ -251,7 +251,7 @@ private fun DutyCard(duty: DutyCardUi, onOpen: () -> Unit) {
         if (duty.ownGivers > 0) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    stringResource(R.string.people_duty_own, formatPounds(duty.ownTotal), duty.ownGivers.toString()),
+                    stringResource(R.string.people_duty_own, poundsText(duty.ownTotal), duty.ownGivers.toString()),
                     style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold), color = LilacInk, modifier = Modifier.weight(1f),
                 )
                 TzIcon(TzIcons.chevron, 18.dp, null, tint = LilacInk)
@@ -275,8 +275,8 @@ internal fun DutyUpcoming(u: UpcomingDuty) {
             )
         }
         u.gaveMe?.let { gave ->
-            DutyLine(stringResource(R.string.people_duty_gave), formatPounds(gave), LilacText)
-            DutyLine(stringResource(R.string.people_duty_return), stringResource(R.string.people_duty_or_more, formatPounds(gave)), Tz.yellow)
+            DutyLine(stringResource(R.string.people_duty_gave), poundsText(gave), LilacText)
+            DutyLine(stringResource(R.string.people_duty_return), stringResource(R.string.people_duty_or_more, poundsText(gave)), Tz.yellow)
         }
     }
 }
@@ -313,7 +313,7 @@ private fun GameyaCard(g: GameyaView?, onOpen: () -> Unit) {
                     if (g.finished) stringResource(R.string.people_gameya_done)
                     else stringResource(
                         R.string.people_gameya_line, g.monthNumber.toString(), g.people.toString(), g.gameya.myTurn.toString(),
-                        g.myTurnMonth.month.getDisplayName(TextStyle.FULL, locale), formatPounds(g.payout),
+                        g.myTurnMonth.month.getDisplayName(TextStyle.FULL, locale), poundsText(g.payout),
                     ),
                     style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2,
                 )
@@ -352,7 +352,7 @@ private fun KidsCard(kids: KidsCardUi, onOpen: () -> Unit) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(R.string.kids_title), style = TzType.cardHeading, color = Tz.text)
                 Text(
-                    if (kids.children == 0) stringResource(R.string.people_kids_empty) else stringResource(R.string.kids_month_line, formatPounds(kids.monthEstimate)),
+                    if (kids.children == 0) stringResource(R.string.people_kids_empty) else stringResource(R.string.kids_month_line, poundsText(kids.monthEstimate)),
                     style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2,
                 )
             }

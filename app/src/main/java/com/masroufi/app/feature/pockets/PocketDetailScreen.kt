@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.roll.EntryLine
 import com.masroufi.app.ui.components.Odometer
@@ -183,7 +183,7 @@ private fun Action(icon: TzIconDef, tint: Color, label: Int, modifier: Modifier,
 private fun CounterCard(s: PocketDetailUi, viewModel: PocketDetailViewModel, onReconcile: () -> Unit) {
     TzCard {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.pockets_counter_counted, formatPounds(s.counter.total)), style = TzType.cardHeading, color = Tz.text)
+            Text(stringResource(R.string.pockets_counter_counted, poundsText(s.counter.total)), style = TzType.cardHeading, color = Tz.text)
             NoteCounter(s.counter, viewModel::step, viewModel::setChange)
             PrimaryButton(stringResource(R.string.pockets_reconcile), onReconcile, Modifier.fillMaxWidth(), height = 48.dp, textStyle = TzType.button.copy(fontSize = 16.sp))
         }
@@ -205,14 +205,14 @@ private fun LimitCard(s: PocketDetailUi, onEdit: () -> Unit) {
             }
             TzProgressBar(listOf((s.moved.toFloat() / limit).coerceIn(0f, 1f) to Tz.yellow), height = 12.dp)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.pocket_limit_moved, formatPounds(s.moved)), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
-                Text(stringResource(R.string.pocket_limit_of, formatPounds(limit)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text)
+                Text(stringResource(R.string.pocket_limit_moved, poundsText(s.moved)), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
+                Text(stringResource(R.string.pocket_limit_of, poundsText(limit)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text)
             }
             val room = s.warningRoom
             if (room != null) {
-                val first = if (room >= 0) stringResource(R.string.pocket_limit_warning, formatPounds(room)) else stringResource(R.string.pocket_limit_over, formatPounds(-room))
+                val first = if (room >= 0) stringResource(R.string.pocket_limit_warning, poundsText(room)) else stringResource(R.string.pocket_limit_over, poundsText(-room))
                 // The mock's second sentence names a specific payment: only said when there is one.
-                val second = s.upcoming?.let { stringResource(R.string.pocket_limit_upcoming, it.name, formatPounds(it.amount)) }
+                val second = s.upcoming?.let { stringResource(R.string.pocket_limit_upcoming, it.name, poundsText(it.amount)) }
                 Text(listOfNotNull(first, second).joinToString(" "), style = TzType.caption.copy(lineHeight = 1.7.em), color = Tz.yellow)
             }
             Text(stringResource(R.string.pocket_limit_note), style = TzType.caption.copy(fontSize = 11.sp), color = Tz.text3)
@@ -231,7 +231,7 @@ private fun FeesCard(s: PocketDetailUi) {
                 return@Column
             }
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(formatPounds(f.total), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 1.em), color = Tz.carnelianText)
+                Text(poundsText(f.total), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 1.em), color = Tz.carnelianText)
                 Text(
                     stringResource(R.string.pocket_fees_line, (f.cashOut.first + f.transfer.first).toString()),
                     style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2, modifier = Modifier.padding(bottom = 4.dp),
@@ -254,7 +254,7 @@ private fun FeesCard(s: PocketDetailUi) {
 private fun FeeLine(label: String, amount: Long) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
-        Text(formatPounds(amount), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text)
+        Text(poundsText(amount), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text)
     }
 }
 
@@ -282,7 +282,7 @@ private fun Switches(s: PocketDetailUi, viewModel: PocketDetailViewModel, onEdit
             val countsTitle = stringResource(R.string.pocket_counts_title)
             SwitchRow(countsTitle, stringResource(R.string.pocket_counts_caption), s.countsInTicket, viewModel::setCountsInTicket)
             Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
-            val lowTitle = stringResource(R.string.pocket_low_title, formatPounds(s.lowBalanceThreshold))
+            val lowTitle = stringResource(R.string.pocket_low_title, poundsText(s.lowBalanceThreshold))
             SwitchRow(lowTitle, stringResource(R.string.pocket_low_caption), s.lowBalanceAlert, viewModel::setLowBalanceAlert) {
                 TextLink(stringResource(R.string.pocket_low_edit), onEditThreshold)
             }

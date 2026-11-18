@@ -1542,4 +1542,35 @@
         <item>If these terms change</item>
         <item>The new version will appear in the app and on its Google Play page, with a new date. Using the app after a change means you accept it.</item>
     </string-array>
+    <!-- Task 55: app lock and hide amounts -->
+    <string name="lock_title">Show me it\'s you</string>
+    <string name="lock_sub">Fingerprint or your PIN. Your money is not for just anyone.</string>
+    <string name="lock_wrong">Not that one. Try again.</string>
+    <string name="lock_wait">Wait %1$s seconds</string>
+    <string name="lock_wait_min">Wait %1$s minutes</string>
+    <string name="lock_unreadable">The PIN cannot be read any more. Open with your fingerprint or the phone\'s screen lock.</string>
+    <string name="lock_guard_cd">Qersh standing guard</string>
+    <string name="lock_fingerprint_cd">Open with fingerprint</string>
+    <string name="lock_delete_cd">Delete</string>
+    <string name="lock_prompt_title">Open Masroufi</string>
+    <string name="lock_forgot">Forgot the PIN? Restore from your backup</string>
+    <string name="lock_forgot_title">Forgot the PIN?</string>
+    <string name="lock_forgot_body">The only way in is to erase this phone\'s data and restore a backup with the backup password.</string>
+    <string name="lock_forgot_erase">Erase this phone\'s data</string>
+    <string name="lock_forgot_back">No, go back</string>
+    <string name="locks_title">Lock and fingerprint</string>
+    <string name="locks_group">Lock</string>
+    <string name="locks_switch">App lock</string>
+    <string name="locks_switch_sub">A PIN or fingerprint before anyone sees your money.</string>
+    <string name="locks_change">Change PIN</string>
+    <string name="locks_fingerprint">Open with fingerprint</string>
+    <string name="locks_fingerprint_sub">Along with the PIN, not instead of it.</string>
+    <string name="locks_when">It locks when you open the app fresh, and after a minute away.</string>
+    <string name="locks_new">Enter a PIN of 4 to 6 digits.</string>
+    <string name="locks_repeat">Enter it again to confirm.</string>
+    <string name="locks_current">Enter your current PIN.</string>
+    <string name="locks_mismatch">The two PINs differ. Start again.</string>
+    <string name="locks_wait">Wait %1$s seconds and try again.</string>
+    <string name="locks_unreadable">The PIN cannot be read any more. From the lock screen you can clear it with your fingerprint or screen lock.</string>
+    <string name="settings_lock_on">On</string>
 </resources>

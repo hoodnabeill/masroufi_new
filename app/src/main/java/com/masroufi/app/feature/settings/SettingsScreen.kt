@@ -143,7 +143,7 @@ fun SettingsContent(ui: SettingsUi, vm: SettingsActions, nav: SettingsNav, suppo
         }
 
         Group(R.string.settings_group_safety) {
-            ValueRow(R.string.settings_lock, null, onClick = nav.onLock)
+            ValueRow(R.string.settings_lock, stringResource(if (ui.lockOn) R.string.settings_lock_on else R.string.settings_off), onClick = nav.onLock)
             ValueRow(R.string.settings_backup, stringResource(R.string.settings_backup_none), onClick = nav.onBackup)
             Row(
                 Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).alpha(0.6f).padding(horizontal = 16.dp, vertical = 8.dp),
@@ -266,7 +266,7 @@ private fun ProfileRow(ui: SettingsUi, onClick: () -> Unit) {
 }
 
 @Composable
-private fun Group(title: Int, content: @Composable () -> Unit) {
+internal fun Group(title: Int, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(stringResource(title), Modifier.padding(horizontal = 16.dp), style = TzType.caption.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold), color = Tz.text2)
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Tz.surface)) { content() }
@@ -274,10 +274,10 @@ private fun Group(title: Int, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun Divider() = Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
+internal fun Divider() = Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
 
 @Composable
-private fun RowTitle(title: Int, sub: Int?) {
+internal fun RowTitle(title: Int, sub: Int?) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(stringResource(title), style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.Medium), color = Tz.text)
         if (sub != null) Text(stringResource(sub), style = TzType.caption, color = Tz.text2)
@@ -286,7 +286,7 @@ private fun RowTitle(title: Int, sub: Int?) {
 
 /** A row that opens something: the current [value] in yellow on the far side, or a chevron when it has none. */
 @Composable
-private fun ValueRow(title: Int, value: String?, last: Boolean = false, onClick: () -> Unit) {
+internal fun ValueRow(title: Int, value: String?, last: Boolean = false, onClick: () -> Unit) {
     val haptics = LocalHaptics.current
     Row(
         Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }.padding(horizontal = 16.dp),
@@ -300,7 +300,7 @@ private fun ValueRow(title: Int, value: String?, last: Boolean = false, onClick:
 }
 
 @Composable
-private fun SwitchRow(title: Int, sub: Int?, checked: Boolean, onChange: (Boolean) -> Unit, last: Boolean = false) {
+internal fun SwitchRow(title: Int, sub: Int?, checked: Boolean, onChange: (Boolean) -> Unit, last: Boolean = false) {
     val label = stringResource(title)
     Row(
         Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).padding(horizontal = 16.dp),

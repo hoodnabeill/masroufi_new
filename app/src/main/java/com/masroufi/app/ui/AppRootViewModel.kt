@@ -24,6 +24,10 @@ class AppRootViewModel @Inject constructor(settings: SettingsStore, endOfMonthMo
     val feel: StateFlow<Pair<Boolean, Boolean>> =
         settings.settings.map { it.vibration to it.ticketSounds }.stateIn(viewModelScope, SharingStarted.Eagerly, true to false)
 
+    /** The "hide amounts" setting: every amount on screen becomes dots (provided to the whole tree as `LocalHideAmounts`). */
+    val hideAmounts: StateFlow<Boolean> =
+        settings.settings.map { it.hideAmounts }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     /** Whether onboarding is done; null until the stored value is read, so nothing shows before it is known. */
     val onboarded: StateFlow<Boolean?> =
         settings.settings.map<_, Boolean?> { it.onboarded }.stateIn(viewModelScope, SharingStarted.Eagerly, null)

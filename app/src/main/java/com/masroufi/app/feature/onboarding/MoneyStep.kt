@@ -59,7 +59,7 @@ fun MoneyStep(state: OnboardingUi, actions: OnboardingActions) {
         StepTitle(stringResource(R.string.ob_money_title))
         Column(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                Odometer(state.money.toPiastres(), TzType.hero.copy(fontSize = 76.sp, lineHeight = 1.em, color = Tz.yellow), showPiastres = state.money.hasPoint)
+                Odometer(state.money.toPiastres(), TzType.hero.copy(fontSize = 76.sp, lineHeight = 1.em, color = Tz.yellow), showPiastres = state.money.hasPoint, maskable = false)
                 Text(stringResource(R.string.paper_currency), Modifier.padding(bottom = 10.dp), style = TzType.button.copy(fontSize = 22.sp, color = Tz.text2))
             }
             Text(stringResource(R.string.ob_money_caption), style = TzType.label.copy(color = Tz.text2))

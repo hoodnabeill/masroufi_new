@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.R
 import com.masroufi.app.core.formatPounds
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.components.EmptyState
 import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.TzCard
@@ -172,7 +173,7 @@ private fun Loaded(
         val dragged = state.cards.firstOrNull { it.view.id == drag.id }
         if (dragged != null) {
             Text(
-                formatPounds(dragged.view.left),
+                poundsText(dragged.view.left),
                 style = TzType.button.copy(fontSize = 18.sp),
                 color = Tz.night,
                 modifier = Modifier
@@ -193,7 +194,7 @@ private fun SplitCard(split: SplitSummary, cards: List<EnvelopeCardUi>) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                 Text(stringResource(R.string.env_split_title, month), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2)
-                Text(formatPounds(split.income), style = TzType.cardHeading.copy(fontSize = 22.sp), color = Tz.text)
+                Text(poundsText(split.income), style = TzType.cardHeading.copy(fontSize = 22.sp), color = Tz.text)
             }
             val total = split.income.coerceAtLeast(1).toFloat()
             TzProgressBar(
@@ -201,7 +202,7 @@ private fun SplitCard(split: SplitSummary, cards: List<EnvelopeCardUi>) {
                 height = 14.dp,
             )
             if (split.unassigned > 0) {
-                val amount = formatPounds(split.unassigned)
+                val amount = poundsText(split.unassigned)
                 val text = stringResource(R.string.env_split_left, amount)
                 val at = text.indexOf(amount)
                 Text(
@@ -251,7 +252,7 @@ private fun TipCard(tip: MoveTip, onClick: () -> Unit) {
     ) {
         Text(stringResource(R.string.env_tip_title), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = Tz.yellow)
         Text(
-            stringResource(R.string.env_tip_text, tip.toName, tip.fromName, formatPounds(tip.amount)),
+            stringResource(R.string.env_tip_text, tip.toName, tip.fromName, poundsText(tip.amount)),
             style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp), color = TipText,
         )
     }

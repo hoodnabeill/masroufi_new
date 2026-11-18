@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -263,10 +264,21 @@ internal fun PinPad(
 }
 
 @Composable
-private fun PinKey(fill: Color, modifier: Modifier, enabled: Boolean, onClick: () -> Unit, content: @Composable () -> Unit) {
+internal fun PinKey(
+    fill: Color,
+    modifier: Modifier,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    height: Dp = 56.dp,
+    corner: Dp = 18.dp,
+    outline: Color? = null,
+    content: @Composable () -> Unit,
+) {
     val source = remember { MutableInteractionSource() }
+    val shape = RoundedCornerShape(corner)
     Box(
-        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).height(56.dp).clip(RoundedCornerShape(18.dp)).background(fill)
+        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).height(height).clip(shape).background(fill)
+            .then(if (outline != null) Modifier.border(1.dp, outline, shape) else Modifier)
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { content() }
