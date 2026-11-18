@@ -1,6 +1,7 @@
 package com.masroufi.app.data.repo
 
 import androidx.room.withTransaction
+import com.masroufi.app.data.db.ClientJobDao
 import com.masroufi.app.data.db.DebtDirection
 import com.masroufi.app.data.db.DebtEntity
 import com.masroufi.app.data.db.EntryDao
@@ -67,6 +68,7 @@ class EntryRepository @Inject constructor(
     private val jarDao: JarDao,
     private val recurringDao: RecurringDao,
     private val peopleDao: PeopleDao,
+    private val clientJobDao: ClientJobDao,
     private val tickets: TicketRepository,
     private val settings: SettingsStore,
     private val entitlements: Entitlements,
@@ -129,6 +131,7 @@ class EntryRepository @Inject constructor(
             entryDao.delete(id)
             releaseBill(old)
             releaseShareDebt(old)
+            clientJobDao.unpay(id) // a client job this entry paid is unpaid again
             tickets.recalcDay(clock.dayOf(old.happenedAt))
         }
     }

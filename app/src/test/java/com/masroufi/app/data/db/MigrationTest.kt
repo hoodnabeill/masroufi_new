@@ -35,6 +35,13 @@ private val V2_TABLES = listOf(
     "CREATE INDEX IF NOT EXISTS `index_jar_movement_entryId` ON `jar_movement` (`entryId`)",
 )
 
+/** `recurring` as v6 had it (no totalCount, paidBefore), exactly as Room created it from the v6 entity. */
+private const val V6_RECURRING = "CREATE TABLE IF NOT EXISTS `recurring` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
+    "`amount` INTEGER NOT NULL, `pocketId` INTEGER NOT NULL, `scheduleDay` INTEGER NOT NULL, `nextDue` INTEGER NOT NULL, " +
+    "`envelopeId` INTEGER, `paidThisCycle` INTEGER NOT NULL, `kind` TEXT NOT NULL, `source` TEXT, `updatedAt` INTEGER NOT NULL, " +
+    "`scheduleType` TEXT NOT NULL, `trialEnd` INTEGER, `yearlyPrice` INTEGER, `sharedWith` INTEGER NOT NULL DEFAULT 1, " +
+    "`answers` TEXT, `lastAskedAt` INTEGER, `archived` INTEGER NOT NULL DEFAULT 0)"
+
 /** The tables v4 added, and `entry` as v3 had it (no debtId), exactly as Room created them from the v3 entities. */
 private val V4_TABLES = listOf("person", "debt", "tab_item", "occasion", "gift", "gameya", "gameya_member", "gameya_payment", "gameya_plan")
 
@@ -58,10 +65,20 @@ class MigrationTest {
         context.deleteDatabase(name)
     }
 
-    /** Room creates the current file; `wish` goes back to its v5 shape (no movedToJar), user_version 5. */
-    private fun v5File(): SQLiteDatabase {
+    /** Room creates the current file; `recurring` goes back to its v6 shape (no totalCount, paidBefore), `client_job` goes, user_version 6. */
+    private fun v6File(): SQLiteDatabase {
         Room.databaseBuilder(context, TazkaraDatabase::class.java, name).build().apply { openHelper.writableDatabase }.close()
-        val v5 = SQLiteDatabase.openDatabase(context.getDatabasePath(name).path, null, SQLiteDatabase.OPEN_READWRITE)
+        val v6 = SQLiteDatabase.openDatabase(context.getDatabasePath(name).path, null, SQLiteDatabase.OPEN_READWRITE)
+        v6.execSQL("DROP TABLE `client_job`")
+        v6.execSQL("DROP TABLE `recurring`")
+        v6.execSQL(V6_RECURRING)
+        v6.version = 6
+        return v6
+    }
+
+    /** The v6 file; `wish` goes back to its v5 shape (no movedToJar), user_version 5. */
+    private fun v5File(): SQLiteDatabase {
+        val v5 = v6File()
         v5.execSQL("DROP TABLE `wish`")
         v5.execSQL(
             "CREATE TABLE IF NOT EXISTS `wish` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
@@ -102,7 +119,7 @@ class MigrationTest {
 
     /** Opening runs the migrations and then Room's schema validation over every table. */
     private fun open() =
-        Room.databaseBuilder(context, TazkaraDatabase::class.java, name).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
+        Room.databaseBuilder(context, TazkaraDatabase::class.java, name).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
 
     /** v1 file database: only `pocket` differs between v1 and v2, so the v2 file gets the v1 pocket table and version 1. */
     @Test fun migration1to2KeepsData() = runTest {
@@ -131,7 +148,7 @@ class MigrationTest {
             assertEquals("new columns: no limit, alert off, no SMS", listOf(null, null, false, null, null),
                 listOf(p.monthlyLimit, p.lowBalanceThreshold, p.lowBalanceAlert, p.lastSmsBalance, p.lastSmsAt))
             assertEquals("the entry survives and still counts", 98_000L, db.pocketDao().balanceOf(1))
-            assertEquals(6, db.openHelper.readableDatabase.version)
+            assertEquals(7, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -182,7 +199,7 @@ class MigrationTest {
             db.envelopeDao().insertMove(EnvelopeMoveEntity(cycleStart = due, fromId = 1, toId = 1, amount = 1, at = 0))
             db.envelopeDao().insertSplit(listOf(SplitRuleEntity(envelopeId = 1, kind = SplitKind.PERCENT, value = 10, sortOrder = 0)))
             assertEquals("new tables usable", 1 to 1, db.envelopeDao().moves().first().size to db.envelopeDao().splitRules().size)
-            assertEquals(6, db.openHelper.readableDatabase.version)
+            assertEquals(7, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -219,7 +236,7 @@ class MigrationTest {
             assertEquals(listOf(1, 1, 1, 1), listOf(
                 db.peopleDao().openDebts().size, db.dutyDao().giftsNow().size, db.gameyaDao().all().first().size, db.gameyaDao().plans().first().size,
             ))
-            assertEquals(6, db.openHelper.readableDatabase.version)
+            assertEquals(7, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -250,7 +267,7 @@ class MigrationTest {
                 db.wishDao().byId(wish)!!.let { listOf(it.answer, it.answeredAt, it.installmentMonths) },
             )
             assertEquals(listOf(item), db.entryDao().pricedEntries().map { it.trackedItemId })
-            assertEquals(6, db.openHelper.readableDatabase.version)
+            assertEquals(7, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -270,7 +287,29 @@ class MigrationTest {
             assertEquals(listOf<Any?>("jacket", 120_000L, WishAnswer.CHANGED_MIND, null), listOf(old.name, old.price, old.answer, old.movedToJar))
             db.wishDao().update(old.copy(movedToJar = 50_000))
             assertEquals(50_000L, db.wishDao().byId(1)!!.movedToJar)
-            assertEquals(6, db.openHelper.readableDatabase.version)
+            assertEquals(7, db.openHelper.readableDatabase.version)
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test fun migration6to7KeepsRecurringAndAddsPlanCountsAndClientJob() = runTest {
+        v6File().use { v6 ->
+            v6.execSQL(
+                "INSERT INTO recurring (id, name, amount, pocketId, scheduleDay, nextDue, paidThisCycle, kind, updatedAt, scheduleType, " +
+                    "sharedWith, archived) VALUES (1, 'phone', 18500, 1, 5, 20000, 0, 'INSTALLMENT', 3, 'MONTHLY', 1, 0)",
+            )
+        }
+
+        val db = open()
+        try {
+            val old = checkNotNull(db.recurringDao().byId(1)) { "recurring item lost in the migration" }
+            assertEquals(listOf<Any?>("phone", 18_500L, null, 0), listOf(old.name, old.amount, old.totalCount, old.paidBefore))
+            db.recurringDao().update(old.copy(totalCount = 12, paidBefore = 5))
+            assertEquals(listOf<Any?>(12, 5), db.recurringDao().byId(1)!!.let { listOf(it.totalCount, it.paidBefore) })
+            val job = db.clientJobDao().insert(ClientJobEntity(client = "al-nour", label = "site", amount = 500_000, dueDate = LocalDate.of(2026, 11, 20)))
+            assertEquals(null, db.clientJobDao().byId(job)!!.paidEntryId)
+            assertEquals(7, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }

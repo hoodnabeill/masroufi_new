@@ -85,6 +85,22 @@ data class Settings(
     val eomNoSpend: Set<Long> = emptySet(),
     /** The payday (epoch day) of the cycle whose offer card was dismissed. */
     val eomOfferDismissedFor: Long? = null,
+    /** Freelancer mode (phase 9a): on, the fixed self-salary, the self-payday (day of month) and the payday it replaced. */
+    val freelanceOn: Boolean = false,
+    val selfSalary: Long? = null,
+    val selfPayday: Int? = null,
+    val prevPayday: Payday? = null,
+    /** The month (yyyymm) whose self-payday ran, the MOVED entry it made (null when the vault was empty), what it paid and if that was short. */
+    val selfPaidMonth: Long? = null,
+    val selfPayEntryId: Long? = null,
+    val selfPaid: Long? = null,
+    val selfPayShort: Boolean = false,
+    /** The month (yyyymm) a raise/lower suggestion was answered, and the month "keep it" was tapped (silences three months). */
+    val selfSuggestMonth: Long? = null,
+    val selfKeptMonth: Long? = null,
+    /** Installment id -> month (yyyymm) its early-payoff suggestion was dismissed; id -> the due epoch day last logged by itself. */
+    val earlyPayoffMonths: Map<Long, Long> = emptyMap(),
+    val installmentLogged: Map<Long, Long> = emptyMap(),
 ) {
     /**
      * The mode is on at [date]: switched on, started by then and not past its payday. With [nextPayday] (the date's pay
@@ -140,6 +156,18 @@ class SettingsStore @Inject constructor(
     private val eomPausedKey = stringSetPreferencesKey("eomPaused")
     private val eomNoSpendKey = stringSetPreferencesKey("eomNoSpend")
     private val eomOfferKey = longPreferencesKey("eomOfferDismissedFor")
+    private val freelanceOnKey = booleanPreferencesKey("freelanceOn")
+    private val selfSalaryKey = longPreferencesKey("selfSalary")
+    private val selfPaydayKey = intPreferencesKey("selfPayday")
+    private val prevPaydayKey = stringPreferencesKey("prevPayday")
+    private val selfPaidMonthKey = longPreferencesKey("selfPaidMonth")
+    private val selfPayEntryKey = longPreferencesKey("selfPayEntryId")
+    private val selfPaidKey = longPreferencesKey("selfPaid")
+    private val selfPayShortKey = booleanPreferencesKey("selfPayShort")
+    private val selfSuggestMonthKey = longPreferencesKey("selfSuggestMonth")
+    private val selfKeptMonthKey = longPreferencesKey("selfKeptMonth")
+    private val earlyPayoffKey = stringPreferencesKey("earlyPayoffMonths")
+    private val installmentLoggedKey = stringPreferencesKey("installmentLogged")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -228,6 +256,50 @@ class SettingsStore @Inject constructor(
     }
     suspend fun eomAddNoSpend(epochDay: Long) { store.edit { it[eomNoSpendKey] = (it[eomNoSpendKey] ?: emptySet()) + epochDay.toString() } }
     suspend fun eomDismissOffer(cyclePayday: Long) { store.edit { it[eomOfferKey] = cyclePayday } }
+    /** Switches freelancer mode on (or edits it): [restoreTo] is the payday to come back to on "off", kept from the first switch-on. */
+    suspend fun freelanceSwitchOn(salary: Long, selfPayday: Int, restoreTo: Payday?) {
+        require(salary > 0) { "self-salary must be > 0" }
+        store.edit {
+            it[freelanceOnKey] = true
+            it[selfSalaryKey] = salary
+            it[selfPaydayKey] = selfPayday
+            it[paydayKey] = encode(Payday.Day(selfPayday))
+            if (restoreTo != null) it[prevPaydayKey] = encode(restoreTo)
+        }
+    }
+    /** Off: the previous payday comes back; the salary, the day and this month's pay record stay. */
+    suspend fun freelanceSwitchOff() {
+        store.edit {
+            it.remove(freelanceOnKey)
+            it[prevPaydayKey]?.let { prev -> it[paydayKey] = prev }
+            it.remove(prevPaydayKey)
+        }
+    }
+    suspend fun setSelfSalary(v: Long) {
+        require(v > 0) { "self-salary must be > 0" }
+        store.edit { it[selfSalaryKey] = v }
+    }
+    suspend fun markSelfPaid(month: Long, entryId: Long?, paid: Long, short: Boolean) {
+        store.edit {
+            it[selfPaidMonthKey] = month
+            if (entryId == null) it.remove(selfPayEntryKey) else it[selfPayEntryKey] = entryId
+            it[selfPaidKey] = paid
+            it[selfPayShortKey] = short
+        }
+    }
+    suspend fun setSelfSuggestMonth(month: Long) { store.edit { it[selfSuggestMonthKey] = month } }
+    suspend fun setSelfKeptMonth(month: Long) {
+        store.edit {
+            it[selfKeptMonthKey] = month
+            it[selfSuggestMonthKey] = month
+        }
+    }
+    suspend fun setEarlyPayoffMonth(planId: Long, month: Long) {
+        store.edit { it[earlyPayoffKey] = encodeMap(decodeReminders(it[earlyPayoffKey]) + (planId to month)) }
+    }
+    suspend fun setInstallmentLogged(planId: Long, dueEpochDay: Long) {
+        store.edit { it[installmentLoggedKey] = encodeMap(decodeReminders(it[installmentLoggedKey]) + (planId to dueEpochDay)) }
+    }
     suspend fun setSuggestionDismissed(month: String) { store.edit { it[suggestionDismissedKey] = month } }
     suspend fun setProfileName(v: String?) { store.edit { if (v.isNullOrBlank()) it.remove(profileNameKey) else it[profileNameKey] = v.trim() } }
     suspend fun setBirthday(v: LocalDate?) { store.edit { if (v == null) it.remove(birthdayKey) else it[birthdayKey] = v.toEpochDay() } }
@@ -300,7 +372,21 @@ class SettingsStore @Inject constructor(
         eomPaused = p[eomPausedKey]?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet(),
         eomNoSpend = p[eomNoSpendKey]?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet(),
         eomOfferDismissedFor = p[eomOfferKey],
+        freelanceOn = p[freelanceOnKey] ?: false,
+        selfSalary = p[selfSalaryKey],
+        selfPayday = p[selfPaydayKey],
+        prevPayday = p[prevPaydayKey]?.let(::decodePayday),
+        selfPaidMonth = p[selfPaidMonthKey],
+        selfPayEntryId = p[selfPayEntryKey],
+        selfPaid = p[selfPaidKey],
+        selfPayShort = p[selfPayShortKey] ?: false,
+        selfSuggestMonth = p[selfSuggestMonthKey],
+        selfKeptMonth = p[selfKeptMonthKey],
+        earlyPayoffMonths = decodeReminders(p[earlyPayoffKey]),
+        installmentLogged = decodeReminders(p[installmentLoggedKey]),
     )
+
+    private fun encodeMap(m: Map<Long, Long>) = m.entries.joinToString(",") { e -> "${e.key}:${e.value}" }
 
     private fun decodeReminders(s: String?): Map<Long, Long> = s?.split(",")?.mapNotNull {
         val (a, b) = it.split(":").takeIf { x -> x.size == 2 } ?: return@mapNotNull null

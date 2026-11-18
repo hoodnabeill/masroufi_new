@@ -79,6 +79,10 @@ data class RecurringRow(
 /** A repeated spend in the last days: same category, amount and pocket. */
 data class RepeatRow(val categoryId: Long, val amount: Long, val pocketId: Long, val count: Int, val lastAt: Long)
 
+// An installment plan whose paid count (paidBefore + entries against it) reached its total reserves nothing any more.
+private const val NOT_FINISHED =
+    "(r.totalCount IS NULL OR r.paidBefore + (SELECT COUNT(*) FROM entry e WHERE e.recurringId = r.id) < r.totalCount)"
+
 @Dao
 interface PocketDao {
     @Insert suspend fun insert(pocket: PocketEntity): Long
@@ -89,6 +93,13 @@ interface PocketDao {
 
     /** The cash pocket: the lowest-id CASH pocket. */
     @Query("SELECT * FROM pocket WHERE kind = 'CASH' ORDER BY id LIMIT 1") suspend fun firstCash(): PocketEntity?
+
+    /** The freelancer vault: the lowest-id VAULT pocket that is not archived. */
+    @Query("SELECT * FROM pocket WHERE kind = 'VAULT' AND archived = 0 ORDER BY id LIMIT 1") suspend fun vault(): PocketEntity?
+
+    /** Where the self-salary lands: the lowest-id pocket that counts in the EGP ticket (same predicate as COUNTING_TOTAL). */
+    @Query("SELECT * FROM pocket WHERE countsInTicket = 1 AND archived = 0 AND currency = 'EGP' ORDER BY id LIMIT 1")
+    suspend fun firstCounting(): PocketEntity?
 
     @Query("SELECT $BALANCE_EXPR FROM pocket p WHERE p.id = :id") suspend fun balanceOf(id: Long): Long
 
@@ -291,14 +302,14 @@ interface RecurringDao {
 
     @Query(
         """SELECT r.id, r.name, r.amount, r.kind, r.pocketId, p.name AS pocketName, r.nextDue, r.envelopeId
-        FROM recurring r JOIN pocket p ON p.id = r.pocketId WHERE r.archived = 0 ORDER BY r.nextDue, r.id"""
+        FROM recurring r JOIN pocket p ON p.id = r.pocketId WHERE r.archived = 0 AND $NOT_FINISHED ORDER BY r.nextDue, r.id"""
     )
     fun rows(): Flow<List<RecurringRow>>
 
     /** Reserved bills (still due before [date], overdue included): only items paid from a pocket that punches the EGP ticket (same predicate as COUNTING_TOTAL). */
     @Query(
         """SELECT COALESCE(SUM(r.amount), 0) FROM recurring r JOIN pocket p ON p.id = r.pocketId
-        WHERE r.archived = 0 AND r.nextDue < :date
+        WHERE r.archived = 0 AND r.nextDue < :date AND $NOT_FINISHED
         AND p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"""
     )
     suspend fun unpaidDueBefore(date: LocalDate): Long
@@ -306,17 +317,31 @@ interface RecurringDao {
     /** The items behind [unpaidDueBefore], soonest first. */
     @Query(
         """SELECT r.* FROM recurring r JOIN pocket p ON p.id = r.pocketId
-        WHERE r.archived = 0 AND r.nextDue < :date
+        WHERE r.archived = 0 AND r.nextDue < :date AND $NOT_FINISHED
         AND p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP' ORDER BY r.nextDue, r.id"""
     )
     suspend fun unpaidItemsDueBefore(date: LocalDate): List<RecurringEntity>
 
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM recurring WHERE pocketId = :pocketId AND archived = 0 AND nextDue < :date")
+    @Query(
+        """SELECT COALESCE(SUM(r.amount), 0) FROM recurring r
+        WHERE r.pocketId = :pocketId AND r.archived = 0 AND r.nextDue < :date AND $NOT_FINISHED"""
+    )
     suspend fun unpaidFromPocketDueBefore(pocketId: Long, date: LocalDate): Long
 
     /** The soonest unpaid payment from the pocket due before [date]. */
-    @Query("SELECT * FROM recurring WHERE pocketId = :pocketId AND archived = 0 AND nextDue < :date ORDER BY nextDue, id LIMIT 1")
+    @Query(
+        """SELECT * FROM recurring r WHERE r.pocketId = :pocketId AND r.archived = 0 AND r.nextDue < :date AND $NOT_FINISHED
+        ORDER BY r.nextDue, r.id LIMIT 1"""
+    )
     suspend fun nextUnpaidFromPocket(pocketId: Long, date: LocalDate): RecurringEntity?
+
+    /** What the monthly items paid from pockets that count in the EGP ticket cost in one cycle (finished plans excluded). */
+    @Query(
+        """SELECT COALESCE(SUM(r.amount), 0) FROM recurring r JOIN pocket p ON p.id = r.pocketId
+        WHERE r.archived = 0 AND r.scheduleType = 'MONTHLY' AND $NOT_FINISHED
+        AND p.countsInTicket = 1 AND p.archived = 0 AND p.currency = 'EGP'"""
+    )
+    suspend fun monthlyFixedTotal(): Long
 }
 
 @Dao
@@ -369,4 +394,17 @@ interface StampDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insert(stamp: StampEntity)
     @Query("SELECT * FROM stamp") fun all(): Flow<List<StampEntity>>
     @Query("SELECT kind FROM stamp") suspend fun kinds(): List<StampKind>
+}
+
+@Dao
+interface ClientJobDao {
+    @Insert suspend fun insert(job: ClientJobEntity): Long
+    @Update suspend fun update(job: ClientJobEntity)
+    @Query("DELETE FROM client_job WHERE id = :id") suspend fun delete(id: Long)
+    @Query("SELECT * FROM client_job WHERE id = :id") suspend fun byId(id: Long): ClientJobEntity?
+    @Query("SELECT * FROM client_job ORDER BY dueDate, id") fun all(): Flow<List<ClientJobEntity>>
+    @Query("SELECT * FROM client_job ORDER BY dueDate, id") suspend fun allNow(): List<ClientJobEntity>
+
+    /** The paying entry was deleted: the job is unpaid again. */
+    @Query("UPDATE client_job SET paidEntryId = NULL WHERE paidEntryId = :entryId") suspend fun unpay(entryId: Long)
 }

@@ -152,6 +152,10 @@ data class RecurringEntity(
     val lastAskedAt: Long? = null,
     /** Deleted while entries still pay it: kept for them, hidden everywhere else. */
     @ColumnInfo(defaultValue = "0") val archived: Boolean = false,
+    /** Installments: how many payments the plan has; null = open-ended. */
+    val totalCount: Int? = null,
+    /** Installments: payments made before the app tracked them (paid = this + the entries logged against the plan). */
+    @ColumnInfo(defaultValue = "0") val paidBefore: Int = 0,
 )
 
 @Entity(
@@ -355,4 +359,15 @@ data class TrackedItemEntity(
     val unit: String? = null,
     val addedByUser: Boolean = false,
     val createdAt: Long,
+)
+
+/** Freelancer mode: money a client owes. Paid = [paidEntryId] set (the RECEIVED entry into the vault). */
+@Entity(tableName = "client_job")
+data class ClientJobEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val client: String,
+    val label: String,
+    val amount: Long,
+    val dueDate: LocalDate,
+    val paidEntryId: Long? = null,
 )

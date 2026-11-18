@@ -99,6 +99,9 @@ class TicketRepository @Inject constructor(
     private val stamps: StampAwarder,
     // Provider: the end-of-month repository reads this one (the Hilt graph breaks the same cycle).
     private val eom: Provider<EndOfMonthRepository>,
+    // Providers: both log entries through EntryRepository, which needs this repository.
+    private val installments: Provider<InstallmentRepository>,
+    private val freelance: Provider<FreelanceRepository>,
 ) {
     /**
      * Today's ticket: printed once, after auto-closing every earlier open day. Days in a gap get no row (design
@@ -106,6 +109,13 @@ class TicketRepository @Inject constructor(
      * the ticket is the morning's; a move's amount is not a punch and is not added back.
      */
     suspend fun printToday(startAfterPayday: Boolean = false): DayTicketEntity {
+        // Installments due today log themselves and the freelancer pays themselves before the ticket is cut from the pockets.
+        val day = LocalDate.now(clock)
+        installments.get().logDue(day)
+        if (freelance.get().runSelfPayday(day)) {
+            // The salary changed Spendable: an untouched ticket already printed today is cut again.
+            ticketDao.forDate(day)?.takeIf { it.status == TicketStatus.OPEN && it.entryCount == 0 }?.let { ticketDao.delete(it.id) }
+        }
         // A new pay cycle ends the mode before anything prints; the settings are read again after it.
         val s = eom.get().endIfCycleChanged(settings.current())
         return db.withTransaction {

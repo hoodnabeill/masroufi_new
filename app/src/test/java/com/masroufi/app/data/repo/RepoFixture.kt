@@ -25,14 +25,14 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val stamps = StampAwarder(db.stampDao(), db.jarDao(), db.peopleDao(), clock)
     val tickets: TicketRepository = TicketRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
-        db.stampDao(), settings, clock, stamps, Provider { eom },
+        db.stampDao(), settings, clock, stamps, Provider { eom }, Provider { installments }, Provider { freelance },
     )
     val eom = EndOfMonthRepository(
         settings, tickets, db.dayTicketDao(), db.entryDao(), db.categoryDao(), db.recurringDao(), db.pocketDao(), db.jarDao(),
         db.peopleDao(), stamps, clock,
     )
     val eomMode = EndOfMonthMode(settings, db.dayTicketDao(), clock)
-    val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), db.peopleDao(), tickets, settings, plus, clock)
+    val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), db.peopleDao(), db.clientJobDao(), tickets, settings, plus, clock)
     val home = HomeRepository(
         db.pocketDao(), db.entryDao(), db.categoryDao(), db.dayTicketDao(), db.jarDao(), db.proverbDao(), db.recurringDao(),
         settings, clock,
@@ -41,6 +41,12 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
         db, db.envelopeDao(), db.entryDao(), db.recurringDao(), db.categoryDao(), settings, plus, clock,
     )
     val jar = JarRepository(db, db.jarDao(), db.goalDao(), settings, clock, stamps)
+    val installments = InstallmentRepository(
+        db, db.recurringDao(), db.entryDao(), db.pocketDao(), db.jarDao(), recurring, jar, settings, clock,
+    )
+    val freelance = FreelanceRepository(
+        db.pocketDao(), db.entryDao(), db.recurringDao(), db.clientJobDao(), Provider { entries }, settings, clock,
+    )
     val seasons = SeasonRepository(db, db.seasonDao(), db.jarDao(), clock)
     val subscriptions = SubscriptionRepository(db.recurringDao(), db.dayTicketDao(), clock)
     val people = PeopleRepository(db, db.peopleDao(), db.dutyDao(), entries, clock, stamps)

@@ -74,10 +74,12 @@ class PaydayRitualRepository @Inject constructor(
      */
     suspend fun shouldOffer(entryId: Long): Boolean {
         val entry = entryDao.byId(entryId) ?: return false
-        if (entry.kind != EntryKind.RECEIVED) return false
-        if (pocketDao.byId(entry.pocketId)?.punchesTicket != true) return false
         val s = settings.current()
         if (s.lastRitualForEntryId == entryId) return false
+        // The freelancer's self-payday move is the salary: offered once, whatever its size.
+        if (entry.kind == EntryKind.MOVED) return entryId == s.selfPayEntryId && pocketDao.byId(entry.toPocketId ?: return false)?.punchesTicket == true
+        if (entry.kind != EntryKind.RECEIVED) return false
+        if (pocketDao.byId(entry.pocketId)?.punchesTicket != true) return false
         s.usualSalary?.let { return entry.amount * 2 >= it }
         val cycle = entryDao.payCycleOn(clock.dayOf(entry.happenedAt), s.payday, clock)
         val fixed = recurringDao.unpaidDueBefore(cycle.nextPayday)

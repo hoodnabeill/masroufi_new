@@ -17,6 +17,7 @@ import com.masroufi.app.data.db.MIGRATION_2_3
 import com.masroufi.app.data.db.MIGRATION_3_4
 import com.masroufi.app.data.db.MIGRATION_4_5
 import com.masroufi.app.data.db.MIGRATION_5_6
+import com.masroufi.app.data.db.MIGRATION_6_7
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.Entitlements
@@ -54,7 +55,7 @@ object AppModule {
 
     @Provides @Singleton
     fun database(@ApplicationContext context: Context): TazkaraDatabase =
-        Room.databaseBuilder(context, TazkaraDatabase::class.java, TazkaraDatabase.FILE_NAME).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
+        Room.databaseBuilder(context, TazkaraDatabase::class.java, TazkaraDatabase.FILE_NAME).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
 
     @Provides fun pocketDao(db: TazkaraDatabase) = db.pocketDao()
     @Provides fun entryDao(db: TazkaraDatabase) = db.entryDao()
@@ -72,6 +73,7 @@ object AppModule {
     @Provides fun gameyaDao(db: TazkaraDatabase) = db.gameyaDao()
     @Provides fun wishDao(db: TazkaraDatabase) = db.wishDao()
     @Provides fun trackedItemDao(db: TazkaraDatabase) = db.trackedItemDao()
+    @Provides fun clientJobDao(db: TazkaraDatabase) = db.clientJobDao()
 
     @Provides @Singleton
     fun dataStore(@ApplicationContext context: Context): DataStore<Preferences> =

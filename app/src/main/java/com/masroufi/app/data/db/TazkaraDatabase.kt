@@ -15,9 +15,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SeasonEntity::class, SeasonItemEntity::class, EnvelopeMoveEntity::class, SplitRuleEntity::class,
         PersonEntity::class, DebtEntity::class, TabItemEntity::class, OccasionEntity::class, GiftEntity::class,
         GameyaEntity::class, GameyaMemberEntity::class, GameyaPaymentEntity::class, GameyaPlanEntity::class,
-        WishEntity::class, TrackedItemEntity::class,
+        WishEntity::class, TrackedItemEntity::class, ClientJobEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -38,6 +38,7 @@ abstract class TazkaraDatabase : RoomDatabase() {
     abstract fun gameyaDao(): GameyaDao
     abstract fun wishDao(): WishDao
     abstract fun trackedItemDao(): TrackedItemDao
+    abstract fun clientJobDao(): ClientJobDao
 
     companion object {
         const val FILE_NAME = "tazkara.db"
@@ -151,5 +152,17 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
 val MIGRATION_5_6 = object : Migration(5, 6) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE `wish` ADD COLUMN `movedToJar` INTEGER")
+    }
+}
+
+/** v7 (Phase 9a): installment plans know their length; the freelancer's client jobs. */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `recurring` ADD COLUMN `totalCount` INTEGER")
+        db.execSQL("ALTER TABLE `recurring` ADD COLUMN `paidBefore` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `client_job` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `client` TEXT NOT NULL, " +
+                "`label` TEXT NOT NULL, `amount` INTEGER NOT NULL, `dueDate` INTEGER NOT NULL, `paidEntryId` INTEGER)",
+        )
     }
 }
