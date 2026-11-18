@@ -102,6 +102,10 @@ Decisions made during Phase 3 (owner may override):
 - Task 44: the basket suggestion is held back while an accepted raise holds and after "سيبها" for the month; no sparkline (no price series stored); the mock's delivery habit fact is not built (no category data). Birthday gift is whole pounds rounded up (1,000 over 117 days = 9). Household steppers save only on a tap; work kind and main goal toggle off when tapped again. Share is plain text. "Delete all my data" relaunches MainActivity in a cleared task and kills the process (not verified on a device). The school-season default stays 0 (no invented amounts). Guessed copy: "رخصت عليك", "ثابتة", the suggestion body.
 - CI (Phase 8): the unit-test step stops after 20 minutes; the summary names a hung test (last STARTED without a result) and adds a thread dump of the test JVM taken at 10 minutes. A test must never `runBlocking` a DataStore read on the main thread while a ViewModel edit may be in flight: the edit's transform runs on the test's main dispatcher, so they deadlock (read through `io` while pumping the dispatcher). `listOf(0, 0L)` infers every literal as Long.
 
+## Phase 9 notes (end-of-month mode)
+
+- Task 45: in the mode the default leftover destination is the existing `TOMORROW` and the ticket ignores the carry (the pool already holds it); the mode beats the basket raise; switching on/off re-prints today's OPEN ticket; `eomSince` keeps earlier auto-closed days on the normal default; switching on clears paused habits and no-spend dates; auto-off in `printToday` when payday comes or the cycle's next payday changes. A day with a bill payment is not a no-spend day. Offer = today under 60% of the cycle's earlier non-EOM printed tickets (3+). `isOn` does not re-emit at midnight by itself. Guessed copy: the paused-habit line.
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
