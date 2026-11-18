@@ -17,6 +17,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
@@ -32,6 +34,18 @@ class StoryTextTest {
     private val app = ApplicationProvider.getApplicationContext<Application>()
     private val ar = Locale("ar")
     private val september = storyMonthName(sepStart, octStart, ar)
+
+    // FileProvider keeps its roots in a static map; another test's (deleted) cache dir would be found first.
+    private fun forgetProviderRoots() {
+        runCatching {
+            val f = androidx.core.content.FileProvider::class.java.getDeclaredField("sCache")
+            f.isAccessible = true
+            (f.get(null) as MutableMap<*, *>).clear()
+        }
+    }
+
+    @Before fun before() = forgetProviderRoots()
+    @After fun after() = forgetProviderRoots()
 
     private fun text(story: MonthStory, slide: StorySlide, hide: Boolean = false) = slideText(app, story, slide, hide)
     private fun str(id: Int, vararg a: Any) = app.getString(id, *a)
