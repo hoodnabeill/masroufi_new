@@ -28,7 +28,7 @@ class LockViewModelTest : LockTestBase() {
         try {
             settle("ready") { ui.loaded && locked == true }
         } catch (e: IllegalStateException) {
-            throw IllegalStateException("not ready: ui=$ui locked=$locked", e)
+            throw IllegalStateException("not ready: ui=$ui locked=$locked stored=${call { f.settings.current().lockOn }} pinSet=${call { f.pin.isSet() }}", e)
         }
     }
 
