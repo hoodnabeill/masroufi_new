@@ -14,11 +14,11 @@ abstract class LockTestBase : KidsVmTestBase() {
         override val lifecycle: Lifecycle get() = registry
     }
     protected lateinit var appLock: AppLock
-    protected lateinit var gate: LockGateViewModel
+    // Made on first use: a gate collecting the settings from before the test writes them stalled CI runs at random.
+    protected val gate: LockGateViewModel by lazy { make(LockGateViewModel::class, { it.locked }) { LockGateViewModel(appLock) } }
 
     @Before fun openLock() {
         appLock = AppLock(f.settings, clock, owner.lifecycle)
-        gate = make(LockGateViewModel::class, { it.locked }) { LockGateViewModel(appLock) }
         owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_START)
     }
 
