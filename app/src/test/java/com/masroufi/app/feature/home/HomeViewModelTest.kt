@@ -17,6 +17,7 @@ import com.masroufi.app.data.db.EntryEntity
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.PocketKind
 import com.masroufi.app.data.db.TazkaraDatabase
+import com.masroufi.app.data.db.WishAnswer
 import com.masroufi.app.data.repo.NewEntry
 import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.data.repo.RepoFixture
@@ -103,7 +104,7 @@ class HomeViewModelTest {
             initializer {
                 HomeViewModel(
                     f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, FeedbackBus(), f.settings, f.onboarding,
-                    PendingDeletes(f.entries, io),
+                    PendingDeletes(f.entries, io), f.wishes,
                 )
             }
         }
@@ -233,5 +234,72 @@ class HomeViewModelTest {
         settle("closed") { ready?.ticket == null }
         // 3,900 with the 300 leftover carried: (3,900 - 300) / 12 days + 300.
         assertEquals(TomorrowUi(60_000, closed.proverbNumber), ready?.tomorrow)
+    }
+
+    /** Two wishes parked three days ago: both are past their 48 hours when Home starts. */
+    private fun parkedBefore(): Pair<Long, Long> {
+        val start = clock.instant
+        clock.instant = at(nov12.minusDays(3), 9)
+        val a = runBlocking { f.wishes.park("سماعة", 180_000) }
+        clock.instant = at(nov12.minusDays(3), 10)
+        val b = runBlocking { f.wishes.park("ساعة", 95_000) }
+        clock.instant = start
+        return a to b
+    }
+
+    @Test fun dueWishCardIsTheOldestDueWish() {
+        val (a, _) = parkedBefore()
+        newVm()
+        settle("the 48-hour card") { ready?.dueWish != null }
+        assertEquals(a, ready?.dueWish?.id)
+    }
+
+    @Test fun aWishStillInItsFortyEightHoursAsksNothing() {
+        runBlocking { f.wishes.park("سماعة", 180_000) }
+        newVm()
+        settle("ready") { ready?.ticket != null }
+        assertNull(ready?.dueWish)
+    }
+
+    @Test fun dueWishWaitsForTheFirstWeekCardAndEndOfMonth() {
+        parkedBefore()
+        newVm()
+        settle("the wish card") { ready?.dueWish != null }
+        spend(1_000) // the first entry: the first-week "first entry" card shows and goes first
+        settle("a first-week card") { ready?.firstWeekCard != null }
+        assertNull("never next to a first-week card", ready?.dueWish)
+
+        vm.dismissCard(ready!!.firstWeekCard!!.id)
+        settle("the wish card once the first-week card is gone") { ready?.firstWeekCard == null && ready?.dueWish != null }
+
+        val row = row(nov12)!!
+        runBlocking { db.dayTicketDao().update(row.copy(endOfMonth = true)) }
+        settle("end-of-month mode hides it") { ready?.dueWish == null && ready?.ticket != null }
+    }
+
+    @Test fun boughtOpensThePrefillAndAnswersNothingYet() {
+        val (a, _) = parkedBefore()
+        newVm()
+        settle("the card") { ready?.dueWish != null }
+        val prefills = mutableListOf<AddPrefill>()
+        vm.viewModelScope.launch { vm.prefill.collect { prefills += it } }
+        vm.wishBought(a)
+        settle("the prefill") { prefills.isNotEmpty() }
+        assertEquals(listOf<Any?>(180_000L, "سماعة", a), prefills.single().let { listOf(it.amount, it.note, it.wishId) })
+        assertEquals(WishAnswer.WAITING, runBlocking { db.wishDao().byId(a) }!!.answer)
+        assertEquals("the card stays until the entry is saved", a, ready?.dueWish?.id)
+    }
+
+    @Test fun changedMindAsksAboutTheJarAndThenTheNextWishComes() {
+        val (a, b) = parkedBefore()
+        newVm()
+        settle("the card") { ready?.dueWish?.id == a }
+        vm.wishChangedMind(ready!!.dueWish!!)
+        settle("the jar question") { vm.wishAsk.value != null }
+        assertEquals(listOf(a, 180_000L, 180_000L), vm.wishAsk.value!!.let { listOf(it.wishId, it.price, it.offer) })
+
+        vm.wishJarAnswer(true)
+        settle("answered with 1,800 in the jar") { ready?.jarTotal == 180_000L && ready?.dueWish?.id == b }
+        assertEquals(180_000L, runBlocking { db.wishDao().byId(a) }!!.movedToJar)
     }
 }

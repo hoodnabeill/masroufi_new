@@ -15,7 +15,10 @@ import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.BuyContext
 import com.masroufi.app.domain.averageMonthlyIncome
 import com.masroufi.app.feature.add.AddPrefill
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.Clock
@@ -29,6 +32,13 @@ private const val HOUR_MS = 3_600_000L
 
 /** [hoursLeft] rounds up and is 0 once the 48 hours have passed; [due] = passed and not answered yet. */
 data class WishView(val wish: WishEntity, val hoursLeft: Long, val due: Boolean)
+
+private val minuteTicks: Flow<Unit> = flow {
+    while (true) {
+        emit(Unit)
+        delay(60_000)
+    }
+}
 
 @Singleton
 class WishRepository @Inject constructor(
@@ -56,8 +66,8 @@ class WishRepository @Inject constructor(
         )
     }
 
-    /** Waiting first, then the answered; hours left are read when the list is collected. */
-    fun observe(): Flow<List<WishView>> = wishDao.all().map { list ->
+    /** Waiting first, then the answered; hours left are re-read every minute so a row falls due while the screen is open. */
+    fun observe(): Flow<List<WishView>> = combine(wishDao.all(), minuteTicks) { list, _ ->
         val now = clock.millis()
         list.map { w ->
             val left = w.parkedAt + WISH_HOURS * HOUR_MS - now
@@ -78,17 +88,31 @@ class WishRepository @Inject constructor(
     suspend fun changedMind(id: Long, toJar: Boolean): Long = db.withTransaction {
         val wish = checkNotNull(wishDao.byId(id)) { "no wish $id" }
         if (wish.answer != WishAnswer.WAITING) return@withTransaction 0L
-        wishDao.update(wish.copy(answer = WishAnswer.CHANGED_MIND, answeredAt = clock.millis()))
         val moved = if (toJar) minOf(wish.price, spendable()) else 0L
+        wishDao.update(wish.copy(answer = WishAnswer.CHANGED_MIND, answeredAt = clock.millis(), movedToJar = moved.takeIf { it > 0 }))
         if (moved > 0) jar.deposit(moved)
         moved
     }
 
-    /** "اشتريتها": marks it bought and hands back the add sheet's prefill (amount, name as the note). */
+    /** What "صرفت نظر" would move to the jar right now: the price, but never more than is spendable; 0 = nothing to ask. */
+    suspend fun jarOffer(id: Long): Long {
+        val wish = wishDao.byId(id)?.takeIf { it.answer == WishAnswer.WAITING } ?: return 0
+        return minOf(wish.price, spendable())
+    }
+
+    /**
+     * "اشتريتها": the add sheet's prefill (amount, name as the note, [AddPrefill.wishId]). Nothing is marked here: the
+     * add sheet calls [markBought] once the entry is saved, so closing it unsaved leaves the wish waiting.
+     */
     suspend fun bought(id: Long): AddPrefill {
         val wish = checkNotNull(wishDao.byId(id)) { "no wish $id" }
+        return AddPrefill(amount = wish.price, categoryId = null, note = wish.name, wishId = wish.id)
+    }
+
+    /** The entry for the wish was saved. Answering twice changes nothing. */
+    suspend fun markBought(id: Long) {
+        val wish = wishDao.byId(id) ?: return
         if (wish.answer == WishAnswer.WAITING) wishDao.update(wish.copy(answer = WishAnswer.BOUGHT, answeredAt = clock.millis()))
-        return AddPrefill(amount = wish.price, categoryId = null, note = wish.name)
     }
 
     /** What is free to spend: counting pockets - unpaid bills before payday - jar - emergency (as the ticket reserves them), never below 0. */

@@ -16,6 +16,7 @@ import com.masroufi.app.data.repo.EntryRepository
 import com.masroufi.app.data.repo.NOTE_MAX_CHARS
 import com.masroufi.app.data.repo.NewEntry
 import com.masroufi.app.data.repo.PaydayRitualRepository
+import com.masroufi.app.data.repo.WishRepository
 import com.masroufi.app.data.repo.dayOf
 import com.masroufi.app.data.repo.punchesTicket
 import com.masroufi.app.domain.EntryKind
@@ -66,6 +67,8 @@ data class AddForm(
     /** SPENT only, both optional and collapsed in the sheet: the item bought and what one unit cost (typed text). */
     val item: String = "",
     val unitPrice: String = "",
+    /** "اشتريتها": marked bought once the entry is stored. */
+    val wishId: Long? = null,
     /** Last used first, then seed order. */
     val categories: List<CategoryEntity> = emptyList(),
     /** Not archived. */
@@ -143,6 +146,7 @@ class AddViewModel @Inject constructor(
     private val feedback: FeedbackBus,
     private val ritual: PaydayRitualRepository,
     private val basket: BasketRepository,
+    private val wishes: WishRepository,
     private val clock: Clock,
 ) : ViewModel(), AddSheetActions {
     private val form = MutableStateFlow(AddForm())
@@ -186,6 +190,7 @@ class AddViewModel @Inject constructor(
                 edit = prefill?.edit,
                 smsBalance = prefill?.smsBalance,
                 recurringId = prefill?.recurringId,
+                wishId = prefill?.wishId,
                 note = prefill?.note.orEmpty().take(NOTE_MAX_CHARS),
                 categories = old.categories,
                 pockets = old.pockets,
@@ -300,6 +305,15 @@ class AddViewModel @Inject constructor(
                 keepDraft = true
                 feedback.emit(PunchFeedback.Failed)
                 return@launch
+            }
+            f.wishId?.let { wish ->
+                try {
+                    wishes.markBought(wish)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "markBought failed", e)
+                }
             }
             f.smsBalance?.let { balance ->
                 try {

@@ -58,10 +58,23 @@ class MigrationTest {
         context.deleteDatabase(name)
     }
 
-    /** Room creates the current file; the v5 tables go, user_version 4. */
-    private fun v4File(): SQLiteDatabase {
+    /** Room creates the current file; `wish` goes back to its v5 shape (no movedToJar), user_version 5. */
+    private fun v5File(): SQLiteDatabase {
         Room.databaseBuilder(context, TazkaraDatabase::class.java, name).build().apply { openHelper.writableDatabase }.close()
-        val v4 = SQLiteDatabase.openDatabase(context.getDatabasePath(name).path, null, SQLiteDatabase.OPEN_READWRITE)
+        val v5 = SQLiteDatabase.openDatabase(context.getDatabasePath(name).path, null, SQLiteDatabase.OPEN_READWRITE)
+        v5.execSQL("DROP TABLE `wish`")
+        v5.execSQL(
+            "CREATE TABLE IF NOT EXISTS `wish` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
+                "`price` INTEGER NOT NULL, `parkedAt` INTEGER NOT NULL, `answer` TEXT NOT NULL, `answeredAt` INTEGER, " +
+                "`installmentMonthly` INTEGER, `installmentMonths` INTEGER)",
+        )
+        v5.version = 5
+        return v5
+    }
+
+    /** The v5 file; the v5 tables go, user_version 4. */
+    private fun v4File(): SQLiteDatabase {
+        val v4 = v5File()
         listOf("wish", "tracked_item").forEach { v4.execSQL("DROP TABLE `$it`") }
         v4.version = 4
         return v4
@@ -89,7 +102,7 @@ class MigrationTest {
 
     /** Opening runs the migrations and then Room's schema validation over every table. */
     private fun open() =
-        Room.databaseBuilder(context, TazkaraDatabase::class.java, name).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
+        Room.databaseBuilder(context, TazkaraDatabase::class.java, name).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
 
     /** v1 file database: only `pocket` differs between v1 and v2, so the v2 file gets the v1 pocket table and version 1. */
     @Test fun migration1to2KeepsData() = runTest {
@@ -118,7 +131,7 @@ class MigrationTest {
             assertEquals("new columns: no limit, alert off, no SMS", listOf(null, null, false, null, null),
                 listOf(p.monthlyLimit, p.lowBalanceThreshold, p.lowBalanceAlert, p.lastSmsBalance, p.lastSmsAt))
             assertEquals("the entry survives and still counts", 98_000L, db.pocketDao().balanceOf(1))
-            assertEquals(5, db.openHelper.readableDatabase.version)
+            assertEquals(6, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -169,7 +182,7 @@ class MigrationTest {
             db.envelopeDao().insertMove(EnvelopeMoveEntity(cycleStart = due, fromId = 1, toId = 1, amount = 1, at = 0))
             db.envelopeDao().insertSplit(listOf(SplitRuleEntity(envelopeId = 1, kind = SplitKind.PERCENT, value = 10, sortOrder = 0)))
             assertEquals("new tables usable", 1 to 1, db.envelopeDao().moves().first().size to db.envelopeDao().splitRules().size)
-            assertEquals(5, db.openHelper.readableDatabase.version)
+            assertEquals(6, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -206,7 +219,7 @@ class MigrationTest {
             assertEquals(listOf(1, 1, 1, 1), listOf(
                 db.peopleDao().openDebts().size, db.dutyDao().giftsNow().size, db.gameyaDao().all().first().size, db.gameyaDao().plans().first().size,
             ))
-            assertEquals(5, db.openHelper.readableDatabase.version)
+            assertEquals(6, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -237,7 +250,27 @@ class MigrationTest {
                 db.wishDao().byId(wish)!!.let { listOf(it.answer, it.answeredAt, it.installmentMonths) },
             )
             assertEquals(listOf(item), db.entryDao().pricedEntries().map { it.trackedItemId })
-            assertEquals(5, db.openHelper.readableDatabase.version)
+            assertEquals(6, db.openHelper.readableDatabase.version)
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test fun migration5to6KeepsWishesAndAddsMovedToJar() = runTest {
+        v5File().use { v5 ->
+            v5.execSQL(
+                "INSERT INTO wish (id, name, price, parkedAt, answer, answeredAt, installmentMonthly, installmentMonths) " +
+                    "VALUES (1, 'jacket', 120000, 5, 'CHANGED_MIND', 9, 18500, 12)",
+            )
+        }
+
+        val db = open()
+        try {
+            val old = checkNotNull(db.wishDao().byId(1)) { "wish lost in the migration" }
+            assertEquals(listOf<Any?>("jacket", 120_000L, WishAnswer.CHANGED_MIND, null), listOf(old.name, old.price, old.answer, old.movedToJar))
+            db.wishDao().update(old.copy(movedToJar = 50_000))
+            assertEquals(50_000L, db.wishDao().byId(1)!!.movedToJar)
+            assertEquals(6, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }

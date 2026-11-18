@@ -904,4 +904,60 @@
     <string name="soon_profile">Your profile</string>
     <string name="soon_settings">Settings</string>
     <string name="soon_line">This screen is coming soon.</string>
+    <!-- Task 43: before you buy and the wishlist -->
+    <string name="plan_link_before_buy">Before you buy</string>
+    <string name="buy_title">Before you buy</string>
+    <string name="buy_want_label">What do you want?</string>
+    <string name="buy_name_hint">What is it</string>
+    <string name="buy_equals">That equals</string>
+    <string name="buy_tickets_caption">full daily tickets</string>
+    <string name="buy_work_caption">of work from your pay</string>
+    <string name="buy_gold_caption">g of gold from the jar</string>
+    <string name="buy_season_caption">of the %1$s money</string>
+    <string name="buy_season_fallback">season</string>
+    <string name="buy_work_one">1 day</string>
+    <string name="buy_work_two">2 days</string>
+    <string name="buy_work_few">%1$s days</string>
+    <string name="buy_work_other">%1$s days</string>
+    <string name="buy_inst_title">Installments or cash?</string>
+    <string name="buy_inst_cash">Cash</string>
+    <string name="buy_inst_label">Installments %1$s × %2$s</string>
+    <string name="buy_inst_monthly">Monthly payment</string>
+    <string name="buy_inst_months">How many months</string>
+    <string name="buy_inst_effect">%1$s extra · your ticket shrinks by %2$s every day for %3$s</string>
+    <string name="buy_inst_effect_free">No extra · your ticket shrinks by %1$s every day for %2$s</string>
+    <string name="buy_inst_year">a year</string>
+    <string name="buy_inst_note">Type the payment and the months as the shop said them, and I will work out the real difference.</string>
+    <string name="buy_inst_locked">Installments against cash come with Plus.</string>
+    <string name="buy_qersh_bold">Sleep on it for two days.</string>
+    <string name="buy_qersh_rest"> If you still want it after 48 hours, it is worth it.</string>
+    <string name="buy_park">Park it for 48 hours</string>
+    <string name="buy_list_title">Wishlist</string>
+    <string name="buy_wish_total">Passed on %1$s so far</string>
+    <string name="buy_due">The two days are up. Still want it?</string>
+    <string name="buy_changed_mind">Changed my mind</string>
+    <string name="buy_bought">Bought it</string>
+    <string name="buy_row_name">%1$s · %2$s</string>
+    <string name="buy_row_changed_jar">Changed my mind · %1$s to the jar</string>
+    <string name="buy_empty_title">Nothing on your wishlist</string>
+    <string name="buy_empty_line">Nice. When something catches your eye, write it here before you buy it.</string>
+    <string name="buy_empty_action">Write something</string>
+    <plurals name="buy_cash_days">
+        <item quantity="one">Takes 1 day of your tickets</item>
+        <item quantity="other">Takes %1$d days of your tickets</item>
+    </plurals>
+    <plurals name="buy_months">
+        <item quantity="one">1 month</item>
+        <item quantity="other">%1$d months</item>
+    </plurals>
+    <plurals name="buy_hours_left">
+        <item quantity="one">1 hour left</item>
+        <item quantity="other">%1$d hours left</item>
+    </plurals>
+    <string name="wish_jar_title">Changed your mind about \'%1$s\'</string>
+    <string name="wish_jar_body">Move %1$s to the jar?</string>
+    <string name="wish_jar_body_capped">Move %1$s to the jar? That is all you can spare, not the full %2$s.</string>
+    <string name="wish_jar_move">Move it to the jar</string>
+    <string name="wish_jar_skip">No, just changed my mind</string>
+    <string name="home_wish_line">Two days have passed since \'%1$s\'. Still want it?</string>
 </resources>

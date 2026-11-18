@@ -121,7 +121,7 @@ class DailyLoopTest {
                 initializer {
                     HomeViewModel(
                         f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, bus,
-                        f.settings, f.onboarding, PendingDeletes(f.entries, io),
+                        f.settings, f.onboarding, PendingDeletes(f.entries, io), f.wishes,
                     )
                 }
             },
@@ -131,7 +131,7 @@ class DailyLoopTest {
             store,
             viewModelFactory {
                 initializer {
-                    AddViewModel(f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, PendingDeletes(f.entries, io), bus, f.ritual, f.basket, clock)
+                    AddViewModel(f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, PendingDeletes(f.entries, io), bus, f.ritual, f.basket, f.wishes, clock)
                 }
             },
         )[AddViewModel::class]

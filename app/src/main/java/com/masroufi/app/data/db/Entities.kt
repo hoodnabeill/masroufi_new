@@ -342,6 +342,8 @@ data class WishEntity(
     val answeredAt: Long? = null,
     val installmentMonthly: Long? = null,
     val installmentMonths: Int? = null,
+    /** What "صرفت نظر" really moved to the jar (capped at spendable); null = nothing moved. */
+    val movedToJar: Long? = null,
 )
 
 /** A thing bought again and again; [normalisedName] is what entries are matched on. [unit] is not captured yet. */

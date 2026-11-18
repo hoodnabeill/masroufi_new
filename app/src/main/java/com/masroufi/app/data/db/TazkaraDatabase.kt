@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         GameyaEntity::class, GameyaMemberEntity::class, GameyaPaymentEntity::class, GameyaPlanEntity::class,
         WishEntity::class, TrackedItemEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -144,5 +144,12 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
             "CREATE TABLE IF NOT EXISTS `tracked_item` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
                 "`normalisedName` TEXT NOT NULL, `unit` TEXT, `addedByUser` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)",
         )
+    }
+}
+
+/** v6 (Phase 8): what a changed-my-mind answer really moved to the jar. */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `wish` ADD COLUMN `movedToJar` INTEGER")
     }
 }

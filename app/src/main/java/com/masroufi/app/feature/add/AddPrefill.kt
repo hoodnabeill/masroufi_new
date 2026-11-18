@@ -22,4 +22,6 @@ data class AddPrefill(
     val smsBalance: Long? = null,
     /** Paying a fixed cost: the new entry pays this recurring item. */
     val recurringId: Long? = null,
+    /** "اشتريتها": this wish is marked bought once the new entry is saved (never on cancel). */
+    val wishId: Long? = null,
 )

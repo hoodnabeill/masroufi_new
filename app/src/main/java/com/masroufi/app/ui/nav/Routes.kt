@@ -40,6 +40,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object Album
 /** ماتش الأسبوع (Task 42). */
 @Serializable data object Match
+/** قبل ما تشتري and the wishlist (Task 43). */
+@Serializable data object BeforeYouBuy
 /** Stub until Task 44's basket replaces it. */
 @Serializable data object Basket
 /** Stub until Task 44's profile replaces it. */

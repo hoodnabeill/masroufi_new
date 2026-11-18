@@ -35,6 +35,9 @@ import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.PunchFeedback
 import com.masroufi.app.domain.HomeCard
+import com.masroufi.app.data.db.WishEntity
+import com.masroufi.app.feature.buy.JarAskSheet
+import com.masroufi.app.feature.buy.WishQuestionCard
 import com.masroufi.app.ui.paper.PrintIn
 import com.masroufi.app.ui.paper.Ticket
 import kotlinx.coroutines.delay
@@ -57,6 +60,7 @@ fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val saveFailed by viewModel.saveFailed.collectAsStateWithLifecycle()
     val feedback by viewModel.feedback.collectAsStateWithLifecycle()
+    val wishAsk by viewModel.wishAsk.collectAsStateWithLifecycle()
     val openSheet by rememberUpdatedState(onOpenAddSheet)
     LaunchedEffect(viewModel) { viewModel.prefill.collect { openSheet(it) } }
 
@@ -93,7 +97,10 @@ fun HomeScreen(
         onTicketShown = viewModel::markTicketShown,
         onDismissCard = viewModel::dismissCard,
         onSetMoney = viewModel::setMoney,
+        onWishChangedMind = viewModel::wishChangedMind,
+        onWishBought = viewModel::wishBought,
     )
+    wishAsk?.let { JarAskSheet(it, onAnswer = viewModel::wishJarAnswer, onDismiss = viewModel::wishAskDismissed) }
 }
 
 /** Stateless Home: skeleton after 150 ms of loading, 160 ms cross-fade to the content or the error. */
@@ -116,6 +123,8 @@ fun HomeContent(
     onOpenPockets: () -> Unit = {},
     onOpenAlbum: () -> Unit = {},
     onOpenMatch: () -> Unit = {},
+    onWishChangedMind: (WishEntity) -> Unit = {},
+    onWishBought: (Long) -> Unit = {},
 ) {
     var skeletonDue by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -139,7 +148,7 @@ fun HomeContent(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets, onOpenAlbum, onOpenMatch)
+                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets, onOpenAlbum, onOpenMatch, onWishChangedMind, onWishBought)
                 }
             }
         }
@@ -164,6 +173,8 @@ private fun ReadyContent(
     onOpenPockets: () -> Unit,
     onOpenAlbum: () -> Unit,
     onOpenMatch: () -> Unit,
+    onWishChangedMind: (WishEntity) -> Unit,
+    onWishBought: (Long) -> Unit,
 ) {
     val epochDay = s.today.toEpochDay()
     HomeHeader(s.today, s.greeting, s.streak, onOpenAlbum)
@@ -195,7 +206,11 @@ private fun ReadyContent(
     }
     if (feedback != null && s.ticket != null) PunchFeedbackLines(feedback, spread = s.cycle.daysLeft > 1)
     var moneySheet by remember { mutableStateOf(false) }
-    s.firstWeekCard?.let { c -> FirstWeekCardView(c, onDismiss = { onDismissCard(c.id) }, onMoney = { moneySheet = true }) }
+    // One Qersh card at a time: a first-week card first, else the 48-hour question (never both).
+    val fw = s.firstWeekCard
+    val wish = s.dueWish
+    if (fw != null) FirstWeekCardView(fw, onDismiss = { onDismissCard(fw.id) }, onMoney = { moneySheet = true })
+    else if (wish != null) WishQuestionCard(wish, onChangedMind = { onWishChangedMind(wish) }, onBought = { onWishBought(wish.id) })
     if (moneySheet) MoneySheet(onDone = { onSetMoney(it); moneySheet = false }, onDismiss = { moneySheet = false })
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         QuickLogField(quickText, onQuickText, onSubmitQuickLog, onMic)

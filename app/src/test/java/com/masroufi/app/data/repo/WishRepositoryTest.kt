@@ -122,13 +122,27 @@ class WishRepositoryTest {
         assertEquals("it still counts as not bought", 120_000L, f.wishes.totalChangedMind().first())
     }
 
-    @Test fun boughtGivesThePrefillAndIsNotCountedAsChangedMind() = runTest {
+    @Test fun boughtGivesThePrefillAndMarksNothingUntilTheEntryIsSaved() = runTest {
         setUp()
         val id = f.wishes.park("jacket", 120_000)
         val prefill = f.wishes.bought(id)
-        assertEquals(listOf<Any?>(120_000L, "jacket", null), listOf(prefill.amount, prefill.note, prefill.edit))
+        assertEquals(listOf<Any?>(120_000L, "jacket", null, id), listOf(prefill.amount, prefill.note, prefill.edit, prefill.wishId))
+        assertEquals("the sheet may still be closed unsaved", WishAnswer.WAITING, db.wishDao().byId(id)!!.answer)
+
+        f.wishes.markBought(id)
         assertEquals(WishAnswer.BOUGHT, db.wishDao().byId(id)!!.answer)
         assertEquals(0L, f.wishes.totalChangedMind().first())
+    }
+
+    @Test fun changedMindStoresWhatReallyMovedAndOnlyThat() = runTest {
+        setUp(openingBalance = 50_000)
+        val capped = f.wishes.park("watch", 95_000)
+        val none = f.wishes.park("jacket", 20_000)
+        assertEquals(50_000L, f.wishes.jarOffer(capped))
+        assertEquals(50_000L, f.wishes.changedMind(capped, toJar = true))
+        assertEquals("capped: the row shows 500, not 950", 50_000L, db.wishDao().byId(capped)!!.movedToJar)
+        assertEquals("nothing moved when not asked", null, f.wishes.changedMind(none, toJar = false).let { db.wishDao().byId(none)!!.movedToJar })
+        assertEquals("an answered wish offers nothing", 0L, f.wishes.jarOffer(capped))
     }
 
     @Test fun parkRejectsNothingToPark() = runTest {

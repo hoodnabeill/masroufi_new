@@ -44,6 +44,7 @@ import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.AddSheet
 import com.masroufi.app.feature.album.AlbumScreen
+import com.masroufi.app.feature.buy.BeforeBuyScreen
 import com.masroufi.app.feature.close.CloseDayScreen
 import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
@@ -80,6 +81,7 @@ import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.nav.Album
 import com.masroufi.app.ui.nav.AppSettings
 import com.masroufi.app.ui.nav.Basket
+import com.masroufi.app.ui.nav.BeforeYouBuy
 import com.masroufi.app.ui.nav.CloseDay
 import com.masroufi.app.ui.nav.Match
 import com.masroufi.app.ui.nav.Profile
@@ -144,7 +146,7 @@ private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<Proverb
     hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<NewGoal>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
     hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>() ||
     hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>() ||
-    hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<AppSettings>()
+    hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<AppSettings>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -276,6 +278,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         onNewEnvelope = { nav.navigate(NewEnvelope) },
                         onOpenSubscriptions = { nav.navigate(Subscriptions) },
                         onOpenFixedCosts = { nav.navigate(FixedCosts) },
+                        onOpenBeforeBuy = { nav.navigate(BeforeYouBuy) },
                         onNewGoal = { nav.navigate(NewGoal) },
                         onOpenSeason = { nav.navigate(SeasonEdit(it)) },
                         onZakat = { nav.navigate(Zakat) },
@@ -283,6 +286,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         onGallery = { nav.navigate(Gallery) },
                     )
                 }
+                composable<BeforeYouBuy> { BeforeBuyScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpenAddSheet = ::openAddSheet) }
                 composable<SeasonEdit> { SeasonDetailScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 composable<Zakat> { ZakatScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 composable<NewGoal> { NewGoalScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }

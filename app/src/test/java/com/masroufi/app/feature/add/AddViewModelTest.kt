@@ -14,6 +14,7 @@ import com.masroufi.app.data.db.EntryEntity
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.PocketKind
 import com.masroufi.app.data.db.TazkaraDatabase
+import com.masroufi.app.data.db.WishAnswer
 import com.masroufi.app.data.repo.NewEntry
 import com.masroufi.app.data.repo.RepoFixture
 import com.masroufi.app.data.repo.TestClock
@@ -96,7 +97,7 @@ class AddViewModelTest {
         val factory = viewModelFactory {
             initializer {
                 AddViewModel(
-                    f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, deletes, bus, f.ritual, f.basket, clock,
+                    f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, deletes, bus, f.ritual, f.basket, f.wishes, clock,
                 )
             }
         }
@@ -129,6 +130,32 @@ class AddViewModelTest {
     }
 
     private fun typeAmount(text: String) = text.forEach { if (it == '.') vm.point() else vm.digit(it.digitToInt()) }
+
+    @Test fun aWishIsBoughtOnlyAfterItsEntryIsSaved() {
+        val wish = runBlocking { f.wishes.park("سماعة", 180_000) }
+        val prefill = runBlocking { f.wishes.bought(wish) }
+        newVm()
+        opened(prefill.copy(pocketId = cash))
+        assertEquals(listOf<Any?>(180_000L, "سماعة"), listOf(state.amount, state.form.note))
+        assertEquals("opening the sheet answers nothing", WishAnswer.WAITING, runBlocking { db.wishDao().byId(wish) }!!.answer)
+
+        assertTrue(vm.save())
+        settle("stored") { entries().size == 1 }
+        settle("bought") { runBlocking { db.wishDao().byId(wish) }!!.answer == WishAnswer.BOUGHT }
+    }
+
+    @Test fun closingTheSheetWithoutSavingLeavesTheWishWaiting() {
+        val wish = runBlocking { f.wishes.park("سماعة", 180_000) }
+        val prefill = runBlocking { f.wishes.bought(wish) }
+        newVm()
+        opened(prefill.copy(pocketId = cash))
+        // The sheet is dismissed here: nothing calls save; a later plain open forgets the wish.
+        opened(null)
+        main.scheduler.runCurrent()
+        assertEquals(WishAnswer.WAITING, runBlocking { db.wishDao().byId(wish) }!!.answer)
+        assertTrue(entries().isEmpty())
+        assertNull(state.form.wishId)
+    }
 
     @Test fun smsBalanceIsRecordedOnlyAfterTheEntrySaves() {
         newVm()

@@ -20,6 +20,10 @@ import com.masroufi.app.data.repo.NewEntry
 import com.masroufi.app.data.repo.OnboardingRepository
 import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.data.repo.TicketRepository
+import com.masroufi.app.data.repo.WishRepository
+import com.masroufi.app.data.db.WishEntity
+import com.masroufi.app.feature.buy.WishAnswers
+import com.masroufi.app.feature.buy.WishAsk
 import com.masroufi.app.data.repo.punchesTicket
 import com.masroufi.app.di.ProcessLifecycle
 import com.masroufi.app.domain.EntryKind
@@ -108,6 +112,11 @@ sealed interface HomeUiState {
         val firstWeekCard: FirstWeekCard? = null,
         /** Which cards show under the ticket and in what order (the profile's main goal). */
         val cardOrder: List<HomeCard> = HomeCard.values().toList(),
+        /**
+         * The oldest wish whose 48 hours passed, asked in the first-week card's slot above the quick log: never next to
+         * a first-week card (that one goes first) and never in end-of-month mode. Not part of [cardOrder].
+         */
+        val dueWish: WishEntity? = null,
     ) : HomeUiState
 }
 
@@ -130,6 +139,7 @@ class HomeViewModel @Inject constructor(
     private val settings: SettingsStore,
     private val onboarding: OnboardingRepository,
     private val pendingDeletes: PendingDeletes,
+    private val wishes: WishRepository,
 ) : ViewModel() {
     private val failure = MutableStateFlow<Throwable?>(null)
     private val _saveFailed = MutableStateFlow(false)
@@ -156,7 +166,21 @@ class HomeViewModel @Inject constructor(
         .catch { fail(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure, pendingDeletes.pending) { d, pending, f, deleted ->
+    /** The 48-hour card's two answers (the same flows as the before-you-buy list). */
+    private val wishAnswers = WishAnswers(wishes, viewModelScope)
+    val wishAsk: StateFlow<WishAsk?> = wishAnswers.ask
+    fun wishChangedMind(wish: WishEntity) = wishAnswers.changedMind(wish)
+    fun wishJarAnswer(toJar: Boolean) = wishAnswers.confirm(toJar)
+    fun wishAskDismissed() = wishAnswers.dismiss()
+
+    /** "اشتريتها": opens the add sheet prefilled; the wish is marked bought when that entry is saved. */
+    fun wishBought(id: Long) {
+        viewModelScope.launch { wishAnswers.bought(id)?.let { prefills.send(it) } }
+    }
+
+    private val dueWishes: Flow<List<WishEntity>> = wishes.dueForAnswer().catch { Log.e(TAG, "wishes failed", it); emit(emptyList()) }
+
+    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure, pendingDeletes.pending, dueWishes) { d, pending, f, deleted, due ->
         val row = d?.today
         when {
             f != null -> HomeUiState.Error
@@ -164,7 +188,7 @@ class HomeViewModel @Inject constructor(
             else -> {
                 // The add sheet's placeholders stop counting once this row holds them; then they can go.
                 pendingPunches.prune(row.entryCount)
-                homeUi(d.withoutDeleted(deleted.values), pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour)
+                homeUi(d.withoutDeleted(deleted.values), pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour, due)
             }
         }
     }
@@ -335,7 +359,7 @@ private fun HomeData.withoutDeleted(deleted: Collection<PendingDelete>): HomeDat
     )
 }
 
-internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int): HomeUiState.Ready {
+internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: List<WishEntity> = emptyList()): HomeUiState.Ready {
     val row = checkNotNull(d.today)
     val today = row.date
     val daysLeft = d.cycle.daysLeft(today)
@@ -376,6 +400,8 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int): HomeUiState
         projectedAtPayday(d.spendable + row.spent, d.unpaidBills, row.base, row.carriedIn, daysLeft).takeIf { it >= 0 }
     }
 
+    val firstWeek = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, row.endOfMonth)
+
     return HomeUiState.Ready(
         today = today,
         greeting = greetingFor(today, hour, d.cycle),
@@ -396,6 +422,7 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int): HomeUiState
         collected = d.collected,
         cardOrder = homeCardOrder(d.mainGoal),
         newTicket = open && d.lastTicketShown != today.toEpochDay(),
-        firstWeekCard = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, row.endOfMonth),
+        firstWeekCard = firstWeek,
+        dueWish = dueWishes.minWithOrNull(compareBy<WishEntity>({ it.parkedAt }, { it.id }))?.takeIf { firstWeek == null && !row.endOfMonth },
     )
 }
