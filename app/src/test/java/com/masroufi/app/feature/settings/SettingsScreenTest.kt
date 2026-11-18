@@ -113,4 +113,17 @@ class SettingsScreenTest {
         assertEquals(listOf(PlusFeature.ROUND_UPS), opened)
         assertEquals(emptyList<String>(), a.calls)
     }
+
+    @Test fun theBackupRowShowsTheLastBackupOrTheFailureLine() {
+        val today = java.time.LocalDate.of(2026, 11, 18)
+        val at = today.minusDays(1).atTime(21, 12)
+        show(ui.copy(lastBackup = at, today = today), FakeActions())
+        rule.onNodeWithText("امبارح 9:12 م").assertExists()
+    }
+
+    @Test fun aFailedBackupRunShowsTheQuietLineOnTheRow() {
+        val today = java.time.LocalDate.of(2026, 11, 18)
+        show(ui.copy(lastBackup = today.atTime(9, 0), today = today, backupFailed = true), FakeActions())
+        rule.onNodeWithText("آخر نسخة فشلت. جرّب تاني.").assertExists()
+    }
 }

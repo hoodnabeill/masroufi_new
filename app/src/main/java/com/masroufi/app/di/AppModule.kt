@@ -12,6 +12,8 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.room.Room
 import com.masroufi.app.BuildConfig
 import com.masroufi.app.core.SystemZoneClock
+import com.masroufi.app.data.backup.BackupService
+import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.db.MIGRATION_1_2
 import com.masroufi.app.data.db.MIGRATION_2_3
 import com.masroufi.app.data.db.MIGRATION_3_4
@@ -98,6 +100,11 @@ object AppModule {
     @Provides @Singleton fun secretCipher(): SecretCipher = KeystoreCipher()
 
     @Provides @Singleton fun pinStore(store: DataStore<Preferences>, cipher: SecretCipher, clock: Clock) = PinStore(store, cipher, clock)
+
+    /** The backup key is sealed by its own Keystore key (not the PIN's). */
+    @Provides @Singleton
+    fun backupService(@ApplicationContext context: Context, db: TazkaraDatabase, settings: SettingsStore, clock: Clock) =
+        BackupService(context, db, context.preferencesDataStoreFile("tazkara_settings"), settings, KeystoreCipher("tazkara_backup_key"), clock, BuildConfig.VERSION_NAME)
 
     /** Phase 13 swaps the Google Play implementation in here; until then release has no products and no purchase. */
     @Provides @Singleton

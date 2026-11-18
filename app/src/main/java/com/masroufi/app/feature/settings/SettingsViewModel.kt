@@ -25,7 +25,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 /** The small sheets a value on the left of a row opens. [PlusInfo] is round-ups' card in end-of-month mode, where the paywall never shows. */
@@ -50,8 +52,10 @@ data class SettingsUi(
     val renewsOn: LocalDate? = null,
     val trialEnds: LocalDate? = null,
     val restore: RestoreOutcome? = null,
-    /** The last backup's day; Task 56 fills it (none yet). */
-    val lastBackup: LocalDate? = null,
+    /** The last good backup's moment (null = none yet), the day it is read against, and whether the last automatic run failed. */
+    val lastBackup: LocalDateTime? = null,
+    val today: LocalDate = LocalDate.of(2000, 1, 1),
+    val backupFailed: Boolean = false,
     val sheet: SettingsSheet? = null,
 ) {
     /** The identity disc's letter. */
@@ -101,6 +105,8 @@ class SettingsViewModel @Inject constructor(
             plan = sub?.plan, renewsOn = sub?.renewsOn,
             trialEnds = if (sub == null && trial.state == TrialState.ACTIVE) trial.endDay else null,
             restore = l.restore, sheet = l.sheet,
+            lastBackup = s.backupLastAt?.let { LocalDateTime.ofInstant(Instant.ofEpochMilli(it), clock.zone) },
+            today = LocalDate.now(clock), backupFailed = s.backupFailedAt != null,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUi())
 

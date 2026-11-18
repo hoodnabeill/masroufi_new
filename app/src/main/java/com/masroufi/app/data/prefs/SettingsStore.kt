@@ -117,6 +117,17 @@ data class Settings(
     val trialEndDay: Long? = null,
     /** The epoch day the paywall last opened by itself (at most once a day). */
     val lastPaywallDay: Long? = null,
+    /**
+     * Backup (Task 56): the weekly automatic backup on/off, its folder (a persisted tree uri), the last good write
+     * (epoch millis, ticket count, bytes), the last failed automatic run, and the derived key sealed by the Keystore.
+     */
+    val backupAuto: Boolean = false,
+    val backupFolder: String? = null,
+    val backupLastAt: Long? = null,
+    val backupLastTickets: Int? = null,
+    val backupLastBytes: Long? = null,
+    val backupFailedAt: Long? = null,
+    val backupKey: String? = null,
 ) {
     /**
      * The mode is on at [date]: switched on, started by then and not past its payday. With [nextPayday] (the date's pay
@@ -194,6 +205,13 @@ class SettingsStore @Inject constructor(
     private val trialStartKey = longPreferencesKey("trialStartDay")
     private val trialEndKey = longPreferencesKey("trialEndDay")
     private val lastPaywallKey = longPreferencesKey("lastPaywallDay")
+    private val backupAutoKey = booleanPreferencesKey("backupAuto")
+    private val backupFolderKey = stringPreferencesKey("backupFolder")
+    private val backupLastAtKey = longPreferencesKey("backupLastAt")
+    private val backupLastTicketsKey = intPreferencesKey("backupLastTickets")
+    private val backupLastBytesKey = longPreferencesKey("backupLastBytes")
+    private val backupFailedAtKey = longPreferencesKey("backupFailedAt")
+    private val backupKeyKey = stringPreferencesKey("backupKey")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -347,6 +365,19 @@ class SettingsStore @Inject constructor(
         return started
     }
     suspend fun setLastPaywallDay(epochDay: Long) { store.edit { it[lastPaywallKey] = epochDay } }
+    suspend fun setBackupAuto(v: Boolean) { store.edit { it[backupAutoKey] = v } }
+    suspend fun setBackupFolder(uri: String?) { store.edit { if (uri == null) it.remove(backupFolderKey) else it[backupFolderKey] = uri } }
+    suspend fun setBackupKey(sealed: String) { store.edit { it[backupKeyKey] = sealed } }
+    /** A good write: the last-backup facts, and an earlier failed run is forgotten. */
+    suspend fun recordBackup(at: Long, tickets: Int, bytes: Long) {
+        store.edit {
+            it[backupLastAtKey] = at
+            it[backupLastTicketsKey] = tickets
+            it[backupLastBytesKey] = bytes
+            it.remove(backupFailedAtKey)
+        }
+    }
+    suspend fun recordBackupFailed(at: Long) { store.edit { it[backupFailedAtKey] = at } }
     suspend fun setSuggestionDismissed(month: String) { store.edit { it[suggestionDismissedKey] = month } }
     suspend fun setProfileName(v: String?) { store.edit { if (v.isNullOrBlank()) it.remove(profileNameKey) else it[profileNameKey] = v.trim() } }
     suspend fun setBirthday(v: LocalDate?) { store.edit { if (v == null) it.remove(birthdayKey) else it[birthdayKey] = v.toEpochDay() } }
@@ -441,6 +472,13 @@ class SettingsStore @Inject constructor(
         trialStartDay = p[trialStartKey],
         trialEndDay = p[trialEndKey],
         lastPaywallDay = p[lastPaywallKey],
+        backupAuto = p[backupAutoKey] ?: false,
+        backupFolder = p[backupFolderKey],
+        backupLastAt = p[backupLastAtKey],
+        backupLastTickets = p[backupLastTicketsKey],
+        backupLastBytes = p[backupLastBytesKey],
+        backupFailedAt = p[backupFailedAtKey],
+        backupKey = p[backupKeyKey],
     )
 
     private fun encodeMap(m: Map<Long, Long>) = m.entries.joinToString(",") { e -> "${e.key}:${e.value}" }

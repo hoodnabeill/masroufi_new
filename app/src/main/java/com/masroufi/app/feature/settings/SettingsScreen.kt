@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.BuildConfig
+import com.masroufi.app.feature.backup.backupWhen
 import com.masroufi.app.R
 import com.masroufi.app.core.Payday
 import com.masroufi.app.data.repo.PlusFeature
@@ -144,7 +145,15 @@ fun SettingsContent(ui: SettingsUi, vm: SettingsActions, nav: SettingsNav, suppo
 
         Group(R.string.settings_group_safety) {
             ValueRow(R.string.settings_lock, stringResource(if (ui.lockOn) R.string.settings_lock_on else R.string.settings_lock_off), onClick = nav.onLock)
-            ValueRow(R.string.settings_backup, stringResource(R.string.settings_backup_none), onClick = nav.onBackup)
+            ValueRow(
+                R.string.settings_backup,
+                when {
+                    ui.backupFailed -> stringResource(R.string.backup_failed)
+                    ui.lastBackup != null -> backupWhen(ui.lastBackup.toLocalDate(), ui.lastBackup.toLocalTime(), ui.today, arabic)
+                    else -> stringResource(R.string.settings_backup_none)
+                },
+                onClick = nav.onBackup,
+            )
             Row(
                 Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).alpha(0.6f).padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,

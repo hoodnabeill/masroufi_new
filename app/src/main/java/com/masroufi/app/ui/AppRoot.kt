@@ -103,6 +103,7 @@ import com.masroufi.app.ui.motion.TzSpring
 import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.nav.Album
 import com.masroufi.app.ui.nav.AppSettings
+import com.masroufi.app.feature.backup.BackupScreen
 import com.masroufi.app.ui.nav.BackupSettings
 import com.masroufi.app.ui.nav.Legal
 import com.masroufi.app.ui.nav.Licences
@@ -385,7 +386,7 @@ private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleDa
                     composable<Legal> { LegalScreen(onBack = { nav.popBackStack() }) }
                     composable<Licences> { LicencesScreen(onBack = { nav.popBackStack() }) }
                     composable<LockSettings> { LockSettingsScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                    composable<BackupSettings> { ComingSoonScreen(R.string.soon_backup) { nav.popBackStack() } }
+                    composable<BackupSettings> { BackupScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                     composable<NotificationSettings> { ComingSoonScreen(R.string.soon_notifications) { nav.popBackStack() } }
                     composable<RollTab> {
                         RollScreen(
