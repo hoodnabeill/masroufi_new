@@ -233,7 +233,11 @@ class HomeViewModelTest {
     @Test fun tomorrowPreviewAfterClose() {
         newVm()
         settle("ready") { ready?.ticket != null }
-        val closed = runBlocking { f.tickets.closeDay(nov12, LeftoverDestination.TOMORROW) }
+        // Through io while Main keeps pumping: a blocking call here deadlocks against the print's settings edit.
+        var result: com.masroufi.app.data.repo.CloseResult? = null
+        val call = io.launch { result = f.tickets.closeDay(nov12, LeftoverDestination.TOMORROW) }
+        settle("close call") { call.isCompleted }
+        val closed = checkNotNull(result)
         settle("closed") { ready?.ticket == null }
         // 3,900 with the 300 leftover carried: (3,900 - 300) / 12 days + 300.
         assertEquals(TomorrowUi(60_000, closed.proverbNumber), ready?.tomorrow)
