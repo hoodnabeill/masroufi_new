@@ -31,7 +31,7 @@ class HomeSelfPayTest {
         seen: Set<String> = emptySet(),
         month: Long = 202611,
     ) = Settings(
-        freelanceOn = on, selfSalary = 700_000, selfPayday = 1, selfPaidMonth = month, selfPayEntryId = entryId, selfPaid = paid,
+        proverbSeed = 1, freelanceOn = on, selfSalary = 700_000, selfPayday = 1, selfPaidMonth = month, selfPayEntryId = entryId, selfPaid = paid,
         selfPayShort = short, lastRitualForEntryId = ritualFor, firstWeekCardsDismissed = dismissed, milestonesSeen = seen,
     )
 
