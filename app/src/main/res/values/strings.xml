@@ -476,10 +476,10 @@
     <string name="jar_gold_prompt">اكتب سعر جرام الدهب عيار 21</string>
     <string name="jar_save">احفظ</string>
     <string name="jar_round_title">حوّش الفكة</string>
-    <string name="jar_round_line">كل تسجيلة تتقرّب لأقرب %1$d جنيه والفرق ينزل الحصّالة.</string>
-    <string name="jar_round_to">لأقرب %1$d</string>
+    <string name="jar_round_line">كل تسجيلة تتقرّب لأقرب %1$s جنيه والفرق ينزل الحصّالة.</string>
+    <string name="jar_round_to">لأقرب %1$s</string>
     <string name="jar_sources_title">الفلوس دي جت منين</string>
-    <string name="jar_src_tickets">باقي التذاكر · %1$d تذكرة</string>
+    <string name="jar_src_tickets">باقي التذاكر · %1$s تذكرة</string>
     <string name="jar_src_roundup">الفكة</string>
     <string name="jar_src_manual">حطّيتهم بإيدك</string>
     <string name="jar_goals_title">بتحوّش لإيه</string>
@@ -501,18 +501,18 @@
     <string name="goal_target_q">عايز توصل لكام؟</string>
     <string name="goal_date_q">ميعاد؟ (اختياري)</string>
     <string name="goal_date_none">من غير ميعاد</string>
-    <string name="goal_date_months">بعد %1$d شهور</string>
+    <string name="goal_date_months">بعد %1$s شهور</string>
 
     <string name="seasons_intro">المصاريف الكبيرة معروف ميعادها. جهّزلها من بدري بدل ما تتفاجئ.</string>
-    <string name="seasons_days_hijri">بعد %1$d يوم تقريبًا</string>
-    <string name="seasons_days">بعد %1$d يوم</string>
+    <string name="seasons_days_hijri">بعد %1$s يوم تقريبًا</string>
+    <string name="seasons_days">بعد %1$s يوم</string>
     <string name="seasons_of">من %1$s</string>
     <string name="seasons_per_day">%1$s جنيه في اليوم من النهارده وتوصل مرتاح.</string>
     <string name="seasons_chip">%1$s %2$s</string>
-    <string name="seasons_when_hijri">%1$s · %2$d يوم تقريبًا</string>
-    <string name="seasons_when">%1$s · %2$d يوم</string>
+    <string name="seasons_when_hijri">%1$s · %2$s يوم تقريبًا</string>
+    <string name="seasons_when">%1$s · %2$s يوم</string>
     <string name="seasons_together_title">كل المواسم مع بعض</string>
-    <string name="seasons_together_lead">عشان تلحق %1$d محتاج تحوّش حوالي</string>
+    <string name="seasons_together_lead">عشان تلحق %1$s محتاج تحوّش حوالي</string>
     <string name="seasons_together_need">%1$s في الشهر</string>
     <string name="seasons_together_over">. ده أكتر من اللي بيفضل معاك دلوقتي (حوالي %1$s).</string>
     <string name="seasons_together_ok">. ده في حدود اللي بتحوّشه.</string>
@@ -528,7 +528,7 @@
     <string name="season_q_name">اسم المناسبة إيه؟</string>
     <string name="season_name_hint">فرح ابن خالتك</string>
     <string name="season_q_date">امتى؟</string>
-    <string name="season_hijri_date">%1$d %2$s تقريبًا</string>
+    <string name="season_hijri_date">%1$s %2$s تقريبًا</string>
     <string name="season_day_less">يوم أقل</string>
     <string name="season_day_more">يوم أكتر</string>
     <string name="season_q_target">محتاج كام؟</string>
@@ -805,28 +805,28 @@
     <string name="match_title">ماتش الأسبوع</string>
     <string name="match_pill">الأسبوع %1$s · %2$s</string>
     <plurals name="match_days_left">
-        <item quantity="zero">فاضل %1$d يوم على الصفارة</item>
+        <item quantity="zero">فاضل %1$s يوم على الصفارة</item>
         <item quantity="one">فاضل يوم على الصفارة</item>
         <item quantity="two">فاضل يومين على الصفارة</item>
-        <item quantity="few">فاضل %1$d أيام على الصفارة</item>
-        <item quantity="many">فاضل %1$d يوم على الصفارة</item>
-        <item quantity="other">فاضل %1$d يوم على الصفارة</item>
+        <item quantity="few">فاضل %1$s أيام على الصفارة</item>
+        <item quantity="many">فاضل %1$s يوم على الصفارة</item>
+        <item quantity="other">فاضل %1$s يوم على الصفارة</item>
     </plurals>
     <plurals name="match_weeks">
-        <item quantity="zero">%1$d أسبوع</item>
+        <item quantity="zero">%1$s أسبوع</item>
         <item quantity="one">أسبوع</item>
         <item quantity="two">أسبوعين</item>
-        <item quantity="few">%1$d أسابيع</item>
-        <item quantity="many">%1$d أسبوع</item>
-        <item quantity="other">%1$d أسبوع</item>
+        <item quantity="few">%1$s أسابيع</item>
+        <item quantity="many">%1$s أسبوع</item>
+        <item quantity="other">%1$s أسبوع</item>
     </plurals>
     <plurals name="match_locked_count">
-        <item quantity="zero">%1$d أسبوع أقدم مع بلس</item>
+        <item quantity="zero">%1$s أسبوع أقدم مع بلس</item>
         <item quantity="one">أسبوع أقدم مع بلس</item>
         <item quantity="two">أسبوعين أقدم مع بلس</item>
-        <item quantity="few">%1$d أسابيع أقدم مع بلس</item>
-        <item quantity="many">%1$d أسبوع أقدم مع بلس</item>
-        <item quantity="other">%1$d أسبوع أقدم مع بلس</item>
+        <item quantity="few">%1$s أسابيع أقدم مع بلس</item>
+        <item quantity="many">%1$s أسبوع أقدم مع بلس</item>
+        <item quantity="other">%1$s أسبوع أقدم مع بلس</item>
     </plurals>
     <string name="match_you">إنت</string>
     <string name="match_last_week">الأسبوع اللي فات</string>
@@ -899,12 +899,12 @@
     <string name="stamp_first_gram_how">جرام دهب في الحصّالة</string>
     <string name="stamp_settled_how">سدّد كل ديونك</string>
     <plurals name="album_stamp_times">
-        <item quantity="zero">%1$d مرة</item>
+        <item quantity="zero">%1$s مرة</item>
         <item quantity="one">مرة</item>
         <item quantity="two">مرتين</item>
-        <item quantity="few">%1$d مرات</item>
-        <item quantity="many">%1$d مرة</item>
-        <item quantity="other">%1$d مرة</item>
+        <item quantity="few">%1$s مرات</item>
+        <item quantity="many">%1$s مرة</item>
+        <item quantity="other">%1$s مرة</item>
     </plurals>
     <string name="album_stubs_title">كعوب التذاكر</string>
     <string name="album_stubs_all">الدفتر كله</string>
@@ -958,28 +958,28 @@
     <string name="buy_empty_line">حلو. لما حاجة تعجبك، اكتبها هنا قبل ما تشتريها.</string>
     <string name="buy_empty_action">اكتب حاجة</string>
     <plurals name="buy_cash_days">
-        <item quantity="zero">تاخد %1$d يوم من تذاكرك</item>
+        <item quantity="zero">تاخد %1$s يوم من تذاكرك</item>
         <item quantity="one">تاخد يوم من تذاكرك</item>
         <item quantity="two">تاخد يومين من تذاكرك</item>
-        <item quantity="few">تاخد %1$d أيام من تذاكرك</item>
-        <item quantity="many">تاخد %1$d يوم من تذاكرك</item>
-        <item quantity="other">تاخد %1$d يوم من تذاكرك</item>
+        <item quantity="few">تاخد %1$s أيام من تذاكرك</item>
+        <item quantity="many">تاخد %1$s يوم من تذاكرك</item>
+        <item quantity="other">تاخد %1$s يوم من تذاكرك</item>
     </plurals>
     <plurals name="buy_months">
-        <item quantity="zero">%1$d شهر</item>
+        <item quantity="zero">%1$s شهر</item>
         <item quantity="one">شهر</item>
         <item quantity="two">شهرين</item>
-        <item quantity="few">%1$d شهور</item>
-        <item quantity="many">%1$d شهر</item>
-        <item quantity="other">%1$d شهر</item>
+        <item quantity="few">%1$s شهور</item>
+        <item quantity="many">%1$s شهر</item>
+        <item quantity="other">%1$s شهر</item>
     </plurals>
     <plurals name="buy_hours_left">
-        <item quantity="zero">فاضل %1$d ساعة</item>
+        <item quantity="zero">فاضل %1$s ساعة</item>
         <item quantity="one">فاضل ساعة</item>
         <item quantity="two">فاضل ساعتين</item>
-        <item quantity="few">فاضل %1$d ساعات</item>
-        <item quantity="many">فاضل %1$d ساعة</item>
-        <item quantity="other">فاضل %1$d ساعة</item>
+        <item quantity="few">فاضل %1$s ساعات</item>
+        <item quantity="many">فاضل %1$s ساعة</item>
+        <item quantity="other">فاضل %1$s ساعة</item>
     </plurals>
     <string name="wish_jar_title">صرفت نظر عن «%1$s»</string>
     <string name="wish_jar_body">تحوّل %1$s للحصّالة؟</string>
@@ -1018,12 +1018,12 @@
     <string name="basket_habit_late_tag">9 م</string>
     <string name="basket_habit_late">بعد 9 بالليل بتصرف. %1$s الشهر ده بـ %2$s.</string>
     <plurals name="basket_times_count">
-        <item quantity="zero">%1$d مرة</item>
+        <item quantity="zero">%1$s مرة</item>
         <item quantity="one">مرة</item>
         <item quantity="two">مرتين</item>
-        <item quantity="few">%1$d مرات</item>
-        <item quantity="many">%1$d مرة</item>
-        <item quantity="other">%1$d مرة</item>
+        <item quantity="few">%1$s مرات</item>
+        <item quantity="many">%1$s مرة</item>
+        <item quantity="other">%1$s مرة</item>
     </plurals>
     <string name="basket_habit_cash_tag">كاش</string>
     <string name="basket_habit_cash_less">لما بتدفع كاش بتصرف أقل %1$s%% من المحفظة.</string>
@@ -1078,41 +1078,41 @@
     <!-- Task 46: end-of-month screen (LastDays.dc.html) and its Home wiring. -->
     <string name="eom_title">وضع آخر الشهر</string>
     <plurals name="eom_days_left">
-        <item quantity="zero">فاضل %1$d يوم على المرتب ومعاك</item>
+        <item quantity="zero">فاضل %1$s يوم على المرتب ومعاك</item>
         <item quantity="one">فاضل يوم على المرتب ومعاك</item>
         <item quantity="two">فاضل يومين على المرتب ومعاك</item>
-        <item quantity="few">فاضل %1$d أيام على المرتب ومعاك</item>
-        <item quantity="many">فاضل %1$d يوم على المرتب ومعاك</item>
-        <item quantity="other">فاضل %1$d يوم على المرتب ومعاك</item>
+        <item quantity="few">فاضل %1$s أيام على المرتب ومعاك</item>
+        <item quantity="many">فاضل %1$s يوم على المرتب ومعاك</item>
+        <item quantity="other">فاضل %1$s يوم على المرتب ومعاك</item>
     </plurals>
     <plurals name="eom_days_left_short">
-        <item quantity="zero">فاضل %1$d يوم على المرتب، وناقصك</item>
+        <item quantity="zero">فاضل %1$s يوم على المرتب، وناقصك</item>
         <item quantity="one">فاضل يوم على المرتب، وناقصك</item>
         <item quantity="two">فاضل يومين على المرتب، وناقصك</item>
-        <item quantity="few">فاضل %1$d أيام على المرتب، وناقصك</item>
-        <item quantity="many">فاضل %1$d يوم على المرتب، وناقصك</item>
-        <item quantity="other">فاضل %1$d يوم على المرتب، وناقصك</item>
+        <item quantity="few">فاضل %1$s أيام على المرتب، وناقصك</item>
+        <item quantity="many">فاضل %1$s يوم على المرتب، وناقصك</item>
+        <item quantity="other">فاضل %1$s يوم على المرتب، وناقصك</item>
     </plurals>
     <string name="eom_unit">جنيه</string>
     <string name="eom_hero_line">يعني %1$s جنيه في اليوم. تتعمل، وأنا معاك.</string>
     <string name="eom_short_line">ده الناقص عن اللي لازم يتدفع. شوف تحت ممكن تجيبه منين، ونرتّبها سوا.</string>
     <plurals name="eom_tickets">
-        <item quantity="zero">%1$d تذكرة صغيرة</item>
+        <item quantity="zero">%1$s تذكرة صغيرة</item>
         <item quantity="one">تذكرة صغيرة</item>
         <item quantity="two">تذكرتين صغيرتين</item>
-        <item quantity="few">%1$d تذاكر صغيرة</item>
-        <item quantity="many">%1$d تذكرة صغيرة</item>
-        <item quantity="other">%1$d تذكرة صغيرة</item>
+        <item quantity="few">%1$s تذاكر صغيرة</item>
+        <item quantity="many">%1$s تذكرة صغيرة</item>
+        <item quantity="other">%1$s تذكرة صغيرة</item>
     </plurals>
     <string name="eom_each">كل واحدة بـ %1$s</string>
     <string name="eom_bill">يوم %1$s فيه فاتورة %2$s (%3$s)، ومحجوزة من دلوقتي برّه الـ %4$s.</string>
     <plurals name="eom_bill_more">
-        <item quantity="zero">وفيه %1$d فاتورة تانية محجوزة برضه.</item>
+        <item quantity="zero">وفيه %1$s فاتورة تانية محجوزة برضه.</item>
         <item quantity="one">وفيه فاتورة تانية محجوزة برضه.</item>
         <item quantity="two">وفيه فاتورتين تانيتين محجوزتين برضه.</item>
-        <item quantity="few">وفيه %1$d فواتير تانية محجوزة برضه.</item>
-        <item quantity="many">وفيه %1$d فاتورة تانية محجوزة برضه.</item>
-        <item quantity="other">وفيه %1$d فاتورة تانية محجوزة برضه.</item>
+        <item quantity="few">وفيه %1$s فواتير تانية محجوزة برضه.</item>
+        <item quantity="many">وفيه %1$s فاتورة تانية محجوزة برضه.</item>
+        <item quantity="other">وفيه %1$s فاتورة تانية محجوزة برضه.</item>
     </plurals>
     <string name="eom_bill_day_cd">يوم %1$s فيه فاتورة</string>
     <string name="eom_habits_title">أكتر حاجتين بيسحبوا منك</string>
@@ -1120,7 +1120,7 @@
     <string name="eom_habit_cd">وقّف %1$s</string>
     <string name="eom_habits_note">لو سجّلت حاجة موقّفة هفكّرك بس، من غير زعل.</string>
     <string name="eom_challenge_title">تحدي: يوم من غير صرف</string>
-    <string name="eom_challenge_count">%1$d / %2$d</string>
+    <string name="eom_challenge_count">%1$s / %2$s</string>
     <string name="eom_challenge_line">كل يوم يعدّي من غير صرف بيزوّد باقي التذاكر %1$s جنيه لكل يوم. عدّي يومين وخد ختم «إيد ماسكة».</string>
     <string name="eom_challenge_line_flat">عدّي يومين من غير صرف وخد ختم «إيد ماسكة».</string>
     <string name="eom_challenge_done">خدت ختم «إيد ماسكة». كمّل كده.</string>
@@ -1391,7 +1391,7 @@
     <string name="people_kids_empty">ضيف أول طفل ومصروفه في الأسبوع.</string>
     <string name="fixed_kids_sub">بيتسلّم كل أسبوع من شاشة العيال</string>
     <string name="fixed_kids_open">افتح</string>
-    <string name="payday_fixed_times">%1$s × %2$d</string>
+    <string name="payday_fixed_times">%1$s × %2$s</string>
 
     <string name="paywall_cd">مصروفي بلس</string>
     <string name="paywall_close">اقفل</string>
@@ -1410,7 +1410,7 @@
     <string name="paywall_plans_cd">اختار الخطة</string>
     <string name="paywall_plan_year">سنة</string>
     <string name="paywall_plan_month">شهر</string>
-    <string name="paywall_save">وفّر %1$d%%</string>
+    <string name="paywall_save">وفّر %1$s%%</string>
     <string name="paywall_per_month">يعني %1$s جنيه في الشهر</string>
     <string name="paywall_per_month_cur">يعني %1$s %2$s في الشهر</string>
     <string name="paywall_month_renews">تتجدد كل شهر</string>
@@ -1439,10 +1439,10 @@
     <string name="loss_sub_gold_loss">مش هتشوف تحويشتك قرّبت للجرام قد إيه</string>
     <string name="loss_sub_gold">تحويشتك بالجرام</string>
     <string name="loss_sub_roundups">ده اللي جمعته الشهر ده من غير ما تحس</string>
-    <string name="loss_sub_seasons">%1$s بعد %2$d يوم</string>
+    <string name="loss_sub_seasons">%1$s بعد %2$s يوم</string>
     <string name="loss_sub_seasons_today">%1$s النهارده</string>
     <string name="loss_sub_seasons_saved">ومحوّشله %1$s</string>
-    <string name="loss_sub_duty">%1$s بعد %2$d يوم. افتكر مين نقّطك وبكام.</string>
+    <string name="loss_sub_duty">%1$s بعد %2$s يوم. افتكر مين نقّطك وبكام.</string>
     <string name="loss_sub_duty_today">%1$s النهارده. افتكر مين نقّطك وبكام.</string>
     <string name="loss_sub_duty_none">مين نقّطك وبكام وإيه اللي عليك تردّه</string>
     <string name="loss_sub_safety">يوم واحد تنسى فيه، والسلسلة ترجع صفر</string>
@@ -1478,43 +1478,43 @@
     <string name="plus_restore_none">ملقيناش اشتراك على حسابك في جوجل بلاي.</string>
     <string name="plus_restore_failed">ماقدرناش نتأكد دلوقتي. جرّب تاني بعد شوية.</string>
     <plurals name="paywall_val_seasons">
-        <item quantity="zero">%d موسم</item>
+        <item quantity="zero">%s موسم</item>
         <item quantity="one">موسم</item>
         <item quantity="two">موسمين</item>
-        <item quantity="few">%d مواسم</item>
-        <item quantity="many">%d موسم</item>
-        <item quantity="other">%d موسم</item>
+        <item quantity="few">%s مواسم</item>
+        <item quantity="many">%s موسم</item>
+        <item quantity="other">%s موسم</item>
     </plurals>
     <plurals name="paywall_val_names">
-        <item quantity="zero">%d اسم</item>
+        <item quantity="zero">%s اسم</item>
         <item quantity="one">اسم واحد</item>
         <item quantity="two">اسمين</item>
-        <item quantity="few">%d أسماء</item>
-        <item quantity="many">%d اسم</item>
-        <item quantity="other">%d اسم</item>
+        <item quantity="few">%s أسماء</item>
+        <item quantity="many">%s اسم</item>
+        <item quantity="other">%s اسم</item>
     </plurals>
     <plurals name="paywall_val_days">
-        <item quantity="zero">%d يوم</item>
+        <item quantity="zero">%s يوم</item>
         <item quantity="one">يوم</item>
         <item quantity="two">يومين</item>
-        <item quantity="few">%d أيام</item>
-        <item quantity="many">%d يوم</item>
-        <item quantity="other">%d يوم</item>
+        <item quantity="few">%s أيام</item>
+        <item quantity="many">%s يوم</item>
+        <item quantity="other">%s يوم</item>
     </plurals>
     <plurals name="paywall_val_items">
-        <item quantity="zero">%d حاجة</item>
+        <item quantity="zero">%s حاجة</item>
         <item quantity="one">حاجة</item>
         <item quantity="two">حاجتين</item>
-        <item quantity="few">%d حاجات</item>
-        <item quantity="many">%d حاجة</item>
-        <item quantity="other">%d حاجة</item>
+        <item quantity="few">%s حاجات</item>
+        <item quantity="many">%s حاجة</item>
+        <item quantity="other">%s حاجة</item>
     </plurals>
     <plurals name="paywall_val_envelopes">
-        <item quantity="zero">%d ظرف</item>
+        <item quantity="zero">%s ظرف</item>
         <item quantity="one">ظرف</item>
         <item quantity="two">ظرفين</item>
-        <item quantity="few">%d ظروف</item>
-        <item quantity="many">%d ظرف</item>
-        <item quantity="other">%d ظرف</item>
+        <item quantity="few">%s ظروف</item>
+        <item quantity="many">%s ظرف</item>
+        <item quantity="other">%s ظرف</item>
     </plurals>
 </resources>

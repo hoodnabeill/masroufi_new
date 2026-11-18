@@ -476,10 +476,10 @@
     <string name="jar_gold_prompt">Type the price of a gram of 21 karat gold</string>
     <string name="jar_save">Save</string>
     <string name="jar_round_title">Save the change</string>
-    <string name="jar_round_line">Every entry rounds up to the nearest %1$d pounds and the difference goes into the jar.</string>
-    <string name="jar_round_to">Nearest %1$d</string>
+    <string name="jar_round_line">Every entry rounds up to the nearest %1$s pounds and the difference goes into the jar.</string>
+    <string name="jar_round_to">Nearest %1$s</string>
     <string name="jar_sources_title">Where this money came from</string>
-    <string name="jar_src_tickets">Ticket leftovers · %1$d tickets</string>
+    <string name="jar_src_tickets">Ticket leftovers · %1$s tickets</string>
     <string name="jar_src_roundup">Change</string>
     <string name="jar_src_manual">Put in by hand</string>
     <string name="jar_goals_title">What you are saving for</string>
@@ -501,18 +501,18 @@
     <string name="goal_target_q">How much do you want to reach?</string>
     <string name="goal_date_q">A date? (optional)</string>
     <string name="goal_date_none">No date</string>
-    <string name="goal_date_months">In %1$d months</string>
+    <string name="goal_date_months">In %1$s months</string>
 
     <string name="seasons_intro">Big expenses have known dates. Get ready early instead of being surprised.</string>
-    <string name="seasons_days_hijri">In about %1$d days</string>
-    <string name="seasons_days">In %1$d days</string>
+    <string name="seasons_days_hijri">In about %1$s days</string>
+    <string name="seasons_days">In %1$s days</string>
     <string name="seasons_of">of %1$s</string>
     <string name="seasons_per_day">EGP %1$s a day from today and you arrive comfortable.</string>
     <string name="seasons_chip">%1$s %2$s</string>
-    <string name="seasons_when_hijri">%1$s · about %2$d days</string>
-    <string name="seasons_when">%1$s · %2$d days</string>
+    <string name="seasons_when_hijri">%1$s · about %2$s days</string>
+    <string name="seasons_when">%1$s · %2$s days</string>
     <string name="seasons_together_title">All seasons together</string>
-    <string name="seasons_together_lead">To catch %1$d you need to save about</string>
+    <string name="seasons_together_lead">To catch %1$s you need to save about</string>
     <string name="seasons_together_need">%1$s a month</string>
     <string name="seasons_together_over">. That is more than what is left over now (about %1$s).</string>
     <string name="seasons_together_ok">. That is within what you usually save.</string>
@@ -528,7 +528,7 @@
     <string name="season_q_name">What is the occasion called?</string>
     <string name="season_name_hint">Cousin\'s wedding</string>
     <string name="season_q_date">When?</string>
-    <string name="season_hijri_date">%1$d %2$s, approximately</string>
+    <string name="season_hijri_date">%1$s %2$s, approximately</string>
     <string name="season_day_less">One day earlier</string>
     <string name="season_day_more">One day later</string>
     <string name="season_q_target">How much will you need?</string>
@@ -807,15 +807,15 @@
     <string name="match_pill">Week %1$s · %2$s</string>
     <plurals name="match_days_left">
         <item quantity="one">1 day to the whistle</item>
-        <item quantity="other">%1$d days to the whistle</item>
+        <item quantity="other">%1$s days to the whistle</item>
     </plurals>
     <plurals name="match_weeks">
         <item quantity="one">1 week</item>
-        <item quantity="other">%1$d weeks</item>
+        <item quantity="other">%1$s weeks</item>
     </plurals>
     <plurals name="match_locked_count">
         <item quantity="one">1 older week with Plus</item>
-        <item quantity="other">%1$d older weeks with Plus</item>
+        <item quantity="other">%1$s older weeks with Plus</item>
     </plurals>
     <string name="match_you">You</string>
     <string name="match_last_week">Last week</string>
@@ -889,7 +889,7 @@
     <string name="stamp_settled_how">Clear every debt</string>
     <plurals name="album_stamp_times">
         <item quantity="one">Once</item>
-        <item quantity="other">%1$d times</item>
+        <item quantity="other">%1$s times</item>
     </plurals>
     <string name="album_stubs_title">Ticket stubs</string>
     <string name="album_stubs_all">The whole roll</string>
@@ -944,15 +944,15 @@
     <string name="buy_empty_action">Write something</string>
     <plurals name="buy_cash_days">
         <item quantity="one">Takes 1 day of your tickets</item>
-        <item quantity="other">Takes %1$d days of your tickets</item>
+        <item quantity="other">Takes %1$s days of your tickets</item>
     </plurals>
     <plurals name="buy_months">
         <item quantity="one">1 month</item>
-        <item quantity="other">%1$d months</item>
+        <item quantity="other">%1$s months</item>
     </plurals>
     <plurals name="buy_hours_left">
         <item quantity="one">1 hour left</item>
-        <item quantity="other">%1$d hours left</item>
+        <item quantity="other">%1$s hours left</item>
     </plurals>
     <string name="wish_jar_title">Changed your mind about \'%1$s\'</string>
     <string name="wish_jar_body">Move %1$s to the jar?</string>
@@ -992,7 +992,7 @@
     <string name="basket_habit_late">After 9 at night you spend. %1$s this month, %2$s in all.</string>
     <plurals name="basket_times_count">
         <item quantity="one">1 time</item>
-        <item quantity="other">%1$d times</item>
+        <item quantity="other">%1$s times</item>
     </plurals>
     <string name="basket_habit_cash_tag">Cash</string>
     <string name="basket_habit_cash_less">When you pay cash you spend %1$s%% less than from the wallet.</string>
@@ -1048,24 +1048,24 @@
     <string name="eom_title">End-of-month mode</string>
     <plurals name="eom_days_left">
         <item quantity="one">1 day to payday, and you have</item>
-        <item quantity="other">%1$d days to payday, and you have</item>
+        <item quantity="other">%1$s days to payday, and you have</item>
     </plurals>
     <plurals name="eom_days_left_short">
         <item quantity="one">1 day to payday, and you are short</item>
-        <item quantity="other">%1$d days to payday, and you are short</item>
+        <item quantity="other">%1$s days to payday, and you are short</item>
     </plurals>
     <string name="eom_unit">EGP</string>
     <string name="eom_hero_line">That\'s %1$s EGP a day. Doable, and I\'m with you.</string>
     <string name="eom_short_line">That is what is missing for what must be paid. See below where it could come from, and we\'ll sort it out.</string>
     <plurals name="eom_tickets">
         <item quantity="one">1 small ticket</item>
-        <item quantity="other">%1$d small tickets</item>
+        <item quantity="other">%1$s small tickets</item>
     </plurals>
     <string name="eom_each">%1$s each</string>
     <string name="eom_bill">On the %1$s there is the %2$s bill (%3$s), reserved from now, outside the %4$s.</string>
     <plurals name="eom_bill_more">
         <item quantity="one">And 1 more bill is reserved too.</item>
-        <item quantity="other">And %1$d more bills are reserved too.</item>
+        <item quantity="other">And %1$s more bills are reserved too.</item>
     </plurals>
     <string name="eom_bill_day_cd">A bill is due on the %1$s</string>
     <string name="eom_habits_title">The two things that drain you most</string>
@@ -1073,7 +1073,7 @@
     <string name="eom_habit_cd">Pause %1$s</string>
     <string name="eom_habits_note">If you log something paused, I\'ll only remind you, no judgment.</string>
     <string name="eom_challenge_title">Challenge: a day with no spending</string>
-    <string name="eom_challenge_count">%1$d / %2$d</string>
+    <string name="eom_challenge_count">%1$s / %2$s</string>
     <string name="eom_challenge_line">Every day that passes with no spending adds %1$s EGP a day to the tickets left. Get through two days and earn the \"Tight fist\" stamp.</string>
     <string name="eom_challenge_line_flat">Get through two days with no spending and earn the \"Tight fist\" stamp.</string>
     <string name="eom_challenge_done">You earned the \"Tight fist\" stamp. Keep going.</string>
@@ -1344,7 +1344,7 @@
     <string name="people_kids_empty">Add the first child and their weekly allowance.</string>
     <string name="fixed_kids_sub">Handed over every week from the kids screen</string>
     <string name="fixed_kids_open">Open</string>
-    <string name="payday_fixed_times">%1$s × %2$d</string>
+    <string name="payday_fixed_times">%1$s × %2$s</string>
 
     <string name="paywall_cd">Masroufi Plus</string>
     <string name="paywall_close">Close</string>
@@ -1363,7 +1363,7 @@
     <string name="paywall_plans_cd">Choose a plan</string>
     <string name="paywall_plan_year">Year</string>
     <string name="paywall_plan_month">Month</string>
-    <string name="paywall_save">Save %1$d%%</string>
+    <string name="paywall_save">Save %1$s%%</string>
     <string name="paywall_per_month">That is %1$s EGP a month</string>
     <string name="paywall_per_month_cur">That is %1$s %2$s a month</string>
     <string name="paywall_month_renews">Renews every month</string>
@@ -1392,10 +1392,10 @@
     <string name="loss_sub_gold_loss">You will not see how close your savings are to a gram</string>
     <string name="loss_sub_gold">Your savings in grams</string>
     <string name="loss_sub_roundups">What you collected this month without feeling it</string>
-    <string name="loss_sub_seasons">%1$s in %2$d days</string>
+    <string name="loss_sub_seasons">%1$s in %2$s days</string>
     <string name="loss_sub_seasons_today">%1$s is today</string>
     <string name="loss_sub_seasons_saved">with %1$s set aside</string>
-    <string name="loss_sub_duty">%1$s in %2$d days. Remember who gave and how much.</string>
+    <string name="loss_sub_duty">%1$s in %2$s days. Remember who gave and how much.</string>
     <string name="loss_sub_duty_today">%1$s is today. Remember who gave and how much.</string>
     <string name="loss_sub_duty_none">Who gave you what, and what you owe back</string>
     <string name="loss_sub_safety">Forget one day and the streak goes back to zero</string>
@@ -1431,23 +1431,23 @@
     <string name="plus_restore_none">No subscription found on your Google Play account.</string>
     <string name="plus_restore_failed">Could not check right now. Try again in a while.</string>
     <plurals name="paywall_val_seasons">
-        <item quantity="one">%d season</item>
-        <item quantity="other">%d seasons</item>
+        <item quantity="one">%s season</item>
+        <item quantity="other">%s seasons</item>
     </plurals>
     <plurals name="paywall_val_names">
-        <item quantity="one">%d name</item>
-        <item quantity="other">%d names</item>
+        <item quantity="one">%s name</item>
+        <item quantity="other">%s names</item>
     </plurals>
     <plurals name="paywall_val_days">
-        <item quantity="one">%d day</item>
-        <item quantity="other">%d days</item>
+        <item quantity="one">%s day</item>
+        <item quantity="other">%s days</item>
     </plurals>
     <plurals name="paywall_val_items">
-        <item quantity="one">%d item</item>
-        <item quantity="other">%d items</item>
+        <item quantity="one">%s item</item>
+        <item quantity="other">%s items</item>
     </plurals>
     <plurals name="paywall_val_envelopes">
-        <item quantity="one">%d envelope</item>
-        <item quantity="other">%d envelopes</item>
+        <item quantity="one">%s envelope</item>
+        <item quantity="other">%s envelopes</item>
     </plurals>
 </resources>
