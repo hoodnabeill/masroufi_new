@@ -11,6 +11,9 @@ import com.masroufi.app.domain.StampKind
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
+/** One spend with what the habit facts need: when, how much, and the kind of pocket it left. */
+data class SpendRow(val amount: Long, val happenedAt: Long, val pocketKind: PocketKind)
+
 data class PocketBalance(val pocketId: Long, val balance: Long)
 
 // Opening + received + adjustments and debts (signed) - spent - every fee - moved out + moved in. Round-ups are not deducted: the
@@ -135,6 +138,25 @@ interface EntryDao {
         AND e.happenedAt >= :start AND e.happenedAt < :end GROUP BY e.categoryId"""
     )
     suspend fun spentByCategory(start: Long, end: Long): List<CategorySpend>
+
+    /** Every spend that names a tracked item and a unit price, oldest first. */
+    @Query("SELECT * FROM entry WHERE kind = 'SPENT' AND trackedItemId IS NOT NULL AND unitPrice IS NOT NULL ORDER BY happenedAt, id")
+    suspend fun pricedEntries(): List<EntryEntity>
+
+    /** EGP spends that are not fixed bills (habits), [start, end) epoch millis. */
+    @Query(
+        """SELECT e.amount, e.happenedAt, p.kind AS pocketKind FROM entry e JOIN pocket p ON p.id = e.pocketId
+        WHERE e.kind = 'SPENT' AND e.isFee = 0 AND e.recurringId IS NULL AND p.currency = 'EGP'
+        AND e.happenedAt >= :start AND e.happenedAt < :end"""
+    )
+    suspend fun habitSpends(start: Long, end: Long): List<SpendRow>
+
+    /** Income into EGP pockets, [start, end) epoch millis. */
+    @Query(
+        """SELECT COALESCE(SUM(e.amount), 0) FROM entry e JOIN pocket p ON p.id = e.pocketId
+        WHERE e.kind = 'RECEIVED' AND p.currency = 'EGP' AND e.happenedAt >= :start AND e.happenedAt < :end"""
+    )
+    suspend fun receivedBetween(start: Long, end: Long): Long
 
     /** Epoch-millis bounds, [start, end). */
     @Query("SELECT * FROM entry WHERE happenedAt >= :start AND happenedAt < :end ORDER BY happenedAt")

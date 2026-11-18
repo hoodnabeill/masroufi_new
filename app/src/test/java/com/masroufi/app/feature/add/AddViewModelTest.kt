@@ -96,7 +96,7 @@ class AddViewModelTest {
         val factory = viewModelFactory {
             initializer {
                 AddViewModel(
-                    f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, deletes, bus, f.ritual, clock,
+                    f.entries, db.entryDao(), db.categoryDao(), db.pocketDao(), db.dayTicketDao(), f.settings, plus, pending, deletes, bus, f.ritual, f.basket, clock,
                 )
             }
         }
@@ -191,6 +191,36 @@ class AddViewModelTest {
         clock.instant = clock.instant.plusMillis(450)
         assertTrue("a tap after 400 ms saves", vm.save())
         settle("second entry") { entries().size == 2 }
+    }
+
+    @Test fun aSpendWithItemAndUnitPriceIsSavedOnTheEntryAndTracksTheName() {
+        newVm()
+        opened()
+        typeAmount("30")
+        vm.setItem("Milk")
+        vm.setUnitPrice("15")
+        settle("unit price typed") { state.unitPrice == 1_500L }
+        assertTrue(vm.save())
+        settle("stored") { entries().size == 1 }
+        val e = entries().single()
+        assertEquals(1_500L, e.unitPrice)
+        assertEquals("the name matches the tracked item", runBlocking { f.basket.itemIdFor(" milk") }, e.trackedItemId)
+    }
+
+    @Test fun anItemWithoutAUnitPriceSavesNoItem() {
+        newVm()
+        opened()
+        typeAmount("30")
+        vm.setItem("Milk")
+        settle("amount typed") { state.amount == 3_000L }
+        assertTrue(vm.save())
+        settle("stored") { entries().size == 1 }
+        assertEquals(listOf(null, null), entries().single().let { listOf(it.unitPrice, it.trackedItemId) })
+        assertEquals(0, runBlocking { db.trackedItemDao().allNow().size })
+    }
+
+    @Test fun unitPriceTextIsParsedStrictly() {
+        assertEquals(listOf(1_250L, 1_500L, 0L, 0L, 0L), listOf("12.5", "15.", "", "abc", "1.234").map(::parseUnitPrice))
     }
 
     @Test fun spentPunchesAndReportsLeft() {

@@ -41,8 +41,12 @@ data class NewEntry(
     val roundUp: Boolean = true,
     /** DEBT entries: the loan, borrow or repayment this moves money for. */
     val debtId: Long? = null,
+    /** A spend of a tracked item at this unit price (the basket); null on an edit keeps what the entry has. */
+    val trackedItemId: Long? = null,
+    val unitPrice: Long? = null,
 ) {
     init {
+        require(unitPrice == null || unitPrice > 0) { "unit price must be > 0" }
         require(if (kind == EntryKind.ADJUST || kind == EntryKind.DEBT) amount != 0L else amount > 0) {
             "amount must be > 0 (an adjustment or a debt: != 0)"
         }
@@ -202,6 +206,8 @@ class EntryRepository @Inject constructor(
         recurringId = e.recurringId,
         fee = e.fee,
         debtId = e.debtId,
+        trackedItemId = if (e.kind == EntryKind.SPENT) e.trackedItemId ?: trackedItemId else null,
+        unitPrice = if (e.kind == EntryKind.SPENT) e.unitPrice ?: unitPrice else null,
         roundUp = roundUp,
         updatedAt = now,
     )

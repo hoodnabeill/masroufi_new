@@ -69,6 +69,9 @@
     <string name="add_from">من</string>
     <string name="add_to">إلى</string>
     <string name="add_in">في</string>
+    <string name="add_item_open">+ ضيف الحاجة وسعر وحدتها</string>
+    <string name="add_item_name">اسم الحاجة</string>
+    <string name="add_item_price">سعر الوحدة</string>
     <string name="add_note">ضيف ملاحظة</string>
     <string name="add_fee">رسوم</string>
     <string name="add_round_up">قرّبها لـ %1$s و %2$s للحصّالة</string>

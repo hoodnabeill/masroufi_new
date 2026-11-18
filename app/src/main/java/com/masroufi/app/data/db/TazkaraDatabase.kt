@@ -15,8 +15,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SeasonEntity::class, SeasonItemEntity::class, EnvelopeMoveEntity::class, SplitRuleEntity::class,
         PersonEntity::class, DebtEntity::class, TabItemEntity::class, OccasionEntity::class, GiftEntity::class,
         GameyaEntity::class, GameyaMemberEntity::class, GameyaPaymentEntity::class, GameyaPlanEntity::class,
+        WishEntity::class, TrackedItemEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -35,6 +36,8 @@ abstract class TazkaraDatabase : RoomDatabase() {
     abstract fun peopleDao(): PeopleDao
     abstract fun dutyDao(): DutyDao
     abstract fun gameyaDao(): GameyaDao
+    abstract fun wishDao(): WishDao
+    abstract fun trackedItemDao(): TrackedItemDao
 
     companion object {
         const val FILE_NAME = "tazkara.db"
@@ -126,5 +129,20 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
                 "`label` TEXT NOT NULL, `amount` INTEGER NOT NULL, `seasonId` INTEGER, `goalId` INTEGER)",
         )
         db.execSQL("ALTER TABLE `entry` ADD COLUMN `debtId` INTEGER")
+    }
+}
+
+/** v5 (Phase 8): the wishlist and the tracked items of the basket. */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `wish` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
+                "`price` INTEGER NOT NULL, `parkedAt` INTEGER NOT NULL, `answer` TEXT NOT NULL, `answeredAt` INTEGER, " +
+                "`installmentMonthly` INTEGER, `installmentMonths` INTEGER)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `tracked_item` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
+                "`normalisedName` TEXT NOT NULL, `unit` TEXT, `addedByUser` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)",
+        )
     }
 }

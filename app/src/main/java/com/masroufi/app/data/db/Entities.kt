@@ -23,6 +23,7 @@ enum class PersonKind { PERSON, SHOP }
 enum class DebtDirection { THEY_OWE, I_OWE }
 enum class OccasionOwner { MINE, THEIRS }
 enum class GiftDirection { RECEIVED, GIVEN }
+enum class WishAnswer { WAITING, BOUGHT, CHANGED_MIND }
 
 // Money is Long piastres. updatedAt is epoch millis, set by callers from the injected Clock.
 
@@ -328,4 +329,28 @@ data class GameyaPlanEntity(
     val amount: Long,
     val seasonId: Long? = null,
     val goalId: Long? = null,
+)
+
+/** "نِفسي فيه": something parked for 48 hours; [installmentMonthly]/[installmentMonths] are what the shop said, as typed. */
+@Entity(tableName = "wish")
+data class WishEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val price: Long,
+    val parkedAt: Long,
+    val answer: WishAnswer = WishAnswer.WAITING,
+    val answeredAt: Long? = null,
+    val installmentMonthly: Long? = null,
+    val installmentMonths: Int? = null,
+)
+
+/** A thing bought again and again; [normalisedName] is what entries are matched on. [unit] is not captured yet. */
+@Entity(tableName = "tracked_item")
+data class TrackedItemEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val normalisedName: String,
+    val unit: String? = null,
+    val addedByUser: Boolean = false,
+    val createdAt: Long,
 )

@@ -11,6 +11,7 @@ import com.masroufi.app.data.db.EntryDao
 import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.prefs.SettingsStore
+import com.masroufi.app.data.repo.BasketRepository
 import com.masroufi.app.data.repo.EntryRepository
 import com.masroufi.app.data.repo.NOTE_MAX_CHARS
 import com.masroufi.app.data.repo.NewEntry
@@ -62,6 +63,9 @@ data class AddForm(
     val smsBalance: Long? = null,
     /** Paying a fixed cost (a new entry); a stored entry keeps its own through [edit]. */
     val recurringId: Long? = null,
+    /** SPENT only, both optional and collapsed in the sheet: the item bought and what one unit cost (typed text). */
+    val item: String = "",
+    val unitPrice: String = "",
     /** Last used first, then seed order. */
     val categories: List<CategoryEntity> = emptyList(),
     /** Not archived. */
@@ -78,6 +82,9 @@ data class AddUiState(
     val roundUpStep: Int = 0,
 ) {
     val amount: Long get() = form.amount.toPiastres()
+
+    /** The unit price typed for the item, in piastres; 0 when empty or not a number. */
+    val unitPrice: Long get() = parseUnitPrice(form.unitPrice)
     val pocket: PocketEntity? get() = form.pockets.firstOrNull { it.id == form.pocketId }
     val toPocket: PocketEntity? get() = form.pockets.firstOrNull { it.id == form.toPocketId }
 
@@ -111,6 +118,13 @@ data class AddUiState(
     val canSave: Boolean get() = amount > 0 && pocket != null && (form.type != EntryKind.MOVED || transferValid)
 }
 
+/** "12.5" -> 1250; anything that is not digits with at most one point and two decimals is 0. */
+internal fun parseUnitPrice(text: String): Long {
+    val t = text.trim()
+    if (!Regex("""\d{1,8}(\.\d{0,2})?""").matches(t)) return 0
+    return AmountInput(t.trimEnd('.')).toPiastres()
+}
+
 private const val TAG = "AddSheet"
 private const val DOUBLE_TAP_MS = 400L
 private const val PENDING_CATCH_UP_MS = 2_000L
@@ -128,6 +142,7 @@ class AddViewModel @Inject constructor(
     private val pendingDeletes: PendingDeletes,
     private val feedback: FeedbackBus,
     private val ritual: PaydayRitualRepository,
+    private val basket: BasketRepository,
     private val clock: Clock,
 ) : ViewModel(), AddSheetActions {
     private val form = MutableStateFlow(AddForm())
@@ -217,6 +232,8 @@ class AddViewModel @Inject constructor(
     override fun selectToPocket(id: Long) = form.update { it.copy(toPocketId = id) }
     override fun setNote(text: String) = form.update { it.copy(note = text.take(NOTE_MAX_CHARS)) }
     override fun setRoundUp(on: Boolean) = form.update { it.copy(roundUpOn = on) }
+    override fun setItem(text: String) = form.update { it.copy(item = text.take(NOTE_MAX_CHARS)) }
+    override fun setUnitPrice(text: String) = form.update { it.copy(unitPrice = text.take(12)) }
 
     /** Edit mode: the entry goes into the roll's 5 s undo; the sheet closes itself. */
     override fun delete() {
@@ -249,11 +266,14 @@ class AddViewModel @Inject constructor(
             fee = if (f.type == EntryKind.MOVED) f.fee.toPiastres() else 0,
             roundUp = f.roundUpOn,
         )
+        // A spend that names an item and a unit price is saved with them (the basket); either alone saves nothing of it.
+        val itemName = f.item.trim().takeIf { f.type == EntryKind.SPENT && it.isNotEmpty() && s.unitPrice > 0 }
+        suspend fun NewEntry.withItem() = if (itemName == null) this else copy(trackedItemId = basket.itemIdFor(itemName), unitPrice = s.unitPrice)
         if (edit != null) {
             // The roll re-reads on its own; no placeholder on Home.
             viewModelScope.launch {
                 try {
-                    entryRepo.edit(edit.id, entry)
+                    entryRepo.edit(edit.id, entry.withItem())
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -269,7 +289,7 @@ class AddViewModel @Inject constructor(
         val left = s.leftAfter
         viewModelScope.launch {
             val id = try {
-                entryRepo.log(entry)
+                entryRepo.log(entry.withItem())
             } catch (e: CancellationException) {
                 pendingId?.let(pendingPunches::remove)
                 throw e

@@ -21,6 +21,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -89,6 +91,9 @@ interface AddSheetActions {
     fun selectToPocket(id: Long)
     fun setNote(text: String)
     fun setRoundUp(on: Boolean)
+    /** The optional item and unit price (spends only). */
+    fun setItem(text: String) {}
+    fun setUnitPrice(text: String) {}
     /** Edit mode's "امسحها". */
     fun delete() {}
 }
@@ -158,6 +163,7 @@ fun ColumnScope.AddSheetContent(state: AddUiState, actions: AddSheetActions, onC
             if (f.type == EntryKind.SPENT && f.categories.isNotEmpty()) CategoryChips(f.categories, f.categoryId, actions::selectCategory)
             PocketFields(state, actions, toPulse.value) { picking = it }
             if (state.roundUpOffer > 0) RoundUpRow(state, actions::setRoundUp)
+            if (f.type == EntryKind.SPENT) ItemRow(f.item, f.unitPrice, actions::setItem, actions::setUnitPrice)
         }
         Keypad(actions::digit, actions::point, actions::backspace)
         PrimaryButton(
@@ -404,6 +410,39 @@ private fun NoteField(note: String, onNote: (String) -> Unit, modifier: Modifier
         decorationBox = { inner ->
             Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
                 if (note.isEmpty()) Text(hint, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2, maxLines = 1)
+                inner()
+            }
+        },
+    )
+}
+
+/** Collapsed by default: the item bought and what one unit cost, so the basket can follow its price. */
+@Composable
+private fun ItemRow(item: String, unitPrice: String, onItem: (String) -> Unit, onUnitPrice: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(item.isNotEmpty() || unitPrice.isNotEmpty()) }
+    if (!expanded) {
+        TextLink(stringResource(R.string.add_item_open), { expanded = true })
+        return
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ItemField(item, stringResource(R.string.add_item_name), KeyboardType.Text, onItem, Modifier.weight(1f))
+        ItemField(unitPrice, stringResource(R.string.add_item_price), KeyboardType.Decimal, onUnitPrice, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun ItemField(value: String, hint: String, keyboard: KeyboardType, onValue: (String) -> Unit, modifier: Modifier) {
+    BasicTextField(
+        value = value,
+        onValueChange = onValue,
+        modifier = modifier.field().semantics { contentDescription = hint },
+        textStyle = TzType.label.copy(fontWeight = FontWeight.Normal, color = Tz.text),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+        cursorBrush = SolidColor(Tz.yellow),
+        decorationBox = { inner ->
+            Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
+                if (value.isEmpty()) Text(hint, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2, maxLines = 1)
                 inner()
             }
         },

@@ -68,6 +68,9 @@ data class Settings(
     val birthdayTarget: Long? = null,
     /** Milestones the celebration already played: "level:N" and "stamp:KIND". */
     val milestonesSeen: Set<String> = emptySet(),
+    /** A raised daily amount the user accepted from the basket's suggestion, and the epoch day (payday) it stops holding. */
+    val ticketRaise: Long? = null,
+    val ticketRaiseUntil: Long? = null,
 )
 
 @Singleton
@@ -103,6 +106,8 @@ class SettingsStore @Inject constructor(
     private val mainGoalKey = stringPreferencesKey("mainGoal")
     private val birthdayTargetKey = longPreferencesKey("birthdayTarget")
     private val milestonesSeenKey = stringSetPreferencesKey("milestonesSeen")
+    private val ticketRaiseKey = longPreferencesKey("ticketRaise")
+    private val ticketRaiseUntilKey = longPreferencesKey("ticketRaiseUntil")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -156,6 +161,13 @@ class SettingsStore @Inject constructor(
         store.edit {
             it[goldPriceKey] = perGram
             it[goldPriceDateKey] = epochDay
+        }
+    }
+    suspend fun setTicketRaise(amount: Long, untilEpochDay: Long) {
+        require(amount > 0) { "raise must be > 0" }
+        store.edit {
+            it[ticketRaiseKey] = amount
+            it[ticketRaiseUntilKey] = untilEpochDay
         }
     }
     suspend fun setProfileName(v: String?) { store.edit { if (v.isNullOrBlank()) it.remove(profileNameKey) else it[profileNameKey] = v.trim() } }
@@ -215,6 +227,8 @@ class SettingsStore @Inject constructor(
         mainGoal = p[mainGoalKey]?.let { runCatching { MainGoal.valueOf(it) }.getOrNull() },
         birthdayTarget = p[birthdayTargetKey],
         milestonesSeen = p[milestonesSeenKey] ?: emptySet(),
+        ticketRaise = p[ticketRaiseKey],
+        ticketRaiseUntil = p[ticketRaiseUntilKey],
     )
 
     private fun decodeReminders(s: String?): Map<Long, Long> = s?.split(",")?.mapNotNull {

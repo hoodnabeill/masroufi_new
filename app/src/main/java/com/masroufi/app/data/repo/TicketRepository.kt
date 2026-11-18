@@ -144,7 +144,14 @@ class TicketRepository @Inject constructor(
             jarDao.totalNow(Pot.JAR).coerceAtLeast(0) + jarDao.totalNow(Pot.EMERGENCY).coerceAtLeast(0) + extraReserved
         // A round-up is in both spent and the reserved jar, so adding it back here nets to zero.
         val spendable = pocketDao.countingBalanceTotal() + spent
-        val calc = computeTicket(spendable, reserved, carriedIn, cycle.daysLeft(maxOf(today, cycle.start)))
+        val computed = computeTicket(spendable, reserved, carriedIn, cycle.daysLeft(maxOf(today, cycle.start)))
+        // A raise the user accepted from the basket's suggestion lifts the printed base until that payday.
+        val raise = s.ticketRaise?.takeIf { today.toEpochDay() < (s.ticketRaiseUntil ?: 0) }
+        val calc = if (computed is TicketCalc.Printed && raise != null && raise > computed.base) {
+            computed.copy(amount = raise + computed.carriedIn, base = raise)
+        } else {
+            computed
+        }
         return TodayBasis(calc, spent, punches.size)
     }
 

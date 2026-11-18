@@ -69,6 +69,9 @@
     <string name="add_from">From</string>
     <string name="add_to">To</string>
     <string name="add_in">Into</string>
+    <string name="add_item_open">+ Add the item and its unit price</string>
+    <string name="add_item_name">Item</string>
+    <string name="add_item_price">Unit price</string>
     <string name="add_note">Add a note</string>
     <string name="add_fee">Fee</string>
     <string name="add_round_up">Round up to %1$s and %2$s to the jar</string>

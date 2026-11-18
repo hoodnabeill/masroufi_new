@@ -58,10 +58,18 @@ class MigrationTest {
         context.deleteDatabase(name)
     }
 
-    /** Room creates the current file; the v4 tables go and `entry` loses debtId, user_version 3. */
-    private fun v3File(): SQLiteDatabase {
+    /** Room creates the current file; the v5 tables go, user_version 4. */
+    private fun v4File(): SQLiteDatabase {
         Room.databaseBuilder(context, TazkaraDatabase::class.java, name).build().apply { openHelper.writableDatabase }.close()
-        val v3 = SQLiteDatabase.openDatabase(context.getDatabasePath(name).path, null, SQLiteDatabase.OPEN_READWRITE)
+        val v4 = SQLiteDatabase.openDatabase(context.getDatabasePath(name).path, null, SQLiteDatabase.OPEN_READWRITE)
+        listOf("wish", "tracked_item").forEach { v4.execSQL("DROP TABLE `$it`") }
+        v4.version = 4
+        return v4
+    }
+
+    /** The v4 file; the v4 tables go and `entry` loses debtId, user_version 3. */
+    private fun v3File(): SQLiteDatabase {
+        val v3 = v4File()
         V4_TABLES.forEach { v3.execSQL("DROP TABLE `$it`") }
         v3.execSQL("DROP TABLE `entry`")
         V3_ENTRY.forEach(v3::execSQL)
@@ -81,7 +89,7 @@ class MigrationTest {
 
     /** Opening runs the migrations and then Room's schema validation over every table. */
     private fun open() =
-        Room.databaseBuilder(context, TazkaraDatabase::class.java, name).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+        Room.databaseBuilder(context, TazkaraDatabase::class.java, name).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
 
     /** v1 file database: only `pocket` differs between v1 and v2, so the v2 file gets the v1 pocket table and version 1. */
     @Test fun migration1to2KeepsData() = runTest {
@@ -110,7 +118,7 @@ class MigrationTest {
             assertEquals("new columns: no limit, alert off, no SMS", listOf(null, null, false, null, null),
                 listOf(p.monthlyLimit, p.lowBalanceThreshold, p.lowBalanceAlert, p.lastSmsBalance, p.lastSmsAt))
             assertEquals("the entry survives and still counts", 98_000L, db.pocketDao().balanceOf(1))
-            assertEquals(4, db.openHelper.readableDatabase.version)
+            assertEquals(5, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -161,7 +169,7 @@ class MigrationTest {
             db.envelopeDao().insertMove(EnvelopeMoveEntity(cycleStart = due, fromId = 1, toId = 1, amount = 1, at = 0))
             db.envelopeDao().insertSplit(listOf(SplitRuleEntity(envelopeId = 1, kind = SplitKind.PERCENT, value = 10, sortOrder = 0)))
             assertEquals("new tables usable", 1 to 1, db.envelopeDao().moves().first().size to db.envelopeDao().splitRules().size)
-            assertEquals(4, db.openHelper.readableDatabase.version)
+            assertEquals(5, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }
@@ -198,7 +206,38 @@ class MigrationTest {
             assertEquals(listOf(1, 1, 1, 1), listOf(
                 db.peopleDao().openDebts().size, db.dutyDao().giftsNow().size, db.gameyaDao().all().first().size, db.gameyaDao().plans().first().size,
             ))
-            assertEquals(4, db.openHelper.readableDatabase.version)
+            assertEquals(5, db.openHelper.readableDatabase.version)
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test fun migration4to5KeepsDataAndAddsWishAndTrackedItem() = runTest {
+        v4File().use { v4 ->
+            v4.execSQL(
+                "INSERT INTO pocket (id, name, kind, currency, openingBalance, color, archived, countsInTicket, updatedAt, lowBalanceAlert) " +
+                    "VALUES (1, 'cash', 'CASH', 'EGP', 100000, 7, 0, 1, 5, 0)",
+            )
+            v4.execSQL(
+                "INSERT INTO entry (kind, amount, pocketId, happenedAt, loggedAt, roundUp, fee, isFee, unitPrice, updatedAt) " +
+                    "VALUES ('SPENT', 2000, 1, 0, 0, 0, 0, 0, 1500, 0)",
+            )
+        }
+
+        val db = open()
+        try {
+            val entry = checkNotNull(db.entryDao().byId(1)) { "entry lost in the migration" }
+            assertEquals("the entry keeps its unit price", 1_500L, entry.unitPrice)
+            assertEquals("and the pocket still counts it", 98_000L, db.pocketDao().balanceOf(1))
+            val item = db.trackedItemDao().insert(TrackedItemEntity(name = "طماطم", normalisedName = "طماطم", createdAt = 1))
+            db.entryDao().update(entry.copy(trackedItemId = item))
+            val wish = db.wishDao().insert(WishEntity(name = "jacket", price = 120_000, parkedAt = 5, installmentMonthly = 18_500, installmentMonths = 12))
+            assertEquals(
+                listOf(WishAnswer.WAITING, null, 12),
+                db.wishDao().byId(wish)!!.let { listOf(it.answer, it.answeredAt, it.installmentMonths) },
+            )
+            assertEquals(listOf(item), db.entryDao().pricedEntries().map { it.trackedItemId })
+            assertEquals(5, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }

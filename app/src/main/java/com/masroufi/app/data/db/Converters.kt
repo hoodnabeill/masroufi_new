@@ -44,4 +44,6 @@ class Converters {
     @TypeConverter fun stringToOccasionOwner(v: String): OccasionOwner = OccasionOwner.valueOf(v)
     @TypeConverter fun giftDirectionToString(v: GiftDirection): String = v.name
     @TypeConverter fun stringToGiftDirection(v: String): GiftDirection = GiftDirection.valueOf(v)
+    @TypeConverter fun wishAnswerToString(v: WishAnswer): String = v.name
+    @TypeConverter fun stringToWishAnswer(v: String): WishAnswer = WishAnswer.valueOf(v)
 }

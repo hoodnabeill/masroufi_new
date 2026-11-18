@@ -41,6 +41,10 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val people = PeopleRepository(db, db.peopleDao(), db.dutyDao(), entries, clock, stamps)
     val duty = DutyRepository(db, db.dutyDao(), db.peopleDao(), clock)
     val gameyas = GameyaRepository(db, db.gameyaDao(), recurring, plus, clock)
+    val basket = BasketRepository(db, db.trackedItemDao(), db.entryDao(), db.dayTicketDao(), settings, plus, clock)
+    val wishes = WishRepository(
+        db, db.wishDao(), db.entryDao(), db.pocketDao(), db.recurringDao(), db.jarDao(), db.dayTicketDao(), jar, seasons, settings, clock,
+    )
     val ritual = PaydayRitualRepository(
         db.entryDao(), db.pocketDao(), db.recurringDao(), db.dayTicketDao(), tickets, jar, envelopes, people, settings, clock,
     )
