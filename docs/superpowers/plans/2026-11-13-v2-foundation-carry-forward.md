@@ -133,6 +133,8 @@ Decisions made during Phase 3 (owner may override):
 
 - Task 54: one "الخصوصية والشروط" row opens a Legal screen with two tabs; a separate licences row (OFL texts of Alexandria and Lalezar from `res/raw`). Profile reaches Settings through a gear in its header. Round-ups row: not Plus → paywall (in the mode → PlusSheet). Ticket sounds = system click on save, repeat chip and tear. `SUPPORT_EMAIL` is empty (feedback row hidden; legal contact points to the Play page). The legal text says no SMS access and no INTERNET permission — recheck in Phase 13 when Billing is added. `versionName` is still 1.0.0 (Phase 13). Guessed copy: all legal text.
 
+- Task 55: `AppLock` (cold start locked; relock after ≥ 60 s away; AppRoot order Child > Lock > app; FLAG_SECURE while the lock setting is on). The PIN length (4–6) is stored unencrypted so the lock keypad submits itself at that length as drawn (owner may prefer an OK key instead: it hides the length). Turning the lock on unlocks the session. If the Keystore key is lost, the system prompt clears the PIN and turns the lock off. Hide amounts covers every Odometer, Home, Roll, Pockets, Plan screens and People; NOT yet Album, Basket, Before you buy, Close day / End of month / Freelance / Installments / Kids text lines, Match, onboarding reveal, Payday ritual, Paywall, Profile, Proverb reward, Story (Phase 12). LockViewModelTest needed a lazily built lock gate (cause not found). Guessed copy: lock strings.
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
