@@ -109,11 +109,17 @@ class TicketRepository @Inject constructor(
      * the ticket is the morning's; a move's amount is not a punch and is not added back.
      */
     suspend fun printToday(startAfterPayday: Boolean = false): DayTicketEntity {
-        val before = settings.current()
         // A new pay cycle ends the mode before anything prints; the settings are read again after it.
-        val s = eom.get().endIfCycleChanged(before)
+        val s = eom.get().endIfCycleChanged(settings.current())
         return db.withTransaction {
             val today = LocalDate.now(clock)
+            // Installments due today log themselves and the freelancer pays themselves before the ticket is cut from the
+            // pockets (inside the transaction: no extra suspension points before it, which hung a main-thread Home test).
+            installments.get().logDue(today, s)
+            if (freelance.get().runSelfPayday(today, s)) {
+                // The salary changed Spendable: an untouched ticket already printed today is cut again.
+                ticketDao.forDate(today)?.takeIf { it.status == TicketStatus.OPEN && it.entryCount == 0 }?.let { ticketDao.delete(it.id) }
+            }
             ticketDao.forDate(today)?.let { return@withTransaction it }
 
             // Normally one row (yesterday or the last printed day); more only if the clock went backwards.
