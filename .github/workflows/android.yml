@@ -56,7 +56,7 @@ jobs:
       - name: Summarize failures
         if: failure()
         run: |
-          errors=$(grep -E '^e: |error:|What went wrong|FAILED|Exception|expected:' build-output.log | grep -v 'BUILD FAILED' | sed "s|file://$GITHUB_WORKSPACE/app/src/||" | head -150 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          errors=$(grep -E '^e: |error:|Error:|What went wrong|FAILED|Exception|expected:|at com\.masroufi' build-output.log | grep -v 'BUILD FAILED' | sed "s|file://$GITHUB_WORKSPACE/app/src/||" | head -150 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
           echo "::error title=Build failures::${errors}"
           hung=$(awk '/ STARTED$/{s=$0} / (PASSED|FAILED|SKIPPED)$/{s=""} END{print s}' build-output.log)
           if [ -n "$hung" ]; then echo "::error title=Hung test::${hung}"; fi
