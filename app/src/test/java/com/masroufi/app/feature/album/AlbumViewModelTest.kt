@@ -95,7 +95,7 @@ class AlbumViewModelTest {
             viewModelFactory {
                 initializer {
                     AlbumViewModel(
-                        AlbumRepository(db.dayTicketDao(), db.proverbDao(), db.stampDao(), clock),
+                        AlbumRepository(db.dayTicketDao(), db.proverbDao(), db.stampDao(), clock, DebugEntitlements()),
                         MilestoneRepository(db.dayTicketDao(), db.stampDao(), f.settings),
                     )
                 }

@@ -25,7 +25,10 @@ import com.masroufi.app.core.PinStore
 import com.masroufi.app.core.SecretCipher
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.Entitlements
-import com.masroufi.app.entitlements.ReleaseEntitlements
+import com.masroufi.app.entitlements.Billing
+import com.masroufi.app.entitlements.PlusEntitlements
+import com.masroufi.app.entitlements.PlusRepository
+import com.masroufi.app.entitlements.StubBilling
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -94,6 +97,10 @@ object AppModule {
 
     @Provides @Singleton fun pinStore(store: DataStore<Preferences>, cipher: SecretCipher, clock: Clock) = PinStore(store, cipher, clock)
 
+    /** Phase 13 swaps the Google Play implementation in here; until then release has no products and no purchase. */
     @Provides @Singleton
-    fun entitlements(): Entitlements = if (BuildConfig.DEBUG) DebugEntitlements() else ReleaseEntitlements()
+    fun billing(clock: Clock): Billing = StubBilling(debug = BuildConfig.DEBUG, clock = clock)
+
+    @Provides @Singleton
+    fun entitlements(plus: PlusRepository): Entitlements = if (BuildConfig.DEBUG) DebugEntitlements(plus = plus) else PlusEntitlements(plus)
 }

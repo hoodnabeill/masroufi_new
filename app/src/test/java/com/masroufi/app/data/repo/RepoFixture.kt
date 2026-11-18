@@ -8,6 +8,8 @@ import com.masroufi.app.core.SecretCipher
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.entitlements.DebugEntitlements
+import com.masroufi.app.entitlements.PlusRepository
+import com.masroufi.app.entitlements.StubBilling
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.time.Clock
@@ -51,7 +53,7 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), db.peopleDao(), db.clientJobDao(), tickets, settings, plus, clock)
     val home = HomeRepository(
         db.pocketDao(), db.entryDao(), db.categoryDao(), db.dayTicketDao(), db.jarDao(), db.proverbDao(), db.recurringDao(),
-        settings, clock,
+        settings, clock, plus,
     )
     val envelopes = EnvelopeRepository(
         db, db.envelopeDao(), db.entryDao(), db.recurringDao(), db.categoryDao(), settings, plus, clock,
@@ -89,4 +91,13 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val onboarding = OnboardingRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), tickets, seed, settings, clock,
     )
+    /** Debug-flavoured stub billing (the two mock prices); the real entitlement is [plusRepo]. Lazy: nothing runs unless a test asks. */
+    val billing = StubBilling(debug = true, clock = clock)
+    val plusRepo: PlusRepository by lazy { PlusRepository(billing, settings, db.dayTicketDao(), eomMode, clock, scope) }
+    val lossRows: LossRowsRepository by lazy {
+        LossRowsRepository(
+            db.jarDao(), db.seasonDao(), db.dutyDao(), db.trackedItemDao(), db.entryDao(), db.envelopeDao(), db.dayTicketDao(),
+            db.gameyaDao(), db.kidsDao(), db.recurringDao(), settings, clock,
+        )
+    }
 }

@@ -99,7 +99,7 @@ class ProfileViewModelTest {
                 initializer {
                     ProfileViewModel(
                         f.profile,
-                        AlbumRepository(db.dayTicketDao(), db.proverbDao(), db.stampDao(), clock),
+                        AlbumRepository(db.dayTicketDao(), db.proverbDao(), db.stampDao(), clock, DebugEntitlements()),
                         MatchRepository(db.dayTicketDao(), DebugEntitlements(false), clock),
                         DataWipe(context, db, f.settings),
                     )

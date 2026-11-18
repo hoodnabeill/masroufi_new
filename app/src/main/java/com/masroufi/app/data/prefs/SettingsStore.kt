@@ -105,6 +105,11 @@ data class Settings(
     val childModeId: Long? = null,
     /** The story's "share without amounts" switch (phase 9b): on until the user turns it off. */
     val storyHideAmounts: Boolean = true,
+    /** Plus trial (phase 10): the epoch day it started and its last day of Plus (inclusive); null = never started. */
+    val trialStartDay: Long? = null,
+    val trialEndDay: Long? = null,
+    /** The epoch day the paywall last opened by itself (at most once a day). */
+    val lastPaywallDay: Long? = null,
 ) {
     /**
      * The mode is on at [date]: switched on, started by then and not past its payday. With [nextPayday] (the date's pay
@@ -174,6 +179,9 @@ class SettingsStore @Inject constructor(
     private val installmentLoggedKey = stringPreferencesKey("installmentLogged")
     private val childModeKey = longPreferencesKey("childModeId")
     private val storyHideAmountsKey = booleanPreferencesKey("storyHideAmounts")
+    private val trialStartKey = longPreferencesKey("trialStartDay")
+    private val trialEndKey = longPreferencesKey("trialEndDay")
+    private val lastPaywallKey = longPreferencesKey("lastPaywallDay")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -309,6 +317,19 @@ class SettingsStore @Inject constructor(
     /** Persists the child screen mode (null = off); callers go through ChildMode, which checks the PIN first. */
     suspend fun setChildMode(childId: Long?) { store.edit { if (childId == null) it.remove(childModeKey) else it[childModeKey] = childId } }
     suspend fun setStoryHideAmounts(v: Boolean) { store.edit { it[storyHideAmountsKey] = v } }
+    /** Starts the one trial; false (and nothing written) when a trial already started. */
+    suspend fun startTrial(startDay: Long, endDay: Long): Boolean {
+        var started = false
+        store.edit {
+            if (it[trialStartKey] == null) {
+                it[trialStartKey] = startDay
+                it[trialEndKey] = endDay
+                started = true
+            }
+        }
+        return started
+    }
+    suspend fun setLastPaywallDay(epochDay: Long) { store.edit { it[lastPaywallKey] = epochDay } }
     suspend fun setSuggestionDismissed(month: String) { store.edit { it[suggestionDismissedKey] = month } }
     suspend fun setProfileName(v: String?) { store.edit { if (v.isNullOrBlank()) it.remove(profileNameKey) else it[profileNameKey] = v.trim() } }
     suspend fun setBirthday(v: LocalDate?) { store.edit { if (v == null) it.remove(birthdayKey) else it[birthdayKey] = v.toEpochDay() } }
@@ -395,6 +416,9 @@ class SettingsStore @Inject constructor(
         installmentLogged = decodeReminders(p[installmentLoggedKey]),
         childModeId = p[childModeKey],
         storyHideAmounts = p[storyHideAmountsKey] ?: true,
+        trialStartDay = p[trialStartKey],
+        trialEndDay = p[trialEndKey],
+        lastPaywallDay = p[lastPaywallKey],
     )
 
     private fun encodeMap(m: Map<Long, Long>) = m.entries.joinToString(",") { e -> "${e.key}:${e.value}" }

@@ -3,6 +3,7 @@ package com.masroufi.app.data.repo
 import com.masroufi.app.data.db.DayTicketDao
 import com.masroufi.app.data.db.ProverbDao
 import com.masroufi.app.data.db.StampDao
+import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.domain.DayResult
 import com.masroufi.app.domain.GoalKind
 import com.masroufi.app.domain.LEVEL_NAMES
@@ -16,6 +17,7 @@ import com.masroufi.app.domain.level
 import com.masroufi.app.domain.longestStreak
 import com.masroufi.app.domain.matchDay
 import com.masroufi.app.domain.nextLevelAt
+import com.masroufi.app.domain.protectedDays
 import com.masroufi.app.domain.stampCount
 import com.masroufi.app.domain.streak
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +39,8 @@ data class AlbumView(
     val nextLevelAt: Int?,
     val ticketsToNext: Int?,
     val streak: Int,
+    /** Streak days the safety ticket (Plus) kept: the streak with it minus without; 0 on Free. */
+    val protectedDays: Int = 0,
     val longestStreak: Int,
     val daysUnder: Int,
     val proverbs: List<CollectedProverb>,
@@ -54,9 +58,10 @@ class AlbumRepository @Inject constructor(
     private val proverbDao: ProverbDao,
     private val stampDao: StampDao,
     private val clock: Clock,
+    private val plus: Entitlements,
 ) {
     fun observe(stubDays: Int = RECENT_STUBS): Flow<AlbumView> =
-        combine(ticketDao.all(), proverbDao.all(), stampDao.all()) { rows, collected, stamps ->
+        combine(ticketDao.all(), proverbDao.all(), stampDao.all(), plus.isPlus) { rows, collected, stamps, isPlus ->
             val today = LocalDate.now(clock)
             val days = rows.map { DayResult(it.date, it.status, it.amount, it.spent) }
             val hand = days.count { it.status == TicketStatus.CLOSED_BY_HAND }
@@ -69,7 +74,7 @@ class AlbumRepository @Inject constructor(
             AlbumView(
                 level = lvl, levelName = LEVEL_NAMES[lvl - 1], handClosed = hand,
                 nextLevelAt = next, ticketsToNext = next?.let { it - hand },
-                streak = streak(days, today), longestStreak = longestStreak(days), daysUnder = daysUnder(days),
+                streak = streak(days, today, isPlus), protectedDays = if (isPlus) protectedDays(days, today) else 0, longestStreak = longestStreak(days), daysUnder = daysUnder(days),
                 proverbs = cards, lockedProverbs = ProverbCatalog.all.size - cards.size,
                 stamps = stamps.sortedBy { it.earnedOn }.map { StampView(it.kind, it.earnedOn, stampCount(it.kind, days)) },
                 stubs = (0L until stubDays).map { today.minusDays(it) }.map { matchDay(it, byDate[it]) }

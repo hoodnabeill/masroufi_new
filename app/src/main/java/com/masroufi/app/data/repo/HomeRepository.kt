@@ -19,6 +19,7 @@ import com.masroufi.app.domain.punched
 import com.masroufi.app.domain.punches
 import com.masroufi.app.domain.EntryForDay
 import com.masroufi.app.domain.streak
+import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.domain.MainGoal
 import com.masroufi.app.domain.weekStart
 import kotlinx.coroutines.flow.Flow
@@ -125,6 +126,7 @@ class HomeRepository @Inject constructor(
     private val recurringDao: RecurringDao,
     private val settings: SettingsStore,
     private val clock: Clock,
+    private val plus: Entitlements,
 ) {
     /**
      * Cold. Today is re-read from the clock whenever any source can emit, so a collector that crosses midnight
@@ -144,8 +146,9 @@ class HomeRepository @Inject constructor(
             ticketDao.forDateFlow(today),
             ticketDao.range(week, week.plusDays(6)),
             ticketDao.range(today.minusDays(STREAK_DAYS), today),
-        ) { row, weekRows, recent ->
-            Days(row, weekRows, streak(recent.map { DayResult(it.date, it.status, it.amount, it.spent) }, today))
+            plus.isPlus,
+        ) { row, weekRows, recent, isPlus ->
+            Days(row, weekRows, streak(recent.map { DayResult(it.date, it.status, it.amount, it.spent) }, today, isPlus))
         }
         // recurring rows only trigger: unpaid bills are read below once the cycle is known.
         val settingsAndCategories = combine(settings.settings, categoryDao.all(), recurringDao.all()) { s, c, _ -> s to c }

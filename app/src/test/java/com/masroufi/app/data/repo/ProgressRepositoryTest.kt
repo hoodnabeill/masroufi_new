@@ -158,5 +158,17 @@ class ProgressRepositoryTest {
         assertEquals(0, plus.lockedWeeks)
     }
 
-    private fun RepoFixture.album() = AlbumRepository(db.dayTicketDao(), db.proverbDao(), db.stampDao(), clock)
+    @Test fun albumShowsTheSafetyTicketOnlyWithPlus() = runTest {
+        setUp()
+        // Tuesday 2026-11-17: closed by hand on the 16th, 14th and 13th; the 15th was missed.
+        closedRow(today.minusDays(1))
+        closedRow(today.minusDays(3))
+        closedRow(today.minusDays(4))
+        val free = f.album(DebugEntitlements(false)).observe().first()
+        assertEquals(listOf(1, 0), listOf(free.streak, free.protectedDays))
+        val plus = f.album(DebugEntitlements(true)).observe().first()
+        assertEquals(listOf(3, 2), listOf(plus.streak, plus.protectedDays))
+    }
+
+    private fun RepoFixture.album(plus: DebugEntitlements = DebugEntitlements()) = AlbumRepository(db.dayTicketDao(), db.proverbDao(), db.stampDao(), clock, plus)
 }

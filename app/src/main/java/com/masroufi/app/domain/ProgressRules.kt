@@ -14,16 +14,40 @@ fun weekStart(date: LocalDate): LocalDate =
     date.with(TemporalAdjusters.previousOrSame(DayOfWeek.SATURDAY))
 
 /** Counts back from today (if hand-closed) or yesterday; an open today never breaks it. */
-fun streak(days: List<DayResult>, today: LocalDate): Int {
+fun streak(days: List<DayResult>, today: LocalDate, plusSafety: Boolean = false): Int =
+    streakResult(days, today, plusSafety).days
+
+/** [bridged] = the missed days the safety ticket let pass; they are not streak days. */
+data class StreakResult(val days: Int, val bridged: List<LocalDate>)
+
+/**
+ * With [plusSafety] (the safety ticket, Plus) one missed day (not closed by hand) per Saturday-Friday week does not
+ * break the streak and is not counted; a second miss in the same week breaks it.
+ */
+fun streakResult(days: List<DayResult>, today: LocalDate, plusSafety: Boolean): StreakResult {
     val byDate = days.associateBy { it.date } // duplicates: last wins
+    val first = byDate.keys.minOrNull() ?: return StreakResult(0, emptyList())
     var d = if (byDate[today]?.status == TicketStatus.CLOSED_BY_HAND) today else today.minusDays(1)
     var n = 0
-    while (byDate[d]?.status == TicketStatus.CLOSED_BY_HAND) {
-        n++
+    val bridges = mutableListOf<Pair<LocalDate, Int>>() // the day and the streak length when it was passed
+    val missedWeeks = mutableSetOf<LocalDate>()
+    while (!d.isBefore(first)) {
+        if (byDate[d]?.status == TicketStatus.CLOSED_BY_HAND) {
+            n++
+        } else if (plusSafety && missedWeeks.add(weekStart(d))) {
+            bridges += d to n
+        } else {
+            break
+        }
         d = d.minusDays(1)
     }
-    return n
+    // A bridge with no streak day older than it protects nothing (it is not part of the streak).
+    return StreakResult(n, bridges.filter { it.second < n }.map { it.first })
 }
+
+/** Streak days the safety ticket kept: the streak with it minus the streak without. */
+fun protectedDays(days: List<DayResult>, today: LocalDate): Int =
+    streak(days, today, plusSafety = true) - streak(days, today)
 
 fun level(handClosed: Int): Int {
     require(handClosed >= 0) { "handClosed must be >= 0" }

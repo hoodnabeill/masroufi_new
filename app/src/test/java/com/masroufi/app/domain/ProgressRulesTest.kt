@@ -82,4 +82,52 @@ class ProgressRulesTest {
         assertEquals(LocalDate.of(2026, 11, 7), weekStart(LocalDate.of(2026, 11, 12)))
         assertEquals(LocalDate.of(2026, 11, 7), weekStart(LocalDate.of(2026, 11, 7)))
     }
+
+    // today is Thursday 2026-11-12; its Saturday-Friday week is Nov 7..13, the one before Oct 31..Nov 6.
+
+    @Test fun safetyTicketKeepsTheStreakThroughOneMissedDayAWeek() {
+        // hand on Nov 11, 9, 8, 7; Nov 10 missed; Nov 6 and 5 missing (two misses in the older week).
+        val days = listOf(day(1, hand), day(3, hand), day(4, hand), day(5, hand))
+        val r = streakResult(days, today, plusSafety = true)
+        assertEquals("the missed day is bridged and not counted", 4, r.days)
+        assertEquals(listOf(LocalDate.of(2026, 11, 10)), r.bridged)
+        assertEquals(1, streak(days, today))
+        assertEquals(3, protectedDays(days, today))
+    }
+
+    @Test fun aSecondMissedDayInTheSameWeekBreaksIt() {
+        // Nov 10 and Nov 9 both missed (the week Nov 7..13); hand on Nov 11, 8, 7.
+        val days = listOf(day(1, hand), day(4, hand), day(5, hand))
+        assertEquals(1, streak(days, today, plusSafety = true))
+        assertEquals(0, protectedDays(days, today))
+    }
+
+    @Test fun eachWeekHasItsOwnTicket() {
+        // Nov 10 and Nov 5 missed, one in each week.
+        val days = listOf(day(1, hand), day(3, hand), day(4, hand), day(5, hand), day(6, hand), day(8, hand), day(9, hand))
+        assertEquals(7, streak(days, today, plusSafety = true))
+        assertEquals(1, streak(days, today))
+        assertEquals(6, protectedDays(days, today))
+    }
+
+    @Test fun anAutoClosedDayIsAMissedDayForTheTicket() {
+        val days = listOf(day(1, hand), day(2, auto), day(3, hand))
+        assertEquals(2, streak(days, today, plusSafety = true))
+        assertEquals(1, streak(days, today))
+    }
+
+    @Test fun aMissedYesterdayWithAnOpenTodayIsBridged() {
+        val days = listOf(day(2, hand), day(3, hand), day(0, TicketStatus.OPEN))
+        assertEquals(2, streak(days, today, plusSafety = true))
+        assertEquals(0, streak(days, today))
+    }
+
+    @Test fun aBridgeWithNoStreakDayBeforeItProtectsNothing() {
+        val days = listOf(day(1, hand))
+        val r = streakResult(days, today, plusSafety = true)
+        assertEquals(1, r.days)
+        assertTrue(r.bridged.isEmpty())
+        assertEquals(0, protectedDays(days, today))
+        assertEquals(0, streak(emptyList(), today, plusSafety = true))
+    }
 }
