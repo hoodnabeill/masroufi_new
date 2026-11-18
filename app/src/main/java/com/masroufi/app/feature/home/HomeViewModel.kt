@@ -400,7 +400,7 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: L
         projectedAtPayday(d.spendable + row.spent, d.unpaidBills, row.base, row.carriedIn, daysLeft).takeIf { it >= 0 }
     }
 
-    val firstWeek = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, row.endOfMonth)
+    val firstWeek = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, row.endOfMonth || d.endOfMonthMode)
 
     return HomeUiState.Ready(
         today = today,
@@ -423,6 +423,6 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: L
         cardOrder = homeCardOrder(d.mainGoal),
         newTicket = open && d.lastTicketShown != today.toEpochDay(),
         firstWeekCard = firstWeek,
-        dueWish = dueWishes.minWithOrNull(compareBy<WishEntity>({ it.parkedAt }, { it.id }))?.takeIf { firstWeek == null && !row.endOfMonth },
+        dueWish = dueWishes.minWithOrNull(compareBy<WishEntity>({ it.parkedAt }, { it.id }))?.takeIf { firstWeek == null && !row.endOfMonth && !d.endOfMonthMode },
     )
 }

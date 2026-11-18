@@ -139,7 +139,7 @@ class AddViewModel @Inject constructor(
     private val categoryDao: CategoryDao,
     private val pocketDao: PocketDao,
     ticketDao: DayTicketDao,
-    settings: SettingsStore,
+    private val settings: SettingsStore,
     entitlements: Entitlements,
     private val pendingPunches: PendingPunches,
     private val pendingDeletes: PendingDeletes,
@@ -246,6 +246,20 @@ class AddViewModel @Inject constructor(
         pendingDeletes.schedule(PendingDelete(e.id, e.punched, clock.dayOf(e.happenedAt)))
     }
 
+    /** A spend in a category the user paused in end-of-month mode: a gentle reminder, never a block. */
+    private suspend fun isPausedHabit(entry: NewEntry): Boolean {
+        val category = entry.categoryId ?: return false
+        if (entry.kind != EntryKind.SPENT) return false
+        return try {
+            settings.current().let { it.eomActiveOn(LocalDate.now(clock)) && category in it.eomPaused }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "paused habits not read", e)
+            false
+        }
+    }
+
     /**
      * Shows the punch at once and stores it in the background. False when the form cannot be saved or this is a second
      * tap within 400 ms. The form stays as typed until the next [open]; on failure the punch is rolled back, Home says
@@ -334,7 +348,9 @@ class AddViewModel @Inject constructor(
                 }
             }
             if (pendingId == null) return@launch
-            if (left != null) feedback.emit(PunchFeedback.Saved(left, firstOfDay = holesBefore == 0))
+            if (left != null) {
+                feedback.emit(PunchFeedback.Saved(left, firstOfDay = holesBefore == 0, pausedHabit = isPausedHabit(entry)))
+            }
             // Home drops the placeholder once its row has the hole; this only covers Home not looking (or a new day).
             try {
                 delay(PENDING_CATCH_UP_MS)

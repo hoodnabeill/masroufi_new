@@ -9,7 +9,7 @@ import javax.inject.Singleton
 /** What the add sheet tells Home after a save; Home shows it under the ticket. */
 sealed interface PunchFeedback {
     /** A punch was stored. [left] is today's ticket left after it (negative = over by -left), piastres. */
-    data class Saved(val left: Long, val firstOfDay: Boolean) : PunchFeedback
+    data class Saved(val left: Long, val firstOfDay: Boolean, val pausedHabit: Boolean = false) : PunchFeedback
 
     /** The write failed and the punch was rolled back ("ماتسجّلتش. جرّب تاني."). */
     data object Failed : PunchFeedback

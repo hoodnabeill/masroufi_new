@@ -25,8 +25,13 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val stamps = StampAwarder(db.stampDao(), db.jarDao(), db.peopleDao(), clock)
     val tickets: TicketRepository = TicketRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
-        db.stampDao(), settings, clock, stamps,
+        db.stampDao(), settings, clock, stamps, Provider { eom },
     )
+    val eom = EndOfMonthRepository(
+        settings, tickets, db.dayTicketDao(), db.entryDao(), db.categoryDao(), db.recurringDao(), db.pocketDao(), db.jarDao(),
+        db.peopleDao(), stamps, clock,
+    )
+    val eomMode = EndOfMonthMode(settings, db.dayTicketDao(), clock)
     val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), db.peopleDao(), tickets, settings, plus, clock)
     val home = HomeRepository(
         db.pocketDao(), db.entryDao(), db.categoryDao(), db.dayTicketDao(), db.jarDao(), db.proverbDao(), db.recurringDao(),

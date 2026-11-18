@@ -56,6 +56,7 @@
     <string name="home_punch_saved">Punched. %1$s left today.</string>
     <string name="home_punch_over">Logged. You went over today\'s ticket by %1$s, spread over the other days.</string>
     <string name="home_punch_over_last">Logged. You went over today\'s ticket by %1$s.</string>
+    <string name="home_punch_paused">That one is paused until payday. Logged, no judgment.</string>
     <string name="home_first_punch">First hole. A new day.</string>
     <string name="add_types_label">Entry type</string>
     <string name="add_type_spent">Spent</string>

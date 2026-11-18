@@ -40,12 +40,18 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 /** The starter ticket (design call 8): 100 EGP while the user has not said how much money they have. */
 internal const val STARTER_TICKET = 10_000L
 
 internal data class TodayBasis(val calc: TicketCalc, val spent: Long, val entryCount: Int)
+
+/** What the ticket is cut from: the morning Spendable, what is reserved, and the pay cycle that sets the days left. */
+internal data class TicketPool(val cycle: PayCycle, val spendable: Long, val reserved: Long, val today: LocalDate) {
+    val daysLeft: Int get() = cycle.daysLeft(maxOf(today, cycle.start))
+}
 
 data class CloseResult(val leftover: Long, val proverbNumber: Int?, val newStamps: Set<StampKind>, val rare: Boolean = false)
 
@@ -91,6 +97,8 @@ class TicketRepository @Inject constructor(
     private val settings: SettingsStore,
     private val clock: Clock,
     private val stamps: StampAwarder,
+    // Provider: the end-of-month repository reads this one (the Hilt graph breaks the same cycle).
+    private val eom: Provider<EndOfMonthRepository>,
 ) {
     /**
      * Today's ticket: printed once, after auto-closing every earlier open day. Days in a gap get no row (design
@@ -98,7 +106,8 @@ class TicketRepository @Inject constructor(
      * the ticket is the morning's; a move's amount is not a punch and is not added back.
      */
     suspend fun printToday(startAfterPayday: Boolean = false): DayTicketEntity {
-        val s = settings.current()
+        // A new pay cycle ends the mode before anything prints; the settings are read again after it.
+        val s = eom.get().endIfCycleChanged(settings.current())
         return db.withTransaction {
             val today = LocalDate.now(clock)
             ticketDao.forDate(today)?.let { return@withTransaction it }
@@ -106,7 +115,10 @@ class TicketRepository @Inject constructor(
             // Normally one row (yesterday or the last printed day); more only if the clock went backwards.
             for (open in ticketDao.openBefore(today)) {
                 // A carry is only for the next day; an older day's leftover goes to the jar instead.
-                val dest = if (s.leftoverDefault == LeftoverDestination.TOMORROW && open.date != today.minusDays(1)) {
+                // In the mode a day's leftover stays in the pool: "tomorrow" with no carry (the pool already holds it).
+                val dest = if (s.eomActiveOn(open.date)) {
+                    LeftoverDestination.TOMORROW
+                } else if (s.leftoverDefault == LeftoverDestination.TOMORROW && open.date != today.minusDays(1)) {
                     LeftoverDestination.JAR
                 } else {
                     s.leftoverDefault
@@ -140,16 +152,45 @@ class TicketRepository @Inject constructor(
         val carriedIn = ticketDao.forDate(today.minusDays(1))
             ?.takeIf { it.status != TicketStatus.OPEN && it.destination == LeftoverDestination.TOMORROW }
             ?.leftover ?: 0L
-        val cycle = cycleFor(s, today, startAfterPayday)
-        val reserved = recurringDao.unpaidDueBefore(cycle.nextPayday) +
-            jarDao.totalNow(Pot.JAR).coerceAtLeast(0) + jarDao.totalNow(Pot.EMERGENCY).coerceAtLeast(0) + extraReserved
-        // A round-up is in both spent and the reserved jar, so adding it back here nets to zero.
-        val spendable = pocketDao.countingBalanceTotal() + spent
-        val computed = computeTicket(spendable, reserved, carriedIn, cycle.daysLeft(maxOf(today, cycle.start)))
+        val pool = poolToday(s, today, startAfterPayday, extraReserved)
+        // End-of-month mode (decision 2): equal small tickets from the whole pool, no carry (a leftover stays in the
+        // pool) and no basket raise: the mode wins. A pool <= 0 still gives the end-of-month row.
+        if (s.eomActiveOn(today, pool.cycle.nextPayday)) {
+            return TodayBasis(computeTicket(pool.spendable, pool.reserved, 0, pool.daysLeft), spent, punches.size)
+        }
+        val computed = computeTicket(pool.spendable, pool.reserved, carriedIn, pool.daysLeft)
         // A raise the user accepted from the basket's suggestion lifts the printed base until that payday.
         val raise = s.ticketRaise?.takeIf { today.toEpochDay() < (s.ticketRaiseUntil ?: 0) }
         val calc = if (computed is TicketCalc.Printed) computed.raisedTo(raise) else computed
         return TodayBasis(calc, spent, punches.size)
+    }
+
+    /** Spendable (the morning's: today's punches added back) and Reserved for [today]'s cycle; writes nothing. */
+    internal suspend fun poolToday(s: Settings, today: LocalDate, startAfterPayday: Boolean = false, extraReserved: Long = 0): TicketPool {
+        val cycle = cycleFor(s, today, startAfterPayday)
+        val reserved = recurringDao.unpaidDueBefore(cycle.nextPayday) +
+            jarDao.totalNow(Pot.JAR).coerceAtLeast(0) + jarDao.totalNow(Pot.EMERGENCY).coerceAtLeast(0) + extraReserved
+        // A round-up is in both spent and the reserved jar, so adding it back here nets to zero.
+        return TicketPool(cycle, pocketDao.countingBalanceTotal() + spentToday(punchesOn(today)), reserved, today)
+    }
+
+    /** Re-prints today's ticket while it is still open (the mode was switched on or off); a closed day is left alone. */
+    internal suspend fun reprintToday() {
+        val s = settings.current()
+        db.withTransaction<Unit> {
+            val today = LocalDate.now(clock)
+            val row = ticketDao.forDate(today)?.takeIf { it.status == TicketStatus.OPEN } ?: return@withTransaction
+            val updated = when (val calc = basisToday(s, today, false).calc) {
+                is TicketCalc.Printed -> row.copy(
+                    amount = calc.amount, base = calc.base, carriedIn = calc.carriedIn,
+                    endOfMonth = false, eomPool = null, eomDaysLeft = null,
+                )
+                is TicketCalc.EndOfMonth -> row.copy(
+                    amount = 0, base = 0, carriedIn = 0, endOfMonth = true, eomPool = calc.pool, eomDaysLeft = calc.daysLeft,
+                )
+            }
+            ticketDao.update(updated.copy(updatedAt = clock.millis()))
+        }
     }
 
     /** Payday is today or tomorrow (never for a not-fixed payday). */
@@ -173,9 +214,11 @@ class TicketRepository @Inject constructor(
     /** Closes an OPEN day by hand; a day already closed returns its stored leftover and nothing new. */
     suspend fun closeDay(date: LocalDate, destination: LeftoverDestination): CloseResult {
         val s = settings.current()
-        return db.withTransaction {
+        var closedNow = false
+        val result = db.withTransaction {
             val row = checkNotNull(ticketDao.forDate(date)) { "no ticket printed for $date" }
             if (row.status != TicketStatus.OPEN) return@withTransaction CloseResult(row.leftover, null, emptySet())
+            closedNow = true
 
             val now = clock.millis()
             val closed = close(row, TicketStatus.CLOSED_BY_HAND, destination, proverbNumber = null)
@@ -200,6 +243,11 @@ class TicketRepository @Inject constructor(
             }
             CloseResult(closed.leftover, proverb, newStamps, rare = rareNumber != null)
         }
+        // Outside the transaction: the settings are not part of it. A no-spend day in the mode can earn tight fist.
+        if (closedNow && s.eomActiveOn(date) && eom.get().onClosedByHand(date)) {
+            return result.copy(newStamps = result.newStamps + StampKind.TIGHT_FIST)
+        }
+        return result
     }
 
     /**

@@ -76,7 +76,26 @@ data class Settings(
     val suggestionDismissedMonth: String? = null,
     /** The match score last shown (task 42: goals since then animate). */
     val matchSeen: MatchSeen? = null,
-)
+    /** End-of-month mode (phase 9): on by hand, from [eomSince] up to [eomUntil] (the payday), epoch days. */
+    val eomOn: Boolean = false,
+    val eomSince: Long? = null,
+    val eomUntil: Long? = null,
+    /** Category ids paused in the mode (a reminder only) and the epoch days closed by hand with no spending. */
+    val eomPaused: Set<Long> = emptySet(),
+    val eomNoSpend: Set<Long> = emptySet(),
+    /** The payday (epoch day) of the cycle whose offer card was dismissed. */
+    val eomOfferDismissedFor: Long? = null,
+) {
+    /**
+     * The mode is on at [date]: switched on, started by then and not past its payday. With [nextPayday] (the date's pay
+     * cycle) it also ends when the cycle is not the one it was switched on for (a not-fixed income came in).
+     */
+    fun eomActiveOn(date: LocalDate, nextPayday: LocalDate? = null): Boolean {
+        val day = date.toEpochDay()
+        return eomOn && day >= (eomSince ?: Long.MIN_VALUE) && day < (eomUntil ?: Long.MIN_VALUE) &&
+            (nextPayday == null || nextPayday.toEpochDay() == eomUntil)
+    }
+}
 
 @Singleton
 class SettingsStore @Inject constructor(
@@ -115,6 +134,12 @@ class SettingsStore @Inject constructor(
     private val ticketRaiseUntilKey = longPreferencesKey("ticketRaiseUntil")
     private val suggestionDismissedKey = stringPreferencesKey("suggestionDismissedMonth")
     private val matchSeenKey = stringPreferencesKey("matchSeen")
+    private val eomOnKey = booleanPreferencesKey("eomOn")
+    private val eomSinceKey = longPreferencesKey("eomSince")
+    private val eomUntilKey = longPreferencesKey("eomUntil")
+    private val eomPausedKey = stringSetPreferencesKey("eomPaused")
+    private val eomNoSpendKey = stringSetPreferencesKey("eomNoSpend")
+    private val eomOfferKey = longPreferencesKey("eomOfferDismissedFor")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -177,6 +202,33 @@ class SettingsStore @Inject constructor(
             it[ticketRaiseUntilKey] = untilEpochDay
         }
     }
+    /** Switches the mode on from [since] to [until] with a fresh challenge and no paused habit. */
+    suspend fun eomSwitchOn(since: Long, until: Long) {
+        store.edit {
+            it[eomOnKey] = true
+            it[eomSinceKey] = since
+            it[eomUntilKey] = until
+            it.remove(eomPausedKey)
+            it.remove(eomNoSpendKey)
+        }
+    }
+    suspend fun eomSwitchOff() {
+        store.edit {
+            it.remove(eomOnKey)
+            it.remove(eomSinceKey)
+            it.remove(eomUntilKey)
+            it.remove(eomPausedKey)
+            it.remove(eomNoSpendKey)
+        }
+    }
+    suspend fun eomSetPaused(categoryId: Long, paused: Boolean) {
+        store.edit {
+            val all = it[eomPausedKey] ?: emptySet()
+            it[eomPausedKey] = if (paused) all + categoryId.toString() else all - categoryId.toString()
+        }
+    }
+    suspend fun eomAddNoSpend(epochDay: Long) { store.edit { it[eomNoSpendKey] = (it[eomNoSpendKey] ?: emptySet()) + epochDay.toString() } }
+    suspend fun eomDismissOffer(cyclePayday: Long) { store.edit { it[eomOfferKey] = cyclePayday } }
     suspend fun setSuggestionDismissed(month: String) { store.edit { it[suggestionDismissedKey] = month } }
     suspend fun setProfileName(v: String?) { store.edit { if (v.isNullOrBlank()) it.remove(profileNameKey) else it[profileNameKey] = v.trim() } }
     suspend fun setBirthday(v: LocalDate?) { store.edit { if (v == null) it.remove(birthdayKey) else it[birthdayKey] = v.toEpochDay() } }
@@ -243,6 +295,12 @@ class SettingsStore @Inject constructor(
         suggestionDismissedMonth = p[suggestionDismissedKey],
         matchSeen = p[matchSeenKey]?.split(",")?.mapNotNull { it.toLongOrNull() }?.takeIf { it.size == 3 }
             ?.let { MatchSeen(it[0], it[1].toInt(), it[2].toInt()) },
+        eomOn = p[eomOnKey] ?: false,
+        eomSince = p[eomSinceKey],
+        eomUntil = p[eomUntilKey],
+        eomPaused = p[eomPausedKey]?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet(),
+        eomNoSpend = p[eomNoSpendKey]?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet(),
+        eomOfferDismissedFor = p[eomOfferKey],
     )
 
     private fun decodeReminders(s: String?): Map<Long, Long> = s?.split(",")?.mapNotNull {

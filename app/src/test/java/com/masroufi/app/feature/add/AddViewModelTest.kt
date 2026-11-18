@@ -261,6 +261,31 @@ class AddViewModelTest {
         assertEquals(PunchFeedback.Saved(27_500, firstOfDay = true), events.single())
     }
 
+    @Test fun aPausedCategoryAddsAGentleLineOnlyInTheMode() {
+        val coffee = category("قهوة")
+        val food = category("أكل")
+        runBlocking {
+            f.eom.switchOn()
+            f.settings.eomSetPaused(coffee, true)
+        }
+        newVm()
+        opened()
+        vm.selectCategory(food)
+        typeAmount("25")
+        settle("amount") { state.canSave }
+        assertTrue(vm.save())
+        settle("feedback") { events.size == 1 }
+        assertFalse("a category that is not paused", (events[0] as PunchFeedback.Saved).pausedHabit)
+        opened()
+        vm.selectCategory(coffee)
+        typeAmount("10")
+        settle("second amount") { state.canSave }
+        clock.instant = clock.instant.plusMillis(450) // past the double-tap guard
+        assertTrue(vm.save())
+        settle("second feedback") { events.size == 2 }
+        assertTrue("a paused category", (events[1] as PunchFeedback.Saved).pausedHabit)
+    }
+
     @Test fun editSavesInPlaceAndDeleteGoesToTheUndo() {
         newVm()
         val id = runBlocking { f.entries.log(NewEntry(EntryKind.SPENT, 2_500, cash, note = "فول", happenedAt = clock.millis())) }

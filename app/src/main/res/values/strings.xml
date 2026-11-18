@@ -56,6 +56,7 @@
     <string name="home_punch_saved">اتخرمت. فاضلك %1$s النهارده.</string>
     <string name="home_punch_over">اتسجّلت. عدّيت تذكرة النهارده بـ %1$s، ووزّعتهم على باقي الأيام.</string>
     <string name="home_punch_over_last">اتسجّلت. عدّيت تذكرة النهارده بـ %1$s.</string>
+    <string name="home_punch_paused">دي من الحاجات اللي وقّفتها لحد المرتب. اتسجّلت، من غير زعل.</string>
     <string name="home_first_punch">أول خُرم. يوم جديد.</string>
     <string name="add_types_label">نوع العملية</string>
     <string name="add_type_spent">صرفت</string>

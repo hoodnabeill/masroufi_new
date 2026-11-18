@@ -57,6 +57,8 @@ data class HomeData(
     val firstOpenDay: Long?,
     /** The profile's main goal; it orders the cards below the ticket. */
     val mainGoal: MainGoal? = null,
+    /** End-of-month mode was switched on by hand (an end-of-month row hides the cards on its own). */
+    val endOfMonthMode: Boolean = false,
 )
 
 /** The day's biggest punch: [categoryName] is null when that entry has no (or a deleted) category. */
@@ -148,6 +150,7 @@ class HomeRepository @Inject constructor(
                 dismissedCards = s.firstWeekCardsDismissed,
                 firstOpenDay = s.firstOpenDay,
                 mainGoal = s.mainGoal,
+                endOfMonthMode = s.eomActiveOn(today, cycle.nextPayday),
             )
         }
     }
@@ -186,7 +189,8 @@ class HomeRepository @Inject constructor(
             jarTotal = jarDao.totalNow(Pot.JAR),
             emergencyTotal = jarDao.totalNow(Pot.EMERGENCY),
             tomorrow = tomorrowBasis(date, s),
-            leftoverDefault = s.leftoverDefault,
+            // In the mode the leftover stays in the pool ("tomorrow" carries nothing there); the jar is still offered.
+            leftoverDefault = if (s.eomActiveOn(date)) LeftoverDestination.TOMORROW else s.leftoverDefault,
         )
     }
 }

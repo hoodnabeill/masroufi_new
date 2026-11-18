@@ -270,6 +270,9 @@ internal fun PunchFeedbackLines(f: PunchFeedback.Saved, spread: Boolean) {
             else -> stringResource(R.string.home_punch_over_last, formatPounds(-f.left))
         }
         Text(text, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text, modifier = Modifier.padding(horizontal = 4.dp))
+        if (f.pausedHabit) {
+            Text(stringResource(R.string.home_punch_paused), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2, modifier = Modifier.padding(horizontal = 4.dp))
+        }
         if (f.firstOfDay) QershBubble(stringResource(R.string.home_first_punch))
     }
 }
