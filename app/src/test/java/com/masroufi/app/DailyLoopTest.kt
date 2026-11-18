@@ -239,7 +239,7 @@ class DailyLoopTest {
         assertEquals(5_000L, r.leftover)
 
         // Home: tomorrow's preview, the jar holding the leftover.
-        settle("Home shows tomorrow") { ready?.let { it.ticket == null && it.tomorrow != null } == true }
+        settle("Home shows tomorrow") { ready?.let { it.ticket == null && it.tomorrow != null && it.jarTotal == 5_000L } == true }
         val h = ready!!
         assertEquals("jar", 5_000L, h.jarTotal)
         assertEquals("(5,680 - 2,750 - 50) / 12 days = 240", 24_000L, h.tomorrow!!.amount)

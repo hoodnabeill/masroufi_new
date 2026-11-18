@@ -315,8 +315,13 @@ class HomeViewModelTest {
         }
     }
 
-    /** DataStore reads and edits run on an IO thread: the main thread is only ever pumped by [settle]. */
-    private fun <T> onIo(block: suspend () -> T): T = runBlocking(Dispatchers.IO) { block() }
+    /** DataStore and Room work runs on the io scope while Main is pumped by [settle]: never block Main on it. */
+    private fun <T> onIo(block: suspend () -> T): T {
+        val out = java.util.concurrent.atomic.AtomicReference<Result<T>?>(null)
+        io.launch { out.set(runCatching { block() }) }
+        settle("an io task") { out.get() != null }
+        return out.get()!!.getOrThrow()
+    }
 
     @Test fun offerCardShowsUnderSixtyPercentAndIsDismissedForTheCycle() {
         printedBefore()
