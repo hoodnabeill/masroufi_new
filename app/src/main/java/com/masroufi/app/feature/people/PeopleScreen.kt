@@ -46,6 +46,7 @@ import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.GameyaView
 import com.masroufi.app.data.repo.PeopleFilter
 import com.masroufi.app.data.repo.PeopleTotals
+import com.masroufi.app.data.repo.UpcomingDuty
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.EmptyState
@@ -229,7 +230,7 @@ private fun PersonRowCard(ui: PersonRowUi, first: Boolean, last: Boolean, onOpen
     }
 }
 
-/** The lilac card; [duty] is empty behind the Plus lock. Tapping it opens the ledger (Task 38). */
+/** The lilac card; [duty] is empty behind the Plus lock. Tapping it opens the ledger. */
 @Composable
 private fun DutyCard(duty: DutyCardUi, onOpen: () -> Unit) {
     val haptics = LocalHaptics.current
@@ -246,24 +247,7 @@ private fun DutyCard(duty: DutyCardUi, onOpen: () -> Unit) {
             )
         }
         Text(stringResource(R.string.people_duty_line), style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium), color = LilacInk)
-        duty.upcoming?.let { u ->
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(LilacInk).padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        "${u.occasion.name} · ${formatShortDate(u.occasion.date)}",
-                        style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = LilacText, modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        if (u.daysUntil == 0L) stringResource(R.string.people_duty_today) else stringResource(R.string.people_duty_in_days, u.daysUntil.toString()),
-                        style = TzType.caption.copy(fontSize = 12.sp), color = Tz.lilac,
-                    )
-                }
-                u.gaveMe?.let { gave ->
-                    DutyLine(stringResource(R.string.people_duty_gave), formatPounds(gave), LilacText)
-                    DutyLine(stringResource(R.string.people_duty_return), stringResource(R.string.people_duty_or_more, formatPounds(gave)), Tz.yellow)
-                }
-            }
-        }
+        duty.upcoming?.let { DutyUpcoming(it) }
         if (duty.ownGivers > 0) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -272,6 +256,27 @@ private fun DutyCard(duty: DutyCardUi, onOpen: () -> Unit) {
                 )
                 TzIcon(TzIcons.chevron, 18.dp, null, tint = LilacInk)
             }
+        }
+    }
+}
+
+/** The dark inset of the lilac card: the next occasion, and what that person gave at the user's own (nothing shown when there is no record). */
+@Composable
+internal fun DutyUpcoming(u: UpcomingDuty) {
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(LilacInk).padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+            Text(
+                "${u.occasion.name} · ${formatShortDate(u.occasion.date)}",
+                style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = LilacText, modifier = Modifier.weight(1f),
+            )
+            Text(
+                if (u.daysUntil == 0L) stringResource(R.string.people_duty_today) else stringResource(R.string.people_duty_in_days, u.daysUntil.toString()),
+                style = TzType.caption.copy(fontSize = 12.sp), color = Tz.lilac,
+            )
+        }
+        u.gaveMe?.let { gave ->
+            DutyLine(stringResource(R.string.people_duty_gave), formatPounds(gave), LilacText)
+            DutyLine(stringResource(R.string.people_duty_return), stringResource(R.string.people_duty_or_more, formatPounds(gave)), Tz.yellow)
         }
     }
 }

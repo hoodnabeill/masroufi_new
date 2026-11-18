@@ -59,6 +59,7 @@ interface DutyDao {
     @Query("UPDATE occasion SET personId = NULL WHERE personId = :personId") suspend fun clearPerson(personId: Long)
 
     @Insert suspend fun insertGift(gift: GiftEntity): Long
+    @Update suspend fun updateGift(gift: GiftEntity)
     @Query("DELETE FROM gift WHERE id = :id") suspend fun deleteGift(id: Long)
     @Query("DELETE FROM gift WHERE occasionId = :occasionId") suspend fun deleteGiftsOf(occasionId: Long)
     @Query("DELETE FROM gift WHERE personId = :personId") suspend fun deleteGiftsFrom(personId: Long)

@@ -49,6 +49,7 @@ import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.add.AddViewModel
 import com.masroufi.app.feature.onboarding.OnboardingScreen
 import com.masroufi.app.feature.payday.PaydayRitualScreen
+import com.masroufi.app.feature.people.DutyLedgerScreen
 import com.masroufi.app.feature.people.PeopleScreen
 import com.masroufi.app.feature.people.PersonDetailScreen
 import com.masroufi.app.feature.people.SoonScreen
@@ -297,8 +298,8 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                     )
                 }
                 composable<PersonDetail> { PersonDetailScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                // Task 38 and Task 39 replace these two.
-                composable<DutyLedger> { SoonScreen(R.string.people_duty_title, onBack = { nav.popBackStack() }) }
+                composable<DutyLedger> { DutyLedgerScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                // Task 39 replaces this one.
                 composable<GameyaScreen> { SoonScreen(R.string.people_gameya_empty, onBack = { nav.popBackStack() }) }
                 composable<CloseDay> {
                     CloseDayScreen(

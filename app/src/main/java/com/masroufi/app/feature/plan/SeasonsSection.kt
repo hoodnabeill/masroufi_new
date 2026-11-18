@@ -76,7 +76,7 @@ private fun SeasonsContent(ui: SeasonsUi, vm: SeasonsViewModel, onOpen: (Long) -
             EmptyState({ EmptyJar() }, R.string.empty_seasons_title, R.string.empty_seasons_line, R.string.empty_seasons_action, vm::addRamadan, primaryAction = true)
         } else {
             Text(stringResource(R.string.seasons_intro), style = TzType.body.copy(fontSize = 14.sp, lineHeight = 24.sp), color = Tz.text2, modifier = Modifier.padding(horizontal = 4.dp))
-            SeasonHero(hero) { onOpen(hero.season.id) }
+            SeasonHero(hero, ui.ledger[hero.season.id]) { onOpen(hero.season.id) }
             Timeline(ui, vm, onOpen)
             TextLink(stringResource(R.string.seasons_add_occasion), onNewOccasion, Modifier.align(Alignment.CenterHorizontally))
             ui.together?.takeIf { it.neededPerMonth > 0 }?.let { Together(ui, it.neededPerMonth, it.usualPerMonth, it.gap > 0, vm) }
@@ -95,7 +95,7 @@ private fun SeasonsContent(ui: SeasonsUi, vm: SeasonsViewModel, onOpen: (Long) -
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SeasonHero(v: SeasonView, onClick: () -> Unit) {
+private fun SeasonHero(v: SeasonView, note: LedgerNote?, onClick: () -> Unit) {
     val s = v.season
     val shape = RoundedCornerShape(28.dp)
     Column(
@@ -125,6 +125,7 @@ private fun SeasonHero(v: SeasonView, onClick: () -> Unit) {
         if (v.perDayNeeded > 0) {
             Text(stringResource(R.string.seasons_per_day, formatPounds(v.perDayNeeded)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.night)
         }
+        if (note != null) Text(stringResource(R.string.season_ledger_line, note.person, formatPounds(note.amount)), style = TzType.caption.copy(fontWeight = FontWeight.SemiBold), color = Tz.night)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 4.dp)) {
             v.items.forEach {
                 Text(
@@ -145,14 +146,14 @@ private fun Timeline(ui: SeasonsUi, vm: SeasonsViewModel, onOpen: (Long) -> Unit
         Box(Modifier.align(Alignment.TopStart).padding(start = 6.dp, top = 10.dp, bottom = 10.dp).width(2.dp).fillMaxHeight().background(Tz.line))
         Column(Modifier.fillMaxWidth().padding(start = 22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             rest.forEachIndexed { i, v ->
-                SeasonRow(v, ui.reordering, canUp = i > 0, canDown = i < rest.lastIndex, onMove = { vm.move(v.season.id, it) }) { onOpen(v.season.id) }
+                SeasonRow(v, ui.ledger[v.season.id], ui.reordering, canUp = i > 0, canDown = i < rest.lastIndex, onMove = { vm.move(v.season.id, it) }) { onOpen(v.season.id) }
             }
         }
     }
 }
 
 @Composable
-private fun SeasonRow(v: SeasonView, reordering: Boolean, canUp: Boolean, canDown: Boolean, onMove: (Int) -> Unit, onClick: () -> Unit) {
+private fun SeasonRow(v: SeasonView, note: LedgerNote?, reordering: Boolean, canUp: Boolean, canDown: Boolean, onMove: (Int) -> Unit, onClick: () -> Unit) {
     val s = v.season
     val locale = LocalConfiguration.current.locales[0]
     val month = remember(locale) { DateTimeFormatter.ofPattern("MMMM", locale) }.format(v.date)
@@ -185,6 +186,7 @@ private fun SeasonRow(v: SeasonView, reordering: Boolean, canUp: Boolean, canDow
                     )
                 }
                 if (s.target > 0) TzProgressBar(listOf((v.saved.toFloat() / s.target) to pocketColor(s.color)), height = 6.dp)
+                if (note != null) Text(stringResource(R.string.season_ledger_line, note.person, formatPounds(note.amount)), style = TzType.caption, color = Tz.text2)
             }
             if (reordering) {
                 Column {

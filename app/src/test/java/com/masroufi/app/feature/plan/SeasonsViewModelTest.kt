@@ -2,7 +2,9 @@ package com.masroufi.app.feature.plan
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.data.db.JarMovementEntity
+import com.masroufi.app.data.db.GiftDirection
 import com.masroufi.app.data.db.JarSource
+import com.masroufi.app.data.db.OccasionOwner
 import com.masroufi.app.data.db.Pot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -19,7 +21,7 @@ class SeasonsViewModelTest : PlanVmTestBase() {
     private lateinit var vm: SeasonsViewModel
 
     @Before fun open() {
-        vm = make(SeasonsViewModel::class, { it.state }) { SeasonsViewModel(f.seasons, f.settings, plus) }
+        vm = make(SeasonsViewModel::class, { it.state }) { SeasonsViewModel(f.seasons, f.duty, f.settings, plus) }
         settle("seeded") { state.seasons.size == 5 }
     }
 
@@ -76,5 +78,19 @@ class SeasonsViewModelTest : PlanVmTestBase() {
         vm.move(before[0], 1)
         settle("moved") { state.rest.map { it.season.id } == listOf(before[1], before[0]) + before.drop(2) }
         assertTrue(state.hero?.season?.id !in state.rest.map { it.season.id })
+    }
+
+    @Test fun personalSeasonShowsWhatTheLinkedPersonGave() {
+        val season = runBlocking { f.seasons.createPersonal("فرح ابن خالتك", LocalDate.of(2026, 12, 20), 150_000) }
+        val dad = runBlocking { f.people.addPerson("أبوه") }
+        settle("no record") { state.seasons.size == 6 }
+        assertTrue("nothing invented without a record", state.ledger.isEmpty())
+        runBlocking {
+            val mine = f.duty.addOccasion("فرحي", LocalDate.of(2026, 6, 1), OccasionOwner.MINE)
+            f.duty.addGift(mine, dad, 50_000, GiftDirection.RECEIVED)
+            f.duty.addOccasion("فرح ابن خالتك", LocalDate.of(2026, 12, 20), OccasionOwner.THEIRS, dad)
+        }
+        settle("note") { state.ledger[season] == LedgerNote("أبوه", 50_000) }
+        assertEquals(1, state.ledger.size)
     }
 }

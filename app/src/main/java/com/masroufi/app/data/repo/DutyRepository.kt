@@ -76,6 +76,11 @@ class DutyRepository @Inject constructor(
         return dao.insertGift(GiftEntity(occasionId = occasionId, personId = personId, amount = amount, direction = direction))
     }
 
+    suspend fun updateGift(gift: GiftEntity) {
+        require(gift.amount > 0) { "amount must be > 0" }
+        dao.updateGift(gift)
+    }
+
     suspend fun deleteGift(id: Long) = dao.deleteGift(id)
 
     /**
