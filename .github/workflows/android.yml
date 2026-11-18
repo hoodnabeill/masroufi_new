@@ -39,7 +39,10 @@ jobs:
 
       - name: Unit tests
         timeout-minutes: 20
-        run: gradle --no-daemon --stacktrace testDebugUnitTest 2>&1 | tee build-output.log; exit ${PIPESTATUS[0]}
+        # A test still running after 10 minutes is likely hung: dump the test JVMs' threads for the summary step.
+        run: |
+          ( sleep 600; for p in $(jps -l | awk '/GradleWorkerMain/{print $1}'); do jstack "$p" > "jstack-$p.txt"; done ) &
+          gradle --no-daemon --stacktrace testDebugUnitTest 2>&1 | tee build-output.log; exit ${PIPESTATUS[0]}
 
       - name: Build APKs
         env:
@@ -57,6 +60,11 @@ jobs:
           echo "::error title=Build failures::${errors}"
           hung=$(awk '/ STARTED$/{s=$0} / (PASSED|FAILED|SKIPPED)$/{s=""} END{print s}' build-output.log)
           if [ -n "$hung" ]; then echo "::error title=Hung test::${hung}"; fi
+          for f in jstack-*.txt; do
+            [ -f "$f" ] || continue
+            stacks=$(awk 'BEGIN{RS=""} /com\.masroufi/' "$f" | head -120 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=Hung threads ($f)::${stacks}"
+          done
 
       - name: Upload test reports
         if: always()
