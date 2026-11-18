@@ -85,6 +85,15 @@ Decisions made during Phase 3 (owner may override):
 - Task 38 duty ledger: no schema change; a personal season matches a "theirs" occasion with the same trimmed name and a person set (renaming either side breaks the link); the season note uses the person's name, not a relation word; a "theirs" occasion with no person never gets a suggestion; date picker is month chips + day/year steppers; all duty-ledger copy is the builder's (07-COPY has none).
 - Task 39 gameya: the user's seat is moved in the form's turn list (no separate "my turn" stepper); edit changes name and monthly only (turns via swap; members fixed after creation); swap lists members not yet paid out; installment due day is the repo default (day 1); plan-row season/goal link not exposed; the statement text stays an Arabic literal (English users get Arabic); the pay sheet defaults to the first pocket; `SoonScreen` is unused.
 
+## Phase 8 notes (match, buying, album, profile)
+
+- Match: a closed day is any status but OPEN (auto-closed included); streak and stamps count hand-closed only. Week number = ISO week of the Monday inside the Saturday–Friday week; days to the whistle count today. Hat-trick nudge when the two days before today were goals and today is open.
+- Stamps: first gram is checked on jar deposit, gold-price save and close day (not on round-ups); settled needs at least one debt ever and none open. Existing users see their earned levels/stamps as "new" once after the update.
+- Birthday plan rounds up to the piastre (1,000 over 122 days = 8.20/day; the mock shows 8).
+- Household scaling: factor = household size ÷ 4; school = per-child base × children in school; both bases are 0 today, so nothing changes on screen until real defaults exist. `SeasonRepository.seedDefaults` is not scaled; the UI uses `ProfileRepository.schoolSuggestion`.
+- Home card order follows the main goal; the people and seasons keys are ignored until Home has those cards.
+- DataWipe clears Room, resets `tazkara_settings`, deletes v1's `masroufi.db` and `datastore/settings.preferences_pb` (closes the Phase 11 v1-file item).
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
