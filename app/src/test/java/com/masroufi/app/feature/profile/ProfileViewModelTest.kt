@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.profile
 
+import com.masroufi.app.data.prefs.Settings
 import android.content.Context
 import android.os.Looper
 import androidx.lifecycle.ViewModelProvider
@@ -110,7 +111,16 @@ class ProfileViewModelTest {
         return vm
     }
 
-    private fun saved() = runBlocking { f.settings.current() }
+    /**
+     * Reads the settings off the main thread while the test dispatcher keeps running: a DataStore edit runs its
+     * transform on the caller's (main) dispatcher, so blocking main on a read deadlocks against an edit in flight.
+     */
+    private fun saved(): Settings {
+        var s: Settings? = null
+        val read = io.launch { s = f.settings.current() }
+        settle("settings read") { read.isCompleted }
+        return s!!
+    }
 
     @Test fun anEmptyProfileShowsTheMocksDefaultsAndSavesNothing() {
         val ui = visit().state.value

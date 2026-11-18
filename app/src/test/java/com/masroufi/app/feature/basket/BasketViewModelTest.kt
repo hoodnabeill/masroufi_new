@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.basket
 
+import com.masroufi.app.data.prefs.Settings
 import android.os.Looper
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -84,6 +85,14 @@ class BasketViewModelTest {
             check(System.nanoTime() < end) { "timed out waiting for $what" }
             Thread.sleep(5)
         }
+    }
+
+    /** Reads the settings off the main thread while the test dispatcher runs (see ProfileViewModelTest.saved). */
+    private fun saved(): Settings {
+        var s: Settings? = null
+        val read = io.launch { s = f.settings.current() }
+        settle("settings read") { read.isCompleted }
+        return s!!
     }
 
     private fun visit(): BasketViewModel {
@@ -213,7 +222,7 @@ class BasketViewModelTest {
         val vm = visit()
         vm.raise()
         settle("raised") { vm.state.value.raisedTo == 26_400L && vm.state.value.suggestion == null }
-        val s = runBlocking { f.settings.current() }
+        val s = saved()
         assertEquals(26_400L, s.ticketRaise)
         assertEquals(26_400L, runBlocking { db.dayTicketDao().forDate(today)!!.base })
         assertNull("the raise holds, so nothing more is suggested", visit().state.value.suggestion)
@@ -226,9 +235,9 @@ class BasketViewModelTest {
         val vm = visit()
         vm.leave()
         settle("dismissed") { vm.state.value.suggestion == null }
-        assertEquals("2026-11", runBlocking { f.settings.current() }.suggestionDismissedMonth)
+        assertEquals("2026-11", saved().suggestionDismissedMonth)
         assertNull("still hidden on a new visit this month", visit().state.value.suggestion)
-        assertEquals("nothing was raised", null, runBlocking { f.settings.current() }.ticketRaise)
+        assertEquals("nothing was raised", null, saved().ticketRaise)
 
         clock.instant = ZonedDateTime.of(LocalDate.of(2026, 12, 2), LocalTime.of(9, 0), zone).toInstant()
         assertEquals("next month it is offered again", SuggestedTicket(24_000, 26_400), visit().state.value.suggestion)
