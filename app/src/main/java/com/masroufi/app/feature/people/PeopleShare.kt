@@ -36,3 +36,19 @@ fun rememberReminder(onReturned: () -> Unit): (name: String, owed: Long) -> Unit
         }
     }
 }
+
+/** The same share sheet for any plain [text] (the gameya's reminder and statement); [title] is the chooser's. */
+@Composable
+fun rememberShareText(onReturned: () -> Unit = {}): (text: String, title: String) -> Unit {
+    val context = LocalContext.current
+    val returned = rememberUpdatedState(onReturned)
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { returned.value() }
+    return { text, title ->
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+        try {
+            launcher.launch(Intent.createChooser(send, title))
+        } catch (e: android.content.ActivityNotFoundException) {
+            // no app can share text: nothing to send
+        }
+    }
+}

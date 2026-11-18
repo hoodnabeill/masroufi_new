@@ -158,6 +158,16 @@ class GameyaRepositoryTest {
         )
     }
 
+    @Test fun updateRenamesAndTheInstallmentItemFollows() = runTest {
+        setUp()
+        val id = create()
+        f.gameyas.update(id, " جمعية البيت ", 300_000)
+        val v = view(id)
+        assertEquals(listOf<Any?>("جمعية البيت", 300_000L, 3_000_000L), listOf(v.gameya.name, v.gameya.monthly, v.payout))
+        val item = checkNotNull(db.recurringDao().byId(checkNotNull(v.gameya.recurringId)))
+        assertEquals(listOf<Any?>("جمعية البيت", 300_000L), listOf(item.name, item.amount))
+    }
+
     @Test fun beforeTheStartAndAfterTheEnd() = runTest {
         setUp()
         val id = create()

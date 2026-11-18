@@ -164,6 +164,19 @@ class GameyaRepository @Inject constructor(
         }
     }
 
+    suspend fun get(id: Long): GameyaEntity? = dao.byId(id)
+
+    /** Renames the gameya or changes its monthly amount; the installment item follows. */
+    suspend fun update(id: Long, name: String, monthly: Long) {
+        require(name.isNotBlank()) { "name must not be blank" }
+        require(monthly > 0) { "monthly must be > 0" }
+        db.withTransaction {
+            val g = checkNotNull(dao.byId(id)) { "no gameya $id" }
+            dao.update(g.copy(name = name.trim(), monthly = monthly))
+            g.recurringId?.let { rid -> recurring.get(rid)?.let { recurring.update(it.copy(name = name.trim(), amount = monthly)) } }
+        }
+    }
+
     /** The gameya leaves the list, and so does its installment (kept for the entries that paid it). */
     suspend fun archive(id: Long) = db.withTransaction {
         val g = checkNotNull(dao.byId(id)) { "no gameya $id" }

@@ -38,7 +38,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.masroufi.app.R
 import com.masroufi.app.data.repo.DebugSampleData
 import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.feature.add.AddPrefill
@@ -50,9 +49,10 @@ import com.masroufi.app.feature.add.AddViewModel
 import com.masroufi.app.feature.onboarding.OnboardingScreen
 import com.masroufi.app.feature.payday.PaydayRitualScreen
 import com.masroufi.app.feature.people.DutyLedgerScreen
+import com.masroufi.app.feature.people.GameyaFormScreen
+import com.masroufi.app.feature.people.GameyaMainScreen
 import com.masroufi.app.feature.people.PeopleScreen
 import com.masroufi.app.feature.people.PersonDetailScreen
-import com.masroufi.app.feature.people.SoonScreen
 import com.masroufi.app.feature.plan.EnvelopeDetailScreen
 import com.masroufi.app.feature.plan.EnvelopeFormScreen
 import com.masroufi.app.feature.plan.FixedCostFormScreen
@@ -76,6 +76,7 @@ import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.nav.CloseDay
 import com.masroufi.app.ui.nav.DutyLedger
 import com.masroufi.app.ui.nav.EditEnvelope
+import com.masroufi.app.ui.nav.GameyaForm
 import com.masroufi.app.ui.nav.GameyaScreen
 import com.masroufi.app.ui.nav.PersonDetail
 import com.masroufi.app.ui.nav.EnvelopeDetail
@@ -133,7 +134,7 @@ private fun NavDestination?.tab(): TzTab? = when {
 private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>() || hasRoute<Pockets>() || hasRoute<PocketDetail>() || hasRoute<NewPocket>() ||
     hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<NewGoal>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
     hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>() ||
-    hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>()
+    hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -295,12 +296,18 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         onOpenPerson = { nav.navigate(PersonDetail(it)) },
                         onOpenDuty = { nav.navigate(DutyLedger) },
                         onOpenGameya = { nav.navigate(GameyaScreen) },
+                        onNewGameya = { nav.navigate(GameyaForm(0)) },
                     )
                 }
                 composable<PersonDetail> { PersonDetailScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 composable<DutyLedger> { DutyLedgerScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                // Task 39 replaces this one.
-                composable<GameyaScreen> { SoonScreen(R.string.people_gameya_empty, onBack = { nav.popBackStack() }) }
+                composable<GameyaScreen> {
+                    GameyaMainScreen(
+                        viewModel = hiltViewModel(), onBack = { nav.popBackStack() },
+                        onNew = { nav.navigate(GameyaForm(0)) }, onEdit = { nav.navigate(GameyaForm(it)) },
+                    )
+                }
+                composable<GameyaForm> { GameyaFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                 composable<CloseDay> {
                     CloseDayScreen(
                         viewModel = hiltViewModel(),

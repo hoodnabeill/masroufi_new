@@ -34,3 +34,5 @@ import kotlinx.serialization.Serializable
 @Serializable data object DutyLedger
 /** The gameya (Task 39). */
 @Serializable data object GameyaScreen
+/** [id] 0 = a new gameya. */
+@Serializable data class GameyaForm(val id: Long)

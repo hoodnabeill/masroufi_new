@@ -75,7 +75,7 @@ private val CardShape = RoundedCornerShape(24.dp)
 
 /** الناس (People.dc.html): the two totals, filter chips, the people, the duty-ledger card, the gameya card and the quick-split hint. */
 @Composable
-fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpenDuty: () -> Unit, onOpenGameya: () -> Unit) {
+fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpenDuty: () -> Unit, onOpenGameya: () -> Unit, onNewGameya: () -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val haptics = LocalHaptics.current
     val remind = rememberReminder(viewModel::reminded)
@@ -112,7 +112,7 @@ fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpe
             if (ui.plus) DutyCard(ui.duty, onOpenDuty)
             else PlusLocked(R.string.people_duty_plus, { plusSheet = true }) { DutyCard(DutyCardUi(), {}) }
         }
-        item(key = "gameya") { GameyaCard(ui.gameya, onOpenGameya) }
+        item(key = "gameya") { GameyaCard(ui.gameya, if (ui.gameya == null) onNewGameya else onOpenGameya) }
         item(key = "split") { SplitHint(viewModel::openSplit) }
     }
     PeopleSheets(ui, viewModel)
