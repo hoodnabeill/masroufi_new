@@ -122,6 +122,10 @@ Decisions made during Phase 3 (owner may override):
 
 - Task 51: no gender stored; Arabic uses neutral forms on the kids screens. Saving into the jar from the child screen comes out of "left" (a spend marked jar, not a punch). Punches = non-jar spends since the last handover. Child mode beats onboarding at start-up; AppRoot shows only the child screen while `childModeId` is set, back swallowed. A PIN missing while in child mode (only after a data wipe) lets the child screen go. The KIDS item is hidden in الثوابت (a row opens the Kids screen); the payday ritual lists weekly items with their count; envelope screens may still list it. BiometricPrompt and the screens are compile-checked only. Guessed copy: kids empty title, forms, PIN lines, child notices.
 
+## Phase 10 notes (Plus)
+
+- Task 52: `trialEndDay` is the last Plus day, inclusive (start + 13); the "ends soon" line runs end−3..end; auto-open on end−1 and the end day, never with an active subscription; one trial per phone; the offer stays open after day 7 until started. Build-type bindings use `BuildConfig.DEBUG` in AppModule. Safety ticket: a missed day = not closed by hand, bridged but not counted; protected days = streak with − without; the rare 30-day card still uses the Free streak rule. The seasons loss row counts only planned seasons (target or money set aside). Usage counts per row kind are proxies (duty uses occasion dates). `isPlus` reads false until settings first emit and does not flip at midnight by itself.
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
