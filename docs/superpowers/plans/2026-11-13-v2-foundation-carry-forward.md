@@ -99,6 +99,9 @@ Decisions made during Phase 3 (owner may override):
 
 - Task 43: DB v6 (`MIGRATION_5_6`, `wish.movedToJar`) so a wish row shows the real amount moved to the jar. A wish is marked bought only after its prefilled entry saves (cancel keeps it waiting). The Home 48-hour card takes the first-week card's slot (a first-week card wins; hidden in end-of-month mode), outside `cardOrder`. Installment months 1–120. English tickets tile shows "7.5" ("ونص" is Arabic only). Before you buy is the third Plan-tab link.
 
+- Task 44: the basket suggestion is held back while an accepted raise holds and after "سيبها" for the month; no sparkline (no price series stored); the mock's delivery habit fact is not built (no category data). Birthday gift is whole pounds rounded up (1,000 over 117 days = 9). Household steppers save only on a tap; work kind and main goal toggle off when tapped again. Share is plain text. "Delete all my data" relaunches MainActivity in a cleared task and kills the process (not verified on a device). The school-season default stays 0 (no invented amounts). Guessed copy: "رخصت عليك", "ثابتة", the suggestion body.
+- CI (Phase 8): the unit-test step stops after 20 minutes; the summary names a hung test (last STARTED without a result) and adds a thread dump of the test JVM taken at 10 minutes. A test must never `runBlocking` a DataStore read on the main thread while a ViewModel edit may be in flight: the edit's transform runs on the test's main dispatcher, so they deadlock (read through `io` while pumping the dispatcher). `listOf(0, 0L)` infers every literal as Long.
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
