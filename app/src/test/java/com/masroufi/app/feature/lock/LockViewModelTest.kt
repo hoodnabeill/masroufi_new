@@ -25,7 +25,11 @@ class LockViewModelTest : LockTestBase() {
         }
         haptics = vm.record(vm.haptics)
         vm.start()
-        settle("ready") { ui.loaded && locked == true }
+        try {
+            settle("ready") { ui.loaded && locked == true }
+        } catch (e: IllegalStateException) {
+            throw IllegalStateException("not ready: ui=$ui locked=$locked", e)
+        }
     }
 
     private fun type(pin: String) = pin.forEach { vm.digit(it.digitToInt()) }
