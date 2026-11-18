@@ -57,7 +57,6 @@ fun PaydayStep(state: OnboardingUi, actions: OnboardingActions) {
     val haptics = LocalHaptics.current
     var pickingDay by remember { mutableStateOf(false) }
     val payday = state.payday
-    val customDay = (payday as? Payday.Day)?.day?.takeIf { it !in CommonDays }
 
     StepFrame(
         bars = 1, onBack = actions::back,
@@ -71,37 +70,7 @@ fun PaydayStep(state: OnboardingUi, actions: OnboardingActions) {
     ) {
         QershBubble(stringResource(R.string.ob_payday_bubble))
         StepTitle(stringResource(R.string.ob_payday_title))
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            // null = "another day", which opens the picker.
-            val items = buildList<Payday?> {
-                CommonDays.forEach { add(Payday.Day(it)) }
-                add(Payday.LastDay)
-                add(null)
-            }
-            items.chunked(4).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    row.forEach { item ->
-                        when (item) {
-                            null -> PaydayTile(customDay != null, { pickingDay = true }, Modifier.weight(1f)) {
-                                Text(stringResource(R.string.ob_payday_other), style = TzType.button.copy(fontSize = 16.sp, color = if (customDay != null) Tz.night else Tz.text))
-                                if (customDay != null) Text(customDay.toString(), style = TzType.caption.copy(fontWeight = FontWeight.Bold, color = Tz.night))
-                            }
-                            Payday.LastDay -> PaydayTile(payday == Payday.LastDay, { actions.pickPayday(Payday.LastDay) }, Modifier.weight(1f)) {
-                                Text(stringResource(R.string.ob_payday_last), style = TzType.button.copy(fontSize = 16.sp, color = if (payday == Payday.LastDay) Tz.night else Tz.text))
-                            }
-                            else -> {
-                                val day = item as Payday.Day
-                                val on = payday == day
-                                PaydayTile(on, { actions.pickPayday(day) }, Modifier.weight(1f)) {
-                                    Text(day.day.toString(), style = TzType.button.copy(fontSize = 26.sp, color = if (on) Tz.night else Tz.text))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        NotFixedRow(payday == Payday.NotFixed) { actions.pickPayday(Payday.NotFixed) }
+        PaydayChoices(payday, actions::pickPayday, onOther = { pickingDay = true })
         val days = stringResource(R.string.ob_days, state.daysLeft.toString())
         val echo = stringResource(R.string.ob_payday_echo, days)
         Text(
@@ -119,16 +88,57 @@ fun PaydayStep(state: OnboardingUi, actions: OnboardingActions) {
         TzSheet(onDismiss = { pickingDay = false }) {
             Column(Modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.ob_payday_pick), style = TzType.cardHeading.copy(color = Tz.text))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    for (d in 1..31) {
-                        TzChip(d.toString(), selected = payday == Payday.Day(d), onClick = {
-                            actions.pickPayday(Payday.Day(d))
-                            pickingDay = false
-                        })
+                PaydayDayChips(payday) {
+                    actions.pickPayday(it)
+                    pickingDay = false
+                }
+            }
+        }
+    }
+}
+
+/** The eight one-tap answers and the dashed "not fixed" row; [onOther] opens the day picker. Settings reuses it. */
+@Composable
+internal fun PaydayChoices(payday: Payday, onPick: (Payday) -> Unit, onOther: () -> Unit) {
+    val customDay = (payday as? Payday.Day)?.day?.takeIf { it !in CommonDays }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // null = "another day", which opens the picker.
+        val items = buildList<Payday?> {
+            CommonDays.forEach { add(Payday.Day(it)) }
+            add(Payday.LastDay)
+            add(null)
+        }
+        items.chunked(4).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { item ->
+                    when (item) {
+                        null -> PaydayTile(customDay != null, onOther, Modifier.weight(1f)) {
+                            Text(stringResource(R.string.ob_payday_other), style = TzType.button.copy(fontSize = 16.sp, color = if (customDay != null) Tz.night else Tz.text))
+                            if (customDay != null) Text(customDay.toString(), style = TzType.caption.copy(fontWeight = FontWeight.Bold, color = Tz.night))
+                        }
+                        Payday.LastDay -> PaydayTile(payday == Payday.LastDay, { onPick(Payday.LastDay) }, Modifier.weight(1f)) {
+                            Text(stringResource(R.string.ob_payday_last), style = TzType.button.copy(fontSize = 16.sp, color = if (payday == Payday.LastDay) Tz.night else Tz.text))
+                        }
+                        else -> {
+                            val day = item as Payday.Day
+                            val on = payday == day
+                            PaydayTile(on, { onPick(day) }, Modifier.weight(1f)) {
+                                Text(day.day.toString(), style = TzType.button.copy(fontSize = 26.sp, color = if (on) Tz.night else Tz.text))
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+    NotFixedRow(payday == Payday.NotFixed) { onPick(Payday.NotFixed) }
+}
+
+/** Days 1 to 31 as chips. */
+@Composable
+internal fun PaydayDayChips(payday: Payday, onPick: (Payday) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        for (d in 1..31) TzChip(d.toString(), selected = payday == Payday.Day(d), onClick = { onPick(Payday.Day(d)) })
     }
 }
 

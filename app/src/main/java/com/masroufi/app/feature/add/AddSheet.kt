@@ -125,6 +125,7 @@ fun AddSheet(prefill: AddPrefill?, onDismiss: () -> Unit, viewModel: AddViewMode
             onSave = {
                 if (viewModel.save()) {
                     haptics.perform(HapticLevel.Confirm)
+                    haptics.sound()
                     close()
                 }
             },

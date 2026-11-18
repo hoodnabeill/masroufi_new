@@ -217,6 +217,7 @@ private fun CloseDayReady(
     LaunchedEffect(tearing) {
         if (!tearing) return@LaunchedEffect
         haptics.perform(HapticLevel.Heavy)
+        haptics.sound()
         if (reduce) {
             haptics.perform(HapticLevel.Tap)
             landed = true

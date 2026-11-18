@@ -1,113 +1,73 @@
 # Privacy Policy
-Last updated: 4 November 2026
+Last updated: 18 November 2026
 
-Masroufi ("the app", "we") is a personal money tracker that works offline. This policy explains what the app handles, where it is kept, and the choices you have. It is written for the Google Play version of the app.
+## In short
+Your money and your data stay on your phone. There is no account, no server of ours, no ads and no analytics. The app itself never opens an internet connection and does not ask for the internet permission.
 
-# The short version
-- Your financial data stays on your phone. We do not run servers that receive it.
-- There are no accounts, no ads, no analytics and no tracking SDKs.
-- Nothing is sold or shared with anyone.
-- Optional features that involve something outside the app (SMS reading, cloud sync, voice input, sharing) are off until you turn them on, and you can turn them off at any time.
+## What is stored, and where
+Tickets, spending, the jar, debts, gameyas and anything else you type are kept in the app's private storage on your phone. Other apps cannot read it, and nothing is sent anywhere from it. Android's automatic cloud backup is turned off for the app.
 
-# What the app stores, and where
-Everything you enter — wallets, transactions, categories, budgets, goals, recurring bills, debts, gameya groups, split rules, notes and receipt photos — is stored in the app's private storage on your device. Other apps cannot read it. Android's automatic cloud backup is turned off for the app, so your data is not copied to Google Drive without you.
+## Backups
+A backup is a file you save yourself, wherever you choose, encrypted with a password you set. We never receive the file and cannot open it, and if you forget the password nobody can recover it. The Excel file you can export is not encrypted, and the app says so before you save it.
 
-Progress such as points, streaks and badges is calculated from that same data on your device; it is not stored separately or sent anywhere.
+## Bank and wallet messages
+If you paste a message from a bank or wallet, the app reads it on your phone only, to pull out the amount and suggest an entry that you confirm. The message text is never stored and never leaves your phone. The app does not ask for permission to read your messages.
 
-# Optional: reading money SMS
-If you turn on "Read wallet and bank messages" in Settings, the app asks for Android's permission to receive SMS. With it, when a new message arrives the app checks on your device whether it is a money message from a mobile wallet (such as Vodafone Cash, e& cash, Orange Cash, WE Pay), InstaPay or a bank. If it is, the app reads only the amount, the type of operation, who it was to or from, and the reported balance, and offers you a notification to log it. You confirm every entry yourself.
-- Messages that are not money messages are ignored.
-- The message text is not saved, and nothing from it leaves your phone.
-- The app does not read your SMS history, and never sends SMS.
-- You can turn the feature off in Settings or remove the permission in Android settings at any time.
-You can also paste a single message into the app yourself instead, without any permission.
+## Permissions
+Notifications: to remind you about the ticket and bills, and only when you turn them on. Fingerprint: if you turn on the lock, Android tells the app whether it worked; the app never sees your fingerprint. Vibration: for the feel of a tap, and you can turn it off in Settings.
 
-# Optional: backup and sync
-- Backup files: you can export a backup file to a place you choose. It is encrypted with a password you set; we cannot open it.
-- WebDAV sync: if you connect your own WebDAV server, the app uploads an encrypted copy of your data to that server and downloads it back. The server is chosen and controlled by you; we never receive the data or your credentials. Server passwords are stored encrypted with the Android Keystore on your device.
+## Masroufi Plus
+Plus is optional. When it is available, payment, renewal and cancellation are handled by Google Play, not by the app, and your data stays on your phone. The free version keeps working without paying.
 
-# Optional: voice input
-Logging by voice uses your device's speech recognition service. Your speech is handled by that service under its own privacy terms (for example Google's); the app receives only the recognised text.
+## Sharing
+When you share something, such as the month's story image, it goes only to the app you pick. The image can hide the amounts before you share it.
 
-# Other permissions
-- Notifications: reminders for bills, debts, budgets and logging, and the SMS log suggestion. You can turn them off in Settings or Android settings.
-- Biometric: to unlock the app with your fingerprint or face, if you enable the app lock. Biometric data never reaches the app; Android only tells it whether unlocking succeeded.
-- Contacts: when you link a debt or a gameya member to a contact, Android's contact picker hands the app that one name and number. The app cannot read your address book; the number is stored on your device with that entry and used only when you tap Call or WhatsApp.
-- Internet: used only for WebDAV sync, and opening links you tap (such as a WhatsApp reminder you choose to send).
+## Children
+The app is for adults. The child screen is part of the parent's phone, and its data sits on that same phone with the rest of yours.
 
-# Sharing
-We do not share, sell or rent your data. When you choose to share something — a monthly recap image, or a reminder message in WhatsApp — it goes only where you send it, through Android's share sheet or the app you pick. The recap image can hide your numbers before you share it.
+## Deleting your data
+You can erase everything from your profile (Delete all my data), from Android's settings, or by uninstalling the app. Backup files you saved stay with you until you delete them.
 
-# Children
-The app is meant for people aged 18 and over, or younger people using it with a parent or guardian's consent. We do not knowingly collect anything from children, and the app collects nothing about anyone on our side.
+## If this policy changes
+The new version will appear in the app and on its Google Play page, with a new date.
 
-# Your rights and choices
-Because your data lives on your device, you control it directly: you can view, edit, export or delete any entry at any time. Uninstalling the app, or clearing its storage in Android settings, deletes all of its data from your phone. Backups you exported and data on your own WebDAV server remain under your control until you delete them.
-These rights are in line with Egypt's Personal Data Protection Law (Law No. 151 of 2020) and similar laws elsewhere.
-
-# Security
-Data is kept in the app's private storage, backups are password-encrypted, sync credentials are protected by the Android Keystore, and you can add a PIN or biometric lock. No method is perfect; keep your phone and backup passwords safe.
-
-# Changes
-If this policy changes, the new version will appear in the app and on the app's Google Play page with a new date. Significant changes will be shown in the app before they apply.
-
-# Contact
-For questions about privacy, use the developer email shown on the app's Google Play page.
+## Contact
+For any question, use the support address shown on the app's Google Play page.
 
 ---
 
 # سياسة الخصوصية
-آخر تحديث: 4 نوفمبر 2026
+آخر تحديث: 18 نوفمبر 2026
 
-مصروفي ("التطبيق"، "إحنا") تطبيق لمتابعة فلوسك الشخصية وبيشتغل من غير إنترنت. السياسة دي بتوضح التطبيق بيتعامل مع إيه، وبيتحفظ فين، والاختيارات اللي في إيدك. مكتوبة لنسخة التطبيق على Google Play.
+## باختصار
+فلوسك وبياناتك على موبايلك وبس. مفيش حساب، ومفيش سيرفر عندنا، ومفيش إعلانات ولا تحليلات. التطبيق نفسه مابيفتحش اتصال بالإنترنت ومابيطلبش إذن الإنترنت.
 
-# باختصار
-- بياناتك المالية بتفضل على موبايلك. إحنا مش بنشغّل سيرفرات بتستقبلها.
-- مفيش حسابات، ولا إعلانات، ولا تحليلات، ولا أدوات تتبّع.
-- مفيش حاجة بتتباع أو بتتشارك مع أي حد.
-- المميزات الاختيارية اللي ليها علاقة بحاجة برّه التطبيق (قراية الرسايل، المزامنة، الإدخال بالصوت، المشاركة) مقفولة لحد ما تفتحها، وتقدر تقفلها في أي وقت.
+## إيه اللي بيتحفظ وفين
+التذاكر والمصروفات والحصّالة والديون والجمعيات وأي حاجة بتكتبها بتتحفظ في المخزن الخاص بالتطبيق على موبايلك. تطبيقات تانية ماتقدرش تقراه، ومابنبعتش منه حاجة لأي مكان. نسخة جوجل الاحتياطية التلقائية مقفولة للتطبيق.
 
-# التطبيق بيحفظ إيه وفين
-كل اللي بتدخّله — المحافظ، الحركات، الفئات، الميزانيات، الأهداف، الفواتير المتكررة، الديون، الجمعيات، قواعد التقسيم، الملاحظات وصور الإيصالات — بيتحفظ في مساحة التطبيق الخاصة على جهازك، ومفيش تطبيق تاني يقدر يقراه. النسخ الاحتياطي التلقائي من أندرويد مقفول للتطبيق، فبياناتك مش بتتنسخ على Google Drive من غيرك.
+## النسخة الاحتياطية
+النسخة الاحتياطية ملف بتحفظه إنت في المكان اللي تختاره، ومتشفّر بكلمة سر إنت اللي بتحطها. إحنا مابنستلمش الملف ومانقدرش نفتحه، ولو نسيت كلمة السر مفيش حد يقدر يرجّعها. ملف الإكسل اللي ممكن تطلّعه مش متشفّر، والتطبيق بيقولك كده قبل ما تحفظه.
 
-النقاط والسلسلة والشارات بتتحسب من نفس البيانات دي على جهازك، ومش بتتحفظ لوحدها ولا بتتبعت لأي مكان.
+## رسايل البنك والمحفظة
+لو لزقت رسالة من بنك أو محفظة، التطبيق بيقراها على موبايلك بس عشان يطلّع المبلغ ويقترح تسجيلة إنت اللي بتأكدها. نص الرسالة مابيتخزّنش ومابيخرجش من موبايلك. التطبيق مابيطلبش إذن قراية الرسايل.
 
-# اختياري: قراية رسايل الفلوس
-لو فعّلت "اقرا رسايل المحافظ والبنك" من الإعدادات، التطبيق هيطلب إذن أندرويد لاستقبال الرسايل. لما توصل رسالة جديدة، التطبيق بيشوف على جهازك هل هي رسالة فلوس من محفظة موبايل (زي فودافون كاش، e& كاش، أورنج كاش، WE Pay)، أو إنستاباي، أو بنك. لو آه، بيقرا المبلغ ونوع العملية واسم الطرف التاني والرصيد بس، وبيبعتلك إشعار تسجّلها منه. كل حركة انت اللي بتأكدها.
-- الرسايل اللي مش رسايل فلوس بيتم تجاهلها.
-- نص الرسالة مش بيتحفظ، ومفيش حاجة منه بتطلع من موبايلك.
-- التطبيق مش بيقرا رسايلك القديمة، ومش بيبعت رسايل خالص.
-- تقدر تقفل الميزة من الإعدادات أو تشيل الإذن من إعدادات أندرويد في أي وقت.
-وتقدر برضه تلصق رسالة واحدة بنفسك في التطبيق من غير أي إذن.
+## الأذونات
+التنبيهات: عشان نفكّرك بالتذكرة والفواتير، وبتشتغل لما إنت تشغّلها. البصمة: لو شغّلت القفل، أندرويد هو اللي بيقول للتطبيق نجحت ولا لأ، والتطبيق مابيشوفش بصمتك. الاهتزاز: لإحساس الضغط، وتقدر تقفله من الإعدادات.
 
-# اختياري: النسخ الاحتياطي والمزامنة
-- ملف النسخة الاحتياطية: تقدر تصدّر ملف للمكان اللي تختاره، وبيكون متشفّر بكلمة سر انت اللي بتحددها، وإحنا ما نقدرش نفتحه.
-- مزامنة WebDAV: لو وصّلت سيرفر WebDAV بتاعك، التطبيق بيرفع نسخة متشفّرة من بياناتك على السيرفر ده وبينزّلها منه. السيرفر انت اللي بتختاره وبتتحكم فيه، وإحنا عمرنا ما بنستلم البيانات ولا بيانات الدخول. كلمات سر السيرفر بتتحفظ متشفّرة بـ Android Keystore على جهازك.
+## مصروفي بلس
+بلس اختياري. لما يتوفر، الدفع والتجديد والإلغاء بيتعملوا من Google Play مش من التطبيق، وبياناتك بتفضل على موبايلك. النسخة المجانية بتفضل شغّالة من غير دفع.
 
-# اختياري: الإدخال بالصوت
-التسجيل بالصوت بيستخدم خدمة التعرّف على الكلام في جهازك. صوتك بتتعامل معاه الخدمة دي حسب شروط الخصوصية بتاعتها (زي Google)، والتطبيق بيستلم النص بس.
+## المشاركة
+لما تشارك حاجة، زي صورة حكاية الشهر، بتروح بس للتطبيق اللي إنت تختاره. الصورة ممكن تخبّي المبالغ قبل ما تشاركها.
 
-# أذونات تانية
-- الإشعارات: تذكيرات بالفواتير والديون والميزانيات والتسجيل، واقتراح تسجيل رسالة الفلوس. تقدر تقفلها من الإعدادات أو من أندرويد.
-- البصمة: لفتح التطبيق ببصمتك أو وشّك لو فعّلت القفل. بيانات البصمة عمرها ما بتوصل للتطبيق؛ أندرويد بيقوله بس الفتح نجح ولا لأ.
-- جهات الاتصال: لما تربط دين أو عضو جمعية بجهة اتصال، أداة اختيار جهات الاتصال في أندرويد بتدّي التطبيق الاسم والرقم ده بس. التطبيق ما يقدرش يقرا دفتر العناوين بتاعك؛ الرقم بيتحفظ على جهازك مع الحركة دي وبيُستخدم بس لما تدوس اتصل أو واتساب.
-- الإنترنت: بيُستخدم بس لمزامنة WebDAV، وفتح الروابط اللي بتدوس عليها (زي تذكير واتساب انت اللي بتبعته).
+## الأطفال
+التطبيق للكبار. شاشة الطفل جزء من موبايل الأب أو الأم، وبياناتها على نفس الموبايل مع باقي بياناتك.
 
-# المشاركة
-إحنا مش بنشارك ولا بنبيع ولا بنأجّر بياناتك. لما تختار تشارك حاجة — صورة ملخص الشهر، أو رسالة تذكير على واتساب — بتروح بس للمكان اللي انت بتبعتها له، من خلال قائمة المشاركة في أندرويد أو التطبيق اللي بتختاره. وتقدر تخفي الأرقام من صورة الملخص قبل ما تشاركها.
+## مسح بياناتك
+تقدر تمسح كل حاجة من ملفك ← امسح كل بياناتي، أو من إعدادات أندرويد، أو بإنك تمسح التطبيق. ملفات النسخ الاحتياطي اللي حفظتها بتفضل عندك لحد ما تمسحها.
 
-# الأطفال
-التطبيق معمول للناس من 18 سنة وأكبر، أو الأصغر بموافقة ولي الأمر. إحنا مش بنجمع حاجة من الأطفال، والتطبيق أصلاً مش بيجمع أي حاجة عن أي حد عندنا.
+## لو السياسة اتغيّرت
+النسخة الجديدة هتظهر في التطبيق وعلى صفحته في Google Play بتاريخ جديد.
 
-# حقوقك واختياراتك
-عشان بياناتك على جهازك، انت متحكم فيها مباشرة: تقدر تشوف أو تعدّل أو تصدّر أو تمسح أي حاجة في أي وقت. لو مسحت التطبيق أو مسحت بياناته من إعدادات أندرويد، كل بياناته بتتمسح من موبايلك. النسخ الاحتياطية اللي صدّرتها والبيانات اللي على سيرفر WebDAV بتاعك بتفضل تحت تحكمك لحد ما تمسحها.
-الحقوق دي متماشية مع قانون حماية البيانات الشخصية المصري (القانون رقم 151 لسنة 2020) والقوانين المشابهة.
-
-# الأمان
-البيانات بتتحفظ في مساحة التطبيق الخاصة، والنسخ الاحتياطية متشفّرة بكلمة سر، وبيانات المزامنة محمية بـ Android Keystore، وتقدر تضيف رقم سري أو بصمة. مفيش طريقة كاملة ١٠٠٪؛ حافظ على موبايلك وكلمات سر النسخ الاحتياطي.
-
-# التغييرات
-لو السياسة دي اتغيرت، النسخة الجديدة هتظهر في التطبيق وعلى صفحته في Google Play بتاريخ جديد، والتغييرات المهمة هتظهرلك في التطبيق قبل ما تتطبق.
-
-# التواصل
-لأي سؤال عن الخصوصية، استخدم إيميل المطوّر الموجود على صفحة التطبيق في Google Play.
+## التواصل
+لأي سؤال، استخدم عنوان الدعم الموجود على صفحة التطبيق في Google Play.

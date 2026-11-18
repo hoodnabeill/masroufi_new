@@ -105,6 +105,10 @@ data class Settings(
     val childModeId: Long? = null,
     /** The story's "share without amounts" switch (phase 9b): on until the user turns it off. */
     val storyHideAmounts: Boolean = true,
+    /** Settings switches (phase 11): vibration on, ticket sounds off, hide amounts off by default; Task 55 applies hide amounts. */
+    val vibration: Boolean = true,
+    val ticketSounds: Boolean = false,
+    val hideAmounts: Boolean = false,
     /** Plus trial (phase 10): the epoch day it started and its last day of Plus (inclusive); null = never started. */
     val trialStartDay: Long? = null,
     val trialEndDay: Long? = null,
@@ -179,6 +183,9 @@ class SettingsStore @Inject constructor(
     private val installmentLoggedKey = stringPreferencesKey("installmentLogged")
     private val childModeKey = longPreferencesKey("childModeId")
     private val storyHideAmountsKey = booleanPreferencesKey("storyHideAmounts")
+    private val vibrationKey = booleanPreferencesKey("vibration")
+    private val ticketSoundsKey = booleanPreferencesKey("ticketSounds")
+    private val hideAmountsKey = booleanPreferencesKey("hideAmounts")
     private val trialStartKey = longPreferencesKey("trialStartDay")
     private val trialEndKey = longPreferencesKey("trialEndDay")
     private val lastPaywallKey = longPreferencesKey("lastPaywallDay")
@@ -317,6 +324,9 @@ class SettingsStore @Inject constructor(
     /** Persists the child screen mode (null = off); callers go through ChildMode, which checks the PIN first. */
     suspend fun setChildMode(childId: Long?) { store.edit { if (childId == null) it.remove(childModeKey) else it[childModeKey] = childId } }
     suspend fun setStoryHideAmounts(v: Boolean) { store.edit { it[storyHideAmountsKey] = v } }
+    suspend fun setVibration(v: Boolean) { store.edit { it[vibrationKey] = v } }
+    suspend fun setTicketSounds(v: Boolean) { store.edit { it[ticketSoundsKey] = v } }
+    suspend fun setHideAmounts(v: Boolean) { store.edit { it[hideAmountsKey] = v } }
     /** Starts the one trial; false (and nothing written) when a trial already started. */
     suspend fun startTrial(startDay: Long, endDay: Long): Boolean {
         var started = false
@@ -416,6 +426,9 @@ class SettingsStore @Inject constructor(
         installmentLogged = decodeReminders(p[installmentLoggedKey]),
         childModeId = p[childModeKey],
         storyHideAmounts = p[storyHideAmountsKey] ?: true,
+        vibration = p[vibrationKey] ?: true,
+        ticketSounds = p[ticketSoundsKey] ?: false,
+        hideAmounts = p[hideAmountsKey] ?: false,
         trialStartDay = p[trialStartKey],
         trialEndDay = p[trialEndKey],
         lastPaywallDay = p[lastPaywallKey],

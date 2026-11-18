@@ -1,91 +1,67 @@
 # Terms of Use
-Last updated: 4 November 2026
+Last updated: 18 November 2026
 
-By installing or using Masroufi ("the app") you agree to these terms. If you do not agree, please do not use the app.
+## What Masroufi is
+Masroufi is a tool for keeping track of your money: a daily ticket, a jar, bills and debts. It is not a bank, a wallet or a payment service, and it does not hold or move money.
 
-# What the app is
-Masroufi helps you record and understand your own spending, income, budgets and savings goals. It is a personal organiser, not a bank, wallet, payment service, lender or financial adviser. It does not hold, move or transfer money, and it is not connected to your bank or wallet accounts.
+## Not advice
+The numbers it shows, such as your daily ticket and the zakat calculator, are estimates from what you recorded. They are not financial, tax or religious advice. What you do with your money is up to you.
 
-# Not financial advice
-Numbers the app shows — the daily number, forecasts, health score, suggested budgets, goal timelines and answers in "Ask Masroufi" — are calculated from what you entered, using simple formulas. They are estimates to help you think, not financial, investment, tax or legal advice. Decisions you make with your money are your own; consider a qualified professional for important ones.
+## Your data is your responsibility
+Everything is on your phone. If the phone is lost or the app is erased without a backup, the data is gone and we cannot bring it back, because we never had it. Make a backup and keep its password safe, because nobody can recover it.
 
-# Your data and your responsibility
-- What you enter stays on your device (see the Privacy Policy). You are responsible for keeping it accurate and for backing it up.
-- If you lose your phone, uninstall the app or clear its storage without a backup, your data cannot be recovered by us, because we never had a copy.
-- Keep your backup password safe: an encrypted backup cannot be opened without it, by you or by us.
-- If you use WebDAV sync, you are responsible for the server you connect and its security.
-- Amounts read from SMS messages or typed by voice may be wrong. Check every entry before you save it.
+## Bank messages
+An amount read from a message can be wrong. Check the entry before you save it.
 
-# Messages you send
-Reminders for debts open WhatsApp (or another app) with a message ready; nothing is sent until you send it. You are responsible for what you send and to whom.
+## Masroufi Plus
+Plus is an optional subscription. When it is available, Google Play bills you at the price and period shown when you subscribe, and it renews by itself until you cancel. You can cancel at any time in Google Play under Subscriptions, and refunds follow Google Play's policy. The free trial ends by itself and never turns into a subscription unless you choose that. The free version keeps working without paying, and when Plus ends your data is not deleted; only its features lock again.
 
-# Premium features
-Some features are marked Premium. During early access they may be available to everyone. If paid plans are offered later, prices and terms will be shown before you buy, and purchases will be handled by Google Play under its terms.
+## Use
+Use the app for your own money and for lawful purposes. Do not try to break it or interfere with other people's devices.
 
-# Acceptable use
-Use the app only for lawful personal purposes. Do not try to break, reverse-engineer for misuse, or interfere with the app or other people's devices.
+## No warranty
+The app is provided as it is. We work to keep it reliable but do not promise it is free of errors, and features may change. To the extent the law allows, we are not liable for a loss that comes from a decision made with its numbers or from lost data. This does not reduce your rights under consumer protection law.
 
-# Availability and changes
-The app is provided "as is" and "as available". We work to keep it reliable but do not promise it will be free of errors or always available, and features may change or be removed.
+## Governing law
+These terms are governed by the laws of the Arab Republic of Egypt and handled by the competent courts of Cairo, unless the consumer protection law of your country gives you a different right.
 
-# Limitation of liability
-To the fullest extent the law allows, the developer is not liable for any indirect, incidental or consequential loss, or for losses arising from decisions made using the app, wrong or lost data, or the failure of third-party services (such as your device, WebDAV server, speech service or WhatsApp). Nothing in these terms limits rights you have under consumer protection law that cannot be limited.
+## If these terms change
+The new version will appear in the app and on its Google Play page, with a new date. Using the app after a change means you accept it.
 
-# Ending use
-You can stop using the app at any time by uninstalling it. We may stop offering the app or a feature.
-
-# Governing law
-These terms are governed by the laws of the Arab Republic of Egypt. Disputes will be handled by the competent courts of Cairo, unless the consumer protection law of your country gives you a different right.
-
-# Changes to these terms
-New versions will appear in the app and on its Google Play page with a new date. Continuing to use the app after a change means you accept the new terms.
-
-# Contact
-Use the developer email shown on the app's Google Play page.
+## Contact
+For any question, use the support address shown on the app's Google Play page.
 
 ---
 
 # شروط الاستخدام
-آخر تحديث: 4 نوفمبر 2026
+آخر تحديث: 18 نوفمبر 2026
 
-بتنزيل مصروفي ("التطبيق") أو استخدامه، انت موافق على الشروط دي. لو مش موافق، من فضلك ما تستخدموش.
+## إيه هو مصروفي
+مصروفي أداة بتساعدك تتابع فلوسك: تذكرة يومية، حصّالة، فواتير وديون. مش بنك ولا محفظة ولا خدمة دفع، ومش بيمسك فلوس ولا بيحوّلها.
 
-# التطبيق إيه
-مصروفي بيساعدك تسجّل وتفهم مصاريفك ودخلك وميزانياتك وأهداف التحويش بتاعتك. هو منظّم شخصي، مش بنك ولا محفظة ولا خدمة دفع ولا جهة إقراض ولا مستشار مالي. مش بيمسك فلوس ولا بيحوّلها، ومش متوصل بحساباتك في البنك أو المحفظة.
+## مش نصيحة
+الأرقام اللي بيعرضها، زي تذكرتك اليومية وحاسبة الزكاة، تقديرات من اللي إنت سجّلته. مش نصيحة مالية ولا ضريبية ولا شرعية. قراراتك في فلوسك مسؤوليتك.
 
-# مش نصيحة مالية
-الأرقام اللي التطبيق بيعرضها — رقمك اليومي، التوقعات، صحتك المالية، الميزانيات المقترحة، مواعيد الأهداف وإجابات "اسأل مصروفي" — محسوبة من اللي انت دخّلته بمعادلات بسيطة. هي تقديرات تساعدك تفكّر، مش نصيحة مالية أو استثمارية أو ضريبية أو قانونية. قراراتك في فلوسك مسؤوليتك؛ وفي القرارات المهمة ارجع لمتخصص.
+## بياناتك مسؤوليتك
+كل حاجة على موبايلك. لو الموبايل ضاع أو التطبيق اتمسح من غير نسخة احتياطية، البيانات بتضيع ومانقدرش نرجّعها لأنها عمرها ما كانت عندنا. اعمل نسخة احتياطية، واحفظ كلمة سرها، لأن محدش يقدر يرجّعها.
 
-# بياناتك ومسؤوليتك
-- اللي بتدخّله بيفضل على جهازك (شوف سياسة الخصوصية). انت مسؤول إنه يكون صح وإنك تاخد منه نسخة احتياطية.
-- لو موبايلك ضاع، أو مسحت التطبيق أو بياناته من غير نسخة احتياطية، إحنا ما نقدرش نرجّع بياناتك، لأننا عمرنا ما كان معانا نسخة منها.
-- حافظ على كلمة سر النسخة الاحتياطية: النسخة المتشفّرة ما تتفتحش من غيرها، لا منك ولا مننا.
-- لو بتستخدم مزامنة WebDAV، انت مسؤول عن السيرفر اللي بتوصّله وأمانه.
-- المبالغ اللي بتتقري من الرسايل أو بتتكتب بالصوت ممكن تبقى غلط. راجع كل حركة قبل ما تحفظها.
+## رسايل البنك
+المبلغ اللي بيتقرا من رسالة ممكن يطلع غلط. راجع التسجيلة قبل ما تحفظها.
 
-# الرسايل اللي بتبعتها
-تذكيرات الديون بتفتح واتساب (أو تطبيق تاني) والرسالة جاهزة؛ مفيش حاجة بتتبعت غير لما انت تبعتها. انت مسؤول عن اللي بتبعته ولمين.
+## مصروفي بلس
+بلس اشتراك اختياري. لما يتوفر، Google Play هو اللي بيحاسبك بالسعر والمدة اللي بتظهرلك وقت الاشتراك، والاشتراك بيتجدد لوحده لحد ما تلغيه. تلغيه في أي وقت من Google Play ثم الاشتراكات، والاسترداد حسب سياسة Google Play. التجربة المجانية بتخلص لوحدها، ومابتتحوّلش لاشتراك من غير ما تختار. النسخة المجانية بتفضل شغّالة من غير دفع، ولما بلس يخلص بياناتك مابتتمسحش، المزايا بس هي اللي بتتقفل.
 
-# مميزات بريميوم
-بعض المميزات عليها علامة بريميوم. في فترة الإطلاق المبكر ممكن تكون متاحة للكل. لو اتعملت باقات مدفوعة بعدين، الأسعار والشروط هتظهرلك قبل الشراء، والشراء هيتم عن طريق Google Play وحسب شروطه.
+## الاستخدام
+استخدم التطبيق لفلوسك إنت وبشكل قانوني. ماتحاولش تعطّله أو تتدخل في أجهزة الناس.
 
-# الاستخدام المسموح
-استخدم التطبيق لأغراض شخصية قانونية بس. ما تحاولش تعطّله أو تفكّه لإساءة استخدامه أو تتدخل في التطبيق أو في أجهزة الناس.
+## من غير ضمان
+التطبيق بيتقدّم زي ما هو. بنحاول يفضل شغّال كويس لكن مابنوعدش إنه من غير أخطاء، والمزايا ممكن تتغيّر. في حدود اللي القانون بيسمح بيه، مش مسؤولين عن خسارة ناتجة عن قرار أخدته بالأرقام اللي فيه أو عن بيانات ضاعت. ده مابيقللش حقوقك في قانون حماية المستهلك.
 
-# الإتاحة والتغييرات
-التطبيق مقدَّم "زي ما هو" و"حسب المتاح". بنشتغل إنه يفضل شغال كويس، لكن ما بنوعدش إنه يكون من غير أخطاء أو متاح دايماً، والمميزات ممكن تتغير أو تتشال.
+## القانون الحاكم
+الشروط دي بيحكمها قانون جمهورية مصر العربية، وبتختص بيها محاكم القاهرة، إلا لو قانون حماية المستهلك في بلدك بيديك حق مختلف.
 
-# حدود المسؤولية
-في أقصى حدود القانون، المطوّر مش مسؤول عن أي خسارة غير مباشرة أو عَرَضية أو تبعية، ولا عن خسائر ناتجة عن قرارات اتاخدت باستخدام التطبيق، أو بيانات غلط أو ضايعة، أو تعطّل خدمات أطراف تانية (زي جهازك، سيرفر WebDAV، خدمة الصوت، أو واتساب). مفيش حاجة في الشروط دي بتقلل من حقوقك في قانون حماية المستهلك اللي ما ينفعش تتقلل.
+## لو الشروط اتغيّرت
+النسخة الجديدة هتظهر في التطبيق وعلى صفحته في Google Play بتاريخ جديد. استمرارك في الاستخدام معناه إنك موافق عليها.
 
-# إنهاء الاستخدام
-تقدر توقف استخدام التطبيق في أي وقت بإنك تمسحه. وإحنا ممكن نوقف التطبيق أو ميزة فيه.
-
-# القانون الحاكم
-الشروط دي بيحكمها قانون جمهورية مصر العربية، والنزاعات بتختص بيها محاكم القاهرة المختصة، إلا لو قانون حماية المستهلك في بلدك بيديك حق مختلف.
-
-# تغيير الشروط
-النسخ الجديدة هتظهر في التطبيق وعلى صفحته في Google Play بتاريخ جديد. استمرارك في استخدام التطبيق بعد التغيير معناه إنك موافق على الشروط الجديدة.
-
-# التواصل
-استخدم إيميل المطوّر الموجود على صفحة التطبيق في Google Play.
+## التواصل
+لأي سؤال، استخدم عنوان الدعم الموجود على صفحة التطبيق في Google Play.

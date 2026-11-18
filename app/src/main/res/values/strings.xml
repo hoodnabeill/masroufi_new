@@ -1517,4 +1517,96 @@
         <item quantity="many">%s ظرف</item>
         <item quantity="other">%s ظرف</item>
     </plurals>
+    <!-- Settings and legal (Task 54) -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_profile_sub">مستوى %1$s · %2$s · ملفك</string>
+    <string name="settings_group_ticket">التذكرة</string>
+    <string name="settings_group_feel">الإحساس والشكل</string>
+    <string name="settings_group_safety">الأمان</string>
+    <string name="settings_group_about">عن مصروفي</string>
+    <string name="settings_payday">يوم القبض</string>
+    <string name="settings_payday_day">%1$s من كل شهر</string>
+    <string name="settings_reminder">تذكير قطع التذكرة</string>
+    <string name="settings_time_am">%1$s:00 ص</string>
+    <string name="settings_time_pm">%1$s:00 م</string>
+    <string name="settings_leftover">الباقي يروح فين</string>
+    <string name="settings_leftover_title">الباقي يروح فين لما تقفل اليوم؟</string>
+    <string name="settings_off">مقفول</string>
+    <string name="settings_notifications">التنبيهات</string>
+    <string name="settings_language">اللغة</string>
+    <string name="settings_lang_ar">العربية</string>
+    <string name="settings_lang_en">English</string>
+    <string name="settings_vibration">الاهتزاز</string>
+    <string name="settings_sounds">صوت التذكرة</string>
+    <string name="settings_sounds_sub">خرم وقطع، بصوت واطي</string>
+    <string name="settings_hide">خبّي المبالغ</string>
+    <string name="settings_hide_sub">نقط بدل الأرقام لحد ما تدوس</string>
+    <string name="settings_lock">القفل والبصمة</string>
+    <string name="settings_backup">النسخة الاحتياطية</string>
+    <string name="settings_backup_none">لسه مفيش نسخة</string>
+    <string name="settings_sms">اقرا رسايل البنك والمحفظة</string>
+    <string name="settings_sms_sub">على موبايلك بس · بلس</string>
+    <string name="settings_soon">قريب</string>
+    <string name="settings_privacy">الخصوصية والشروط</string>
+    <string name="settings_licences">تراخيص الخطوط</string>
+    <string name="settings_feedback">قول رأيك لقرش</string>
+    <string name="settings_feedback_subject">رأيي في مصروفي</string>
+    <string name="settings_version">النسخة</string>
+    <string name="settings_footer">من غير حساب ولا إعلانات. كل حاجة على موبايلك.</string>
+    <string name="legal_title">الخصوصية والشروط</string>
+    <string name="legal_tab_privacy">الخصوصية</string>
+    <string name="legal_tab_terms">الشروط</string>
+    <string name="legal_updated">آخر تحديث: 18 نوفمبر 2026</string>
+    <string name="legal_contact_title">التواصل</string>
+    <string name="legal_contact_none">لأي سؤال، استخدم وسيلة التواصل الموجودة على صفحة التطبيق في Google Play.</string>
+    <string name="legal_contact_email">لأي سؤال ابعتلنا على %1$s.</string>
+    <string name="licences_title">تراخيص الخطوط</string>
+    <string name="licences_intro">مصروفي بيستخدم خطين مفتوحي المصدر، تحت رخصة SIL Open Font License، النسخة 1.1.</string>
+    <string name="licences_alexandria">Alexandria</string>
+    <string name="licences_lalezar">Lalezar</string>
+    <string name="soon_lock">القفل والبصمة</string>
+    <string name="soon_backup">النسخة الاحتياطية</string>
+    <string name="soon_notifications">التنبيهات</string>
+    <string-array name="legal_privacy">
+        <item>باختصار</item>
+        <item>فلوسك وبياناتك على موبايلك وبس. مفيش حساب، ومفيش سيرفر عندنا، ومفيش إعلانات ولا تحليلات. التطبيق نفسه مابيفتحش اتصال بالإنترنت ومابيطلبش إذن الإنترنت.</item>
+        <item>إيه اللي بيتحفظ وفين</item>
+        <item>التذاكر والمصروفات والحصّالة والديون والجمعيات وأي حاجة بتكتبها بتتحفظ في المخزن الخاص بالتطبيق على موبايلك. تطبيقات تانية ماتقدرش تقراه، ومابنبعتش منه حاجة لأي مكان. نسخة جوجل الاحتياطية التلقائية مقفولة للتطبيق.</item>
+        <item>النسخة الاحتياطية</item>
+        <item>النسخة الاحتياطية ملف بتحفظه إنت في المكان اللي تختاره، ومتشفّر بكلمة سر إنت اللي بتحطها. إحنا مابنستلمش الملف ومانقدرش نفتحه، ولو نسيت كلمة السر مفيش حد يقدر يرجّعها. ملف الإكسل اللي ممكن تطلّعه مش متشفّر، والتطبيق بيقولك كده قبل ما تحفظه.</item>
+        <item>رسايل البنك والمحفظة</item>
+        <item>لو لزقت رسالة من بنك أو محفظة، التطبيق بيقراها على موبايلك بس عشان يطلّع المبلغ ويقترح تسجيلة إنت اللي بتأكدها. نص الرسالة مابيتخزّنش ومابيخرجش من موبايلك. التطبيق مابيطلبش إذن قراية الرسايل.</item>
+        <item>الأذونات</item>
+        <item>التنبيهات: عشان نفكّرك بالتذكرة والفواتير، وبتشتغل لما إنت تشغّلها. البصمة: لو شغّلت القفل، أندرويد هو اللي بيقول للتطبيق نجحت ولا لأ، والتطبيق مابيشوفش بصمتك. الاهتزاز: لإحساس الضغط، وتقدر تقفله من الإعدادات.</item>
+        <item>مصروفي بلس</item>
+        <item>بلس اختياري. لما يتوفر، الدفع والتجديد والإلغاء بيتعملوا من Google Play مش من التطبيق، وبياناتك بتفضل على موبايلك. النسخة المجانية بتفضل شغّالة من غير دفع.</item>
+        <item>المشاركة</item>
+        <item>لما تشارك حاجة، زي صورة حكاية الشهر، بتروح بس للتطبيق اللي إنت تختاره. الصورة ممكن تخبّي المبالغ قبل ما تشاركها.</item>
+        <item>الأطفال</item>
+        <item>التطبيق للكبار. شاشة الطفل جزء من موبايل الأب أو الأم، وبياناتها على نفس الموبايل مع باقي بياناتك.</item>
+        <item>مسح بياناتك</item>
+        <item>تقدر تمسح كل حاجة من ملفك ← امسح كل بياناتي، أو من إعدادات أندرويد، أو بإنك تمسح التطبيق. ملفات النسخ الاحتياطي اللي حفظتها بتفضل عندك لحد ما تمسحها.</item>
+        <item>لو السياسة اتغيّرت</item>
+        <item>النسخة الجديدة هتظهر في التطبيق وعلى صفحته في Google Play بتاريخ جديد.</item>
+    </string-array>
+    <string-array name="legal_terms">
+        <item>إيه هو مصروفي</item>
+        <item>مصروفي أداة بتساعدك تتابع فلوسك: تذكرة يومية، حصّالة، فواتير وديون. مش بنك ولا محفظة ولا خدمة دفع، ومش بيمسك فلوس ولا بيحوّلها.</item>
+        <item>مش نصيحة</item>
+        <item>الأرقام اللي بيعرضها، زي تذكرتك اليومية وحاسبة الزكاة، تقديرات من اللي إنت سجّلته. مش نصيحة مالية ولا ضريبية ولا شرعية. قراراتك في فلوسك مسؤوليتك.</item>
+        <item>بياناتك مسؤوليتك</item>
+        <item>كل حاجة على موبايلك. لو الموبايل ضاع أو التطبيق اتمسح من غير نسخة احتياطية، البيانات بتضيع ومانقدرش نرجّعها لأنها عمرها ما كانت عندنا. اعمل نسخة احتياطية، واحفظ كلمة سرها، لأن محدش يقدر يرجّعها.</item>
+        <item>رسايل البنك</item>
+        <item>المبلغ اللي بيتقرا من رسالة ممكن يطلع غلط. راجع التسجيلة قبل ما تحفظها.</item>
+        <item>مصروفي بلس</item>
+        <item>بلس اشتراك اختياري. لما يتوفر، Google Play هو اللي بيحاسبك بالسعر والمدة اللي بتظهرلك وقت الاشتراك، والاشتراك بيتجدد لوحده لحد ما تلغيه. تلغيه في أي وقت من Google Play ثم الاشتراكات، والاسترداد حسب سياسة Google Play. التجربة المجانية بتخلص لوحدها، ومابتتحوّلش لاشتراك من غير ما تختار. النسخة المجانية بتفضل شغّالة من غير دفع، ولما بلس يخلص بياناتك مابتتمسحش، المزايا بس هي اللي بتتقفل.</item>
+        <item>الاستخدام</item>
+        <item>استخدم التطبيق لفلوسك إنت وبشكل قانوني. ماتحاولش تعطّله أو تتدخل في أجهزة الناس.</item>
+        <item>من غير ضمان</item>
+        <item>التطبيق بيتقدّم زي ما هو. بنحاول يفضل شغّال كويس لكن مابنوعدش إنه من غير أخطاء، والمزايا ممكن تتغيّر. في حدود اللي القانون بيسمح بيه، مش مسؤولين عن خسارة ناتجة عن قرار أخدته بالأرقام اللي فيه أو عن بيانات ضاعت. ده مابيقللش حقوقك في قانون حماية المستهلك.</item>
+        <item>القانون الحاكم</item>
+        <item>الشروط دي بيحكمها قانون جمهورية مصر العربية، وبتختص بيها محاكم القاهرة، إلا لو قانون حماية المستهلك في بلدك بيديك حق مختلف.</item>
+        <item>لو الشروط اتغيّرت</item>
+        <item>النسخة الجديدة هتظهر في التطبيق وعلى صفحته في Google Play بتاريخ جديد. استمرارك في الاستخدام معناه إنك موافق عليها.</item>
+    </string-array>
 </resources>

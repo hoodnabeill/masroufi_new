@@ -98,6 +98,17 @@ import com.masroufi.app.ui.motion.TzSpring
 import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.nav.Album
 import com.masroufi.app.ui.nav.AppSettings
+import com.masroufi.app.ui.nav.BackupSettings
+import com.masroufi.app.ui.nav.Legal
+import com.masroufi.app.ui.nav.Licences
+import com.masroufi.app.ui.nav.LockSettings
+import com.masroufi.app.ui.nav.NotificationSettings
+import com.masroufi.app.feature.settings.LegalScreen
+import com.masroufi.app.feature.settings.LicencesScreen
+import com.masroufi.app.feature.settings.SettingsNav
+import com.masroufi.app.feature.settings.SettingsScreen
+import com.masroufi.app.ui.haptics.AndroidHaptics
+import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.nav.Basket
 import com.masroufi.app.ui.nav.BeforeYouBuy
 import com.masroufi.app.ui.nav.CloseDay
@@ -173,7 +184,7 @@ private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<Proverb
     hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<NewGoal>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
     hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>() ||
     hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>() ||
-    hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<EndOfMonth>() || hasRoute<AppSettings>() ||
+    hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<EndOfMonth>() || hasRoute<AppSettings>() || hasRoute<Legal>() || hasRoute<Licences>() || hasRoute<LockSettings>() || hasRoute<BackupSettings>() || hasRoute<NotificationSettings>() ||
     hasRoute<Installments>() || hasRoute<InstallmentEdit>() || hasRoute<Freelance>() || hasRoute<Story>() || hasRoute<StoryList>() || hasRoute<Kids>() || hasRoute<ChildEdit>() || hasRoute<Paywall>()
 
 private fun NavController.switchTab(tab: TzTab) {
@@ -195,6 +206,11 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null, bil
     MasroufiTheme {
         val root = hiltViewModel<AppRootViewModel>()
         val mode by root.mode.collectAsStateWithLifecycle()
+        val feel by root.feel.collectAsStateWithLifecycle()
+        val haptics = LocalHaptics.current
+        LaunchedEffect(feel, haptics) {
+            (haptics as? AndroidHaptics)?.let { it.enabled = feel.first; it.sounds = feel.second }
+        }
         // The child screen replaces the whole app (no nav graph, tab bar, add sheet or ritual behind it); back goes nowhere.
         when (val m = mode) {
             null -> Box(Modifier.fillMaxSize().background(Tz.night)) // night until the stored value is read: no flash of Home
@@ -329,8 +345,30 @@ private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleDa
                         EndOfMonthScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpenJar = { nav.switchTab(TzTab.Plan) })
                     }
                     composable<Basket> { BasketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                    composable<Profile> { ProfileScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpenFreelance = { nav.navigate(Freelance) }) }
-                    composable<AppSettings> { ComingSoonScreen(R.string.soon_settings) { nav.popBackStack() } }
+                    composable<Profile> { ProfileScreen(
+                            viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpenFreelance = { nav.navigate(Freelance) },
+                            onOpenSettings = { nav.navigate(AppSettings) { popUpTo<AppSettings> { inclusive = true }; launchSingleTop = true } },
+                        ) }
+                    composable<AppSettings> {
+                        SettingsScreen(
+                            viewModel = hiltViewModel(),
+                            nav = SettingsNav(
+                                onBack = { nav.popBackStack() },
+                                // Profile and Settings link to each other: reuse the one already on the stack.
+                                onProfile = { nav.navigate(Profile) { popUpTo<Profile> { inclusive = true }; launchSingleTop = true } },
+                                onLock = { nav.navigate(LockSettings) },
+                                onBackup = { nav.navigate(BackupSettings) },
+                                onNotifications = { nav.navigate(NotificationSettings) },
+                                onLegal = { nav.navigate(Legal) },
+                                onLicences = { nav.navigate(Licences) },
+                            ),
+                        )
+                    }
+                    composable<Legal> { LegalScreen(onBack = { nav.popBackStack() }) }
+                    composable<Licences> { LicencesScreen(onBack = { nav.popBackStack() }) }
+                    composable<LockSettings> { ComingSoonScreen(R.string.soon_lock) { nav.popBackStack() } }
+                    composable<BackupSettings> { ComingSoonScreen(R.string.soon_backup) { nav.popBackStack() } }
+                    composable<NotificationSettings> { ComingSoonScreen(R.string.soon_notifications) { nav.popBackStack() } }
                     composable<RollTab> {
                         RollScreen(
                             viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet, onPayday = { nav.navigate(PaydayRitual(it)) },

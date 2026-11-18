@@ -297,6 +297,7 @@ internal fun RepeatChips(repeats: List<RepeatChip>, onChip: (RepeatChip) -> Unit
                         .border(1.dp, Tz.line, shape)
                         .clickable(interactionSource = source, indication = null, role = Role.Button) {
                             haptics.perform(HapticLevel.Confirm)
+                            haptics.sound()
                             onChip(chip)
                         },
                     horizontalAlignment = Alignment.CenterHorizontally,

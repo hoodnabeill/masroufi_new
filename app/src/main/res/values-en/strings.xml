@@ -1450,4 +1450,96 @@
         <item quantity="one">%s envelope</item>
         <item quantity="other">%s envelopes</item>
     </plurals>
+    <!-- Settings and legal (Task 54) -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_profile_sub">Level %1$s · %2$s · your profile</string>
+    <string name="settings_group_ticket">The ticket</string>
+    <string name="settings_group_feel">Feel and look</string>
+    <string name="settings_group_safety">Safety</string>
+    <string name="settings_group_about">About Masroufi</string>
+    <string name="settings_payday">Payday</string>
+    <string name="settings_payday_day">The %1$s of every month</string>
+    <string name="settings_reminder">Tear-off reminder</string>
+    <string name="settings_time_am">%1$s:00 AM</string>
+    <string name="settings_time_pm">%1$s:00 PM</string>
+    <string name="settings_leftover">Where the leftover goes</string>
+    <string name="settings_leftover_title">Where does the leftover go when you close the day?</string>
+    <string name="settings_off">Off</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_lang_ar">العربية</string>
+    <string name="settings_lang_en">English</string>
+    <string name="settings_vibration">Vibration</string>
+    <string name="settings_sounds">Ticket sounds</string>
+    <string name="settings_sounds_sub">Punch and tear, quietly</string>
+    <string name="settings_hide">Hide amounts</string>
+    <string name="settings_hide_sub">Dots instead of numbers until you tap</string>
+    <string name="settings_lock">Lock and fingerprint</string>
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_none">No backup yet</string>
+    <string name="settings_sms">Read bank and wallet messages</string>
+    <string name="settings_sms_sub">On your phone only · Plus</string>
+    <string name="settings_soon">Soon</string>
+    <string name="settings_privacy">Privacy and terms</string>
+    <string name="settings_licences">Font licences</string>
+    <string name="settings_feedback">Tell Qersh what you think</string>
+    <string name="settings_feedback_subject">My thoughts on Masroufi</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_footer">No account, no ads. Everything is on your phone.</string>
+    <string name="legal_title">Privacy and terms</string>
+    <string name="legal_tab_privacy">Privacy</string>
+    <string name="legal_tab_terms">Terms</string>
+    <string name="legal_updated">Last updated: 18 November 2026</string>
+    <string name="legal_contact_title">Contact</string>
+    <string name="legal_contact_none">For any question, use the contact shown on the app\'s Google Play page.</string>
+    <string name="legal_contact_email">For any question, write to %1$s.</string>
+    <string name="licences_title">Font licences</string>
+    <string name="licences_intro">Masroufi uses two open-source fonts, under the SIL Open Font License, version 1.1.</string>
+    <string name="licences_alexandria">Alexandria</string>
+    <string name="licences_lalezar">Lalezar</string>
+    <string name="soon_lock">Lock and fingerprint</string>
+    <string name="soon_backup">Backup</string>
+    <string name="soon_notifications">Notifications</string>
+    <string-array name="legal_privacy">
+        <item>In short</item>
+        <item>Your money and your data stay on your phone. There is no account, no server of ours, no ads and no analytics. The app itself never opens an internet connection and does not ask for the internet permission.</item>
+        <item>What is stored, and where</item>
+        <item>Tickets, spending, the jar, debts, gameyas and anything else you type are kept in the app\'s private storage on your phone. Other apps cannot read it, and nothing is sent anywhere from it. Android\'s automatic cloud backup is turned off for the app.</item>
+        <item>Backups</item>
+        <item>A backup is a file you save yourself, wherever you choose, encrypted with a password you set. We never receive the file and cannot open it, and if you forget the password nobody can recover it. The Excel file you can export is not encrypted, and the app says so before you save it.</item>
+        <item>Bank and wallet messages</item>
+        <item>If you paste a message from a bank or wallet, the app reads it on your phone only, to pull out the amount and suggest an entry that you confirm. The message text is never stored and never leaves your phone. The app does not ask for permission to read your messages.</item>
+        <item>Permissions</item>
+        <item>Notifications: to remind you about the ticket and bills, and only when you turn them on. Fingerprint: if you turn on the lock, Android tells the app whether it worked; the app never sees your fingerprint. Vibration: for the feel of a tap, and you can turn it off in Settings.</item>
+        <item>Masroufi Plus</item>
+        <item>Plus is optional. When it is available, payment, renewal and cancellation are handled by Google Play, not by the app, and your data stays on your phone. The free version keeps working without paying.</item>
+        <item>Sharing</item>
+        <item>When you share something, such as the month\'s story image, it goes only to the app you pick. The image can hide the amounts before you share it.</item>
+        <item>Children</item>
+        <item>The app is for adults. The child screen is part of the parent\'s phone, and its data sits on that same phone with the rest of yours.</item>
+        <item>Deleting your data</item>
+        <item>You can erase everything from your profile (Delete all my data), from Android\'s settings, or by uninstalling the app. Backup files you saved stay with you until you delete them.</item>
+        <item>If this policy changes</item>
+        <item>The new version will appear in the app and on its Google Play page, with a new date.</item>
+    </string-array>
+    <string-array name="legal_terms">
+        <item>What Masroufi is</item>
+        <item>Masroufi is a tool for keeping track of your money: a daily ticket, a jar, bills and debts. It is not a bank, a wallet or a payment service, and it does not hold or move money.</item>
+        <item>Not advice</item>
+        <item>The numbers it shows, such as your daily ticket and the zakat calculator, are estimates from what you recorded. They are not financial, tax or religious advice. What you do with your money is up to you.</item>
+        <item>Your data is your responsibility</item>
+        <item>Everything is on your phone. If the phone is lost or the app is erased without a backup, the data is gone and we cannot bring it back, because we never had it. Make a backup and keep its password safe, because nobody can recover it.</item>
+        <item>Bank messages</item>
+        <item>An amount read from a message can be wrong. Check the entry before you save it.</item>
+        <item>Masroufi Plus</item>
+        <item>Plus is an optional subscription. When it is available, Google Play bills you at the price and period shown when you subscribe, and it renews by itself until you cancel. You can cancel at any time in Google Play under Subscriptions, and refunds follow Google Play\'s policy. The free trial ends by itself and never turns into a subscription unless you choose that. The free version keeps working without paying, and when Plus ends your data is not deleted; only its features lock again.</item>
+        <item>Use</item>
+        <item>Use the app for your own money and for lawful purposes. Do not try to break it or interfere with other people\'s devices.</item>
+        <item>No warranty</item>
+        <item>The app is provided as it is. We work to keep it reliable but do not promise it is free of errors, and features may change. To the extent the law allows, we are not liable for a loss that comes from a decision made with its numbers or from lost data. This does not reduce your rights under consumer protection law.</item>
+        <item>Governing law</item>
+        <item>These terms are governed by the laws of the Arab Republic of Egypt and handled by the competent courts of Cairo, unless the consumer protection law of your country gives you a different right.</item>
+        <item>If these terms change</item>
+        <item>The new version will appear in the app and on its Google Play page, with a new date. Using the app after a change means you accept it.</item>
+    </string-array>
 </resources>

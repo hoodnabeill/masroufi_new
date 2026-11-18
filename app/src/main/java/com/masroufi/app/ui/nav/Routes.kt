@@ -48,8 +48,16 @@ import kotlinx.serialization.Serializable
 @Serializable data object Profile
 /** وضع آخر الشهر (Task 46). */
 @Serializable data object EndOfMonth
-/** Stub until Phase 11's settings replace it. */
+/** الإعدادات (Task 54). */
 @Serializable data object AppSettings
+/** الخصوصية والشروط (Task 54): one screen, two tabs. */
+@Serializable data object Legal
+/** تراخيص الخطوط (Task 54). */
+@Serializable data object Licences
+/** Stubs the Phase 11 tasks fill: the lock (Task 55), the backup (Task 56), the notification switches (Task 57). */
+@Serializable data object LockSettings
+@Serializable data object BackupSettings
+@Serializable data object NotificationSettings
 /** أقساطي (Task 48). */
 @Serializable data object Installments
 /** [id] 0 = a new installment plan. */

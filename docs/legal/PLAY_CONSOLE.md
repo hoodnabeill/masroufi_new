@@ -1,38 +1,43 @@
 # Google Play Console notes
 
-Answers for the Play Console forms, matching what the app does as of this commit. Re-check them whenever a feature
-that touches data, permissions or the network changes. This is not legal advice.
+Answers for the Play Console forms, matching what Masroufi v2 does as of this commit. Re-check them whenever a feature
+that touches data, permissions or the network changes. This is not legal advice. Billing and the store listing text
+come in Phase 13; the Plus lines below describe the plan, not shipped behaviour.
 
 ## Privacy policy URL
 
 Play requires a public URL. The repository is public, so the simplest option is GitHub Pages on `docs/`:
 publish `docs/legal/privacy-policy.md` and paste its URL into **App content → Privacy policy**. The same text ships
-inside the app (More → Privacy policy).
+inside the app (Settings → Privacy and terms), in Arabic and English, and `docs/legal/*` is written from it.
 
 ## Data safety form
 
-- **Does the app collect or share any of the required user data types?** No. All data is stored only on the device.
-  Data that leaves the device does so only at the user's request and to a destination the user chooses (their own
-  encrypted backup file, their own WebDAV server, apps they share to). Google's guidance treats on-device processing
-  and user-initiated transfers to the user's own destinations as not "collected".
-- **Is data encrypted in transit?** Yes (WebDAV over HTTPS is required for sync; backups are encrypted at rest).
-- **Can users request deletion?** Yes: delete entries in the app, clear storage, or uninstall.
-- If you ever add analytics, crash reporting, accounts, ads or a server, this form must be updated first.
+- **Does the app collect or share any of the required user data types?** No. Everything is stored only on the
+  device. There is no account, no server, no analytics, no ads and no crash-reporting SDK.
+- **Is data encrypted in transit?** Not applicable: the app itself never uses the network and does not declare the
+  `INTERNET` permission. Backups are files the user saves, encrypted with the user's password.
+- **Can users request deletion?** Yes: Profile → Delete all my data, Android's clear-storage, or uninstall.
+- Google Play Billing (Phase 13) is handled by Google Play, not by the app's own network code. If you ever add
+  analytics, crash reporting, accounts, ads or a server, this form must be updated first.
 
-## SMS permission declaration (Permissions Declaration Form)
+## Permissions
 
-The app requests `RECEIVE_SMS` only, and only when the user turns on "Read wallet and bank messages".
+Declared: `POST_NOTIFICATIONS` (reminders the user turns on), `USE_BIOMETRIC` (the app lock), `VIBRATE`.
+Not declared: `INTERNET`, `RECEIVE_SMS`, `READ_SMS`, contacts, storage, location.
 
-- **Core functionality / permitted use:** "SMS-based money management — apps that track and manage budget"
-  (Google Play SMS and Call Log policy, Exceptions table).
-- **Why no alternative works:** Egyptian mobile wallets (Vodafone Cash, e& cash, Orange Cash, WE Pay), InstaPay and
-  local banks notify transactions only by SMS; there is no public API to read the user's own transaction history.
-- **What is read:** incoming messages are checked on the device; only messages that contain a currency amount from a
-  wallet, InstaPay or a bank are parsed (amount, type, counterparty, reported balance) to suggest an entry the user
-  confirms. Message text is not stored or transmitted. SMS history is never read (`READ_SMS` is not requested).
-- **Demo video:** record Settings → toggle on → permission prompt → incoming wallet SMS → notification → confirm in
-  the quick-add sheet.
+## SMS permission declaration
+
+Not needed. v2 never requests an SMS permission: the user pastes a bank or wallet message and the app reads it on
+the device, never storing or sending the text. If a later version asks for incoming-SMS access ("read bank messages",
+shown as "قريب" in Settings), this section and the Permissions Declaration Form must be filled in first.
+
+## Subscriptions (Plus)
+
+State in the listing and in the app: the price and period, that it renews automatically, that it is cancelled in
+Google Play → Subscriptions, and that the free version stays usable without paying (09-PREMIUM, "Wording for stores
+and legal"). The in-app terms already say this.
 
 ## Content rating and audience
 
-Finance utility, no user-generated content shared with others, no ads. Target audience: 18+.
+Finance utility, no user-generated content shared with others, no ads. Target audience: 18+. The child screen is part
+of a parent's phone, not an account for a child.

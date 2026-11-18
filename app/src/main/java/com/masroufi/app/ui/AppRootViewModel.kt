@@ -20,6 +20,10 @@ sealed interface RootMode {
 
 @HiltViewModel
 class AppRootViewModel @Inject constructor(settings: SettingsStore, endOfMonthMode: EndOfMonthMode) : ViewModel() {
+    /** The vibration and ticket-sound switches, applied to the one [com.masroufi.app.ui.haptics.AndroidHaptics]. */
+    val feel: StateFlow<Pair<Boolean, Boolean>> =
+        settings.settings.map { it.vibration to it.ticketSounds }.stateIn(viewModelScope, SharingStarted.Eagerly, true to false)
+
     /** Whether onboarding is done; null until the stored value is read, so nothing shows before it is known. */
     val onboarded: StateFlow<Boolean?> =
         settings.settings.map<_, Boolean?> { it.onboarded }.stateIn(viewModelScope, SharingStarted.Eagerly, null)

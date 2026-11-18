@@ -8,6 +8,7 @@ import android.provider.Settings
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.view.HapticFeedbackConstants
+import android.view.SoundEffectConstants
 import android.view.View
 import androidx.compose.runtime.staticCompositionLocalOf
 
@@ -15,6 +16,9 @@ enum class HapticLevel { Tick, Tap, Confirm, Heavy, Milestone, Reject }
 
 interface Haptics {
     fun perform(level: HapticLevel)
+
+    /** The ticket-sound switch's click (punch, tear, close); silent unless the user turned ticket sounds on. */
+    fun sound() = Unit
 }
 
 object NoHaptics : Haptics {
@@ -25,7 +29,15 @@ val LocalHaptics = staticCompositionLocalOf<Haptics> { NoHaptics }
 
 /** performHapticFeedback respects the system touch-feedback setting; [enabled] is the in-app switch (Phase 11). */
 class AndroidHaptics(private val view: View) : Haptics {
+    /** The vibration switch: off silences [perform] here, at the one place every haptic goes through. */
     var enabled = true
+
+    /** The ticket-sounds switch (off by default): the system click, no sound assets. */
+    var sounds = false
+
+    override fun sound() {
+        if (sounds) view.playSoundEffect(SoundEffectConstants.CLICK)
+    }
 
     private val vibrator: Vibrator? by lazy {
         val c = view.context

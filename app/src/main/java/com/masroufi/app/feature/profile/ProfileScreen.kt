@@ -60,6 +60,7 @@ import com.masroufi.app.domain.MainGoal
 import com.masroufi.app.domain.WorkKind
 import com.masroufi.app.feature.people.rememberShareText
 import com.masroufi.app.feature.plan.AmountKeypad
+import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.RowSkeleton
@@ -84,7 +85,7 @@ import java.time.format.DecimalStyle
 
 /** ملفك (Profile.dc.html), a pushed screen; every field is optional and saved as it changes. */
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit, onOpenFreelance: () -> Unit = {}) {
+fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit, onOpenFreelance: () -> Unit = {}, onOpenSettings: () -> Unit = {}) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val share = rememberShareText()
@@ -95,7 +96,9 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit, onOpenFreelan
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        PushedHeader(stringResource(R.string.profile_title), onBack)
+        PushedHeader(stringResource(R.string.profile_title), onBack) {
+            CircleButton(TzIcons.settings, stringResource(R.string.album_settings_cd), onOpenSettings)
+        }
         if (ui.loading) {
             repeat(3) { RowSkeleton() }
         } else {

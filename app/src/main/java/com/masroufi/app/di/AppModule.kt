@@ -37,6 +37,8 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import com.masroufi.app.ui.AndroidAppLocales
+import com.masroufi.app.ui.AppLocales
 import java.time.Clock
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -100,6 +102,8 @@ object AppModule {
     /** Phase 13 swaps the Google Play implementation in here; until then release has no products and no purchase. */
     @Provides @Singleton
     fun billing(clock: Clock): Billing = StubBilling(debug = BuildConfig.DEBUG, clock = clock)
+
+    @Provides @Singleton fun appLocales(): AppLocales = AndroidAppLocales()
 
     @Provides @Singleton
     fun entitlements(plus: PlusRepository): Entitlements = if (BuildConfig.DEBUG) DebugEntitlements(plus = plus) else PlusEntitlements(plus)
