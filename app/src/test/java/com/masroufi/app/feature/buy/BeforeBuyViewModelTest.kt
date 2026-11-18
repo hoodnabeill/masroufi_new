@@ -76,7 +76,7 @@ class BeforeBuyViewModelTest : PlanVmTestBase() {
         plus.setDebugOverride(true)
         settle("Plus") { state.installment != null }
         val i = state.installment!!
-        assertEquals(listOf(222_000L, 42_000L, 12), listOf(i.total, i.extra, i.months))
+        assertEquals(listOf(222_000L, 42_000L, 12L), listOf(i.total, i.extra, i.months.toLong()))
         assertEquals("185 a month over 30 days", 617L, i.perDay)
     }
 
