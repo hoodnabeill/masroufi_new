@@ -97,6 +97,8 @@ Decisions made during Phase 3 (owner may override):
 
 - Task 42: a "last-minute" goal is a leftover of 1–10 pounds; exactly 0 reads "جون! قفلت على الحد بالظبط"; best day needs two goals with a leftover. Only a goal for flips the score; one haptic per visit. First week hides the scoreboard and league. Locked league weeks show a count over placeholder rows (no real data behind the blur). The album header counts N of 50 (the catalog size), not the mock's 60; the progress bar shows progress inside the current level. Milestones celebrate once in the album (first unseen item), not on Home. Basket, Profile and AppSettings are stub routes until Task 44 / Phase 11.
 
+- Task 43: DB v6 (`MIGRATION_5_6`, `wish.movedToJar`) so a wish row shows the real amount moved to the jar. A wish is marked bought only after its prefilled entry saves (cancel keeps it waiting). The Home 48-hour card takes the first-week card's slot (a first-week card wins; hidden in end-of-month mode), outside `cardOrder`. Installment months 1–120. English tickets tile shows "7.5" ("ونص" is Arabic only). Before you buy is the third Plan-tab link.
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
