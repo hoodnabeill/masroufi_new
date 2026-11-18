@@ -743,7 +743,7 @@
     <string name="gameya_payout">Payout</string>
     <string name="gameya_month_of">Month %1$s of %2$s</string>
     <string name="gameya_leg_out">Paid out</string>
-    <string name="gameya_leg_now">This month's turn</string>
+    <string name="gameya_leg_now">This month\'s turn</string>
     <string name="gameya_leg_me">Your turn</string>
     <string name="gameya_me">You</string>
     <string name="gameya_turn_title">Your turn %1$s · %2$s</string>
