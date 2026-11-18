@@ -91,7 +91,7 @@ class DutyLedgerViewModelTest : PlanVmTestBase() {
         val wedding = occasion("فرحي", LocalDate.of(2026, 6, 1), OccasionOwner.MINE)
         settle("occasion") { state.mine.size == 1 }
         vm.openGift(wedding)
-        assertTrue(state.sheet is DutySheet.Gift)
+        settle("sheet") { state.sheet is DutySheet.Gift }
         vm.saveGift(wedding, null, null, "  خالتي ", 75_000, GiftDirection.RECEIVED)
         settle("gift") { state.mine.single().gifts.size == 1 && state.sheet == null }
         val g = state.mine.single().gifts.single()
