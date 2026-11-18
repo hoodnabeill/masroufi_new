@@ -93,6 +93,7 @@ Decisions made during Phase 3 (owner may override):
 - Household scaling: factor = household size ÷ 4; school = per-child base × children in school; both bases are 0 today, so nothing changes on screen until real defaults exist. `SeasonRepository.seedDefaults` is not scaled; the UI uses `ProfileRepository.schoolSuggestion`.
 - Home card order follows the main goal; the people and seasons keys are ignored until Home has those cards.
 - DataWipe clears Room, resets `tazkara_settings`, deletes v1's `masroufi.db` and `datastore/settings.preferences_pb` (closes the Phase 11 v1-file item).
+- Task 41: the first priced entry creates a hidden `tracked_item` row; it is listed after two priced entries or when the user adds it; tracking runs for everyone, only basket reads are Plus. "زوّد التذكرة" stores `ticketRaise` until the next payday and lifts the printed base (today's open row at once); tomorrow's preview does not show the raise yet (Task 44). The suggested ticket follows the rule (240 × 1.09 = 261), not the mock's 252. "صرفت نظر" caps the jar move at spendable. 0.5 ticket is spoken "نص". The unit price uses the system keyboard; editing an entry keeps but does not show its item and unit price.
 
 ## Later phases
 
