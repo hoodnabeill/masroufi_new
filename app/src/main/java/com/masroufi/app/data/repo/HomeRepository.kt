@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import java.time.Clock
 import java.time.LocalDate
+import java.time.YearMonth
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -59,7 +60,33 @@ data class HomeData(
     val mainGoal: MainGoal? = null,
     /** End-of-month mode was switched on by hand (an end-of-month row hides the cards on its own). */
     val endOfMonthMode: Boolean = false,
+    /** Freelancer mode: null while it is off. */
+    val freelance: HomeFreelance? = null,
 )
+
+/**
+ * Freelancer mode on Home: [selfPay] is this month's self-payday (null before it ran), [ritualOffer] = money moved and the
+ * payday ritual neither done nor skipped yet, [dismissed] = the card was closed, [landedSeen] = its Heavy haptic fired.
+ */
+data class HomeFreelance(val salary: Long?, val selfPay: SelfPay?, val ritualOffer: Boolean, val dismissed: Boolean, val landedSeen: Boolean)
+
+/** The key a month's self-payday card is closed (and its haptic remembered) by. */
+fun selfPayCardKey(month: YearMonth): String = "selfpay:${month.key()}"
+
+/** Read from the settings alone, so Home takes no extra read. */
+fun homeFreelance(s: Settings, today: LocalDate): HomeFreelance? {
+    if (!s.freelanceOn) return null
+    val month = YearMonth.from(today)
+    val pay = selfPayOf(s, month)
+    val key = selfPayCardKey(month)
+    return HomeFreelance(
+        salary = s.selfSalary,
+        selfPay = pay,
+        ritualOffer = pay?.entryId != null && s.lastRitualForEntryId != pay.entryId,
+        dismissed = key in s.firstWeekCardsDismissed,
+        landedSeen = key in s.milestonesSeen,
+    )
+}
 
 /** The day's biggest punch: [categoryName] is null when that entry has no (or a deleted) category. */
 data class BiggestPunch(val categoryName: String?, val amount: Long)
@@ -153,6 +180,7 @@ class HomeRepository @Inject constructor(
                 firstOpenDay = s.firstOpenDay,
                 mainGoal = s.mainGoal,
                 endOfMonthMode = s.eomActiveOn(today, cycle.nextPayday),
+                freelance = homeFreelance(s, today),
             )
         }
     }

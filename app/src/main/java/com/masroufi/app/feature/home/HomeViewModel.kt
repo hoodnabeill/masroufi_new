@@ -15,7 +15,9 @@ import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.repo.EndOfMonthRepository
 import com.masroufi.app.data.repo.EntryRepository
 import com.masroufi.app.data.repo.HomeData
+import com.masroufi.app.data.repo.HomeFreelance
 import com.masroufi.app.data.repo.HomeRepository
+import com.masroufi.app.data.repo.selfPayCardKey
 import com.masroufi.app.data.repo.NOTE_MAX_CHARS
 import com.masroufi.app.data.repo.NewEntry
 import com.masroufi.app.data.repo.OnboardingRepository
@@ -65,6 +67,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
@@ -80,6 +83,19 @@ sealed interface SubLine {
 
 data class TicketUi(val amount: Long, val spent: Long, val holes: Int, val subLine: SubLine) {
     val left: Long get() = amount - spent
+}
+
+/**
+ * The self-payday card. [entryId] is the MOVED entry the payday ritual is offered for (null when the vault was empty and
+ * nothing moved); [short] = less than the [salary] moved.
+ */
+data class SelfPayCard(val key: String, val paid: Long, val salary: Long, val entryId: Long?, val short: Boolean, val landedSeen: Boolean)
+
+/** The card of this month's self-payday: shown while the ritual is still offered (or, for an empty vault, until closed). */
+internal fun selfPayCard(f: HomeFreelance?, today: LocalDate): SelfPayCard? {
+    val pay = f?.selfPay ?: return null
+    if (f.dismissed || (pay.entryId != null && !f.ritualOffer)) return null
+    return SelfPayCard(selfPayCardKey(YearMonth.from(today)), pay.paid, f.salary ?: pay.paid, pay.entryId, pay.short, f.landedSeen)
 }
 
 /** After closing: tomorrow's ticket and the card earned today. */
@@ -125,6 +141,13 @@ sealed interface HomeUiState {
          * before the 48-hour question, so never two cards at once. Not part of [cardOrder].
          */
         val endOfMonthOffer: Boolean = false,
+        /** Freelancer mode is on: the ticket's source line links to the vault screen. */
+        val freelanceOn: Boolean = false,
+        /**
+         * What the self-payday did, in the first-week card's slot (after a first-week card, before the end-of-month offer
+         * and the 48-hour question): never two cards at once.
+         */
+        val selfPayCard: SelfPayCard? = null,
     ) : HomeUiState
 }
 
@@ -290,6 +313,11 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { settings.dismissFirstWeekCard(id) }
     }
 
+    /** The self-payday card's money has landed (its Heavy haptic fired): not again this month. */
+    fun selfPayLanded(key: String) {
+        viewModelScope.launch { settings.markMilestoneSeen(key) }
+    }
+
     /** The offer card's "شغّله": the mode goes on until payday and today's open ticket is re-printed. */
     fun switchOnEndOfMonth() = launchEom { eom.switchOn() }
 
@@ -433,7 +461,8 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: L
 
     val firstWeek = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, row.endOfMonth || d.endOfMonthMode)
 
-    val offerCard = offer && firstWeek == null
+    val selfPay = selfPayCard(d.freelance, today)?.takeIf { firstWeek == null }
+    val offerCard = offer && firstWeek == null && selfPay == null
     return HomeUiState.Ready(
         today = today,
         greeting = greetingFor(today, hour, d.cycle),
@@ -455,7 +484,9 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: L
         cardOrder = homeCardOrder(d.mainGoal),
         newTicket = open && d.lastTicketShown != today.toEpochDay(),
         firstWeekCard = firstWeek,
-        dueWish = dueWishes.minWithOrNull(compareBy<WishEntity>({ it.parkedAt }, { it.id }))?.takeIf { firstWeek == null && !offerCard && !row.endOfMonth && !d.endOfMonthMode },
+        dueWish = dueWishes.minWithOrNull(compareBy<WishEntity>({ it.parkedAt }, { it.id }))?.takeIf { firstWeek == null && selfPay == null && !offerCard && !row.endOfMonth && !d.endOfMonthMode },
         endOfMonthOffer = offerCard,
+        freelanceOn = d.freelance != null,
+        selfPayCard = selfPay,
     )
 }

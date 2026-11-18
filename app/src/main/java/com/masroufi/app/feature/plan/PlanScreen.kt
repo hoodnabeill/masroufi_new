@@ -45,6 +45,7 @@ fun PlanScreen(
     onOpenSubscriptions: () -> Unit,
     onOpenFixedCosts: () -> Unit,
     onOpenBeforeBuy: () -> Unit,
+    onOpenInstallments: () -> Unit,
     onNewGoal: () -> Unit,
     onOpenSeason: (Long) -> Unit,
     onZakat: () -> Unit,
@@ -72,6 +73,7 @@ fun PlanScreen(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             TextLink(stringResource(R.string.plan_link_subscriptions), onOpenSubscriptions)
             TextLink(stringResource(R.string.plan_link_fixed), onOpenFixedCosts)
+            TextLink(stringResource(R.string.plan_link_installments), onOpenInstallments)
             TextLink(stringResource(R.string.plan_link_before_buy), onOpenBeforeBuy)
         }
         when (segment) {

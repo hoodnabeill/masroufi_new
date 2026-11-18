@@ -49,7 +49,10 @@ import com.masroufi.app.feature.basket.BasketScreen
 import com.masroufi.app.feature.buy.BeforeBuyScreen
 import com.masroufi.app.feature.close.CloseDayScreen
 import com.masroufi.app.feature.endofmonth.EndOfMonthScreen
+import com.masroufi.app.feature.freelance.FreelanceScreen
 import com.masroufi.app.feature.gallery.GalleryScreen
+import com.masroufi.app.feature.installments.InstallmentFormScreen
+import com.masroufi.app.feature.installments.InstallmentsScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.match.MatchScreen
 import com.masroufi.app.feature.profile.ProfileScreen
@@ -103,7 +106,10 @@ import com.masroufi.app.ui.nav.NewEnvelope
 import com.masroufi.app.ui.nav.NewGoal
 import com.masroufi.app.ui.nav.SubscriptionEdit
 import com.masroufi.app.ui.nav.Subscriptions
+import com.masroufi.app.ui.nav.Freelance
 import com.masroufi.app.ui.nav.Gallery
+import com.masroufi.app.ui.nav.InstallmentEdit
+import com.masroufi.app.ui.nav.Installments
 import com.masroufi.app.ui.nav.Home
 import com.masroufi.app.ui.nav.NewPocket
 import com.masroufi.app.ui.nav.Onboarding
@@ -152,7 +158,8 @@ private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<Proverb
     hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<NewGoal>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
     hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>() ||
     hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>() ||
-    hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<EndOfMonth>() || hasRoute<AppSettings>()
+    hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<EndOfMonth>() || hasRoute<AppSettings>() ||
+    hasRoute<Installments>() || hasRoute<InstallmentEdit>() || hasRoute<Freelance>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -250,8 +257,21 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                             onOpenMatch = { nav.navigate(Match) },
                             onOpenEndOfMonth = { nav.navigate(EndOfMonth) },
                             onOpenAddSheet = ::openAddSheet,
+                            onOpenFreelance = { nav.navigate(Freelance) },
+                            onOpenRitual = { nav.navigate(PaydayRitual(it)) },
                         )
                     }
+                    composable<Installments> {
+                        InstallmentsScreen(
+                            viewModel = hiltViewModel(),
+                            onBack = { nav.popBackStack() },
+                            onNew = { nav.navigate(InstallmentEdit(0)) },
+                            onEdit = { nav.navigate(InstallmentEdit(it)) },
+                            onOpenBeforeBuy = { nav.navigate(BeforeYouBuy) },
+                        )
+                    }
+                    composable<InstallmentEdit> { InstallmentFormScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<Freelance> { FreelanceScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                     composable<Album> {
                         AlbumScreen(
                             viewModel = hiltViewModel(),
@@ -272,10 +292,13 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         EndOfMonthScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpenJar = { nav.switchTab(TzTab.Plan) })
                     }
                     composable<Basket> { BasketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                    composable<Profile> { ProfileScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
+                    composable<Profile> { ProfileScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpenFreelance = { nav.navigate(Freelance) }) }
                     composable<AppSettings> { ComingSoonScreen(R.string.soon_settings) { nav.popBackStack() } }
                     composable<RollTab> {
-                        RollScreen(viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet, onPayday = { nav.navigate(PaydayRitual(it)) })
+                        RollScreen(
+                            viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet, onPayday = { nav.navigate(PaydayRitual(it)) },
+                            onOpenInstallments = { nav.navigate(Installments) },
+                        )
                     }
                     composable<PaydayRitual> {
                         PaydayRitualScreen(
@@ -293,6 +316,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                             onOpenSubscriptions = { nav.navigate(Subscriptions) },
                             onOpenFixedCosts = { nav.navigate(FixedCosts) },
                             onOpenBeforeBuy = { nav.navigate(BeforeYouBuy) },
+                            onOpenInstallments = { nav.navigate(Installments) },
                             onNewGoal = { nav.navigate(NewGoal) },
                             onOpenSeason = { nav.navigate(SeasonEdit(it)) },
                             onZakat = { nav.navigate(Zakat) },

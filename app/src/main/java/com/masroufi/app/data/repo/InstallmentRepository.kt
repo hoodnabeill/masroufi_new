@@ -91,8 +91,8 @@ class InstallmentRepository @Inject constructor(
         )
     }
 
-    /** Re-reads on every plan and entry change. */
-    fun observe(): Flow<InstallmentsView> = combine(recurringDao.all(), entryDao.countFlow()) { _, _ -> view() }
+    /** Re-reads on every plan, entry and jar change (the early-payoff offer follows the jar). */
+    fun observe(): Flow<InstallmentsView> = combine(recurringDao.all(), entryDao.countFlow(), jarDao.total(Pot.JAR)) { _, _, _ -> view() }
 
     private suspend fun plan(item: RecurringEntity): InstallmentPlan {
         val paid = item.paidBefore + entryDao.countAllForRecurring(item.id)

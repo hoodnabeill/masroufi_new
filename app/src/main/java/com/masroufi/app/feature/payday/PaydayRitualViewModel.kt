@@ -68,12 +68,14 @@ class PaydayRitualViewModel @Inject constructor(
                     _state.update { it.copy(loading = false, finished = true) }
                     return@launch
                 }
+                // A freelancer's self-payday is a move out of the vault: the salary lands in the pocket it moved to.
+                val landed = entry.toPocketId ?: entry.pocketId
                 val share = JarShare.Percent(settings.current().lastJarSharePercent ?: DEFAULT_SHARE)
                 val debts = ritual.debtsIOwe()
                 _state.update {
                     it.copy(
-                        loading = false, salary = entry.amount, share = share, debts = debts, repay = debts.map { d -> d.debt.id }.toSet(), pocketId = entry.pocketId,
-                        pocketName = pocketDao.byId(entry.pocketId)?.name.orEmpty(), jarTotal = jar.observe().first().total,
+                        loading = false, salary = entry.amount, share = share, debts = debts, repay = debts.map { d -> d.debt.id }.toSet(), pocketId = landed,
+                        pocketName = pocketDao.byId(landed)?.name.orEmpty(), jarTotal = jar.observe().first().total,
                     )
                 }
                 refresh()

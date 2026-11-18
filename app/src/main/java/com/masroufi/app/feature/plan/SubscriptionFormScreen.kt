@@ -103,7 +103,7 @@ fun SubscriptionFormScreen(viewModel: SubscriptionFormViewModel, onBack: () -> U
 }
 
 @Composable
-private fun Stepper(value: String, minusCd: Int, plusCd: Int, onMinus: () -> Unit, onPlus: () -> Unit) {
+internal fun Stepper(value: String, minusCd: Int, plusCd: Int, onMinus: () -> Unit, onPlus: () -> Unit) {
     val haptics = LocalHaptics.current
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
         CircleButton(TzIcons.minus, stringResource(minusCd)) { haptics.perform(HapticLevel.Tick); onMinus() }

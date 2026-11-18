@@ -38,6 +38,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +75,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.formatDayDate
@@ -127,12 +129,20 @@ private const val ENTRIES_FADE_DELAY_MS = 40
 
 /** الدفتر (Roll.dc.html). Leaving the screen writes any delete still waiting its 5 s. */
 @Composable
-fun RollScreen(viewModel: RollViewModel, onOpenAddSheet: (AddPrefill?) -> Unit, onPayday: (Long) -> Unit = {}) {
+fun RollScreen(
+    viewModel: RollViewModel,
+    onOpenAddSheet: (AddPrefill?) -> Unit,
+    onPayday: (Long) -> Unit = {},
+    onOpenInstallments: () -> Unit = {},
+    installmentIds: InstallmentIdsViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val installments by installmentIds.ids.collectAsStateWithLifecycle()
     val haptics = LocalHaptics.current
     val open by rememberUpdatedState(onOpenAddSheet)
     LaunchedEffect(viewModel) { viewModel.committed.collect { haptics.perform(HapticLevel.Heavy) } }
     DisposableEffect(viewModel) { onDispose { if (viewModel.flush()) haptics.perform(HapticLevel.Heavy) } }
+    CompositionLocalProvider(LocalInstallmentLinks provides InstallmentLinks(installments, onOpenInstallments)) {
     RollContent(
         state,
         onFilter = viewModel::setFilter,
@@ -144,6 +154,7 @@ fun RollScreen(viewModel: RollViewModel, onOpenAddSheet: (AddPrefill?) -> Unit, 
         onAdd = { open(null) },
         onUndo = viewModel::undo,
     )
+    }
 }
 
 internal fun EntryRow.editPrefill() = AddPrefill(
@@ -650,6 +661,14 @@ internal fun EntryLine(
                 maxLines = 1,
             )
             Text(entrySub(e), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2, maxLines = 1)
+            val links = LocalInstallmentLinks.current
+            if (links != null && e.recurringId != null && e.recurringId in links.ids) {
+                Text(
+                    stringResource(R.string.roll_installments_link),
+                    Modifier.clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); links.onOpen() }.padding(vertical = 4.dp),
+                    style = TzType.caption.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold), color = Tz.yellow,
+                )
+            }
         }
         Text(amount, style = TzType.titleTab.copy(fontSize = 18.sp), color = if (e.kind == EntryKind.RECEIVED) Tz.turquoise else Tz.text, maxLines = 1)
     }

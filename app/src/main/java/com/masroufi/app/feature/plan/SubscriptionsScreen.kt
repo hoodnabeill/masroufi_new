@@ -165,7 +165,7 @@ private fun StatTile(big: String, small: String, bg: Color, ink: Color, inkSmall
 }
 
 @Composable
-private fun PillButton(text: String, filled: Boolean, fill: Color, ink: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun PillButton(text: String, filled: Boolean, fill: Color, ink: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val haptics = LocalHaptics.current
     val shape = RoundedCornerShape(22.dp)
     Box(

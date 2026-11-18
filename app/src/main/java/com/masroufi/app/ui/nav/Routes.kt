@@ -50,3 +50,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object EndOfMonth
 /** Stub until Phase 11's settings replace it. */
 @Serializable data object AppSettings
+/** أقساطي (Task 48). */
+@Serializable data object Installments
+/** [id] 0 = a new installment plan. */
+@Serializable data class InstallmentEdit(val id: Long)
+/** مرتب لنفسك (Task 48). */
+@Serializable data object Freelance

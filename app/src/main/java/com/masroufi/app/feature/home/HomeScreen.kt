@@ -38,6 +38,7 @@ import com.masroufi.app.domain.HomeCard
 import com.masroufi.app.data.db.WishEntity
 import com.masroufi.app.feature.buy.JarAskSheet
 import com.masroufi.app.feature.buy.WishQuestionCard
+import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.paper.PrintIn
 import com.masroufi.app.ui.paper.Ticket
 import kotlinx.coroutines.delay
@@ -56,6 +57,8 @@ fun HomeScreen(
     onOpenAlbum: () -> Unit = {},
     onOpenMatch: () -> Unit = {},
     onOpenEndOfMonth: () -> Unit = {},
+    onOpenFreelance: () -> Unit = {},
+    onOpenRitual: (Long) -> Unit = {},
     onOpenAddSheet: (AddPrefill?) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -103,6 +106,9 @@ fun HomeScreen(
         onSetMoney = viewModel::setMoney,
         onWishChangedMind = viewModel::wishChangedMind,
         onWishBought = viewModel::wishBought,
+        onOpenFreelance = onOpenFreelance,
+        onOpenRitual = onOpenRitual,
+        onSelfPayLanded = viewModel::selfPayLanded,
     )
     wishAsk?.let { JarAskSheet(it, onAnswer = viewModel::wishJarAnswer, onDismiss = viewModel::wishAskDismissed) }
 }
@@ -132,6 +138,9 @@ fun HomeContent(
     onDismissOffer: () -> Unit = {},
     onWishChangedMind: (WishEntity) -> Unit = {},
     onWishBought: (Long) -> Unit = {},
+    onOpenFreelance: () -> Unit = {},
+    onOpenRitual: (Long) -> Unit = {},
+    onSelfPayLanded: (String) -> Unit = {},
 ) {
     var skeletonDue by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -155,7 +164,7 @@ fun HomeContent(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets, onOpenAlbum, onOpenMatch, onWishChangedMind, onWishBought, onOpenEndOfMonth, onSwitchOnEndOfMonth, onDismissOffer)
+                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets, onOpenAlbum, onOpenMatch, onWishChangedMind, onWishBought, onOpenEndOfMonth, onSwitchOnEndOfMonth, onDismissOffer, onOpenFreelance, onOpenRitual, onSelfPayLanded)
                 }
             }
         }
@@ -185,6 +194,9 @@ private fun ReadyContent(
     onOpenEndOfMonth: () -> Unit,
     onSwitchOnEndOfMonth: () -> Unit,
     onDismissOffer: () -> Unit,
+    onOpenFreelance: () -> Unit,
+    onOpenRitual: (Long) -> Unit,
+    onSelfPayLanded: (String) -> Unit,
 ) {
     val epochDay = s.today.toEpochDay()
     HomeHeader(s.today, s.greeting, s.streak, onOpenAlbum)
@@ -215,11 +227,14 @@ private fun ReadyContent(
         }
     }
     if (feedback != null && s.ticket != null) PunchFeedbackLines(feedback, spread = s.cycle.daysLeft > 1)
+    if (s.freelanceOn && s.ticket != null) TextLink(stringResource(R.string.home_free_source), onOpenFreelance, Modifier.fillMaxWidth())
     var moneySheet by remember { mutableStateOf(false) }
-    // One Qersh card at a time: a first-week card first, then the end-of-month offer, then the 48-hour question.
+    // One Qersh card at a time: a first-week card first, then the self-payday result, the end-of-month offer, then the 48-hour question.
     val fw = s.firstWeekCard
     val wish = s.dueWish
+    val selfPay = s.selfPayCard
     if (fw != null) FirstWeekCardView(fw, onDismiss = { onDismissCard(fw.id) }, onMoney = { moneySheet = true })
+    else if (selfPay != null) SelfPayCardView(selfPay, onRitual = onOpenRitual, onOpenVault = onOpenFreelance, onDismiss = { onDismissCard(selfPay.key) }, onLanded = { onSelfPayLanded(selfPay.key) })
     else if (s.endOfMonthOffer) EndOfMonthOfferCard(onSwitchOn = onSwitchOnEndOfMonth, onDismiss = onDismissOffer)
     else if (wish != null) WishQuestionCard(wish, onChangedMind = { onWishChangedMind(wish) }, onBought = { onWishBought(wish.id) })
     if (moneySheet) MoneySheet(onDone = { onSetMoney(it); moneySheet = false }, onDismiss = { moneySheet = false })

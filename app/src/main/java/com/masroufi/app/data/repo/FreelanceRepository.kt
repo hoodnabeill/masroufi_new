@@ -72,6 +72,13 @@ fun bufferHalves(vault: Long, salary: Long): Int {
     return (2 * vault.coerceAtLeast(0) / salary).toInt()
 }
 
+/** What [now]'s self-payday did, read from [s] alone; null before it ran, when the mode is off, or when nothing was paid and the vault was not short. */
+fun selfPayOf(s: Settings, now: YearMonth): SelfPay? {
+    val month = s.selfPaidMonth ?: return null
+    if (!s.freelanceOn || month != now.key() || (s.selfPayEntryId == null && !s.selfPayShort)) return null
+    return SelfPay(now, s.selfPayEntryId, s.selfPaid ?: 0L, s.selfPayShort)
+}
+
 /** Today plus the buffer: one calendar month per whole month and 15 days for a half. */
 fun safeUntil(today: LocalDate, halves: Int): LocalDate = today.plusMonths(halves / 2L).plusDays(if (halves % 2 == 1) 15L else 0L)
 
@@ -187,12 +194,7 @@ class FreelanceRepository @Inject constructor(
     }
 
     /** This month's self-payday, null before it ran or when the mode is off. */
-    suspend fun selfPay(): SelfPay? {
-        val s = settings.current()
-        val month = s.selfPaidMonth ?: return null
-        if (!s.freelanceOn || month != YearMonth.now(clock).key() || (s.selfPayEntryId == null && !s.selfPayShort)) return null
-        return SelfPay(YearMonth.now(clock), s.selfPayEntryId, s.selfPaid ?: 0L, s.selfPayShort)
-    }
+    suspend fun selfPay(): SelfPay? = selfPayOf(settings.current(), YearMonth.now(clock))
 
     /** Income into the vault by calendar month for the six months up to and including this one. */
     private suspend fun incomeByMonth(vault: PocketEntity?): List<MonthIncome> {

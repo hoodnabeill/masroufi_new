@@ -84,7 +84,7 @@ import java.time.format.DecimalStyle
 
 /** ملفك (Profile.dc.html), a pushed screen; every field is optional and saved as it changes. */
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
+fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit, onOpenFreelance: () -> Unit = {}) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val share = rememberShareText()
@@ -101,7 +101,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
         } else {
             val shareTitle = stringResource(R.string.profile_share)
             Identity(ui) { share(profileShareText(context, ui), shareTitle) }
-            Fields(ui, viewModel)
+            Fields(ui, viewModel, onOpenFreelance)
             ui.gift?.let { Gift(it) { viewModel.open(ProfileSheet.Target) } }
             Household(ui, viewModel)
             MainGoalCard(ui, viewModel)
@@ -172,7 +172,7 @@ private fun Stat(value: String, label: Int, modifier: Modifier) {
 }
 
 @Composable
-private fun Fields(ui: ProfileUi, vm: ProfileViewModel) {
+private fun Fields(ui: ProfileUi, vm: ProfileViewModel, onOpenFreelance: () -> Unit) {
     val shape = RoundedCornerShape(TzRadius.card)
     val locale = LocalConfiguration.current.locales[0]
     val nameLabel = stringResource(R.string.profile_name_label)
@@ -218,6 +218,17 @@ private fun Fields(ui: ProfileUi, vm: ProfileViewModel) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 WorkKind.entries.forEach { k ->
                     TzChip(stringResource(workLabel(k)), ui.workKind == k, { vm.setWorkKind(k) })
+                }
+            }
+            // The freelancer's vault and self-salary live on their own screen.
+            if (ui.workKind == WorkKind.FREELANCE) {
+                val haptics = LocalHaptics.current
+                Row(
+                    Modifier.fillMaxWidth().clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpenFreelance() }.padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(stringResource(R.string.profile_free_link), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.yellow)
+                    TzIcon(TzIcons.chevron, 18.dp, null)
                 }
             }
         }
