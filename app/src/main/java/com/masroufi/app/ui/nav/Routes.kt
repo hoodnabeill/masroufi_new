@@ -64,3 +64,5 @@ import kotlinx.serialization.Serializable
 @Serializable data object Kids
 /** [id] 0 = a new child. */
 @Serializable data class ChildEdit(val id: Long)
+/** مصروفي بلس (Task 53): [feature] is the PlusFeature name it was opened from, empty = from nowhere in particular. */
+@Serializable data class Paywall(val feature: String = "")

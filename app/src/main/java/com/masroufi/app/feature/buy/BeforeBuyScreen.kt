@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.PIASTRES
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.WishView
@@ -81,7 +82,6 @@ import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.feature.add.Keypad
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.EmptyState
-import com.masroufi.app.ui.components.PlusComingSheet
 import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.TzProgressBar
@@ -121,7 +121,6 @@ fun BeforeBuyScreen(viewModel: BeforeBuyViewModel, onBack: () -> Unit, onOpenAdd
     val nameFocus = remember { FocusRequester() }
     val scroll = rememberScrollState()
     val scope = rememberCoroutineScope()
-    var plusSheet by remember { mutableStateOf(false) }
 
     // 05-MOTION "Parking an item for 48 h": the item's cards shrink away as the list gains its row.
     val shrink = remember { Animatable(1f) }
@@ -151,7 +150,7 @@ fun BeforeBuyScreen(viewModel: BeforeBuyViewModel, onBack: () -> Unit, onOpenAdd
                 )
                 ui.result?.let { r -> if (ui.tiles.isNotEmpty()) Tiles(r, ui.tiles) }
                 if (ui.priceValue > 0) {
-                    InstallmentCard(ui, viewModel::focus) { plusSheet = true }
+                    InstallmentCard(ui, viewModel::focus)
                 }
                 ParkCard(enabled = ui.canPark, onPark = { if (viewModel.park()) haptics.perform(HapticLevel.Confirm) })
             }
@@ -172,7 +171,6 @@ fun BeforeBuyScreen(viewModel: BeforeBuyViewModel, onBack: () -> Unit, onOpenAdd
         }
     }
     ask?.let { JarAskSheet(it, onAnswer = viewModel::jarAnswer, onDismiss = viewModel::askDismissed) }
-    if (plusSheet) PlusComingSheet { plusSheet = false }
 }
 
 @Composable
@@ -283,7 +281,7 @@ private fun TileBox(big: String, caption: String, numberColor: Color, highlighte
 }
 
 @Composable
-private fun InstallmentCard(ui: BeforeBuyUi, onFocus: (BuyField?) -> Unit, onTryPlus: () -> Unit) {
+private fun InstallmentCard(ui: BeforeBuyUi, onFocus: (BuyField?) -> Unit) {
     val shape = RoundedCornerShape(24.dp)
     Column(
         Modifier.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).padding(16.dp),
@@ -291,7 +289,7 @@ private fun InstallmentCard(ui: BeforeBuyUi, onFocus: (BuyField?) -> Unit, onTry
     ) {
         Text(stringResource(R.string.buy_inst_title), style = TzType.cardHeading, color = Tz.text)
         if (ui.plus) InstallmentBody(ui, onFocus)
-        else PlusLocked(R.string.buy_inst_locked, onTryPlus) { InstallmentBody(ui, onFocus) }
+        else PlusLocked(R.string.buy_inst_locked, PlusFeature.INSTALLMENT_COMPARE) { InstallmentBody(ui, onFocus) }
     }
 }
 

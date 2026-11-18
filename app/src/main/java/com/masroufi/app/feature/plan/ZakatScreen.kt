@@ -26,11 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
-import com.masroufi.app.ui.components.PlusComingSheet
 import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.TzCard
@@ -53,10 +53,9 @@ fun ZakatScreen(viewModel: ZakatViewModel, onBack: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         PushedHeader(stringResource(R.string.zakat_title), onBack)
-        if (ui.isPlus) body() else PlusLocked(R.string.zakat_lock, { viewModel.open(ZakatSheet.Plus) }, body)
+        if (ui.isPlus) body() else PlusLocked(R.string.zakat_lock, PlusFeature.ZAKAT, body)
     }
     when (ui.sheet) {
-        ZakatSheet.Plus -> PlusComingSheet(viewModel::dismiss)
         ZakatSheet.Money -> ValueSheet(R.string.zakat_held, ui.zakatable, viewModel::dismiss, viewModel::setZakatable)
         ZakatSheet.Nisab -> ValueSheet(R.string.zakat_nisab, ui.nisab ?: 0, viewModel::dismiss, viewModel::setNisab)
         ZakatSheet.PerPerson -> ValueSheet(R.string.zakat_per_person, ui.perPerson, viewModel::dismiss, viewModel::setPerPerson)

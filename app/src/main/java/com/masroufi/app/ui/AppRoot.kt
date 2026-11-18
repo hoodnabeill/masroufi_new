@@ -42,7 +42,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.DebugSampleData
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.entitlements.Entitlements
+import com.masroufi.app.entitlements.StubBilling
+import com.masroufi.app.feature.paywall.PaywallScreen
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.AddSheet
 import com.masroufi.app.feature.album.AlbumScreen
@@ -87,6 +90,7 @@ import com.masroufi.app.feature.story.StoryListScreen
 import com.masroufi.app.feature.story.StoryScreen
 import com.masroufi.app.feature.roll.RollScreen
 import com.masroufi.app.ui.components.LocalEndOfMonthMode
+import com.masroufi.app.ui.components.LocalOpenPaywall
 import com.masroufi.app.ui.components.TzTab
 import com.masroufi.app.ui.components.TzTabBar
 import com.masroufi.app.ui.motion.LocalReduceMotion
@@ -119,6 +123,7 @@ import com.masroufi.app.ui.nav.Installments
 import com.masroufi.app.ui.nav.Home
 import com.masroufi.app.ui.nav.NewPocket
 import com.masroufi.app.ui.nav.Onboarding
+import com.masroufi.app.ui.nav.Paywall
 import com.masroufi.app.ui.nav.PaydayRitual
 import com.masroufi.app.ui.nav.PeopleTab
 import com.masroufi.app.ui.nav.PlanTab
@@ -169,7 +174,7 @@ private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<Proverb
     hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>() ||
     hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>() ||
     hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<EndOfMonth>() || hasRoute<AppSettings>() ||
-    hasRoute<Installments>() || hasRoute<InstallmentEdit>() || hasRoute<Freelance>() || hasRoute<Story>() || hasRoute<StoryList>() || hasRoute<Kids>() || hasRoute<ChildEdit>()
+    hasRoute<Installments>() || hasRoute<InstallmentEdit>() || hasRoute<Freelance>() || hasRoute<Story>() || hasRoute<StoryList>() || hasRoute<Kids>() || hasRoute<ChildEdit>() || hasRoute<Paywall>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -186,7 +191,7 @@ private fun NavController.switchTab(tab: TzTab) {
 }
 
 @Composable
-fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
+fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null, billing: StubBilling? = null) {
     MasroufiTheme {
         val root = hiltViewModel<AppRootViewModel>()
         val mode by root.mode.collectAsStateWithLifecycle()
@@ -197,13 +202,13 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                 BackHandler(enabled = true) {}
                 ChildScreen(viewModel = hiltViewModel())
             }
-            else -> MainApp(root, entitlements, sampleData, startAtOnboarding = m == RootMode.Onboarding)
+            else -> MainApp(root, entitlements, sampleData, billing, startAtOnboarding = m == RootMode.Onboarding)
         }
     }
 }
 
 @Composable
-private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleData: DebugSampleData?, startAtOnboarding: Boolean) {
+private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleData: DebugSampleData?, billing: StubBilling?, startAtOnboarding: Boolean) {
     run {
         val nav = rememberNavController()
         val endOfMonth by root.endOfMonth.collectAsStateWithLifecycle()
@@ -234,7 +239,9 @@ private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleDa
         fun AnimatedContentTransitionScope<NavBackStackEntry>.pushedOut(): ExitTransition =
             if (reduce) fadeOut(tween(120)) else slideOutHorizontally(move) { sign * it }
 
-        CompositionLocalProvider(LocalEndOfMonthMode provides endOfMonth) {
+        // Every "جرّب بلس" lands here; one paywall at a time, and the mode keeps the buttons away in the first place.
+        val openPaywall = remember(nav) { { feature: PlusFeature -> nav.navigate(Paywall(feature.name)) { launchSingleTop = true } } }
+        CompositionLocalProvider(LocalEndOfMonthMode provides endOfMonth, LocalOpenPaywall provides openPaywall) {
             AppScaffold(
                 selectedTab = current.tab(),
                 onTab = nav::switchTab,
@@ -282,8 +289,10 @@ private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleDa
                             onOpenFreelance = { nav.navigate(Freelance) },
                             onOpenRitual = { nav.navigate(PaydayRitual(it)) },
                             onOpenStory = { nav.navigate(Story(it)) { launchSingleTop = true } },
+                            onOpenPaywall = { nav.navigate(Paywall()) { launchSingleTop = true } },
                         )
                     }
+                    composable<Paywall> { PaywallScreen(viewModel = hiltViewModel(), onClose = { nav.popBackStack() }) }
                     composable<Story> { StoryScreen(viewModel = hiltViewModel(), onClose = { nav.popBackStack() }) }
                     composable<StoryList> {
                         StoryListScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpen = { nav.navigate(Story(it)) })
@@ -447,7 +456,7 @@ private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleDa
                         )
                     }
                     composable<NewPocket> { NewPocketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                    composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }) }
+                    composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }, billing = billing) }
                 }
             }
             if (addSheetOpen) AddSheet(addPrefill, onDismiss = { addSheetOpen = false })

@@ -11,7 +11,14 @@ import com.masroufi.app.domain.TicketStatus
 import com.masroufi.app.entitlements.ActiveSubscription
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.PlusPlan
+import com.masroufi.app.entitlements.Billing
+import com.masroufi.app.entitlements.BillingProduct
+import com.masroufi.app.entitlements.MANAGE_SUBSCRIPTION_URL
+import com.masroufi.app.entitlements.PlusRepository
 import com.masroufi.app.entitlements.PurchaseResult
+import com.masroufi.app.entitlements.RestoreOutcome
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import com.masroufi.app.entitlements.StubBilling
 import com.masroufi.app.entitlements.TrialState
 import com.masroufi.app.entitlements.plusOn
@@ -253,6 +260,22 @@ class PlusRepositoryTest {
         assertEquals(PurchaseResult.Success, debug.purchase(PlusPlan.MONTHLY))
         assertEquals(ActiveSubscription(PlusPlan.MONTHLY, day1.plusMonths(1)), debug.subscription.value)
         assertEquals(debug.subscription.value, debug.restore())
+    }
+
+    @Test fun restoreSaysWhatItFoundInPlainWords() = runTest {
+        setUp()
+        assertEquals(RestoreOutcome.NONE, f.plusRepo.restoreOutcome())
+        assertEquals(PurchaseResult.Success, f.billing.purchase(PlusPlan.YEARLY))
+        assertEquals(RestoreOutcome.FOUND, f.plusRepo.restoreOutcome())
+        val broken = object : Billing {
+            override val products: StateFlow<List<BillingProduct>> = MutableStateFlow(emptyList())
+            override val subscription: StateFlow<ActiveSubscription?> = MutableStateFlow(null)
+            override suspend fun purchase(plan: PlusPlan) = PurchaseResult.Failed
+            override suspend fun restore(): ActiveSubscription? = throw IllegalStateException("store unreachable")
+            override fun manageSubscriptionUrl() = MANAGE_SUBSCRIPTION_URL
+        }
+        val offline = PlusRepository(broken, f.settings, db.dayTicketDao(), f.eomMode, clock, backgroundScope)
+        assertEquals(RestoreOutcome.FAILED, offline.restoreOutcome())
     }
 
     // --- nothing is deleted when Plus ends -------------------------------------------------------------------

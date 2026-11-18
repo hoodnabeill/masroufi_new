@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.db.CategoryDao
 import com.masroufi.app.data.db.PocketDao
+import com.masroufi.app.data.prefs.Settings
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.repo.EndOfMonthRepository
 import com.masroufi.app.data.repo.EntryRepository
@@ -30,6 +31,11 @@ import com.masroufi.app.feature.buy.WishAnswers
 import com.masroufi.app.feature.buy.WishAsk
 import com.masroufi.app.data.repo.punchesTicket
 import com.masroufi.app.di.ProcessLifecycle
+import com.masroufi.app.entitlements.PlusRepository
+import com.masroufi.app.entitlements.TRIAL_DAYS
+import com.masroufi.app.entitlements.TrialInfo
+import com.masroufi.app.entitlements.TrialState
+import com.masroufi.app.entitlements.trialInfo
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.domain.TicketStatus
@@ -65,6 +71,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Clock
 import java.time.LocalDate
@@ -99,6 +107,17 @@ internal fun selfPayCard(f: HomeFreelance?, today: LocalDate): SelfPayCard? {
     if (f.dismissed || (pay.entryId != null && !f.ritualOffer)) return null
     return SelfPayCard(selfPayCardKey(YearMonth.from(today)), pay.paid, f.salary ?: pay.paid, pay.entryId, pay.short, f.landedSeen)
 }
+
+/** The trial card (decision 3): what is in it and the day it would end if started today. */
+data class TrialOffer(val endsOn: LocalDate)
+
+/** The quiet line three days before the end (and on it): [daysLeft] 0 = the last day. */
+data class TrialEndsSoon(val daysLeft: Int)
+
+/** The trial inputs: the stored settings and whether something is paid (then neither card nor line shows). */
+private data class TrialInputs(val settings: Settings, val subscribed: Boolean)
+
+private data class Extras(val due: List<WishEntity>, val offered: Boolean, val storyDue: Long?, val trial: TrialInputs)
 
 /** After closing: tomorrow's ticket and the card earned today. */
 data class TomorrowUi(val amount: Long, val proverbNumber: Int?)
@@ -150,6 +169,13 @@ sealed interface HomeUiState {
          * and the 48-hour question): never two cards at once.
          */
         val selfPayCard: SelfPayCard? = null,
+        /**
+         * The trial card, last in the card slot: after a first-week card, the self-payday card, the end-of-month offer and the
+         * 48-hour question (never two cards at once), never in end-of-month mode, never while a story is unseen.
+         */
+        val trialOffer: TrialOffer? = null,
+        /** The quiet "ends soon" line (not a card); also held back while a story is unseen. */
+        val trialEndsSoon: TrialEndsSoon? = null,
     ) : HomeUiState
 }
 
@@ -175,6 +201,7 @@ class HomeViewModel @Inject constructor(
     private val wishes: WishRepository,
     private val eom: EndOfMonthRepository,
     private val story: StoryRepository,
+    private val plus: PlusRepository,
 ) : ViewModel() {
     private val failure = MutableStateFlow<Throwable?>(null)
     private val _saveFailed = MutableStateFlow(false)
@@ -222,6 +249,8 @@ class HomeViewModel @Inject constructor(
     private val unseenStory: Flow<Long?> = story.unseen().map { it?.id }.distinctUntilChanged()
         .catch { Log.e(TAG, "story failed", it); emit(null) }
 
+    private val trialInputs: Flow<TrialInputs> = combine(settings.settings, plus.subscription) { s, sub -> TrialInputs(s, sub != null) }
+
     private val storiesOpened = MutableStateFlow<Set<Long>>(emptySet())
 
     /** The story to open now, once: the first open after the cycle closed. Null once [storyOpened] was called for it. */
@@ -231,7 +260,7 @@ class HomeViewModel @Inject constructor(
     /** The screen is opening story [id]: not again from this Home. It stays unseen (and the other moments wait) until the story closes. */
     fun storyOpened(id: Long) = storiesOpened.update { it + id }
 
-    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure, pendingDeletes.pending, combine(dueWishes, offer, unseenStory, ::Triple)) { d, pending, f, deleted, (due, offered, storyDue) ->
+    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure, pendingDeletes.pending, combine(dueWishes, offer, unseenStory, trialInputs, ::Extras)) { d, pending, f, deleted, (due, offered, storyDue, trial) ->
         val row = d?.today
         when {
             f != null -> HomeUiState.Error
@@ -239,9 +268,12 @@ class HomeViewModel @Inject constructor(
             else -> {
                 // The add sheet's placeholders stop counting once this row holds them; then they can go.
                 pendingPunches.prune(row.entryCount)
-                homeUi(d.withoutDeleted(deleted.values), pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour, due, offered)
+                homeUi(
+                    d.withoutDeleted(deleted.values), pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour, due, offered,
+                    trial = if (trial.subscribed) null else trialInfo(trial.settings, row.date),
+                )
                     // The story comes first: the new-ticket moment, the self-payday card and the offer wait until it closes.
-                    .let { if (storyDue != null) it.copy(newTicket = false, selfPayCard = null, endOfMonthOffer = false, dueWish = null) else it }
+                    .let { if (storyDue != null) it.copy(newTicket = false, selfPayCard = null, endOfMonthOffer = false, dueWish = null, trialOffer = null, trialEndsSoon = null) else it }
             }
         }
     }
@@ -252,9 +284,52 @@ class HomeViewModel @Inject constructor(
         override fun onStart(owner: LifecycleOwner) = print()
     }
 
+    private val paywalls = Channel<Unit>(Channel.BUFFERED)
+    private val paywallLock = Mutex()
+
+    /** The paywall should open now (once a day, see [PlusRepository.shouldAutoOpenPaywall]); the screen navigates. */
+    val paywallRequests: Flow<Unit> = paywalls.receiveAsFlow()
+
+    /**
+     * Home resumed, or the story just closed: asks for the paywall when the rules allow it, once. The story comes first, so
+     * nothing opens while one is unseen; the day is marked before the request is sent, so two checks never open it twice.
+     */
+    fun checkPaywall() {
+        viewModelScope.launch {
+            try {
+                paywallLock.withLock {
+                    if (story.unseen().first() != null) return@withLock
+                    val today = LocalDate.now(clock)
+                    if (!plus.shouldAutoOpenPaywall(today)) return@withLock
+                    plus.markPaywallShown(today)
+                    paywalls.send(Unit)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "paywall check failed", e)
+            }
+        }
+    }
+
+    /** The trial card's one tap: the 14 days start today, no payment. */
+    fun startTrial() {
+        viewModelScope.launch {
+            try {
+                plus.startTrial(LocalDate.now(clock))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "trial not started", e)
+            }
+        }
+    }
+
     init {
         print()
         processLifecycle.addObserver(onStart)
+        // The story closing (it turns seen) is the moment the paywall may follow it; this is also the first check on open.
+        viewModelScope.launch { unseenStory.collect { if (it == null) checkPaywall() } }
         viewModelScope.launch {
             feedbackBus.events.collect(::show)
         }
@@ -435,7 +510,9 @@ private fun HomeData.withoutDeleted(deleted: Collection<PendingDelete>): HomeDat
     )
 }
 
-internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: List<WishEntity> = emptyList(), offer: Boolean = false): HomeUiState.Ready {
+internal fun homeUi(
+    d: HomeData, pending: List<Pending>, hour: Int, dueWishes: List<WishEntity> = emptyList(), offer: Boolean = false, trial: TrialInfo? = null,
+): HomeUiState.Ready {
     val row = checkNotNull(d.today)
     val today = row.date
     val daysLeft = d.cycle.daysLeft(today)
@@ -477,10 +554,22 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: L
         projectedAtPayday(d.spendable + row.spent, d.unpaidBills, row.base, row.carriedIn, daysLeft).takeIf { it >= 0 }
     }
 
-    val firstWeek = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, row.endOfMonth || d.endOfMonthMode)
+    val inMode = row.endOfMonth || d.endOfMonthMode
+    // From day 7 the trial offer goes before the chatty first-week cards (they never expire on their own and would starve it);
+    // the money question is a real need and keeps its place.
+    val trialOffered = trial?.state == TrialState.OFFERED && !inMode
+    val firstWeek = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, inMode)
+        ?.takeUnless { trialOffered && it != FirstWeekCard.Money }
 
     val selfPay = selfPayCard(d.freelance, today)?.takeIf { firstWeek == null }
     val offerCard = offer && firstWeek == null && selfPay == null
+    val dueWish = dueWishes.minWithOrNull(compareBy<WishEntity>({ it.parkedAt }, { it.id }))?.takeIf { firstWeek == null && selfPay == null && !offerCard && !inMode }
+    val trialOffer = if (trialOffered && firstWeek == null && selfPay == null && !offerCard && dueWish == null) {
+        TrialOffer(today.plusDays(TRIAL_DAYS - 1))
+    } else {
+        null
+    }
+    val endsSoon = if (trial?.state == TrialState.ACTIVE && trial.endsSoon) TrialEndsSoon(trial.daysLeft) else null
     return HomeUiState.Ready(
         today = today,
         greeting = greetingFor(today, hour, d.cycle),
@@ -502,9 +591,11 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int, dueWishes: L
         cardOrder = homeCardOrder(d.mainGoal),
         newTicket = open && d.lastTicketShown != today.toEpochDay(),
         firstWeekCard = firstWeek,
-        dueWish = dueWishes.minWithOrNull(compareBy<WishEntity>({ it.parkedAt }, { it.id }))?.takeIf { firstWeek == null && selfPay == null && !offerCard && !row.endOfMonth && !d.endOfMonthMode },
+        dueWish = dueWish,
         endOfMonthOffer = offerCard,
         freelanceOn = d.freelance != null,
         selfPayCard = selfPay,
+        trialOffer = trialOffer,
+        trialEndsSoon = endsSoon,
     )
 }

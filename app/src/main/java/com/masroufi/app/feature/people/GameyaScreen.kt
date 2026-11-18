@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.db.GameyaPlanEntity
 import com.masroufi.app.data.repo.GameyaView
@@ -67,7 +68,7 @@ import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.EmptyState
-import com.masroufi.app.ui.components.PlusComingSheet
+import com.masroufi.app.ui.components.PlusSheet
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.SecondaryButton
@@ -129,7 +130,7 @@ fun GameyaMainScreen(viewModel: GameyaViewModel, onBack: () -> Unit, onNew: () -
             Spacer(Modifier.size(28.dp))
         }
     }
-    if (ui.plusSheet) PlusComingSheet(viewModel::dismissPlus)
+    if (ui.plusSheet) PlusSheet(R.string.gameya_plus_line, PlusFeature.GAMEYA, viewModel::dismissPlus)
     val v = current
     if (v != null) GameyaSheets(ui, v, viewModel)
 }

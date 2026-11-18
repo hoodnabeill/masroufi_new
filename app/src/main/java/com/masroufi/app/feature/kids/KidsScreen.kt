@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.PIN_MIN_DIGITS
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.ChoreView
@@ -48,7 +49,7 @@ import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.EmptyState
-import com.masroufi.app.ui.components.PlusComingSheet
+import com.masroufi.app.ui.components.PlusSheet
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzCard
@@ -217,7 +218,7 @@ private fun KidsSheets(ui: KidsUi, vm: KidsViewModel) {
             }
         }
         KidsSheet.AddChore -> AddChoreSheet(view, vm)
-        KidsSheet.Plus -> PlusComingSheet(vm::dismissSheet)
+        KidsSheet.Plus -> PlusSheet(R.string.kids_plus_line, PlusFeature.KIDS, vm::dismissSheet)
         is KidsSheet.ChooseChild -> TzSheet(vm::dismissSheet) {
             Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.kids_chore_who), style = TzType.cardHeading, color = Tz.text)

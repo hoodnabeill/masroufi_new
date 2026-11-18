@@ -6,6 +6,7 @@ import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.repo.EndOfMonthMode
 import com.masroufi.app.di.AppScope
 import com.masroufi.app.domain.TicketStatus
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,8 @@ const val TRIAL_DAYS = 14L
 
 /** The quiet Home line shows this many days before the end (and on the end day). */
 const val TRIAL_ENDS_SOON_DAYS = 3L
+
+enum class RestoreOutcome { FOUND, NONE, FAILED }
 
 enum class TrialState { NOT_YET, OFFERED, ACTIVE, ENDED }
 
@@ -90,6 +93,18 @@ class PlusRepository @Inject constructor(
     }
 
     suspend fun restore(): ActiveSubscription? = billing.restore()
+
+    /** The settings row's "استرجاع الاشتراك": a plain result, never an exception. */
+    suspend fun restoreOutcome(): RestoreOutcome = try {
+        if (billing.restore() != null) RestoreOutcome.FOUND else RestoreOutcome.NONE
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        RestoreOutcome.FAILED
+    }
+
+    /** What is paid for now (null = nothing): the Home trial card and line stay away when it is set. */
+    val subscription: StateFlow<ActiveSubscription?> get() = billing.subscription
 
     /**
      * The paywall opens by itself the day before the trial ends and on the end day, once a day; never with a

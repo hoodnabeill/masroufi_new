@@ -27,6 +27,8 @@ import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.domain.TicketStatus
 import com.masroufi.app.entitlements.DebugEntitlements
+import com.masroufi.app.entitlements.PlusPlan
+import com.masroufi.app.entitlements.TrialState
 import com.masroufi.app.feature.roll.PendingDeletes
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.FeedbackBus
@@ -111,7 +113,7 @@ class HomeViewModelTest {
             initializer {
                 HomeViewModel(
                     f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, FeedbackBus(), f.settings, f.onboarding,
-                    PendingDeletes(f.entries, io), f.wishes, f.eom, f.story,
+                    PendingDeletes(f.entries, io), f.wishes, f.eom, f.story, f.plusRepo,
                 )
             }
         }
@@ -404,5 +406,155 @@ class HomeViewModelTest {
         settle("tomorrow's preview") { ready?.tomorrow != null }
         // 3,890 over 12 days = 324: the 290 leftover is already in the 3,890 (carried on top it would show 590).
         assertEquals(32_400L, ready?.tomorrow?.amount)
+    }
+
+    // --- Plus: the trial card, the quiet line and the paywall's own opening (Task 53) -----------------------------
+
+    /** Day 7 of use: the first open was Nov 6 and onboarding is done (Home only shows after it). */
+    private fun seventhDay() {
+        clock.instant = at(nov12.minusDays(6), 9)
+        onIo { f.settings.current(); f.settings.setOnboarded(true) }
+        clock.instant = at(nov12, 9)
+    }
+
+    /** A trial that runs through today and [daysLeft] more days. */
+    private fun trialEndingIn(daysLeft: Long) = onIo {
+        f.settings.startTrial(nov12.plusDays(daysLeft - 13).toEpochDay(), nov12.plusDays(daysLeft).toEpochDay())
+    }
+
+    private fun pump(ms: Long) {
+        val end = System.nanoTime() + ms * 1_000_000
+        while (System.nanoTime() < end) {
+            main.scheduler.runCurrent()
+            shadowOf(Looper.getMainLooper()).idle()
+            Thread.sleep(5)
+        }
+    }
+
+    private fun collectPaywalls(): MutableList<Unit> {
+        val opened = mutableListOf<Unit>()
+        vm.viewModelScope.launch { vm.paywallRequests.collect { opened += Unit } }
+        return opened
+    }
+
+    @Test fun theTrialCardOffersFromDaySevenWithTheEndDateAndStartsInOneTap() {
+        seventhDay()
+        newVm()
+        settle("the trial card") { ready?.trialOffer != null }
+        assertEquals("14 days: the start day and 13 more", nov12.plusDays(13), ready!!.trialOffer!!.endsOn)
+        assertNull("the chatty first-week cards give way", ready!!.firstWeekCard)
+        assertNull(ready!!.trialEndsSoon)
+        vm.startTrial()
+        settle("started") { ready?.trialOffer == null }
+        val info = onIo { f.plusRepo.trialInfoNow(nov12) }
+        assertEquals(listOf(TrialState.ACTIVE, nov12, nov12.plusDays(13)), listOf(info.state, info.startDay, info.endDay))
+    }
+
+    @Test fun noTrialCardBeforeDaySeven() {
+        clock.instant = at(nov12.minusDays(6), 9)
+        onIo { f.settings.current(); f.settings.setOnboarded(true) }
+        clock.instant = at(nov12.minusDays(1), 9) // day 6
+        newVm()
+        settle("ready") { ready?.today == nov12.minusDays(1) }
+        assertNull(ready!!.trialOffer)
+    }
+
+    @Test fun theWishQuestionGoesBeforeTheTrialCard() {
+        seventhDay()
+        parkedBefore()
+        newVm()
+        settle("the wish card") { ready?.dueWish != null }
+        assertNull("never two cards at once", ready!!.trialOffer)
+    }
+
+    @Test fun noTrialCardInEndOfMonthMode() {
+        seventhDay()
+        runBlocking { f.tickets.printToday(); f.eom.switchOn() }
+        newVm()
+        settle("ready in the mode") { ready?.ticket != null }
+        assertNull(ready!!.trialOffer)
+    }
+
+    @Test fun anUnseenStoryHoldsBackTheTrialCardAndTheLine() {
+        seventhDay()
+        val id = onIo { db.storyDao().insert(entity(fullPayload())) }
+        newVm()
+        vm.viewModelScope.launch { vm.pendingStory.collect {} }
+        settle("the story is pending") { vm.pendingStory.value == id && ready != null }
+        assertNull(ready!!.trialOffer)
+        val mark = io.launch { f.story.markShown(id) }
+        settle("the card once the story closed") { mark.isCompleted && ready?.trialOffer != null }
+    }
+
+    @Test fun theQuietLineShowsInTheLastThreeDaysAndIsNotACard() {
+        seventhDay()
+        trialEndingIn(2)
+        newVm()
+        settle("the line") { ready?.trialEndsSoon != null }
+        assertEquals(2, ready!!.trialEndsSoon!!.daysLeft)
+        assertNull(ready!!.trialOffer)
+    }
+
+    @Test fun noLineWithMoreThanThreeDaysLeft() {
+        seventhDay()
+        trialEndingIn(5)
+        newVm()
+        settle("ready") { ready != null }
+        assertNull(ready!!.trialEndsSoon)
+        assertNull(ready!!.trialOffer)
+    }
+
+    @Test fun aSubscriptionTakesTheCardAndTheLineAway() {
+        seventhDay()
+        trialEndingIn(2)
+        onIo { f.billing.purchase(PlusPlan.MONTHLY) }
+        newVm()
+        settle("ready") { ready != null }
+        assertNull(ready!!.trialEndsSoon)
+        assertNull(ready!!.trialOffer)
+    }
+
+    @Test fun theTrialsLastDaysOpenThePaywallOncePerDay() {
+        seventhDay()
+        trialEndingIn(1)
+        newVm()
+        val opened = collectPaywalls()
+        settle("the paywall opens by itself") { opened.size == 1 }
+        vm.checkPaywall()
+        pump(300)
+        assertEquals("once a day", 1, opened.size)
+        assertEquals(nov12.toEpochDay(), onIo { f.settings.current().lastPaywallDay })
+        clock.instant = at(nov13, 9) // the end day
+        vm.checkPaywall()
+        settle("the end day opens it again") { opened.size == 2 }
+    }
+
+    @Test fun theStoryComesBeforeThePaywall() {
+        seventhDay()
+        trialEndingIn(1)
+        val id = onIo { db.storyDao().insert(entity(fullPayload())) }
+        newVm()
+        val opened = collectPaywalls()
+        vm.viewModelScope.launch { vm.pendingStory.collect {} }
+        settle("the story is pending") { vm.pendingStory.value == id }
+        vm.checkPaywall()
+        pump(300)
+        assertTrue("not while a story is unseen", opened.isEmpty())
+        assertNull("and the day is not used up", onIo { f.settings.current().lastPaywallDay })
+        vm.storyOpened(id)
+        vm.checkPaywall()
+        pump(300)
+        assertTrue("an open story is still unseen", opened.isEmpty())
+        val mark = io.launch { f.story.markShown(id) }
+        settle("the paywall follows the closed story") { mark.isCompleted && opened.size == 1 }
+    }
+
+    @Test fun noPaywallWithoutATrial() {
+        seventhDay()
+        newVm()
+        val opened = collectPaywalls()
+        vm.checkPaywall()
+        pump(300)
+        assertTrue(opened.isEmpty())
     }
 }

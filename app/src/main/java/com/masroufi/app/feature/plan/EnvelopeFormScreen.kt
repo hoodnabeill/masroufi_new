@@ -20,6 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.PlusSheet
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.data.db.EnvelopeKind
 import com.masroufi.app.data.repo.CATEGORY_COLORS
 import com.masroufi.app.feature.pockets.PushedHeader
@@ -89,5 +91,5 @@ fun EnvelopeFormScreen(viewModel: EnvelopeFormViewModel, onBack: () -> Unit, onN
             enabled = f.canSave,
         )
     }
-    if (f.plus) PlusSheet(viewModel::dismissPlus)
+    if (f.plus) PlusSheet(R.string.env_plus_line, PlusFeature.ENVELOPES, viewModel::dismissPlus)
 }

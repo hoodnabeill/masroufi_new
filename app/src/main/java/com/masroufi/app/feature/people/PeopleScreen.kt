@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.GameyaView
 import com.masroufi.app.data.repo.PeopleFilter
@@ -50,7 +51,6 @@ import com.masroufi.app.data.repo.UpcomingDuty
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.EmptyState
-import com.masroufi.app.ui.components.PlusComingSheet
 import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.TzCard
@@ -80,7 +80,6 @@ fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpe
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val haptics = LocalHaptics.current
     val remind = rememberReminder(viewModel::reminded)
-    var plusSheet by remember { mutableStateOf(false) }
     LazyColumn(
         Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -111,14 +110,13 @@ fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpe
         }
         item(key = "duty") {
             if (ui.plus) DutyCard(ui.duty, onOpenDuty)
-            else PlusLocked(R.string.people_duty_plus, { plusSheet = true }) { DutyCard(DutyCardUi(), {}) }
+            else PlusLocked(R.string.people_duty_plus, PlusFeature.DUTY) { DutyCard(DutyCardUi(), {}) }
         }
         item(key = "gameya") { GameyaCard(ui.gameya, if (ui.gameya == null) onNewGameya else onOpenGameya) }
         item(key = "kids") { KidsCard(ui.kids, onOpenKids) }
         item(key = "split") { SplitHint(viewModel::openSplit) }
     }
     PeopleSheets(ui, viewModel)
-    if (plusSheet) PlusComingSheet { plusSheet = false }
 }
 
 @Composable

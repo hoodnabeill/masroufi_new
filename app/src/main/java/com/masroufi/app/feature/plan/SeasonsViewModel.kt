@@ -37,7 +37,6 @@ data class SeasonsUi(
     /** Seasons still short of their target. */
     val togetherCount: Int = 0,
     val reordering: Boolean = false,
-    val plusSheet: Boolean = false,
     /** By season id: the ledger line for a personal occasion whose person has a record. */
     val ledger: Map<Long, LedgerNote> = emptyMap(),
 ) {
@@ -54,18 +53,17 @@ class SeasonsViewModel @Inject constructor(
     entitlements: Entitlements,
 ) : ViewModel() {
     private val reordering = MutableStateFlow(false)
-    private val plusSheet = MutableStateFlow(false)
 
     val state: StateFlow<SeasonsUi> = combine(
         combine(seasons.observe(), duty.observe()) { all, views -> Triple(all, seasons.together(), ledgerNotes(all, views)) },
-        settings.settings, entitlements.isPlus, reordering, plusSheet,
-    ) { (all, together, ledger), s, plus, re, sheet ->
+        settings.settings, entitlements.isPlus, reordering,
+    ) { (all, together, ledger), s, plus, re ->
         // observe() is by date: the nearest with a target leads the page, the rest follow the user's order.
         val hero = all.firstOrNull { it.season.target > 0 } ?: all.firstOrNull()
         val rank = { v: SeasonView -> s.seasonOrder.indexOf(v.season.id).let { if (it < 0) Int.MAX_VALUE else it } }
         SeasonsUi(
             loading = false, isPlus = plus, seasons = all.sortedBy(rank), hero = hero, together = together,
-            togetherCount = all.count { it.season.target > it.saved }, reordering = re, plusSheet = sheet, ledger = ledger,
+            togetherCount = all.count { it.season.target > it.saved }, reordering = re, ledger = ledger,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SeasonsUi())
 
@@ -81,8 +79,6 @@ class SeasonsViewModel @Inject constructor(
     }
 
     fun toggleReorder() { reordering.value = !reordering.value }
-    fun openPlus() { plusSheet.value = true }
-    fun dismissPlus() { plusSheet.value = false }
 
     /** Moves a season one step among the others (-1 up, +1 down) and saves the whole order. */
     fun move(id: Long, delta: Int) {

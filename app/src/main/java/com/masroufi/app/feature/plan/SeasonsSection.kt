@@ -37,11 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.SeasonView
 import com.masroufi.app.feature.pockets.pocketColor
 import com.masroufi.app.ui.components.EmptyState
-import com.masroufi.app.ui.components.PlusComingSheet
 import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzCard
@@ -64,8 +64,7 @@ fun SeasonsSection(viewModel: SeasonsViewModel, onOpen: (Long) -> Unit, onNewOcc
     val ui by viewModel.state.collectAsStateWithLifecycle()
     if (ui.loading) return
     val content: @Composable () -> Unit = { SeasonsContent(ui, viewModel, onOpen, onNewOccasion, onZakat) }
-    if (ui.isPlus) content() else PlusLocked(R.string.seasons_intro, viewModel::openPlus, content)
-    if (ui.plusSheet) PlusComingSheet(viewModel::dismissPlus)
+    if (ui.isPlus) content() else PlusLocked(R.string.seasons_intro, PlusFeature.SEASONS, content)
 }
 
 @Composable

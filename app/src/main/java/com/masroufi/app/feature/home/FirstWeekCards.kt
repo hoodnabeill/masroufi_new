@@ -63,7 +63,7 @@ private const val MONEY_CARD_MIN_ENTRIES = 3
 
 /**
  * The one card Home shows now, or null. Days count from [firstOpenDay] (day 1 = that day). A card is gone for good once
- * dismissed, and none shows while the day is end-of-month. Day 7 (the Plus trial) is not a card: Plus has no trial.
+ * dismissed, and none shows while the day is end-of-month. The Plus trial offer is a card of its own in this slot (HomeViewModel): from day 7 it goes before every card here but the money question.
  */
 fun firstWeekCard(
     entryCount: Int,

@@ -40,6 +40,13 @@ import androidx.compose.ui.unit.sp
 import com.masroufi.app.BuildConfig
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.Entitlements
+import com.masroufi.app.entitlements.PurchaseResult
+import com.masroufi.app.entitlements.RestoreOutcome
+import com.masroufi.app.entitlements.StubBilling
+import com.masroufi.app.ui.components.PlusSettingsRow
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.Odometer
 import com.masroufi.app.ui.components.PrimaryButton
@@ -121,7 +128,7 @@ private fun SampleTicket(subLine: String, holes: Int, left: Long = 15_600) {
 
 /** [onSampleData] (debug builds only) loads the mock's money so Home shows the 240 ticket. */
 @Composable
-fun GalleryScreen(entitlements: Entitlements, onSampleData: (() -> Unit)? = null) {
+fun GalleryScreen(entitlements: Entitlements, onSampleData: (() -> Unit)? = null, billing: StubBilling? = null) {
     val haptics = LocalHaptics.current
     var choice by remember { mutableIntStateOf(0) }
     var filter by remember { mutableIntStateOf(0) }
@@ -155,6 +162,28 @@ fun GalleryScreen(entitlements: Entitlements, onSampleData: (() -> Unit)? = null
                 // The toggle carries the one spoken label; the visible text is hidden from TalkBack.
                 Text("Plus (debug)", style = TzType.body, color = Tz.text, modifier = Modifier.clearAndSetSemantics {})
                 TzToggle(plus, entitlements::setDebugOverride, "Plus (debug)")
+            }
+        }
+        if (billing != null) item(key = "billing") {
+            // Debug only: what the next purchase does, ending the mock subscription, and Settings' Plus row (Phase 11 places it).
+            var outcome by remember { mutableStateOf(billing.nextOutcome) }
+            var restore by remember { mutableStateOf<RestoreOutcome?>(null) }
+            val sub by billing.subscription.collectAsState()
+            val uri = LocalUriHandler.current
+            val scope = rememberCoroutineScope()
+            Column(Modifier.padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Next purchase (debug)", style = TzType.body, color = Tz.text)
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("Succeeds" to PurchaseResult.Success, "Cancelled" to PurchaseResult.Cancelled, "Fails" to PurchaseResult.Failed).forEach { (label, result) ->
+                        TzChip(label, outcome == result, { outcome = result; billing.nextOutcome = result }, style = ChipStyle.Choice)
+                    }
+                }
+                TextLink("Clear subscription (debug)", { billing.clearSubscription() })
+                PlusSettingsRow(
+                    plan = sub?.plan, renewsOn = sub?.renewsOn, trialEnds = null, restore = restore,
+                    onManage = { runCatching { uri.openUri(billing.manageSubscriptionUrl()) } },
+                    onRestore = { scope.launch { restore = if (billing.restore() != null) RestoreOutcome.FOUND else RestoreOutcome.NONE } },
+                )
             }
         }
         section("icons", "Icons") {}

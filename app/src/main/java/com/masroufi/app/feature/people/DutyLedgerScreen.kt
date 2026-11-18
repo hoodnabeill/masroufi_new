@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.db.GiftDirection
 import com.masroufi.app.data.db.OccasionOwner
@@ -48,7 +49,6 @@ import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.EmptyState
-import com.masroufi.app.ui.components.PlusComingSheet
 import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.RowSkeleton
@@ -88,12 +88,11 @@ fun DutyLedgerScreen(viewModel: DutyLedgerViewModel, onBack: () -> Unit) {
         )
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             val content: @Composable () -> Unit = { DutyContent(ui, viewModel) }
-            if (ui.plus) content() else PlusLocked(R.string.people_duty_plus, viewModel::openPlus, content)
+            if (ui.plus) content() else PlusLocked(R.string.people_duty_plus, PlusFeature.DUTY, content)
             Spacer(Modifier.size(28.dp))
         }
     }
     if (ui.plus) DutySheets(ui, viewModel)
-    if (ui.plusSheet) PlusComingSheet(viewModel::dismissPlus)
 }
 
 @Composable

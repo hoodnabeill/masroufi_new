@@ -1,6 +1,7 @@
 package com.masroufi.app.feature.home
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,7 +9,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.masroufi.app.ui.components.LocalEndOfMonthMode
 import com.masroufi.app.ui.theme.MasroufiTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -111,5 +115,57 @@ class HomeScreenTest {
         rule.setContent { Home(ready(null, tomorrow = TomorrowUi(24_000, 2))) }
         rule.onNodeWithText("تذكرة بكره: 240").assertExists()
         rule.onNodeWithText("مثل النهارده مقفول").assertDoesNotExist()
+    }
+
+    private val openTicket = TicketUi(24_000, 0, 0, SubLine.None)
+
+    @Test fun theTrialCardNamesTheEndDateAndStartsInOneTap() {
+        var started = 0
+        val state = ready(openTicket).copy(trialOffer = TrialOffer(LocalDate.of(2026, 11, 25)))
+        rule.setContent { MasroufiTheme { HomeContent(state, "", {}, {}, null, false, {}, {}, {}, onStartTrial = { started++ }) } }
+        rule.onNodeWithText("جرّب بلس 14 يوم ببلاش").performScrollTo().assertExists()
+        rule.onNodeWithText("بتخلص يوم 25 نوفمبر.", substring = true).assertExists()
+        rule.onNodeWithText("ابدأ التجربة").performScrollTo().performClick()
+        assertEquals(1, started)
+    }
+
+    @Test fun noTrialCardWithoutAnOffer() {
+        rule.setContent { Home(ready(openTicket)) }
+        rule.onNodeWithTag(TrialCardTag).assertDoesNotExist()
+        rule.onNodeWithTag(TrialEndsSoonTag).assertDoesNotExist()
+    }
+
+    @Test fun theQuietLineSaysWhenAndOpensThePaywall() {
+        var opened = 0
+        val state = ready(openTicket).copy(trialEndsSoon = TrialEndsSoon(2))
+        rule.setContent { MasroufiTheme { HomeContent(state, "", {}, {}, null, false, {}, {}, {}, onOpenPaywall = { opened++ }) } }
+        rule.onNodeWithText("تجربة بلس بتخلص بعد يومين.").performScrollTo().performClick()
+        assertEquals(1, opened)
+    }
+
+    @Test fun theQuietLineNamesTheLastDays() {
+        var state by mutableStateOf(ready(openTicket).copy(trialEndsSoon = TrialEndsSoon(0)))
+        rule.setContent { Home(state) }
+        rule.onNodeWithText("تجربة بلس بتخلص النهارده.").assertExists()
+        state = ready(openTicket).copy(trialEndsSoon = TrialEndsSoon(1))
+        rule.waitForIdle()
+        rule.onNodeWithText("تجربة بلس بتخلص بكره.").assertExists()
+        state = ready(openTicket).copy(trialEndsSoon = TrialEndsSoon(3))
+        rule.waitForIdle()
+        rule.onNodeWithText("تجربة بلس بتخلص بعد 3 أيام.").assertExists()
+    }
+
+    @Test fun inEndOfMonthModeTheLineIsPlainText() {
+        var opened = 0
+        val state = ready(openTicket).copy(trialEndsSoon = TrialEndsSoon(1))
+        rule.setContent {
+            MasroufiTheme {
+                CompositionLocalProvider(LocalEndOfMonthMode provides true) {
+                    HomeContent(state, "", {}, {}, null, false, {}, {}, {}, onOpenPaywall = { opened++ })
+                }
+            }
+        }
+        rule.onNodeWithText("تجربة بلس بتخلص بكره.").performScrollTo().performClick()
+        assertEquals(0, opened)
     }
 }

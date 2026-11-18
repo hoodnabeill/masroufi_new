@@ -106,31 +106,6 @@ fun AmountKeypad(input: AmountInput, onDigit: (Int) -> Unit, onPoint: () -> Unit
     Keypad(onDigit, onPoint, onBackspace)
 }
 
-/** The Plus-locked card (decision 1): Qersh, what Plus does, "جرّب بلس" -> the placeholder "بلس قريب". */
-@Composable
-fun PlusSheet(onDismiss: () -> Unit) {
-    var soon by remember { mutableStateOf(false) }
-    val haptics = LocalHaptics.current
-    TzSheet(onDismiss) {
-        Column(
-            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Qersh(if (soon) QershMood.Happy else QershMood.Sad, 96.dp)
-            Text(
-                stringResource(if (soon) R.string.env_plus_soon else R.string.env_plus_line),
-                style = TzType.cardHeading, color = Tz.text,
-            )
-            PrimaryButton(
-                stringResource(if (soon) R.string.env_plus_ok else R.string.env_plus_try),
-                { haptics.perform(HapticLevel.Tap); if (soon) onDismiss() else soon = true },
-                Modifier.fillMaxWidth(), height = 52.dp,
-            )
-        }
-    }
-}
-
 /**
  * "انقل {amount}": pick both envelopes (preselected by a drop or the tip) and type the amount, capped at what the first
  * has left. [onConfirm] gets piastres.

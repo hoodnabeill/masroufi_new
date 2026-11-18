@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.domain.EventKind
 import com.masroufi.app.domain.GoalKind
@@ -71,7 +72,6 @@ import com.masroufi.app.domain.weekNumber
 import com.masroufi.app.domain.weekStart
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.EmptyState
-import com.masroufi.app.ui.components.PlusComingSheet
 import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.RowSkeleton
@@ -102,13 +102,11 @@ private val HatLine = Color(0xFFF0E3B5)
 @Composable
 fun MatchScreen(viewModel: MatchViewModel, onBack: () -> Unit, onContinue: () -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
-    var plusSheet by remember { mutableStateOf(false) }
-    MatchContent(ui, onBack, onContinue, onTryPlus = { plusSheet = true })
-    if (plusSheet) PlusComingSheet { plusSheet = false }
+    MatchContent(ui, onBack, onContinue)
 }
 
 @Composable
-fun MatchContent(ui: MatchUi, onBack: () -> Unit, onContinue: () -> Unit, onTryPlus: () -> Unit, modifier: Modifier = Modifier) {
+fun MatchContent(ui: MatchUi, onBack: () -> Unit, onContinue: () -> Unit, modifier: Modifier = Modifier) {
     val view = ui.view
     val fresh = ui.fresh
     // One switch for the whole screen, outside the list so scrolling away and back does not replay it: the score flips
@@ -143,7 +141,7 @@ fun MatchContent(ui: MatchUi, onBack: () -> Unit, onContinue: () -> Unit, onTryP
             }
             if (ui.events.isNotEmpty()) item(key = "events") { Events(ui.events, landed) }
             if (view.hatTrick != HatTrick.NONE) item(key = "hat") { HatTrickCard(view.hatTrick == HatTrick.DONE) }
-            if (!view.firstWeek) item(key = "league") { League(view, onTryPlus) }
+            if (!view.firstWeek) item(key = "league") { League(view) }
             item(key = "continue") {
                 PrimaryButton(stringResource(R.string.match_continue), onContinue, Modifier.fillMaxWidth().padding(top = 6.dp), height = 56.dp)
             }
@@ -344,7 +342,7 @@ private fun HatTrickCard(done: Boolean) {
 }
 
 @Composable
-private fun League(v: MatchView, onTryPlus: () -> Unit) {
+private fun League(v: MatchView) {
     TzPanel(spacing = 10.dp) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
             Text(stringResource(R.string.match_league_title), style = TzType.cardHeading, color = Tz.text)
@@ -369,7 +367,7 @@ private fun League(v: MatchView, onTryPlus: () -> Unit) {
         if (v.lockedWeeks > 0) {
             Text(pluralText(R.plurals.match_locked_count, v.lockedWeeks), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
             // Placeholder rows only: no real week is drawn behind the blur.
-            PlusLocked(R.string.match_locked_what, onTryPlus) {
+            PlusLocked(R.string.match_locked_what, PlusFeature.MATCH_HISTORY) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     repeat(minOf(v.lockedWeeks, 2)) { LeagueRowView(LeagueRow(v.today, 0, WeekResult.WIN, 0, List(7) { GoalKind.NONE }, 0, false)) }
                 }

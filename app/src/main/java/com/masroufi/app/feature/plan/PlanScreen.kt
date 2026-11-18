@@ -25,6 +25,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.BuildConfig
 import com.masroufi.app.R
+import com.masroufi.app.ui.components.PlusSheet
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.ui.components.Segmented
 import com.masroufi.app.ui.components.TextLink
@@ -92,7 +94,7 @@ fun PlanScreen(
         if (BuildConfig.DEBUG) TextLink("Gallery", onGallery, Modifier.align(Alignment.CenterHorizontally))
     }
     when (val sheet = state.sheet) {
-        EnvelopeSheet.Plus -> PlusSheet(viewModel::dismissSheet)
+        EnvelopeSheet.Plus -> PlusSheet(R.string.env_plus_line, PlusFeature.ENVELOPES, viewModel::dismissSheet)
         is EnvelopeSheet.Move -> MoveSheet(sheet, state.cards, viewModel::confirmMove, viewModel::dismissSheet)
         null -> Unit
     }

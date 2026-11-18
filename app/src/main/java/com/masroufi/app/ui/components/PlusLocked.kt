@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.paper.Qersh
@@ -38,13 +39,17 @@ import com.masroufi.app.ui.theme.TzType
  */
 val LocalEndOfMonthMode = staticCompositionLocalOf { false }
 
+/** Opens the paywall with [PlusFeature] first (Task 53); AppRoot provides the navigation. */
+val LocalOpenPaywall = staticCompositionLocalOf<(PlusFeature) -> Unit> { {} }
+
 /**
  * The Plus-locked pattern (decision 1): [content] is drawn blurred (alpha 0.15 below API 31), not interactive and hidden
  * from TalkBack, under one bubble-style card with the [what] line and "جرّب بلس".
  */
 @Composable
-fun PlusLocked(@StringRes what: Int, onTryPlus: () -> Unit, content: @Composable () -> Unit) {
+fun PlusLocked(@StringRes what: Int, feature: PlusFeature, content: @Composable () -> Unit) {
     val haptics = LocalHaptics.current
+    val openPaywall = LocalOpenPaywall.current
     val endOfMonth = LocalEndOfMonthMode.current
     val look = if (Build.VERSION.SDK_INT >= 31) Modifier.blur(12.dp) else Modifier.alpha(0.15f)
     val shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomEnd = 20.dp, bottomStart = 6.dp)
@@ -62,23 +67,42 @@ fun PlusLocked(@StringRes what: Int, onTryPlus: () -> Unit, content: @Composable
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(stringResource(what), style = TzType.body.copy(textAlign = TextAlign.Center), color = Tz.text2)
-            if (!endOfMonth) PrimaryButton(stringResource(R.string.env_plus_try), { haptics.perform(HapticLevel.Tap); onTryPlus() }, height = 48.dp)
+            if (!endOfMonth) PrimaryButton(stringResource(R.string.env_plus_try), { haptics.perform(HapticLevel.Tap); openPaywall(feature) }, height = 48.dp)
         }
     }
 }
 
-/** Placeholder target of "جرّب بلس" until billing arrives in Phase 10. */
+/**
+ * The limit card of a Plus feature reached through a tap (second envelope, gameya or child): Qersh, [line], and "جرّب بلس"
+ * to the paywall with [feature] first. End-of-month mode keeps the card and leaves the button out (the paywall never
+ * shows there); the card then closes with "تمام". [onDismiss] runs before the paywall opens.
+ */
 @Composable
-fun PlusComingSheet(onDismiss: () -> Unit) {
-    TzSheet(onDismiss) {
-        Column(
-            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Qersh(QershMood.Happy, 96.dp)
-            Text(stringResource(R.string.env_plus_soon), style = TzType.cardHeading, color = Tz.text)
-            PrimaryButton(stringResource(R.string.env_plus_ok), onDismiss, Modifier.fillMaxWidth(), height = 52.dp)
+fun PlusSheet(@StringRes line: Int, feature: PlusFeature, onDismiss: () -> Unit) {
+    TzSheet(onDismiss) { PlusSheetContent(line, feature, onDismiss) }
+}
+
+/** The sheet's body, apart from the modal window so it can be tested on its own. */
+@Composable
+fun PlusSheetContent(@StringRes line: Int, feature: PlusFeature, onDismiss: () -> Unit) {
+    val haptics = LocalHaptics.current
+    val openPaywall = LocalOpenPaywall.current
+    val endOfMonth = LocalEndOfMonthMode.current
+    Column(
+        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Qersh(QershMood.Sad, 96.dp)
+        Text(stringResource(line), style = TzType.cardHeading.copy(textAlign = TextAlign.Center), color = Tz.text)
+        if (endOfMonth) {
+            PrimaryButton(stringResource(R.string.env_plus_ok), { haptics.perform(HapticLevel.Tap); onDismiss() }, Modifier.fillMaxWidth(), height = 52.dp)
+        } else {
+            PrimaryButton(
+                stringResource(R.string.env_plus_try),
+                { haptics.perform(HapticLevel.Tap); onDismiss(); openPaywall(feature) },
+                Modifier.fillMaxWidth(), height = 52.dp,
+            )
         }
     }
 }

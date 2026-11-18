@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.formatPounds
@@ -60,6 +62,7 @@ fun HomeScreen(
     onOpenFreelance: () -> Unit = {},
     onOpenRitual: (Long) -> Unit = {},
     onOpenStory: (Long) -> Unit = {},
+    onOpenPaywall: () -> Unit = {},
     onOpenAddSheet: (AddPrefill?) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -74,6 +77,11 @@ fun HomeScreen(
     LaunchedEffect(story) {
         story?.let { viewModel.storyOpened(it); openStory(it) }
     }
+
+    // The trial's last two days: the paywall opens by itself, once a day, after the story (see HomeViewModel.checkPaywall).
+    val openPaywall by rememberUpdatedState(onOpenPaywall)
+    LaunchedEffect(viewModel) { viewModel.paywallRequests.collect { openPaywall() } }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.checkPaywall() }
 
     val context = LocalContext.current
     val speech = remember {
@@ -116,6 +124,8 @@ fun HomeScreen(
         onOpenFreelance = onOpenFreelance,
         onOpenRitual = onOpenRitual,
         onSelfPayLanded = viewModel::selfPayLanded,
+        onStartTrial = viewModel::startTrial,
+        onOpenPaywall = onOpenPaywall,
     )
     wishAsk?.let { JarAskSheet(it, onAnswer = viewModel::wishJarAnswer, onDismiss = viewModel::wishAskDismissed) }
 }
@@ -148,6 +158,8 @@ fun HomeContent(
     onOpenFreelance: () -> Unit = {},
     onOpenRitual: (Long) -> Unit = {},
     onSelfPayLanded: (String) -> Unit = {},
+    onStartTrial: () -> Unit = {},
+    onOpenPaywall: () -> Unit = {},
 ) {
     var skeletonDue by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -171,7 +183,7 @@ fun HomeContent(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets, onOpenAlbum, onOpenMatch, onWishChangedMind, onWishBought, onOpenEndOfMonth, onSwitchOnEndOfMonth, onDismissOffer, onOpenFreelance, onOpenRitual, onSelfPayLanded)
+                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets, onOpenAlbum, onOpenMatch, onWishChangedMind, onWishBought, onOpenEndOfMonth, onSwitchOnEndOfMonth, onDismissOffer, onOpenFreelance, onOpenRitual, onSelfPayLanded, onStartTrial, onOpenPaywall)
                 }
             }
         }
@@ -204,6 +216,8 @@ private fun ReadyContent(
     onOpenFreelance: () -> Unit,
     onOpenRitual: (Long) -> Unit,
     onSelfPayLanded: (String) -> Unit,
+    onStartTrial: () -> Unit,
+    onOpenPaywall: () -> Unit,
 ) {
     val epochDay = s.today.toEpochDay()
     HomeHeader(s.today, s.greeting, s.streak, onOpenAlbum)
@@ -244,6 +258,8 @@ private fun ReadyContent(
     else if (selfPay != null) SelfPayCardView(selfPay, onRitual = onOpenRitual, onOpenVault = onOpenFreelance, onDismiss = { onDismissCard(selfPay.key) }, onLanded = { onSelfPayLanded(selfPay.key) })
     else if (s.endOfMonthOffer) EndOfMonthOfferCard(onSwitchOn = onSwitchOnEndOfMonth, onDismiss = onDismissOffer)
     else if (wish != null) WishQuestionCard(wish, onChangedMind = { onWishChangedMind(wish) }, onBought = { onWishBought(wish.id) })
+    else if (s.trialOffer != null) TrialCard(s.trialOffer, onStart = onStartTrial)
+    s.trialEndsSoon?.let { TrialEndsSoonLine(it, onOpenPaywall) }
     if (moneySheet) MoneySheet(onDone = { onSetMoney(it); moneySheet = false }, onDismiss = { moneySheet = false })
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         QuickLogField(quickText, onQuickText, onSubmitQuickLog, onMic)

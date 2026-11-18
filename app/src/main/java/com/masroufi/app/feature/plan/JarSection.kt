@@ -45,13 +45,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.GoldView
 import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.EmptyState
 import com.masroufi.app.ui.components.Odometer
-import com.masroufi.app.ui.components.PlusComingSheet
 import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.SecondaryButton
@@ -91,9 +91,9 @@ fun JarSection(viewModel: JarViewModel, onNewGoal: () -> Unit, onToday: () -> Un
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             JarHero(jar.total, jar.monthGrowth, ui.goals.maxOfOrNull { it.view.goal.target } ?: 0L)
             val gold: @Composable () -> Unit = { GoldCard(jar.gold) { viewModel.open(JarSheet.Gold) } }
-            if (ui.isPlus) gold() else PlusLocked(R.string.jar_lock_gold, { viewModel.open(JarSheet.Plus) }, gold)
+            if (ui.isPlus) gold() else PlusLocked(R.string.jar_lock_gold, PlusFeature.GOLD, gold)
             val round: @Composable () -> Unit = { RoundUpCard(ui.roundUpStep, viewModel::setRoundUpStep) }
-            if (ui.isPlus) round() else PlusLocked(R.string.jar_lock_round, { viewModel.open(JarSheet.Plus) }, round)
+            if (ui.isPlus) round() else PlusLocked(R.string.jar_lock_round, PlusFeature.ROUND_UPS, round)
             SourcesCard(jar.sources.leftoverCount, jar.sources.leftoverSum, jar.sources.roundUpSum, jar.sources.manualSum)
             GoalsCard(ui, onNewGoal, { viewModel.open(JarSheet.Goal(it)) }, onSeasons)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -273,7 +273,6 @@ private fun JarSheets(ui: JarUi, vm: JarViewModel) {
     val haptics = LocalHaptics.current
     val jar = ui.jar ?: return
     when (val sheet = ui.sheet) {
-        JarSheet.Plus -> PlusComingSheet(vm::dismiss)
         JarSheet.Deposit -> AmountSheet(stringResource(R.string.jar_deposit_title), vm::dismiss) { amount ->
             PrimaryButton(stringResource(R.string.jar_deposit), { haptics.perform(HapticLevel.Confirm); vm.deposit(amount) }, Modifier.fillMaxWidth(), enabled = amount > 0, height = 52.dp)
         }

@@ -15,3 +15,7 @@ fun formatDayDate(date: LocalDate, locale: Locale = Locale("ar")): String =
 /** "27 سبتمبر" in Arabic; Western digits in every locale. */
 fun formatDayMonth(date: LocalDate, locale: Locale = Locale("ar")): String =
     DateTimeFormatter.ofPattern("d MMMM", locale).withDecimalStyle(DecimalStyle.STANDARD).format(date)
+
+/** "27 سبتمبر 2027" in Arabic; Western digits in every locale. */
+fun formatDate(date: LocalDate, locale: Locale = Locale("ar")): String =
+    DateTimeFormatter.ofPattern("d MMMM yyyy", locale).withDecimalStyle(DecimalStyle.STANDARD).format(date)

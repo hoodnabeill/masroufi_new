@@ -43,7 +43,6 @@ data class DutyUi(
     val upcoming: UpcomingDuty? = null,
     val persons: List<PersonEntity> = emptyList(),
     val sheet: DutySheet? = null,
-    val plusSheet: Boolean = false,
 ) {
     val empty: Boolean get() = mine.isEmpty() && theirs.isEmpty()
 }
@@ -58,7 +57,6 @@ class DutyLedgerViewModel @Inject constructor(
     private val clock: Clock,
 ) : ViewModel() {
     private val sheet = MutableStateFlow<DutySheet?>(null)
-    private val plusSheet = MutableStateFlow(false)
 
     private val content = combine(duty.observe(), people.observePersons(), entitlements.isPlus) { views, persons, plus ->
         DutyUi(
@@ -69,14 +67,12 @@ class DutyLedgerViewModel @Inject constructor(
         )
     }
 
-    val state: StateFlow<DutyUi> = combine(content, sheet, plusSheet) { c, s, p -> c.copy(sheet = s, plusSheet = p) }
+    val state: StateFlow<DutyUi> = combine(content, sheet) { c, s -> c.copy(sheet = s) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DutyUi())
 
     fun openOccasion(editing: OccasionView? = null) { sheet.value = DutySheet.Occasion(editing) }
     fun openGift(occasionId: Long, editing: GiftRow? = null) { sheet.value = DutySheet.Gift(occasionId, editing) }
     fun dismissSheet() { sheet.value = null }
-    fun openPlus() { plusSheet.value = true }
-    fun dismissPlus() { plusSheet.value = false }
 
     /** Saves a new occasion, or the edit of [editing]. */
     fun saveOccasion(editing: OccasionEntity?, name: String, date: LocalDate, whose: OccasionOwner, personId: Long?) = launchSafe("save occasion") {

@@ -8,6 +8,12 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.entitlements.DebugEntitlements
+import com.masroufi.app.entitlements.PlusPlan
+import com.masroufi.app.entitlements.PurchaseResult
+import com.masroufi.app.entitlements.StubBilling
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import com.masroufi.app.ui.theme.MasroufiTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -59,5 +65,18 @@ class GalleryTest {
         rule.onNodeWithText("+72").performClick()
         rule.onNodeWithText("312").assertExists("amount did not change to 312")
         rule.onNodeWithText("240").assertDoesNotExist()
+    }
+
+    @Test
+    fun debugBillingControlsSetTheNextOutcomeAndClearTheSubscription() {
+        val billing = StubBilling(debug = true)
+        runBlocking { billing.purchase(PlusPlan.MONTHLY) }
+        rule.setContent { MasroufiTheme { GalleryScreen(DebugEntitlements(), billing = billing) } }
+        rule.onNodeWithText("Cancelled").performClick()
+        assertEquals(PurchaseResult.Cancelled, billing.nextOutcome)
+        rule.onNodeWithText("Fails").performClick()
+        assertEquals(PurchaseResult.Failed, billing.nextOutcome)
+        rule.onNodeWithText("Clear subscription (debug)").performClick()
+        assertNull(billing.subscription.value)
     }
 }

@@ -30,7 +30,6 @@ sealed interface JarSheet {
     data object Deposit : JarSheet
     data object Withdraw : JarSheet
     data object Gold : JarSheet
-    data object Plus : JarSheet
     data class Goal(val id: Long) : JarSheet
 }
 

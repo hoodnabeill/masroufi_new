@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.feature.plan.AmountKeypad
 import com.masroufi.app.feature.plan.ChipRow
 import com.masroufi.app.feature.plan.FormBlock
@@ -37,7 +38,7 @@ import com.masroufi.app.feature.plan.NameField
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.ChipStyle
-import com.masroufi.app.ui.components.PlusComingSheet
+import com.masroufi.app.ui.components.PlusSheet
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.SecondaryButton
 import com.masroufi.app.ui.components.TextLink
@@ -106,7 +107,7 @@ fun GameyaFormScreen(viewModel: GameyaFormViewModel, onBack: () -> Unit) {
             }
         }
     }
-    if (f.blocked) PlusComingSheet(onBack)
+    if (f.blocked) PlusSheet(R.string.gameya_plus_line, PlusFeature.GAMEYA, onBack)
     if (f.askArchive) {
         TzSheet(viewModel::dismissArchive) {
             Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -42,12 +42,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
+import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.HabitFacts
 import com.masroufi.app.feature.pockets.DashedRow
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.EmptyState
-import com.masroufi.app.ui.components.PlusComingSheet
 import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.RowSkeleton
@@ -75,7 +75,7 @@ fun BasketScreen(viewModel: BasketViewModel, onBack: () -> Unit) {
         PushedHeader(stringResource(R.string.basket_title), onBack)
         when {
             ui.loading -> repeat(3) { RowSkeleton() }
-            ui.locked -> PlusLocked(R.string.basket_locked_what, viewModel::openPlus) { Sample() }
+            ui.locked -> PlusLocked(R.string.basket_locked_what, PlusFeature.BASKET) { Sample() }
             ui.empty -> {
                 EmptyState(
                     { Qersh(QershMood.Sleepy, 96.dp) }, R.string.empty_basket_title, R.string.empty_basket_line,
@@ -86,7 +86,6 @@ fun BasketScreen(viewModel: BasketViewModel, onBack: () -> Unit) {
             else -> Body(ui, viewModel)
         }
     }
-    if (ui.plusSheet) PlusComingSheet(viewModel::dismissPlus)
     if (ui.addSheet) AddItemSheet(viewModel::dismissAdd, viewModel::track)
 }
 

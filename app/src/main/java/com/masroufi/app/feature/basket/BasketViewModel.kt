@@ -45,7 +45,6 @@ data class BasketUi(
     /** The raised ticket just accepted; shown in place of the card until the screen closes. */
     val raisedTo: Long? = null,
     val habits: HabitFacts = HabitFacts(null, null, null),
-    val plusSheet: Boolean = false,
     val addSheet: Boolean = false,
 ) {
     val empty: Boolean get() = !loading && !locked && items.isEmpty()
@@ -77,25 +76,22 @@ internal fun BasketData.toUi(): Triple<List<BasketItemUi>, HeroUi?, SuggestedTic
 
 @HiltViewModel
 class BasketViewModel @Inject constructor(private val basket: BasketRepository) : ViewModel() {
-    private val plusSheet = MutableStateFlow(false)
     private val addSheet = MutableStateFlow(false)
     private val raisedTo = MutableStateFlow<Long?>(null)
 
-    val state: StateFlow<BasketUi> = combine(basket.observe(), plusSheet, addSheet, raisedTo) { r, plus, add, raised ->
+    val state: StateFlow<BasketUi> = combine(basket.observe(), addSheet, raisedTo) { r, add, raised ->
         when (r) {
-            BasketResult.Locked -> BasketUi(loading = false, locked = true, plusSheet = plus)
+            BasketResult.Locked -> BasketUi(loading = false, locked = true)
             is BasketResult.Ready -> {
                 val (items, hero, suggestion) = r.data.toUi()
                 BasketUi(
                     loading = false, items = items, hero = hero, suggestion = suggestion, raisedTo = raised,
-                    habits = r.data.habits, plusSheet = plus, addSheet = add,
+                    habits = r.data.habits, addSheet = add,
                 )
             }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BasketUi())
 
-    fun openPlus() { plusSheet.value = true }
-    fun dismissPlus() { plusSheet.value = false }
     fun openAdd() { addSheet.value = true }
     fun dismissAdd() { addSheet.value = false }
 

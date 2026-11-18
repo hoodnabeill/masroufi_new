@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-enum class ZakatSheet { Plus, Money, Nisab, PerPerson }
+enum class ZakatSheet { Money, Nisab, PerPerson }
 
 /** Typed values override the defaults for this visit only; nothing is stored. */
 private data class ZakatEdits(
