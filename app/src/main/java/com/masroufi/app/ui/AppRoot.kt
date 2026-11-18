@@ -79,6 +79,8 @@ import com.masroufi.app.feature.pockets.NewPocketScreen
 import com.masroufi.app.feature.pockets.PocketDetailScreen
 import com.masroufi.app.feature.pockets.PocketsScreen
 import com.masroufi.app.feature.proverb.ProverbRewardScreen
+import com.masroufi.app.feature.story.StoryListScreen
+import com.masroufi.app.feature.story.StoryScreen
 import com.masroufi.app.feature.roll.RollScreen
 import com.masroufi.app.ui.components.LocalEndOfMonthMode
 import com.masroufi.app.ui.components.TzTab
@@ -121,6 +123,8 @@ import com.masroufi.app.ui.nav.Zakat
 import com.masroufi.app.ui.nav.PocketDetail
 import com.masroufi.app.ui.nav.Pockets
 import com.masroufi.app.ui.nav.ProverbReward
+import com.masroufi.app.ui.nav.Story
+import com.masroufi.app.ui.nav.StoryList
 import com.masroufi.app.ui.nav.RollTab
 import com.masroufi.app.ui.theme.MasroufiTheme
 import com.masroufi.app.ui.theme.Tz
@@ -159,7 +163,7 @@ private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<Proverb
     hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>() ||
     hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>() ||
     hasRoute<BeforeYouBuy>() || hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<EndOfMonth>() || hasRoute<AppSettings>() ||
-    hasRoute<Installments>() || hasRoute<InstallmentEdit>() || hasRoute<Freelance>()
+    hasRoute<Installments>() || hasRoute<InstallmentEdit>() || hasRoute<Freelance>() || hasRoute<Story>() || hasRoute<StoryList>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -259,7 +263,12 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                             onOpenAddSheet = ::openAddSheet,
                             onOpenFreelance = { nav.navigate(Freelance) },
                             onOpenRitual = { nav.navigate(PaydayRitual(it)) },
+                            onOpenStory = { nav.navigate(Story(it)) { launchSingleTop = true } },
                         )
+                    }
+                    composable<Story> { StoryScreen(viewModel = hiltViewModel(), onClose = { nav.popBackStack() }) }
+                    composable<StoryList> {
+                        StoryListScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onOpen = { nav.navigate(Story(it)) })
                     }
                     composable<Installments> {
                         InstallmentsScreen(
@@ -282,6 +291,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                             onOpenPockets = { nav.navigate(Pockets) },
                             onOpenSettings = { nav.navigate(AppSettings) },
                             onOpenProfile = { nav.navigate(Profile) },
+                            onOpenStories = { nav.navigate(StoryList) },
                         )
                     }
                     composable<Match> {

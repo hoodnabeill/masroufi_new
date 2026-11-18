@@ -59,6 +59,7 @@ fun HomeScreen(
     onOpenEndOfMonth: () -> Unit = {},
     onOpenFreelance: () -> Unit = {},
     onOpenRitual: (Long) -> Unit = {},
+    onOpenStory: (Long) -> Unit = {},
     onOpenAddSheet: (AddPrefill?) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -67,6 +68,12 @@ fun HomeScreen(
     val wishAsk by viewModel.wishAsk.collectAsStateWithLifecycle()
     val openSheet by rememberUpdatedState(onOpenAddSheet)
     LaunchedEffect(viewModel) { viewModel.prefill.collect { openSheet(it) } }
+    // The first open after the cycle closed: the story opens once, before the other one-time moments.
+    val story by viewModel.pendingStory.collectAsStateWithLifecycle()
+    val openStory by rememberUpdatedState(onOpenStory)
+    LaunchedEffect(story) {
+        story?.let { viewModel.storyOpened(it); openStory(it) }
+    }
 
     val context = LocalContext.current
     val speech = remember {

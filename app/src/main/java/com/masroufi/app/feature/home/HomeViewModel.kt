@@ -22,6 +22,7 @@ import com.masroufi.app.data.repo.NOTE_MAX_CHARS
 import com.masroufi.app.data.repo.NewEntry
 import com.masroufi.app.data.repo.OnboardingRepository
 import com.masroufi.app.data.repo.RepeatChip
+import com.masroufi.app.data.repo.StoryRepository
 import com.masroufi.app.data.repo.TicketRepository
 import com.masroufi.app.data.repo.WishRepository
 import com.masroufi.app.data.db.WishEntity
@@ -62,6 +63,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Clock
@@ -172,6 +174,7 @@ class HomeViewModel @Inject constructor(
     private val pendingDeletes: PendingDeletes,
     private val wishes: WishRepository,
     private val eom: EndOfMonthRepository,
+    private val story: StoryRepository,
 ) : ViewModel() {
     private val failure = MutableStateFlow<Throwable?>(null)
     private val _saveFailed = MutableStateFlow(false)
@@ -215,7 +218,20 @@ class HomeViewModel @Inject constructor(
     private val offer: Flow<Boolean> = eom.observe().map { it.offer }.distinctUntilChanged()
         .catch { Log.e(TAG, "offer failed", it); emit(false) }
 
-    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure, pendingDeletes.pending, combine(dueWishes, offer, ::Pair)) { d, pending, f, deleted, (due, offered) ->
+    /** The newest story never closed, while it is unseen: the one-time moments below wait for it (Task 50). */
+    private val unseenStory: Flow<Long?> = story.unseen().map { it?.id }.distinctUntilChanged()
+        .catch { Log.e(TAG, "story failed", it); emit(null) }
+
+    private val storiesOpened = MutableStateFlow<Set<Long>>(emptySet())
+
+    /** The story to open now, once: the first open after the cycle closed. Null once [storyOpened] was called for it. */
+    val pendingStory: StateFlow<Long?> = combine(unseenStory, storiesOpened) { id, opened -> id?.takeIf { it !in opened } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** The screen is opening story [id]: not again from this Home. It stays unseen (and the other moments wait) until the story closes. */
+    fun storyOpened(id: Long) = storiesOpened.update { it + id }
+
+    val state: StateFlow<HomeUiState> = combine(home, pendingPunches.pending, failure, pendingDeletes.pending, combine(dueWishes, offer, unseenStory, ::Triple)) { d, pending, f, deleted, (due, offered, storyDue) ->
         val row = d?.today
         when {
             f != null -> HomeUiState.Error
@@ -224,6 +240,8 @@ class HomeViewModel @Inject constructor(
                 // The add sheet's placeholders stop counting once this row holds them; then they can go.
                 pendingPunches.prune(row.entryCount)
                 homeUi(d.withoutDeleted(deleted.values), pending.filter { it.expectedHoles > row.entryCount }, LocalTime.now(clock).hour, due, offered)
+                    // The story comes first: the new-ticket moment, the self-payday card and the offer wait until it closes.
+                    .let { if (storyDue != null) it.copy(newTicket = false, selfPayCard = null, endOfMonthOffer = false, dueWish = null) else it }
             }
         }
     }

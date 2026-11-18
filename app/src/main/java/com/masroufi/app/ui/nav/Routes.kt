@@ -56,3 +56,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class InstallmentEdit(val id: Long)
 /** مرتب لنفسك (Task 48). */
 @Serializable data object Freelance
+/** حكاية الشهر (Task 50): the saved story [id]. */
+@Serializable data class Story(val id: Long)
+/** الحكايات: the saved months (Task 50). */
+@Serializable data object StoryList

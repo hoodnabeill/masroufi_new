@@ -32,6 +32,8 @@ import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.FeedbackBus
 import com.masroufi.app.feature.add.Pending
 import com.masroufi.app.feature.add.PendingPunches
+import com.masroufi.app.feature.story.entity
+import com.masroufi.app.feature.story.fullPayload
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,6 +45,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
@@ -107,7 +111,7 @@ class HomeViewModelTest {
             initializer {
                 HomeViewModel(
                     f.home, f.tickets, f.entries, db.categoryDao(), db.pocketDao(), pending, process.lifecycle, clock, FeedbackBus(), f.settings, f.onboarding,
-                    PendingDeletes(f.entries, io), f.wishes, f.eom,
+                    PendingDeletes(f.entries, io), f.wishes, f.eom, f.story,
                 )
             }
         }
@@ -134,6 +138,29 @@ class HomeViewModelTest {
     private fun category(name: String) = runBlocking { db.categoryDao().insert(CategoryEntity(name = name, icon = "coffee", color = 0)) }
     private fun spend(amount: Long) = runBlocking {
         f.entries.log(NewEntry(EntryKind.SPENT, amount, cash, happenedAt = clock.millis()))
+    }
+
+    @Test fun anUnseenStoryOpensOnceAndTheTicketMomentWaitsForIt() {
+        val id = runBlocking { db.storyDao().insert(entity(fullPayload())) }
+        newVm()
+        vm.viewModelScope.launch { vm.pendingStory.collect {} } // the screen collecting it
+        settle("the story is pending") { vm.pendingStory.value == id && ready != null }
+        assertFalse("the new-ticket moment waits for the story", ready!!.newTicket)
+        vm.storyOpened(id)
+        settle("not offered a second time") { vm.pendingStory.value == null }
+        assertFalse("and keeps waiting while the story is open", ready!!.newTicket)
+        // The story closes: marked seen, so the moment plays and nothing opens again.
+        val mark = io.launch { f.story.markShown(id) }
+        settle("seen") { mark.isCompleted && ready?.newTicket == true }
+        assertNull(vm.pendingStory.value)
+    }
+
+    @Test fun withoutAStoryNothingOpensAndTheTicketMomentPlays() {
+        newVm()
+        vm.viewModelScope.launch { vm.pendingStory.collect {} }
+        settle("ready") { ready != null }
+        assertNull(vm.pendingStory.value)
+        assertTrue(ready!!.newTicket)
     }
 
     @Test fun printsOnStart() {

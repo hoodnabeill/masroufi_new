@@ -112,6 +112,7 @@ fun AlbumScreen(
     onOpenPockets: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenProfile: () -> Unit,
+    onOpenStories: () -> Unit = {},
 ) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val celebration by viewModel.celebration.collectAsStateWithLifecycle()
@@ -124,7 +125,7 @@ fun AlbumScreen(
             viewModel.celebrated()
         }
     }
-    AlbumContent(ui, celebration, onBack, onToday, onOpenRoll, onOpenBasket, onOpenPockets, onOpenSettings, onOpenProfile)
+    AlbumContent(ui, celebration, onBack, onToday, onOpenRoll, onOpenBasket, onOpenPockets, onOpenSettings, onOpenProfile, onOpenStories)
 }
 
 @Composable
@@ -138,6 +139,7 @@ fun AlbumContent(
     onOpenPockets: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenProfile: () -> Unit,
+    onOpenStories: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var open by remember { mutableStateOf<Proverb?>(null) }
@@ -196,7 +198,7 @@ fun AlbumContent(
                 item(key = "stamps") { Box(Modifier.padding(top = 6.dp, bottom = 14.dp)) { Stamps(ui) } }
                 if (album.stubs.isNotEmpty()) item(key = "stubs") { Box(Modifier.padding(bottom = 14.dp)) { Stubs(album.stubs.take(STUBS_SHOWN), onOpenRoll) } }
             }
-            item(key = "links") { Links(onOpenBasket, onOpenPockets, onOpenSettings) }
+            item(key = "links") { Links(onOpenStories, onOpenBasket, onOpenPockets, onOpenSettings) }
         }
         val last = remember { mutableStateOf<Milestone?>(null) }
         if (celebration != null) last.value = celebration
@@ -429,9 +431,10 @@ private fun StubTile(d: MatchDay, tilt: Float, modifier: Modifier) {
 }
 
 @Composable
-private fun Links(onOpenBasket: () -> Unit, onOpenPockets: () -> Unit, onOpenSettings: () -> Unit) {
+private fun Links(onOpenStories: () -> Unit, onOpenBasket: () -> Unit, onOpenPockets: () -> Unit, onOpenSettings: () -> Unit) {
     val shape = RoundedCornerShape(TzRadius.card)
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)) {
+        LinkRow(R.string.album_link_stories, onOpenStories, divider = true)
         LinkRow(R.string.album_link_basket, onOpenBasket, divider = true)
         LinkRow(R.string.album_link_pockets, onOpenPockets, divider = true)
         LinkRow(R.string.album_link_settings, onOpenSettings, divider = false)
