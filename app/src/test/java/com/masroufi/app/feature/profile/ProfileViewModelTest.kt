@@ -265,7 +265,10 @@ class ProfileViewModelTest {
 
         val home = runBlocking { f.home.observeHome().first() }
         assertNull("no ticket", home.today)
-        assertEquals(listOf(0, 0L, 0), listOf(home.entryCount, home.spendable, home.collected))
+        // Separate asserts: listOf(0, 0L, 0) infers every literal as Long, so it never equals the Int fields.
+        assertEquals(0, home.entryCount)
+        assertEquals(0L, home.spendable)
+        assertEquals(0, home.collected)
         assertTrue(runBlocking { db.pocketDao().all().first() }.isEmpty())
         val s = saved()
         assertNull(s.profileName)
