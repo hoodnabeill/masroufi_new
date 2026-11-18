@@ -10,6 +10,7 @@ import com.masroufi.app.data.db.RecurringDao
 import com.masroufi.app.data.db.RecurringEntity
 import com.masroufi.app.data.db.RecurringKind
 import com.masroufi.app.data.db.TazkaraDatabase
+import com.masroufi.app.data.prefs.Settings
 import com.masroufi.app.data.prefs.SettingsStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -161,11 +162,11 @@ class InstallmentRepository @Inject constructor(
      * logged by itself once: undoing it brings the same due date back and it stays undone. A plan whose pocket is gone
      * is left alone.
      */
-    suspend fun logDue(today: LocalDate) {
+    suspend fun logDue(today: LocalDate, s: Settings? = null) {
         val items = recurringDao.allNow().filter { it.kind == RecurringKind.INSTALLMENT && !it.archived && !it.nextDue.isAfter(today) }
         for (item in items) {
             if (plan(item).finished) continue
-            if (settings.current().installmentLogged[item.id] == item.nextDue.toEpochDay()) continue
+            if ((s ?: settings.current()).installmentLogged[item.id] == item.nextDue.toEpochDay()) continue
             if (pocketDao.byId(item.pocketId)?.archived != false) continue
             recurring.markPaid(item.id, item.pocketId)
             settings.setInstallmentLogged(item.id, item.nextDue.toEpochDay())
