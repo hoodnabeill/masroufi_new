@@ -38,13 +38,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.masroufi.app.R
 import com.masroufi.app.data.repo.DebugSampleData
 import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.AddSheet
+import com.masroufi.app.feature.album.AlbumScreen
 import com.masroufi.app.feature.close.CloseDayScreen
 import com.masroufi.app.feature.gallery.GalleryScreen
 import com.masroufi.app.feature.home.HomeScreen
+import com.masroufi.app.feature.match.MatchScreen
+import com.masroufi.app.feature.placeholder.ComingSoonScreen
 import com.masroufi.app.feature.add.AddViewModel
 import com.masroufi.app.feature.onboarding.OnboardingScreen
 import com.masroufi.app.feature.payday.PaydayRitualScreen
@@ -73,7 +77,12 @@ import com.masroufi.app.ui.components.TzTabBar
 import com.masroufi.app.ui.motion.LocalReduceMotion
 import com.masroufi.app.ui.motion.TzSpring
 import com.masroufi.app.ui.motion.spec
+import com.masroufi.app.ui.nav.Album
+import com.masroufi.app.ui.nav.AppSettings
+import com.masroufi.app.ui.nav.Basket
 import com.masroufi.app.ui.nav.CloseDay
+import com.masroufi.app.ui.nav.Match
+import com.masroufi.app.ui.nav.Profile
 import com.masroufi.app.ui.nav.DutyLedger
 import com.masroufi.app.ui.nav.EditEnvelope
 import com.masroufi.app.ui.nav.GameyaForm
@@ -134,7 +143,8 @@ private fun NavDestination?.tab(): TzTab? = when {
 private fun NavDestination.isPushed() = hasRoute<CloseDay>() || hasRoute<ProverbReward>() || hasRoute<Gallery>() || hasRoute<Pockets>() || hasRoute<PocketDetail>() || hasRoute<NewPocket>() ||
     hasRoute<EnvelopeDetail>() || hasRoute<NewEnvelope>() || hasRoute<NewGoal>() || hasRoute<EditEnvelope>() || hasRoute<FixedCosts>() || hasRoute<FixedCostEdit>() ||
     hasRoute<Subscriptions>() || hasRoute<SubscriptionEdit>() || hasRoute<SeasonEdit>() || hasRoute<Zakat>() || hasRoute<PaydayRitual>() ||
-    hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>()
+    hasRoute<PersonDetail>() || hasRoute<DutyLedger>() || hasRoute<GameyaScreen>() || hasRoute<GameyaForm>() ||
+    hasRoute<Album>() || hasRoute<Match>() || hasRoute<Basket>() || hasRoute<Profile>() || hasRoute<AppSettings>()
 
 private fun NavController.switchTab(tab: TzTab) {
     val route: Any = when (tab) {
@@ -225,9 +235,29 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null) {
                         onCloseDay = { nav.navigate(CloseDay(it)) },
                         onOpenProverb = { nav.navigate(ProverbReward(it)) },
                         onOpenPockets = { nav.navigate(Pockets) },
+                        onOpenAlbum = { nav.navigate(Album) },
+                        onOpenMatch = { nav.navigate(Match) },
                         onOpenAddSheet = ::openAddSheet,
                     )
                 }
+                composable<Album> {
+                    AlbumScreen(
+                        viewModel = hiltViewModel(),
+                        onBack = { nav.popBackStack() },
+                        onToday = { nav.popBackStack<Home>(inclusive = false) },
+                        onOpenRoll = { nav.switchTab(TzTab.Roll) },
+                        onOpenBasket = { nav.navigate(Basket) },
+                        onOpenPockets = { nav.navigate(Pockets) },
+                        onOpenSettings = { nav.navigate(AppSettings) },
+                        onOpenProfile = { nav.navigate(Profile) },
+                    )
+                }
+                composable<Match> {
+                    MatchScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }, onContinue = { nav.popBackStack<Home>(inclusive = false) })
+                }
+                composable<Basket> { ComingSoonScreen(R.string.soon_basket) { nav.popBackStack() } }
+                composable<Profile> { ComingSoonScreen(R.string.soon_profile) { nav.popBackStack() } }
+                composable<AppSettings> { ComingSoonScreen(R.string.soon_settings) { nav.popBackStack() } }
                 composable<RollTab> {
                     RollScreen(viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet, onPayday = { nav.navigate(PaydayRitual(it)) })
                 }

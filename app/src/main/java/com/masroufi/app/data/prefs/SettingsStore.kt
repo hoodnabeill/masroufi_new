@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.masroufi.app.core.Payday
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.domain.MainGoal
+import com.masroufi.app.domain.MatchSeen
 import com.masroufi.app.domain.WorkKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -71,6 +72,8 @@ data class Settings(
     /** A raised daily amount the user accepted from the basket's suggestion, and the epoch day (payday) it stops holding. */
     val ticketRaise: Long? = null,
     val ticketRaiseUntil: Long? = null,
+    /** The match score last shown (task 42: goals since then animate). */
+    val matchSeen: MatchSeen? = null,
 )
 
 @Singleton
@@ -108,6 +111,7 @@ class SettingsStore @Inject constructor(
     private val milestonesSeenKey = stringSetPreferencesKey("milestonesSeen")
     private val ticketRaiseKey = longPreferencesKey("ticketRaise")
     private val ticketRaiseUntilKey = longPreferencesKey("ticketRaiseUntil")
+    private val matchSeenKey = stringPreferencesKey("matchSeen")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -186,6 +190,9 @@ class SettingsStore @Inject constructor(
         require(v == null || v > 0) { "birthday target must be > 0" }
         store.edit { if (v == null) it.remove(birthdayTargetKey) else it[birthdayTargetKey] = v }
     }
+    suspend fun setMatchSeen(weekStart: LocalDate, goalsFor: Int, goalsAgainst: Int) {
+        store.edit { it[matchSeenKey] = "${weekStart.toEpochDay()},$goalsFor,$goalsAgainst" }
+    }
     suspend fun markMilestoneSeen(key: String) { store.edit { it[milestonesSeenKey] = (it[milestonesSeenKey] ?: emptySet()) + key } }
     /** Clears every key (delete all my data) and re-seeds in the same edit, so a live collector never sees no seed. */
     suspend fun clearAll() {
@@ -229,6 +236,8 @@ class SettingsStore @Inject constructor(
         milestonesSeen = p[milestonesSeenKey] ?: emptySet(),
         ticketRaise = p[ticketRaiseKey],
         ticketRaiseUntil = p[ticketRaiseUntilKey],
+        matchSeen = p[matchSeenKey]?.split(",")?.mapNotNull { it.toLongOrNull() }?.takeIf { it.size == 3 }
+            ?.let { MatchSeen(it[0], it[1].toInt(), it[2].toInt()) },
     )
 
     private fun decodeReminders(s: String?): Map<Long, Long> = s?.split(",")?.mapNotNull {

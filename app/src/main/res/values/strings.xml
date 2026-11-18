@@ -801,4 +801,122 @@
     <string name="gameya_archive_body">هتختفي من الناس، وقسطها الثابت بيتشال. اللي اتسجّل قبل كده بيفضل.</string>
     <string name="gameya_archive_confirm">أرشّفها</string>
     <string name="gameya_archive_cancel">لأ، سيبها</string>
+    <!-- Task 42: match and album -->
+    <string name="match_title">ماتش الأسبوع</string>
+    <string name="match_pill">الأسبوع %1$s · %2$s</string>
+    <plurals name="match_days_left">
+        <item quantity="zero">فاضل %1$d يوم على الصفارة</item>
+        <item quantity="one">فاضل يوم على الصفارة</item>
+        <item quantity="two">فاضل يومين على الصفارة</item>
+        <item quantity="few">فاضل %1$d أيام على الصفارة</item>
+        <item quantity="many">فاضل %1$d يوم على الصفارة</item>
+        <item quantity="other">فاضل %1$d يوم على الصفارة</item>
+    </plurals>
+    <plurals name="match_weeks">
+        <item quantity="zero">%1$d أسبوع</item>
+        <item quantity="one">أسبوع</item>
+        <item quantity="two">أسبوعين</item>
+        <item quantity="few">%1$d أسابيع</item>
+        <item quantity="many">%1$d أسبوع</item>
+        <item quantity="other">%1$d أسبوع</item>
+    </plurals>
+    <plurals name="match_locked_count">
+        <item quantity="zero">%1$d أسبوع أقدم مع بلس</item>
+        <item quantity="one">أسبوع أقدم مع بلس</item>
+        <item quantity="two">أسبوعين أقدم مع بلس</item>
+        <item quantity="few">%1$d أسابيع أقدم مع بلس</item>
+        <item quantity="many">%1$d أسبوع أقدم مع بلس</item>
+        <item quantity="other">%1$d أسبوع أقدم مع بلس</item>
+    </plurals>
+    <string name="match_you">إنت</string>
+    <string name="match_last_week">الأسبوع اللي فات</string>
+    <string name="match_score_cd">إنت %1$s، الأسبوع اللي فات %2$s</string>
+    <string name="match_rule">كل يوم تقفله تحت التذكرة جون ليك. فوقها جون عليك.</string>
+    <string name="match_events_title">أحداث الماتش</string>
+    <string-array name="match_day_names">
+        <item>السبت</item>
+        <item>الحد</item>
+        <item>الاتنين</item>
+        <item>التلات</item>
+        <item>الأربع</item>
+        <item>الخميس</item>
+        <item>الجمعة</item>
+    </string-array>
+    <string name="match_ev_goal">جون! قفلت بـ %1$s زيادة</string>
+    <string name="match_ev_exact">جون! قفلت على الحد بالظبط</string>
+    <string name="match_ev_best">جون! أحسن يوم: %1$s زيادة</string>
+    <string name="match_ev_last">جون في آخر دقيقة · %1$s زيادة</string>
+    <string name="match_ev_against">جون عليك · عدّيت التذكرة بـ %1$s</string>
+    <string name="match_ev_open">الكورة في ملعبك · معاك %1$s</string>
+    <string name="match_hat_nudge_title">جون كمان النهارده = هاتريك</string>
+    <string name="match_hat_nudge_line">3 أيام ورا بعض تحت التذكرة تكسب ختم «هاتريك» وكارت مثل نادر.</string>
+    <string name="match_hat_done_title">هاتريك! الختم في ألبومك</string>
+    <string name="match_hat_done_line">3 أيام ورا بعض تحت التذكرة.</string>
+    <string name="match_hat_stamp">هاتريك</string>
+    <string name="match_league_title">دوري الأسابيع</string>
+    <string name="match_league_sub">إنت ضد نفسك</string>
+    <string name="match_col_week">الأسبوع</string>
+    <string name="match_col_result">النتيجة</string>
+    <string name="match_col_saved">حوّشت</string>
+    <string name="match_row_now">%1$s · دلوقتي</string>
+    <string name="match_row_win">%1$s · فوز</string>
+    <string name="match_row_draw">%1$s · تعادل</string>
+    <string name="match_row_loss">%1$s · خسارة</string>
+    <string name="match_summary">كسبت %1$s من آخر %2$s. أطول سلسلة فوز: %3$s.</string>
+    <string name="match_locked_what">باقي أسابيع الدوري مع بلس.</string>
+    <string name="match_continue">كمّل الماتش</string>
+    <string name="album_title">ألبومك</string>
+    <string name="album_settings_cd">الإعدادات</string>
+    <string name="album_level">مستوى %1$s</string>
+    <string name="album_qersh_happy">قرش مبسوط منك بقاله %1$s يوم</string>
+    <string name="album_qersh_waiting">قرش مستنيك تقفل تذكرة</string>
+    <string name="album_cut">%1$s تذكرة مقطوعة</string>
+    <string name="album_to_next">%1$s كمان وتبقى «%2$s»</string>
+    <string name="album_identity_cd">ملفك: %1$s</string>
+    <string name="album_tile_streak">سلسلة دلوقتي</string>
+    <string name="album_tile_longest">أطول سلسلة</string>
+    <string name="album_tile_under">يوم تحت الحد</string>
+    <string name="album_proverbs_title">أمثال الفلوس</string>
+    <string name="album_proverbs_count">%1$s من %2$s</string>
+    <string name="album_card_new">%1$s · جديد</string>
+    <string name="album_card_cd">كارت %1$s: %2$s</string>
+    <string name="album_locked_cd">كارت مقفول: %1$s</string>
+    <string name="album_lock_tomorrow">تذكرة بكره</string>
+    <string name="album_lock_week">أسبوع كامل</string>
+    <string name="album_lock_rare">كارت نادر</string>
+    <string name="album_card_close">تمام</string>
+    <string name="album_stamps_title">الأختام</string>
+    <string name="stamp_first_ticket">أول تذكرة</string>
+    <string name="stamp_full_week">أسبوع كامل</string>
+    <string name="stamp_hat_trick">هاتريك</string>
+    <string name="stamp_tight_fist">إيد ماسكة</string>
+    <string name="stamp_first_gram">أول جرام</string>
+    <string name="stamp_settled">خالص</string>
+    <string name="stamp_first_ticket_how">اقفل أول تذكرة</string>
+    <string name="stamp_full_week_how">7 أيام ورا بعض</string>
+    <string name="stamp_hat_trick_how">3 أيام تحت التذكرة</string>
+    <string name="stamp_tight_fist_how">يومين من غير صرف</string>
+    <string name="stamp_first_gram_how">جرام دهب في الحصّالة</string>
+    <string name="stamp_settled_how">سدّد كل ديونك</string>
+    <plurals name="album_stamp_times">
+        <item quantity="zero">%1$d مرة</item>
+        <item quantity="one">مرة</item>
+        <item quantity="two">مرتين</item>
+        <item quantity="few">%1$d مرات</item>
+        <item quantity="many">%1$d مرة</item>
+        <item quantity="other">%1$d مرة</item>
+    </plurals>
+    <string name="album_stubs_title">كعوب التذاكر</string>
+    <string name="album_stubs_all">الدفتر كله</string>
+    <string name="album_stub_ok">تمام</string>
+    <string name="album_stub_cd">%1$s: %2$s</string>
+    <string name="album_link_basket">سلّتك والأسعار</string>
+    <string name="album_link_pockets">الجيوب</string>
+    <string name="album_link_settings">القفل، النسخة الاحتياطية والإعدادات</string>
+    <string name="album_celebrate_level">مستوى جديد: %1$s</string>
+    <string name="album_celebrate_stamp">ختم جديد: %1$s</string>
+    <string name="soon_basket">سلّتك والأسعار</string>
+    <string name="soon_profile">ملفك</string>
+    <string name="soon_settings">الإعدادات</string>
+    <string name="soon_line">الشاشة دي جاية قريب.</string>
 </resources>

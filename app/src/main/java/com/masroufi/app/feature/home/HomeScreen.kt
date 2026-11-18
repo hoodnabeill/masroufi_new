@@ -50,6 +50,8 @@ fun HomeScreen(
     onCloseDay: (epochDay: Long) -> Unit,
     onOpenProverb: (epochDay: Long) -> Unit,
     onOpenPockets: () -> Unit = {},
+    onOpenAlbum: () -> Unit = {},
+    onOpenMatch: () -> Unit = {},
     onOpenAddSheet: (AddPrefill?) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -85,6 +87,8 @@ fun HomeScreen(
         onCloseDay = onCloseDay,
         onOpenProverb = onOpenProverb,
         onOpenPockets = onOpenPockets,
+        onOpenAlbum = onOpenAlbum,
+        onOpenMatch = onOpenMatch,
         feedback = feedback,
         onTicketShown = viewModel::markTicketShown,
         onDismissCard = viewModel::dismissCard,
@@ -110,6 +114,8 @@ fun HomeContent(
     onDismissCard: (String) -> Unit = {},
     onSetMoney: (Long) -> Unit = {},
     onOpenPockets: () -> Unit = {},
+    onOpenAlbum: () -> Unit = {},
+    onOpenMatch: () -> Unit = {},
 ) {
     var skeletonDue by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -133,7 +139,7 @@ fun HomeContent(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets)
+                    ReadyContent(ready, quickText, onQuickText, onSubmitQuickLog, onMic, saveFailed, onChip, onCloseDay, onOpenProverb, feedback, onTicketShown, onDismissCard, onSetMoney, onOpenPockets, onOpenAlbum, onOpenMatch)
                 }
             }
         }
@@ -156,9 +162,11 @@ private fun ReadyContent(
     onDismissCard: (String) -> Unit,
     onSetMoney: (Long) -> Unit,
     onOpenPockets: () -> Unit,
+    onOpenAlbum: () -> Unit,
+    onOpenMatch: () -> Unit,
 ) {
     val epochDay = s.today.toEpochDay()
-    HomeHeader(s.today, s.greeting, s.streak)
+    HomeHeader(s.today, s.greeting, s.streak, onOpenAlbum)
     // 26 dp above the ticket (on top of the 16 dp gap) leaves room for Qersh peeking over it.
     Box(Modifier.fillMaxWidth().padding(top = 26.dp)) {
         val t = s.ticket
@@ -196,7 +204,7 @@ private fun ReadyContent(
     if (s.repeats.isNotEmpty()) RepeatChips(s.repeats, onChip)
     s.cardOrder.forEach { card ->
         when (card) {
-            HomeCard.WEEK -> WeekCard(s.week, s.closedUnder)
+            HomeCard.WEEK -> WeekCard(s.week, s.closedUnder, onOpenMatch)
             HomeCard.JAR -> JarCard(s.jarTotal)
             HomeCard.CYCLE -> CycleCard(s.cycle)
             HomeCard.PEOPLE, HomeCard.SEASONS -> Unit // no Home card for these yet

@@ -85,3 +85,20 @@ fun stampCount(kind: StampKind, days: List<DayResult>): Int {
         else -> 1
     }
 }
+
+/** 0..1 through the current level toward the next; 1 at the top level. */
+fun levelProgress(handClosed: Int): Float {
+    val next = nextLevelAt(handClosed) ?: return 1f
+    val start = LEVEL_THRESHOLDS[level(handClosed) - 1]
+    return (handClosed - start).toFloat() / (next - start)
+}
+
+/** What a locked card in the album says it needs: the next ordinary card, the first full week (card 45), or any other rare one. */
+enum class LockHint { TOMORROW, FULL_WEEK, RARE }
+
+/** Up to one placeholder per hint that still applies, in the mock's order. */
+fun lockHints(collected: Set<Int>): List<LockHint> = buildList {
+    if (ProverbCatalog.all.any { it.number !in collected && !it.rare }) add(LockHint.TOMORROW)
+    if (45 !in collected) add(LockHint.FULL_WEEK)
+    if (ProverbCatalog.rare.any { it != 45 && it !in collected }) add(LockHint.RARE)
+}

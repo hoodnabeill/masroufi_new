@@ -36,3 +36,13 @@ import kotlinx.serialization.Serializable
 @Serializable data object GameyaScreen
 /** [id] 0 = a new gameya. */
 @Serializable data class GameyaForm(val id: Long)
+/** ألبومك (Task 42). */
+@Serializable data object Album
+/** ماتش الأسبوع (Task 42). */
+@Serializable data object Match
+/** Stub until Task 44's basket replaces it. */
+@Serializable data object Basket
+/** Stub until Task 44's profile replaces it. */
+@Serializable data object Profile
+/** Stub until Phase 11's settings replace it. */
+@Serializable data object AppSettings

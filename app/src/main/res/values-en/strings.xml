@@ -802,4 +802,106 @@
     <string name="gameya_archive_body">It leaves People and its fixed installment goes. What was recorded before stays.</string>
     <string name="gameya_archive_confirm">Archive it</string>
     <string name="gameya_archive_cancel">No, keep it</string>
+    <!-- Task 42: match and album -->
+    <string name="match_title">The weekly match</string>
+    <string name="match_pill">Week %1$s · %2$s</string>
+    <plurals name="match_days_left">
+        <item quantity="one">1 day to the whistle</item>
+        <item quantity="other">%1$d days to the whistle</item>
+    </plurals>
+    <plurals name="match_weeks">
+        <item quantity="one">1 week</item>
+        <item quantity="other">%1$d weeks</item>
+    </plurals>
+    <plurals name="match_locked_count">
+        <item quantity="one">1 older week with Plus</item>
+        <item quantity="other">%1$d older weeks with Plus</item>
+    </plurals>
+    <string name="match_you">You</string>
+    <string name="match_last_week">Last week</string>
+    <string name="match_score_cd">You %1$s, last week %2$s</string>
+    <string name="match_rule">Every day you close under the ticket is a goal for you. Over it, a goal against.</string>
+    <string name="match_events_title">Match events</string>
+    <string-array name="match_day_names">
+        <item>Saturday</item>
+        <item>Sunday</item>
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+    </string-array>
+    <string name="match_ev_goal">Goal! Closed with %1$s to spare</string>
+    <string name="match_ev_exact">Goal! Closed exactly on the limit</string>
+    <string name="match_ev_best">Goal! Best day: %1$s to spare</string>
+    <string name="match_ev_last">Last-minute goal · %1$s to spare</string>
+    <string name="match_ev_against">Goal against · over the ticket by %1$s</string>
+    <string name="match_ev_open">The ball is in your court · %1$s left</string>
+    <string name="match_hat_nudge_title">One more goal today = hat-trick</string>
+    <string name="match_hat_nudge_line">3 days in a row under the ticket earns the \'Hat-trick\' stamp and a rare proverb card.</string>
+    <string name="match_hat_done_title">Hat-trick! The stamp is in your album</string>
+    <string name="match_hat_done_line">3 days in a row under the ticket.</string>
+    <string name="match_hat_stamp">Hat-trick</string>
+    <string name="match_league_title">Weekly league</string>
+    <string name="match_league_sub">You against yourself</string>
+    <string name="match_col_week">Week</string>
+    <string name="match_col_result">Result</string>
+    <string name="match_col_saved">Saved</string>
+    <string name="match_row_now">%1$s · now</string>
+    <string name="match_row_win">%1$s · win</string>
+    <string name="match_row_draw">%1$s · draw</string>
+    <string name="match_row_loss">%1$s · loss</string>
+    <string name="match_summary">You won %1$s of the last %2$s. Longest winning run: %3$s.</string>
+    <string name="match_locked_what">The rest of the league history comes with Plus.</string>
+    <string name="match_continue">Back to the match</string>
+    <string name="album_title">Your album</string>
+    <string name="album_settings_cd">Settings</string>
+    <string name="album_level">Level %1$s</string>
+    <string name="album_qersh_happy">Qersh has been happy with you for %1$s days</string>
+    <string name="album_qersh_waiting">Qersh is waiting for you to close a ticket</string>
+    <string name="album_cut">%1$s tickets cut</string>
+    <string name="album_to_next">%1$s more to reach \'%2$s\'</string>
+    <string name="album_identity_cd">Your profile: %1$s</string>
+    <string name="album_tile_streak">Current streak</string>
+    <string name="album_tile_longest">Longest streak</string>
+    <string name="album_tile_under">Days under the limit</string>
+    <string name="album_proverbs_title">Money proverbs</string>
+    <string name="album_proverbs_count">%1$s of %2$s</string>
+    <string name="album_card_new">%1$s · new</string>
+    <string name="album_card_cd">Card %1$s: %2$s</string>
+    <string name="album_locked_cd">Locked card: %1$s</string>
+    <string name="album_lock_tomorrow">Tomorrow\'s ticket</string>
+    <string name="album_lock_week">A full week</string>
+    <string name="album_lock_rare">A rare card</string>
+    <string name="album_card_close">Done</string>
+    <string name="album_stamps_title">Stamps</string>
+    <string name="stamp_first_ticket">First ticket</string>
+    <string name="stamp_full_week">Full week</string>
+    <string name="stamp_hat_trick">Hat-trick</string>
+    <string name="stamp_tight_fist">Tight fist</string>
+    <string name="stamp_first_gram">First gram</string>
+    <string name="stamp_settled">All settled</string>
+    <string name="stamp_first_ticket_how">Close your first ticket</string>
+    <string name="stamp_full_week_how">7 days in a row</string>
+    <string name="stamp_hat_trick_how">3 days under the ticket</string>
+    <string name="stamp_tight_fist_how">2 days with no spending</string>
+    <string name="stamp_first_gram_how">A gram of gold in the jar</string>
+    <string name="stamp_settled_how">Clear every debt</string>
+    <plurals name="album_stamp_times">
+        <item quantity="one">Once</item>
+        <item quantity="other">%1$d times</item>
+    </plurals>
+    <string name="album_stubs_title">Ticket stubs</string>
+    <string name="album_stubs_all">The whole roll</string>
+    <string name="album_stub_ok">Even</string>
+    <string name="album_stub_cd">%1$s: %2$s</string>
+    <string name="album_link_basket">Your basket and prices</string>
+    <string name="album_link_pockets">Pockets</string>
+    <string name="album_link_settings">Lock, backup and settings</string>
+    <string name="album_celebrate_level">New level: %1$s</string>
+    <string name="album_celebrate_stamp">New stamp: %1$s</string>
+    <string name="soon_basket">Your basket and prices</string>
+    <string name="soon_profile">Your profile</string>
+    <string name="soon_settings">Settings</string>
+    <string name="soon_line">This screen is coming soon.</string>
 </resources>

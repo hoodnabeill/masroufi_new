@@ -102,7 +102,7 @@ private fun Modifier.dashedBorder(width: Dp, color: Color, radius: Dp) = drawBeh
 }
 
 @Composable
-internal fun HomeHeader(today: LocalDate, greeting: Greeting, streak: Int) {
+internal fun HomeHeader(today: LocalDate, greeting: Greeting, streak: Int, onOpenAlbum: () -> Unit = {}) {
     val locale = LocalConfiguration.current.locales[0]
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 4.dp),
@@ -121,9 +121,10 @@ internal fun HomeHeader(today: LocalDate, greeting: Greeting, streak: Int) {
         if (streak > 0) {
             val cd = stringResource(R.string.home_streak_cd, streak.toString())
             val shape = RoundedCornerShape(22.dp)
-            // Not clickable until the album exists (Phase 8).
+            val haptics = LocalHaptics.current
             Row(
                 Modifier.height(44.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
+                    .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpenAlbum() }
                     .clearAndSetSemantics { contentDescription = cd }
                     .padding(horizontal = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -306,9 +307,9 @@ internal fun RepeatChips(repeats: List<RepeatChip>, onChip: (RepeatChip) -> Unit
 }
 
 @Composable
-internal fun WeekCard(week: List<WeekStub>, closedUnder: Int) {
+internal fun WeekCard(week: List<WeekStub>, closedUnder: Int, onClick: (() -> Unit)? = null) {
     val days = stringArrayResource(R.array.home_week_days)
-    TzCard(Modifier.fillMaxWidth()) {
+    TzCard(Modifier.fillMaxWidth(), onClick = onClick) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(stringResource(R.string.home_week_title), style = TzType.cardHeading, color = Tz.text, modifier = Modifier.alignByBaseline())
             Text(
