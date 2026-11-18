@@ -129,6 +129,10 @@ Decisions made during Phase 3 (owner may override):
 - Task 53: one shared PlusSheet for the envelope / gameya / kids limits (button hidden in the mode, "تمام" instead). The trial card goes last in the Home slot; from day 7 it goes before first-week cards except the money card; hidden in the mode and while a story is unseen; the ends-soon line is tappable except in the mode. Dashed rows and sad Qersh only when a trial is active or ended. Features with no loss row get their pitch row on top. The mock's "less than a coffee" line was dropped (not a claim the app can check). `PlusComingSheet` is removed; `PlusSettingsRow` waits for Phase 11's Settings (shown in the gallery). Guessed copy: headline variants, tags, row titles/subs/pitches, trial card/line, prices-unavailable, restore lines.
 - Digits: strings use `%s`, never `%d` — `%d` prints Arabic-Indic digits on an Arabic locale; the spec wants Western digits everywhere (`03-DESIGN-SYSTEM` line 65). Kotlin formatting uses `Locale.US`.
 
+## Phase 11 notes (trust)
+
+- Task 54: one "الخصوصية والشروط" row opens a Legal screen with two tabs; a separate licences row (OFL texts of Alexandria and Lalezar from `res/raw`). Profile reaches Settings through a gear in its header. Round-ups row: not Plus → paywall (in the mode → PlusSheet). Ticket sounds = system click on save, repeat chip and tear. `SUPPORT_EMAIL` is empty (feedback row hidden; legal contact points to the Play page). The legal text says no SMS access and no INTERNET permission — recheck in Phase 13 when Billing is added. `versionName` is still 1.0.0 (Phase 13). Guessed copy: all legal text.
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
