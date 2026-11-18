@@ -10,6 +10,7 @@ import com.masroufi.app.data.db.PocketDao
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.PocketKind
 import com.masroufi.app.data.db.RecurringDao
+import com.masroufi.app.data.prefs.Settings
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.TicketCalc
@@ -166,10 +167,9 @@ class FreelanceRepository @Inject constructor(
      * Called by printToday: on the first open on or after the self-payday (once a month) moves min(self-salary, vault)
      * from the vault to the lowest-id counting pocket (a MOVED entry, no fee). A short vault pays what is there, never
      * a negative amount; an empty one makes no entry. The result is kept for Home ([selfPay]) and the ritual.
-     * Returns true when money was moved.
+     * [s] is the settings the caller already read (one read per print). Returns true when money was moved.
      */
-    suspend fun runSelfPayday(today: LocalDate): Boolean {
-        val s = settings.current()
+    suspend fun runSelfPayday(today: LocalDate, s: Settings): Boolean {
         val salary = s.selfSalary?.takeIf { s.freelanceOn } ?: return false
         val day = s.selfPayday ?: return false
         val month = YearMonth.from(today)
