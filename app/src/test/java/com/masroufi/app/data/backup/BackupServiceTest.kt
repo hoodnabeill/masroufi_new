@@ -103,8 +103,9 @@ class BackupServiceTest {
         s.setPassword("pw-123456")
         store.setProfileName("يوسف")
         addEntry("قبل النسخة")
-        val savedSettings = settingsFile.readBytes()
         val file = s.createBackup()
+        // Read after the backup: reading the settings the first time seeds them, so the file changes under it.
+        val savedSettings = settingsFile.readBytes()
         addEntry("بعد النسخة")
         store.setProfileName("حد تاني")
         assertEquals(listOf("بعد النسخة", "قبل النسخة"), notes(db))
