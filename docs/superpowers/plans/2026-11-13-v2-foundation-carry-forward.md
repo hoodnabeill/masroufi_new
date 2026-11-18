@@ -82,6 +82,7 @@ Decisions made during Phase 3 (owner may override):
 - The ritual preview does not check that the pocket covers the ticked repayments.
 - Task 37: the payday debts step lists loans only (not tab items) and ticks them all by default, as drawn; the duty ledger and gameya routes are stubs (`SoonScreen`) for Tasks 38 and 39; the reminder feedback shows when the share sheet closes (Android cannot say whether anything was sent).
 - Task 37 split: equal shares over everyone ticked (incl. the user); a typed share is fixed and the rest split equally; unticking the user puts the whole bill on the others. A row's "سدّد" repays all that person's open loans in full (partial amounts per debt in person detail). Due date is a chip (none / 1 week / 2 weeks / 1 month). A repayment with no pocket leaves no history row.
+- Task 38 duty ledger: no schema change; a personal season matches a "theirs" occasion with the same trimmed name and a person set (renaming either side breaks the link); the season note uses the person's name, not a relation word; a "theirs" occasion with no person never gets a suggestion; date picker is month chips + day/year steppers; all duty-ledger copy is the builder's (07-COPY has none).
 
 ## Later phases
 
