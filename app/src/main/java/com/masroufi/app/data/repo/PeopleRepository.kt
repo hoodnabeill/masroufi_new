@@ -77,6 +77,7 @@ class PeopleRepository @Inject constructor(
     private val dutyDao: DutyDao,
     private val entries: EntryRepository,
     private val clock: Clock,
+    private val stamps: StampAwarder,
 ) {
     private fun rows(): Flow<List<PersonRow>> =
         combine(dao.persons(), dao.debts(), dao.tabItems(), dutyDao.gifts()) { persons, debts, tab, gifts ->
@@ -177,6 +178,7 @@ class PeopleRepository @Inject constructor(
                 val person = checkNotNull(dao.personById(debt.personId))
                 logMoney(pocketId, if (debt.direction == DebtDirection.THEY_OWE) amount else -amount, person, debtId)
             }
+            stamps.checkSettled()
         }
     }
 

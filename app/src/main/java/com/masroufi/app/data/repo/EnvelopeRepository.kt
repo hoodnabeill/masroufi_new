@@ -19,6 +19,7 @@ import com.masroufi.app.data.db.SplitKind
 import com.masroufi.app.data.db.SplitRuleEntity
 import com.masroufi.app.data.db.TazkaraDatabase
 import com.masroufi.app.data.prefs.SettingsStore
+import com.masroufi.app.domain.scaleForHousehold
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.SplitResult
 import com.masroufi.app.domain.SplitRule
@@ -83,6 +84,9 @@ private val SUGGESTED = listOf(
     Triple("الفواتير والنت", EnvelopeKind.FIXED, listOf("فواتير")),
     Triple("الخروجات", EnvelopeKind.SPENDING, listOf("قهوة")),
 )
+
+/** Suggested monthly grocery amount for a household of four; 0 = none suggested (no invented amounts). */
+internal const val GROCERY_BASE = 0L
 
 /** Days of spending before an envelope says when it runs out. */
 private const val MIN_DAYS_OF_DATA = 5
@@ -236,12 +240,16 @@ class EnvelopeRepository @Inject constructor(
 
     /**
      * The four starter envelopes from the seeded categories. Monthly amounts stay 0 for the user to fill (no invented
-     * amounts), so [householdSize] does not change anything yet.
+     * amounts); the grocery one goes through the household scaling hook ([GROCERY_BASE] is 0 until a figure is
+     * agreed). [householdSize] null reads the profile's.
      */
-    @Suppress("UNUSED_PARAMETER")
-    suspend fun suggestDefaults(householdSize: Int?): List<EnvelopeSuggestion> {
+    suspend fun suggestDefaults(householdSize: Int? = null): List<EnvelopeSuggestion> {
+        val size = householdSize ?: settings.current().householdSize
         val byName = categoryDao.all().first().associateBy({ it.name }, { it.id })
-        return SUGGESTED.map { (name, kind, cats) -> EnvelopeSuggestion(name, kind, cats.mapNotNull(byName::get).toSet()) }
+        return SUGGESTED.map { (name, kind, cats) ->
+            val monthly = if (cats.contains("بقالة")) scaleForHousehold(GROCERY_BASE, size) else 0L
+            EnvelopeSuggestion(name, kind, cats.mapNotNull(byName::get).toSet(), monthly)
+        }
     }
 
     /** Today's pay cycle. */

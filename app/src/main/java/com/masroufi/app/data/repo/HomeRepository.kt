@@ -19,6 +19,7 @@ import com.masroufi.app.domain.punched
 import com.masroufi.app.domain.punches
 import com.masroufi.app.domain.EntryForDay
 import com.masroufi.app.domain.streak
+import com.masroufi.app.domain.MainGoal
 import com.masroufi.app.domain.weekStart
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -54,6 +55,8 @@ data class HomeData(
     val moneyUnknown: Boolean,
     val dismissedCards: Set<String>,
     val firstOpenDay: Long?,
+    /** The profile's main goal; it orders the cards below the ticket. */
+    val mainGoal: MainGoal? = null,
 )
 
 /** The day's biggest punch: [categoryName] is null when that entry has no (or a deleted) category. */
@@ -144,6 +147,7 @@ class HomeRepository @Inject constructor(
                 moneyUnknown = s.moneyUnknown,
                 dismissedCards = s.firstWeekCardsDismissed,
                 firstOpenDay = s.firstOpenDay,
+                mainGoal = s.mainGoal,
             )
         }
     }

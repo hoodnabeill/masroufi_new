@@ -21,6 +21,7 @@ interface PeopleDao {
     @Query("DELETE FROM debt WHERE id = :id") suspend fun deleteDebt(id: Long)
     @Query("SELECT * FROM debt ORDER BY id") fun debts(): Flow<List<DebtEntity>>
     @Query("SELECT * FROM debt WHERE id = :id") suspend fun debtById(id: Long): DebtEntity?
+    @Query("SELECT COUNT(*) FROM debt") suspend fun debtCount(): Int
     @Query("SELECT * FROM debt WHERE settled = 0 ORDER BY id") suspend fun openDebts(): List<DebtEntity>
     @Query("DELETE FROM debt WHERE personId = :personId") suspend fun deleteDebtsOf(personId: Long)
 

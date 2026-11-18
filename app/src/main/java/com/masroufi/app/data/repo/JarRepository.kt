@@ -95,6 +95,7 @@ class JarRepository @Inject constructor(
     private val goalDao: GoalDao,
     private val settings: SettingsStore,
     private val clock: Clock,
+    private val stamps: StampAwarder,
 ) {
     fun observe(): Flow<JarView> = combine(jarDao.rows(Pot.JAR), goalDao.all(), settings.settings) { rows, goals, s ->
         val total = rows.sumOf { it.amount }
@@ -114,6 +115,13 @@ class JarRepository @Inject constructor(
     suspend fun deposit(amount: Long) {
         require(amount > 0) { "amount must be > 0" }
         jarDao.insert(manual(amount))
+        stamps.checkFirstGram(settings.current().goldPricePerGram)
+    }
+
+    /** Stores the typed gold price; a jar already over one gram at it earns the first-gram stamp. */
+    suspend fun setGoldPrice(perGram: Long, epochDay: Long) {
+        settings.setGoldPrice(perGram, epochDay)
+        stamps.checkFirstGram(perGram)
     }
 
     /** A MANUAL withdrawal, at most the free total ([AboveFreeJar] otherwise). */

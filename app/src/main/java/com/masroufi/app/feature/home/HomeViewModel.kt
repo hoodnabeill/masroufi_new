@@ -36,6 +36,8 @@ import com.masroufi.app.feature.roll.PendingDelete
 import com.masroufi.app.feature.roll.PendingDeletes
 import com.masroufi.app.feature.add.PunchFeedback
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.masroufi.app.domain.HomeCard
+import com.masroufi.app.domain.homeCardOrder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -104,6 +106,8 @@ sealed interface HomeUiState {
         val newTicket: Boolean = false,
         /** The one first-week card to show under the ticket section, if any. */
         val firstWeekCard: FirstWeekCard? = null,
+        /** Which cards show under the ticket and in what order (the profile's main goal). */
+        val cardOrder: List<HomeCard> = HomeCard.values().toList(),
     ) : HomeUiState
 }
 
@@ -390,6 +394,7 @@ internal fun homeUi(d: HomeData, pending: List<Pending>, hour: Int): HomeUiState
             paydayDay = d.cycle.nextPayday.dayOfMonth,
         ),
         collected = d.collected,
+        cardOrder = homeCardOrder(d.mainGoal),
         newTicket = open && d.lastTicketShown != today.toEpochDay(),
         firstWeekCard = firstWeekCard(d.entryCount, d.moneyUnknown, d.dismissedCards, d.firstOpenDay, today, hour, open, row.endOfMonth),
     )

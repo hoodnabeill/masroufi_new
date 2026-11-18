@@ -34,6 +34,7 @@ import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.RepeatChip
 import com.masroufi.app.feature.add.AddPrefill
 import com.masroufi.app.feature.add.PunchFeedback
+import com.masroufi.app.domain.HomeCard
 import com.masroufi.app.ui.paper.PrintIn
 import com.masroufi.app.ui.paper.Ticket
 import kotlinx.coroutines.delay
@@ -193,8 +194,13 @@ private fun ReadyContent(
         if (saveFailed) SaveFailedLine()
     }
     if (s.repeats.isNotEmpty()) RepeatChips(s.repeats, onChip)
-    WeekCard(s.week, s.closedUnder)
-    JarCard(s.jarTotal)
-    CycleCard(s.cycle)
+    s.cardOrder.forEach { card ->
+        when (card) {
+            HomeCard.WEEK -> WeekCard(s.week, s.closedUnder)
+            HomeCard.JAR -> JarCard(s.jarTotal)
+            HomeCard.CYCLE -> CycleCard(s.cycle)
+            HomeCard.PEOPLE, HomeCard.SEASONS -> Unit // no Home card for these yet
+        }
+    }
     if (s.ticket != null) ProverbTeaser(s.collected)
 }

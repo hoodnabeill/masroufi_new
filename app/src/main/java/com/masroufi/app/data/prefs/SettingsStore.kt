@@ -10,6 +10,8 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.masroufi.app.core.Payday
 import com.masroufi.app.domain.LeftoverDestination
+import com.masroufi.app.domain.MainGoal
+import com.masroufi.app.domain.WorkKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
@@ -55,6 +57,17 @@ data class Settings(
     val seasonOrder: List<Long> = emptyList(),
     /** Subscription id -> epoch day of the "remind me" before its trial ends (the notification itself is Phase 11). */
     val trialReminders: Map<Long, Long> = emptyMap(),
+    /** Profile (11-DATA "Profile"): every field optional, stored on the phone only. */
+    val profileName: String? = null,
+    val birthday: LocalDate? = null,
+    val workKind: WorkKind? = null,
+    val householdSize: Int? = null,
+    /** How many of the household are in school. */
+    val inSchool: Int? = null,
+    val mainGoal: MainGoal? = null,
+    val birthdayTarget: Long? = null,
+    /** Milestones the celebration already played: "level:N" and "stamp:KIND". */
+    val milestonesSeen: Set<String> = emptySet(),
 )
 
 @Singleton
@@ -82,6 +95,14 @@ class SettingsStore @Inject constructor(
     private val lastRitualKey = longPreferencesKey("lastRitualForEntryId")
     private val seasonOrderKey = stringPreferencesKey("seasonOrder")
     private val trialRemindersKey = stringPreferencesKey("trialReminders")
+    private val profileNameKey = stringPreferencesKey("profileName")
+    private val birthdayKey = longPreferencesKey("birthdayEpochDay")
+    private val workKindKey = stringPreferencesKey("workKind")
+    private val householdKey = intPreferencesKey("householdSize")
+    private val inSchoolKey = intPreferencesKey("inSchool")
+    private val mainGoalKey = stringPreferencesKey("mainGoal")
+    private val birthdayTargetKey = longPreferencesKey("birthdayTarget")
+    private val milestonesSeenKey = stringSetPreferencesKey("milestonesSeen")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -137,6 +158,31 @@ class SettingsStore @Inject constructor(
             it[goldPriceDateKey] = epochDay
         }
     }
+    suspend fun setProfileName(v: String?) { store.edit { if (v.isNullOrBlank()) it.remove(profileNameKey) else it[profileNameKey] = v.trim() } }
+    suspend fun setBirthday(v: LocalDate?) { store.edit { if (v == null) it.remove(birthdayKey) else it[birthdayKey] = v.toEpochDay() } }
+    suspend fun setWorkKind(v: WorkKind?) { store.edit { if (v == null) it.remove(workKindKey) else it[workKindKey] = v.name } }
+    suspend fun setHousehold(size: Int?, inSchool: Int?) {
+        require(size == null || size in 1..20) { "household size must be 1..20" }
+        require(inSchool == null || inSchool in 0..(size ?: 20)) { "in school must be 0..household size" }
+        store.edit {
+            if (size == null) it.remove(householdKey) else it[householdKey] = size
+            if (inSchool == null) it.remove(inSchoolKey) else it[inSchoolKey] = inSchool
+        }
+    }
+    suspend fun setMainGoal(v: MainGoal?) { store.edit { if (v == null) it.remove(mainGoalKey) else it[mainGoalKey] = v.name } }
+    suspend fun setBirthdayTarget(v: Long?) {
+        require(v == null || v > 0) { "birthday target must be > 0" }
+        store.edit { if (v == null) it.remove(birthdayTargetKey) else it[birthdayTargetKey] = v }
+    }
+    suspend fun markMilestoneSeen(key: String) { store.edit { it[milestonesSeenKey] = (it[milestonesSeenKey] ?: emptySet()) + key } }
+    /** Clears every key (delete all my data) and re-seeds in the same edit, so a live collector never sees no seed. */
+    suspend fun clearAll() {
+        store.edit {
+            it.clear()
+            it[seedKey] = SecureRandom().nextLong()
+            it[firstOpenDayKey] = LocalDate.now(clock).toEpochDay()
+        }
+    }
     suspend fun dismissFirstWeekCard(id: String) { store.edit { it[cardsDismissedKey] = (it[cardsDismissedKey] ?: emptySet()) + id } }
 
     private fun decode(p: Preferences) = Settings(
@@ -161,6 +207,14 @@ class SettingsStore @Inject constructor(
         lastRitualForEntryId = p[lastRitualKey],
         seasonOrder = p[seasonOrderKey]?.split(",")?.mapNotNull { it.toLongOrNull() } ?: emptyList(),
         trialReminders = decodeReminders(p[trialRemindersKey]),
+        profileName = p[profileNameKey],
+        birthday = p[birthdayKey]?.let(LocalDate::ofEpochDay),
+        workKind = p[workKindKey]?.let { runCatching { WorkKind.valueOf(it) }.getOrNull() },
+        householdSize = p[householdKey],
+        inSchool = p[inSchoolKey],
+        mainGoal = p[mainGoalKey]?.let { runCatching { MainGoal.valueOf(it) }.getOrNull() },
+        birthdayTarget = p[birthdayTargetKey],
+        milestonesSeen = p[milestonesSeenKey] ?: emptySet(),
     )
 
     private fun decodeReminders(s: String?): Map<Long, Long> = s?.split(",")?.mapNotNull {

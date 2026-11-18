@@ -46,3 +46,42 @@ fun earnedStamps(days: List<DayResult>): Set<StampKind> {
     if (under.any { d -> d.plusDays(1) in under && d.plusDays(2) in under }) out += StampKind.HAT_TRICK
     return out
 }
+
+/** The longest run of consecutive days closed by hand. */
+fun longestStreak(days: List<DayResult>): Int {
+    val hand = days.filter { it.status == TicketStatus.CLOSED_BY_HAND }.map { it.date }.toSortedSet()
+    var best = 0
+    var run = 0
+    var prev: LocalDate? = null
+    for (d in hand) {
+        run = if (prev != null && prev.plusDays(1) == d) run + 1 else 1
+        best = maxOf(best, run)
+        prev = d
+    }
+    return best
+}
+
+/** Days closed by hand on or under the ticket. */
+fun daysUnder(days: List<DayResult>): Int = days.count { it.status == TicketStatus.CLOSED_BY_HAND && it.spent <= it.ticket }
+
+/** How many times a stamp was earned: full weeks, hat-tricks (every full run of three under days), else 1. */
+fun stampCount(kind: StampKind, days: List<DayResult>): Int {
+    val hand = days.filter { it.status == TicketStatus.CLOSED_BY_HAND }.associateBy { it.date }
+    return when (kind) {
+        StampKind.FULL_WEEK ->
+            hand.keys.map(::weekStart).distinct().count { s -> (0L..6L).all { s.plusDays(it) in hand } }.coerceAtLeast(1)
+        StampKind.HAT_TRICK -> {
+            val under = hand.filterValues { it.spent <= it.ticket }.keys.toSortedSet()
+            var total = 0
+            var run = 0
+            var prev: LocalDate? = null
+            for (d in under) {
+                run = if (prev != null && prev.plusDays(1) == d) run + 1 else 1
+                if (run % 3 == 0) total++
+                prev = d
+            }
+            total.coerceAtLeast(1)
+        }
+        else -> 1
+    }
+}

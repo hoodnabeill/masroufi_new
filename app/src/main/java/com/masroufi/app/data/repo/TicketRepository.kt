@@ -89,6 +89,7 @@ class TicketRepository @Inject constructor(
     private val stampDao: StampDao,
     private val settings: SettingsStore,
     private val clock: Clock,
+    private val stamps: StampAwarder,
 ) {
     /**
      * Today's ticket: printed once, after auto-closing every earlier open day. Days in a gap get no row (design
@@ -178,6 +179,7 @@ class TicketRepository @Inject constructor(
             val days = ticketDao.allNow().map { DayResult(it.date, it.status, it.amount, it.spent) }
             val newStamps = earnedStamps(days) - stampDao.kinds().toSet()
             newStamps.forEach { stampDao.insert(StampEntity(kind = it, earnedOn = date, updatedAt = now)) }
+            stamps.checkFirstGram(s.goldPricePerGram) // the leftover may have taken the jar over one gram
 
             // One card per close: a milestone's rare card replaces the ordinary draw (45 first, 50 on a later close).
             val collected = proverbDao.numbers().toSet()

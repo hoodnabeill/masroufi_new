@@ -222,6 +222,8 @@ interface DayTicketDao {
     suspend fun openBefore(date: LocalDate): List<DayTicketEntity>
 
     @Query("SELECT * FROM day_ticket ORDER BY date") suspend fun allNow(): List<DayTicketEntity>
+    @Query("SELECT * FROM day_ticket ORDER BY date") fun all(): Flow<List<DayTicketEntity>>
+    @Query("SELECT COUNT(*) FROM day_ticket WHERE status = 'CLOSED_BY_HAND'") fun handClosedCount(): Flow<Int>
 
     @Query("SELECT * FROM day_ticket WHERE date < :date ORDER BY date DESC LIMIT 1")
     suspend fun latestBefore(date: LocalDate): DayTicketEntity?

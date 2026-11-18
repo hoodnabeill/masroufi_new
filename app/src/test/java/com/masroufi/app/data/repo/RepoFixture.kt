@@ -22,9 +22,10 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val settings = SettingsStore(PreferenceDataStoreFactory.create(scope = scope) { File(dir, "s.preferences_pb") }, clock)
     // Provider: entries is declared below (the Hilt graph breaks the same cycle).
     val recurring: RecurringRepository = RecurringRepository(db.recurringDao(), db.entryDao(), Provider { entries }, clock)
+    val stamps = StampAwarder(db.stampDao(), db.jarDao(), db.peopleDao(), clock)
     val tickets: TicketRepository = TicketRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
-        db.stampDao(), settings, clock,
+        db.stampDao(), settings, clock, stamps,
     )
     val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), db.peopleDao(), tickets, settings, plus, clock)
     val home = HomeRepository(
@@ -34,10 +35,10 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val envelopes = EnvelopeRepository(
         db, db.envelopeDao(), db.entryDao(), db.recurringDao(), db.categoryDao(), settings, plus, clock,
     )
-    val jar = JarRepository(db, db.jarDao(), db.goalDao(), settings, clock)
+    val jar = JarRepository(db, db.jarDao(), db.goalDao(), settings, clock, stamps)
     val seasons = SeasonRepository(db, db.seasonDao(), db.jarDao(), clock)
     val subscriptions = SubscriptionRepository(db.recurringDao(), db.dayTicketDao(), clock)
-    val people = PeopleRepository(db, db.peopleDao(), db.dutyDao(), entries, clock)
+    val people = PeopleRepository(db, db.peopleDao(), db.dutyDao(), entries, clock, stamps)
     val duty = DutyRepository(db, db.dutyDao(), db.peopleDao(), clock)
     val gameyas = GameyaRepository(db, db.gameyaDao(), recurring, plus, clock)
     val ritual = PaydayRitualRepository(

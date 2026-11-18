@@ -96,7 +96,7 @@ class JarViewModel @Inject constructor(
 
     fun earmark(goalId: Long, amount: Long) = act { jar.earmark(amount, goalId = goalId) }
     fun release(goalId: Long, amount: Long) = act { jar.release(amount, goalId = goalId) }
-    fun setGoldPrice(perGram: Long) = act { settings.setGoldPrice(perGram, LocalDate.now(clock).toEpochDay()) }
+    fun setGoldPrice(perGram: Long) = act { jar.setGoldPrice(perGram, LocalDate.now(clock).toEpochDay()) }
     fun setRoundUpStep(step: Int) = act { settings.setRoundUpStep(step) }
 
     private fun act(block: suspend () -> Unit) {
