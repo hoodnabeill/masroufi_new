@@ -66,6 +66,8 @@ android {
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        // CI names a hung test: the summary step reports the last STARTED line that has no result after it.
+        unitTests.all { it.testLogging.events("started", "passed", "skipped", "failed") }
     }
     lint {
         // shortcut: AGP 8.7's bundled lint crashes analysing Kotlin 2.2 sources, so the release lint-vital pass is
