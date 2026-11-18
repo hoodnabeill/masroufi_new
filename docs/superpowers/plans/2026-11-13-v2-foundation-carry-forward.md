@@ -95,6 +95,8 @@ Decisions made during Phase 3 (owner may override):
 - DataWipe clears Room, resets `tazkara_settings`, deletes v1's `masroufi.db` and `datastore/settings.preferences_pb` (closes the Phase 11 v1-file item).
 - Task 41: the first priced entry creates a hidden `tracked_item` row; it is listed after two priced entries or when the user adds it; tracking runs for everyone, only basket reads are Plus. "زوّد التذكرة" stores `ticketRaise` until the next payday and lifts the printed base (today's open row at once); tomorrow's preview does not show the raise yet (Task 44). The suggested ticket follows the rule (240 × 1.09 = 261), not the mock's 252. "صرفت نظر" caps the jar move at spendable. 0.5 ticket is spoken "نص". The unit price uses the system keyboard; editing an entry keeps but does not show its item and unit price.
 
+- Task 42: a "last-minute" goal is a leftover of 1–10 pounds; exactly 0 reads "جون! قفلت على الحد بالظبط"; best day needs two goals with a leftover. Only a goal for flips the score; one haptic per visit. First week hides the scoreboard and league. Locked league weeks show a count over placeholder rows (no real data behind the blur). The album header counts N of 50 (the catalog size), not the mock's 60; the progress bar shows progress inside the current level. Milestones celebrate once in the album (first unseen item), not on Home. Basket, Profile and AppSettings are stub routes until Task 44 / Phase 11.
+
 ## Later phases
 
 - Phase 6: reset `paidThisCycle` at payday; touch it only for entries in the current cycle (a backdated or old-cycle payment can mark/unmark the current cycle today); reserve bills only from counting EGP pockets; round-up netting assumes the jar total ≥ 0 — revisit with jar withdrawals.
