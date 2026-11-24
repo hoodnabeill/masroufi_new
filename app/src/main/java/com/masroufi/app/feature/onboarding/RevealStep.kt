@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.onboarding
 
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
 import android.Manifest
 import android.os.Build
@@ -133,7 +134,7 @@ fun RevealStep(state: OnboardingUi, actions: OnboardingActions) {
 @Composable
 private fun Facts(state: OnboardingUi, reveal: RevealUi) {
     val style = TzType.label.copy(fontWeight = FontWeight.SemiBold, color = Tz.yellowInk)
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         // A skipped money question has no number to show.
         if (!state.moneySkipped) Text(stringResource(R.string.ob_fact_have, poundsText(state.money.toPiastres())), style = style)
         Text(stringResource(R.string.ob_fact_reserved, poundsText(state.fixedTotal)), style = style)

@@ -1,5 +1,7 @@
 package com.masroufi.app.feature.pockets
 
+import com.masroufi.app.ui.components.isLargeFont
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -124,11 +126,19 @@ fun PocketDetailContent(
             return@Column
         }
         Hero(s)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Action(TzIcons.arrowUp, Tz.turquoise, R.string.pocket_act_receive, Modifier.weight(1f), onReceive)
-            Action(TzIcons.swap, Tz.sky, R.string.pocket_act_move, Modifier.weight(1f), onMove)
-            if (!s.isCash) Action(TzIcons.withdraw, Tz.yellow, R.string.pocket_act_cash, Modifier.weight(1f), onCashOut)
-            Action(TzIcons.refresh, Tz.lilac, R.string.pocket_act_reconcile, Modifier.weight(1f)) { sheet = DetailSheet.Reconcile }
+        // Four across; two by two once the font is large.
+        val actions = buildList<@Composable (Modifier) -> Unit> {
+            add { m -> Action(TzIcons.arrowUp, Tz.turquoise, R.string.pocket_act_receive, m, onReceive) }
+            add { m -> Action(TzIcons.swap, Tz.sky, R.string.pocket_act_move, m, onMove) }
+            if (!s.isCash) add { m -> Action(TzIcons.withdraw, Tz.yellow, R.string.pocket_act_cash, m, onCashOut) }
+            add { m -> Action(TzIcons.refresh, Tz.lilac, R.string.pocket_act_reconcile, m) { sheet = DetailSheet.Reconcile } }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            actions.chunked(if (isLargeFont()) 2 else 4).forEach { line ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    line.forEach { it(Modifier.weight(1f)) }
+                }
+            }
         }
         s.reconciled?.let {
             val line = if (it == ReconcileResult.Done) R.string.pockets_reconciled else R.string.pockets_reconciled_already
@@ -239,12 +249,12 @@ private fun LimitCard(s: PocketDetailUi, onEdit: () -> Unit) {
     }
     TzCard {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.pocket_limit_title), style = TzType.cardHeading, color = Tz.text)
                 TextLink(stringResource(R.string.pocket_limit_edit), onEdit)
             }
             TzProgressBar(listOf((s.moved.toFloat() / limit).coerceIn(0f, 1f) to Tz.yellow), height = 12.dp)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(stringResource(R.string.pocket_limit_moved, poundsText(s.moved)), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
                 Text(stringResource(R.string.pocket_limit_of, poundsText(limit)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text)
             }
@@ -292,7 +302,7 @@ private fun FeesCard(s: PocketDetailUi) {
 
 @Composable
 private fun FeeLine(label: String, amount: Long) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
         Text(poundsText(amount), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text)
     }
@@ -301,7 +311,7 @@ private fun FeeLine(label: String, amount: Long) {
 @Composable
 private fun RecentCard(s: PocketDetailUi, onOpenRoll: () -> Unit) {
     TzCard(padding = 0.dp) {
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.pocket_recent_title), style = TzType.cardHeading, color = Tz.text)
             TextLink(stringResource(R.string.pocket_recent_all), onOpenRoll)
         }

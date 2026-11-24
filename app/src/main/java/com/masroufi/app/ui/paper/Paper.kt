@@ -1,5 +1,6 @@
 package com.masroufi.app.ui.paper
 
+import com.masroufi.app.ui.components.CappedFontScale
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -138,6 +139,8 @@ fun ProverbCard(
     modifier: Modifier = Modifier,
 ) {
     val ink = if (color == Tz.turquoise) Tz.turquoiseInk else Tz.night
+    // A printed 300 x 400 card (also the shared picture): its text keeps its printed size, TalkBack reads it all.
+    CappedFontScale {
     Box(
         modifier.size(width = 300.dp, height = 400.dp).graphicsLayer { rotationZ = 2f }
             .clip(RoundedCornerShape(TzRadius.hero))
@@ -163,6 +166,7 @@ fun ProverbCard(
             Text(proverb, style = TzType.hero.copy(fontSize = 44.sp, lineHeight = 1.25.em), color = ink)
             Text(line, style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium), color = ink)
         }
+    }
     }
 }
 

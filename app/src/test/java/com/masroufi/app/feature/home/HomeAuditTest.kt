@@ -17,7 +17,7 @@ import java.time.LocalDate
 
 /** Home at 200% font, right-to-left, animations off (Task 60): every card state the screen can be in. */
 @RunWith(AndroidJUnit4::class)
-@Config(qualifiers = "ar")
+@Config(qualifiers = "ar-w320dp-h1000dp")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class HomeAuditTest {
     @get:Rule val rule = createComposeRule()

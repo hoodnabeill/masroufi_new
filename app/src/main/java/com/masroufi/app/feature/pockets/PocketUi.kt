@@ -171,7 +171,7 @@ internal fun NoteCounter(counter: CashCounter, onStep: (denomination: Int, delta
             }
         }
         Column(Modifier.weight(1f).clip(chip).background(Tz.night), horizontalAlignment = Alignment.CenterHorizontally) {
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(24.dp))
             Text(stringResource(R.string.pockets_counter_change), style = TzType.cardHeading.copy(fontSize = 18.sp), color = Tz.yellow)
             BasicTextField(
                 value = counter.change.text,
@@ -182,13 +182,13 @@ internal fun NoteCounter(counter: CashCounter, onStep: (denomination: Int, delta
                 cursorBrush = SolidColor(Tz.yellow),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
                 decorationBox = { inner ->
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(Modifier.heightIn(min = 48.dp), contentAlignment = Alignment.Center) {
                         if (counter.change.text.isEmpty()) Text("0", style = TzType.caption.copy(fontSize = 13.sp), color = Tz.yellow.copy(alpha = 0.5f))
                         inner()
                     }
                 },
             )
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(24.dp))
         }
     }
 }

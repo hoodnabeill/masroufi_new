@@ -12,7 +12,6 @@ import com.masroufi.app.data.repo.RollSummary
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.domain.TicketStatus
-import com.masroufi.app.ui.audit.AuditConfig
 import com.masroufi.app.ui.audit.assertNone
 import com.masroufi.app.ui.audit.audit
 import org.junit.Rule
@@ -62,9 +61,9 @@ class RollAuditTest {
         days = days, results = results, categories = cats, undoVisible = undo,
     )
 
-    // The one long note in the fixtures is meant to be cut with an ellipsis, so it is allowed to.
+    // Long notes wrap on a stub; nothing is allowed to overflow.
     private fun audit(s: RollUi) {
-        rule.audit(AuditConfig(allowOverflow = listOf("قهوة الصبح"))) { RollContent(s, {}, {}, {}, {}, {}, {}, {}) }.assertNone()
+        rule.audit { RollContent(s, {}, {}, {}, {}, {}, {}, {}) }.assertNone()
     }
 
     @Test fun days() = audit(ui(undo = true))

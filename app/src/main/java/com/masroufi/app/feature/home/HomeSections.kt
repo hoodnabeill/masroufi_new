@@ -1,5 +1,7 @@
 package com.masroufi.app.feature.home
 
+import androidx.compose.foundation.layout.FlowRow
+import com.masroufi.app.ui.components.CappedFontScale
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -114,7 +116,7 @@ internal fun HomeHeader(today: LocalDate, greeting: Greeting, streak: Int, onOpe
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(formatDayDate(today, locale), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
             Text(
                 greetingText(greeting),
@@ -194,7 +196,7 @@ internal fun TomorrowPreview(tomorrow: TomorrowUi, onOpenProverb: () -> Unit) {
                 Modifier.size(width = 150.dp, height = 200.dp).clickable(role = Role.Button) {
                     haptics.perform(HapticLevel.Tap)
                     onOpenProverb()
-                },
+                }.semantics { contentDescription = proverb.text },
                 contentAlignment = Alignment.Center,
             ) {
                 ProverbCard(
@@ -333,7 +335,7 @@ internal fun WeekCard(week: List<WeekStub>, closedUnder: Int, onClick: (() -> Un
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             week.forEachIndexed { i, stub ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                  CappedFont {
+                  CappedFontScale {
                     Text(
                         days[i],
                         style = TzType.caption.copy(fontSize = 11.sp, fontWeight = if (stub.isToday) FontWeight.Bold else FontWeight.Normal),
@@ -346,13 +348,6 @@ internal fun WeekCard(week: List<WeekStub>, closedUnder: Int, onClick: (() -> Un
         }
         Spacer(Modifier.height(2.dp))
     }
-}
-
-/** shortcut: the seven-day strip caps text at 130% (a day is about 40 dp wide), the card's own heading and count still grow; revisit with a two-row week. */
-@Composable
-private fun CappedFont(content: @Composable () -> Unit) {
-    val d = LocalDensity.current
-    CompositionLocalProvider(LocalDensity provides Density(d.density, minOf(d.fontScale, 1.3f))) { content() }
 }
 
 @Composable
@@ -408,7 +403,7 @@ internal fun CycleCard(cycle: CycleUi, onOpenEndOfMonth: () -> Unit = {}) {
     val haptics = LocalHaptics.current
     TzCard(Modifier.fillMaxWidth()) {
         // 04-SCREENS "Main" 7: the title, and a link to end-of-month mode at its end (Main.dc.html).
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.Center, itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.home_cycle_title, cycle.daysLeft.toString()), style = TzType.cardHeading, color = Tz.text)
             TextLink(stringResource(R.string.eom_title), { haptics.perform(HapticLevel.Tap); onOpenEndOfMonth() })
         }

@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.add
 
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.heightIn
@@ -298,7 +299,7 @@ private fun highlighted(line: String, part: String, style: SpanStyle): Annotated
 
 @Composable
 private fun CategoryChips(categories: List<CategoryEntity>, selected: Long?, onSelect: (Long) -> Unit) {
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         categories.forEach { c -> CategoryChip(c, c.id == selected) { onSelect(c.id) } }
     }
 }
@@ -366,18 +367,17 @@ private fun Modifier.field(borderColor: Color = Tz.line) =
 @Composable
 private fun PocketButton(label: String, pocket: PocketEntity?, modifier: Modifier, onClick: () -> Unit) {
     val haptics = LocalHaptics.current
-    Row(
+    Column(
         modifier.field()
             .clickable(role = Role.Button) {
                 haptics.perform(HapticLevel.Tap)
                 onClick()
             }
-            .padding(horizontal = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 14.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.Center,
     ) {
-        Text(label, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
-        Text(pocket?.name.orEmpty(), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).padding(start = 6.dp))
+        Text(label, style = TzType.caption, color = Tz.text2)
+        Text(pocket?.name.orEmpty(), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text)
     }
 }
 

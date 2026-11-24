@@ -1,5 +1,7 @@
 package com.masroufi.app.feature.roll
 
+import androidx.compose.foundation.layout.FlowRow
+import com.masroufi.app.ui.components.isLargeFont
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -286,9 +288,9 @@ private fun monthLabel(m: YearMonth, now: YearMonth): String {
 private fun Header(state: RollUi, onSearch: () -> Unit, onPickMonth: () -> Unit) {
     val haptics = LocalHaptics.current
     val now = YearMonth.from(state.today)
-    Row(
+    FlowRow(
         Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        itemVerticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(stringResource(R.string.tab_roll), style = TzType.titleTab, color = Tz.text)
@@ -344,10 +346,19 @@ private fun SearchField(query: String, onQuery: (String) -> Unit) {
 
 @Composable
 private fun Tiles(s: RollSummary) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Tile(R.string.roll_tile_spent, poundsText(s.spent), Tz.text, Modifier.weight(1f))
-        Tile(R.string.roll_tile_received, poundsText(s.received), Tz.turquoise, Modifier.weight(1f))
-        Tile(R.string.roll_tile_closed, stringResource(R.string.roll_tile_closed_value, s.ticketsUnder, s.ticketsClosed), Tz.yellow, Modifier.weight(1f))
+    val closed = stringResource(R.string.roll_tile_closed_value, s.ticketsUnder, s.ticketsClosed)
+    if (isLargeFont()) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Tile(R.string.roll_tile_spent, poundsText(s.spent), Tz.text, Modifier.fillMaxWidth())
+            Tile(R.string.roll_tile_received, poundsText(s.received), Tz.turquoise, Modifier.fillMaxWidth())
+            Tile(R.string.roll_tile_closed, closed, Tz.yellow, Modifier.fillMaxWidth())
+        }
+    } else {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Tile(R.string.roll_tile_spent, poundsText(s.spent), Tz.text, Modifier.weight(1f))
+            Tile(R.string.roll_tile_received, poundsText(s.received), Tz.turquoise, Modifier.weight(1f))
+            Tile(R.string.roll_tile_closed, closed, Tz.yellow, Modifier.weight(1f))
+        }
     }
 }
 
@@ -362,7 +373,7 @@ private fun Tile(label: Int, value: String, color: Color, modifier: Modifier) {
 
 @Composable
 private fun FilterChips(selected: RollFilter, onFilter: (RollFilter) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(
             RollFilter.ALL to R.string.roll_filter_all,
             RollFilter.SPENT to R.string.roll_filter_spent,
@@ -665,10 +676,8 @@ internal fun EntryLine(
                 highlighted(entryTitle(e, salaryDay), highlight),
                 style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
                 color = Tz.text,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
             )
-            Text(entrySub(e), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(entrySub(e), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
             val links = LocalInstallmentLinks.current
             if (links != null && e.recurringId != null && e.recurringId in links.ids) {
                 Text(

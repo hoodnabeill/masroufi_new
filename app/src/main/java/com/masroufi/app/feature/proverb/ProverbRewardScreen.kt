@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.proverb
 
+import com.masroufi.app.ui.components.isLargeFont
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -212,28 +213,40 @@ private fun Ready(s: ProverbRewardUi.Ready, onShare: (Proverb) -> Unit, onHome: 
                 }
             }
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val tileLabel = when (s.destination) {
-                    LeftoverDestination.TOMORROW -> R.string.proverb_tile_tomorrow
-                    LeftoverDestination.EMERGENCY -> R.string.proverb_tile_emergency
-                    else -> R.string.proverb_tile_jar
-                }
-                StatTile(0, settled, reduce, stringResource(tileLabel), Modifier.weight(1f)) { shown ->
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                        Row {
-                            Text("+", style = TzType.cardHeading.copy(fontSize = 24.sp), color = Tz.turquoise)
-                            Odometer(if (shown) s.leftover else 0L, TzType.cardHeading.copy(fontSize = 24.sp, color = Tz.turquoise))
+            val tileLabel = when (s.destination) {
+                LeftoverDestination.TOMORROW -> R.string.proverb_tile_tomorrow
+                LeftoverDestination.EMERGENCY -> R.string.proverb_tile_emergency
+                else -> R.string.proverb_tile_jar
+            }
+            val tiles = listOf<@Composable (Modifier) -> Unit>(
+                { m ->
+                    StatTile(0, settled, reduce, stringResource(tileLabel), m) { shown ->
+                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                            Row {
+                                Text("+", style = TzType.cardHeading.copy(fontSize = 24.sp), color = Tz.turquoise)
+                                Odometer(if (shown) s.leftover else 0L, TzType.cardHeading.copy(fontSize = 24.sp, color = Tz.turquoise))
+                            }
                         }
                     }
-                }
-                StatTile(1, settled, reduce, stringResource(R.string.proverb_streak_label), Modifier.weight(1f)) { shown ->
-                    val n by animateIntAsState(if (shown) s.streak else 0, if (reduce) snap() else tween(500), label = "streak")
-                    Text(stringResource(R.string.proverb_streak_value, n.toString()), style = TzType.cardHeading.copy(fontSize = 24.sp), color = Tz.yellow)
-                }
-                StatTile(2, settled, reduce, stringResource(R.string.proverb_week_label), Modifier.weight(1f)) { shown ->
-                    val n by animateIntAsState(if (shown) s.weekDays else 0, if (reduce) snap() else tween(500), label = "week")
-                    Text(stringResource(R.string.proverb_week_value, n.toString()), style = TzType.cardHeading.copy(fontSize = 24.sp), color = Tz.text)
-                }
+                },
+                { m ->
+                    StatTile(1, settled, reduce, stringResource(R.string.proverb_streak_label), m) { shown ->
+                        val n by animateIntAsState(if (shown) s.streak else 0, if (reduce) snap() else tween(500), label = "streak")
+                        Text(stringResource(R.string.proverb_streak_value, n.toString()), style = TzType.cardHeading.copy(fontSize = 24.sp), color = Tz.yellow)
+                    }
+                },
+                { m ->
+                    StatTile(2, settled, reduce, stringResource(R.string.proverb_week_label), m) { shown ->
+                        val n by animateIntAsState(if (shown) s.weekDays else 0, if (reduce) snap() else tween(500), label = "week")
+                        Text(stringResource(R.string.proverb_week_value, n.toString()), style = TzType.cardHeading.copy(fontSize = 24.sp), color = Tz.text)
+                    }
+                },
+            )
+            // Side by side; stacked once the font is large (a tile is under 90 dp wide).
+            if (isLargeFont()) {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) { tiles.forEach { it(Modifier.fillMaxWidth()) } }
+            } else {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { tiles.forEach { it(Modifier.weight(1f)) } }
             }
         }
 

@@ -1,5 +1,7 @@
 package com.masroufi.app.feature.buy
 
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,8 +43,8 @@ const val WishCardTag = "wish_card"
 @Composable
 fun WishButtons(onChangedMind: () -> Unit, onBought: () -> Unit, modifier: Modifier = Modifier) {
     val haptics = LocalHaptics.current
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Pill(stringResource(R.string.buy_changed_mind), Modifier.weight(1f), filled = true) { haptics.perform(HapticLevel.Tap); onChangedMind() }
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Pill(stringResource(R.string.buy_changed_mind), Modifier, filled = true) { haptics.perform(HapticLevel.Tap); onChangedMind() }
         Pill(stringResource(R.string.buy_bought), Modifier, filled = false) { haptics.perform(HapticLevel.Tap); onBought() }
     }
 }
@@ -51,7 +53,7 @@ fun WishButtons(onChangedMind: () -> Unit, onBought: () -> Unit, modifier: Modif
 private fun Pill(text: String, modifier: Modifier, filled: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(22.dp)
     Row(
-        modifier.height(44.dp).clip(shape)
+        modifier.heightIn(min = 48.dp).clip(shape)
             .then(if (filled) Modifier.background(Tz.turquoise) else Modifier.border(1.dp, Tz.line, shape))
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp),

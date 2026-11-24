@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.close
 
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.activity.compose.BackHandler
@@ -424,7 +425,7 @@ private fun TicketTop(s: CloseDayUi.Ready, weekday: String) {
 private fun Holes(count: Int, modifier: Modifier) {
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val punched = count.coerceAtLeast(0)
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+    FlowRow(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp), itemVerticalAlignment = Alignment.CenterVertically) {
         Canvas(Modifier.size(width = (SLOTS * 24 + (SLOTS - 1) * 8).dp, height = 24.dp)) {
             val d = 24.dp.toPx()
             val outline = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx())))
@@ -577,7 +578,7 @@ private fun NumberLine(template: String, piastres: Long, style: TextStyle) {
     val before = template.substringBefore(MARK)
     val after = template.substringAfter(MARK, "")
     val plain = template.replace(MARK, poundsText(piastres))
-    Row(Modifier.clearAndSetSemantics { text = AnnotatedString(plain) }, verticalAlignment = Alignment.CenterVertically) {
+    FlowRow(Modifier.clearAndSetSemantics { text = AnnotatedString(plain) }, itemVerticalAlignment = Alignment.CenterVertically) {
         Text(before, style = style, color = Tz.text2)
         Odometer(piastres, style.copy(color = Tz.text2))
         Text(after, style = style, color = Tz.text2)
