@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.repo.EndOfMonthMode
+import com.masroufi.app.notify.NotifTarget
+import com.masroufi.app.notify.NotificationRouter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +21,15 @@ sealed interface RootMode {
 }
 
 @HiltViewModel
-class AppRootViewModel @Inject constructor(settings: SettingsStore, endOfMonthMode: EndOfMonthMode) : ViewModel() {
+class AppRootViewModel @Inject constructor(
+    settings: SettingsStore,
+    endOfMonthMode: EndOfMonthMode,
+    private val router: NotificationRouter = NotificationRouter(),
+) : ViewModel() {
+    /** The notification the user tapped, until the navigation host has opened its screen. */
+    val notifTarget: StateFlow<NotifTarget?> = router.target
+    fun consumeNotifTarget() = router.consume()
+
     /** The vibration and ticket-sound switches, applied to the one [com.masroufi.app.ui.haptics.AndroidHaptics]. */
     val feel: StateFlow<Pair<Boolean, Boolean>> =
         settings.settings.map { it.vibration to it.ticketSounds }.stateIn(viewModelScope, SharingStarted.Eagerly, true to false)

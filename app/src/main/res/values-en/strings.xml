@@ -1637,4 +1637,35 @@
     <string name="backup_csv_moved">Moved</string>
     <string name="backup_csv_adjust">Adjustment</string>
     <string name="backup_csv_debt">Debt</string>
+
+    <!-- Notifications (Task 57) -->
+    <string name="notif_reminder_time">Reminder time</string>
+    <string name="notif_group">What I remind you about</string>
+    <string name="notif_cap_line">Two a day at most. Only what helps.</string>
+    <string name="notif_blocked">Notifications are off for this app in the phone\'s settings, so none will reach you.</string>
+    <string name="notif_open_system">Open the phone\'s settings</string>
+    <string name="notif_ch_evening">Tear-off reminder</string>
+    <string name="notif_ch_morning">Today\'s ticket (morning)</string>
+    <string name="notif_ch_bill">Bill tomorrow</string>
+    <string name="notif_ch_gameya_due">Gameya installment tomorrow</string>
+    <string name="notif_ch_gameya_turn">Your gameya turn</string>
+    <string name="notif_ch_wish">Two days passed on a wish</string>
+    <string name="notif_ch_occasion">Occasion coming up</string>
+    <string name="notif_ch_streak">Streak at risk</string>
+    <string name="notif_ch_trial_plus">Plus trial ending</string>
+    <string name="notif_ch_trial_sub">Subscription trial ending</string>
+    <string name="notif_ch_low">Low balance</string>
+    <string name="notif_evening">Your ticket is still open. You have %1$s left. Tear it?</string>
+    <string name="notif_evening_over">Your ticket is still open. Tear it?</string>
+    <string name="notif_morning">Today\'s ticket: %1$s EGP.</string>
+    <string name="notif_bill">%1$s bill tomorrow (%2$s). It is set aside, not from your ticket.</string>
+    <string name="notif_gameya_due">Gameya installment tomorrow: %1$s.</string>
+    <string name="notif_gameya_turn">Your gameya turn is this month. You collect %1$s.</string>
+    <string name="notif_wish">Two days passed on \u201c%1$s\u201d. Still want it?</string>
+    <string name="notif_occasion">%1$s is in a week. They gave you %2$s.</string>
+    <string name="notif_occasion_plain">%1$s is in a week.</string>
+    <string name="notif_streak">Streak: %1$s days. Tear today\'s ticket before 12.</string>
+    <string name="notif_trial_plus">Your Plus trial ends tomorrow. Everything you entered stays as it is.</string>
+    <string name="notif_trial_sub">The %1$s trial ends tomorrow. Your call whether to keep it.</string>
+    <string name="notif_low">%1$s has %2$s left.</string>
 </resources>

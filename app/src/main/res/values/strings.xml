@@ -1704,4 +1704,35 @@
     <string name="backup_csv_moved">تحويل</string>
     <string name="backup_csv_adjust">تسوية</string>
     <string name="backup_csv_debt">دين</string>
+
+    <!-- Notifications (Task 57) -->
+    <string name="notif_reminder_time">وقت التذكير</string>
+    <string name="notif_group">اللي أفكّرك بيه</string>
+    <string name="notif_cap_line">تنبيهين في اليوم بالكتير. ومفيش غير اللي يفيد.</string>
+    <string name="notif_blocked">التنبيهات مقفولة للتطبيق من إعدادات الموبايل، فمش هتوصلك.</string>
+    <string name="notif_open_system">افتح إعدادات الموبايل</string>
+    <string name="notif_ch_evening">تذكير قطع التذكرة</string>
+    <string name="notif_ch_morning">تذكرة النهارده (الصبح)</string>
+    <string name="notif_ch_bill">فاتورة بكره</string>
+    <string name="notif_ch_gameya_due">قسط الجمعية بكره</string>
+    <string name="notif_ch_gameya_turn">دورك في الجمعية</string>
+    <string name="notif_ch_wish">عدّى يومين على حاجة</string>
+    <string name="notif_ch_occasion">مناسبة قريبة</string>
+    <string name="notif_ch_streak">السلسلة في خطر</string>
+    <string name="notif_ch_trial_plus">تجربة بلس بتخلص</string>
+    <string name="notif_ch_trial_sub">تجربة اشتراك بتخلص</string>
+    <string name="notif_ch_low">رصيد قليل</string>
+    <string name="notif_evening">تذكرتك لسه مفتوحة. فضل معاك %1$s، تقطعها؟</string>
+    <string name="notif_evening_over">تذكرتك لسه مفتوحة. تقطعها؟</string>
+    <string name="notif_morning">تذكرة النهارده: %1$s جنيه.</string>
+    <string name="notif_bill">بكره فاتورة %1$s (%2$s). محجوزة ومش من تذكرتك.</string>
+    <string name="notif_gameya_due">قسط الجمعية بكره: %1$s.</string>
+    <string name="notif_gameya_turn">دورك في الجمعية الشهر ده. هتقبض %1$s.</string>
+    <string name="notif_wish">عدّى يومين على «%1$s». لسه عايزها؟</string>
+    <string name="notif_occasion">%1$s بعد أسبوع. هما نقّطوك %2$s.</string>
+    <string name="notif_occasion_plain">%1$s بعد أسبوع.</string>
+    <string name="notif_streak">السلسلة %1$s يوم. اقطع تذكرة النهارده قبل 12.</string>
+    <string name="notif_trial_plus">تجربة بلس بتخلص بكره. اللي كتبته كله هيفضل زي ما هو.</string>
+    <string name="notif_trial_sub">تجربة %1$s بتخلص بكره. إنت اللي تقرر تكمّل ولا لأ.</string>
+    <string name="notif_low">%1$s فاضل فيه %2$s.</string>
 </resources>

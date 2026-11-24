@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.masroufi.app.core.Payday
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.domain.MainGoal
+import com.masroufi.app.domain.NotifKind
 import com.masroufi.app.domain.MatchSeen
 import com.masroufi.app.domain.WorkKind
 import kotlinx.coroutines.flow.Flow
@@ -128,7 +129,23 @@ data class Settings(
     val backupLastBytes: Long? = null,
     val backupFailedAt: Long? = null,
     val backupKey: String? = null,
+    /** Notifications (Task 57): kinds switched on / off by hand (absent = the kind's default); the evening one follows [reminderHour]. */
+    val notifOn: Set<String> = emptySet(),
+    val notifOff: Set<String> = emptySet(),
+    /** Stored keys of what was posted (see NotificationPlanner), the day of the daily counter and its count, pockets told they are low. */
+    val notifSent: Set<String> = emptySet(),
+    val notifDay: Long? = null,
+    val notifCount: Int = 0,
+    val notifLow: Set<Long> = emptySet(),
 ) {
+    /** The switch of [kind]: the evening reminder is on when an hour is set; the rest are by hand or their default. */
+    fun notifEnabled(kind: NotifKind): Boolean = when {
+        kind == NotifKind.EVENING -> reminderHour != null
+        kind.name in notifOn -> true
+        kind.name in notifOff -> false
+        else -> kind.defaultOn
+    }
+
     /**
      * The mode is on at [date]: switched on, started by then and not past its payday. With [nextPayday] (the date's pay
      * cycle) it also ends when the cycle is not the one it was switched on for (a not-fixed income came in).
@@ -212,6 +229,12 @@ class SettingsStore @Inject constructor(
     private val backupLastBytesKey = longPreferencesKey("backupLastBytes")
     private val backupFailedAtKey = longPreferencesKey("backupFailedAt")
     private val backupKeyKey = stringPreferencesKey("backupKey")
+    private val notifOnKey = stringSetPreferencesKey("notifOn")
+    private val notifOffKey = stringSetPreferencesKey("notifOff")
+    private val notifSentKey = stringSetPreferencesKey("notifSent")
+    private val notifDayKey = longPreferencesKey("notifDay")
+    private val notifCountKey = intPreferencesKey("notifCount")
+    private val notifLowKey = stringSetPreferencesKey("notifLow")
 
     /** Emits only after the seed exists; edit {} is serialised, so concurrent first reads share one seed. */
     val settings: Flow<Settings> = flow {
@@ -377,6 +400,22 @@ class SettingsStore @Inject constructor(
             it.remove(backupFailedAtKey)
         }
     }
+    /** A hand switch for a kind other than the evening one (that follows the reminder hour). */
+    suspend fun setNotifKind(kind: NotifKind, on: Boolean) {
+        store.edit {
+            it[notifOnKey] = (it[notifOnKey] ?: emptySet()) - kind.name + (if (on) setOf(kind.name) else emptySet())
+            it[notifOffKey] = (it[notifOffKey] ?: emptySet()) - kind.name + (if (on) emptySet() else setOf(kind.name))
+        }
+    }
+    /** After a run posted [count] more on [day]: the new daily total, the stored keys and the pockets told they are low. */
+    suspend fun recordNotified(day: Long, total: Int, sent: Set<String>, low: Set<Long>) {
+        store.edit {
+            it[notifDayKey] = day
+            it[notifCountKey] = total
+            it[notifSentKey] = sent
+            it[notifLowKey] = low.map(Long::toString).toSet()
+        }
+    }
     suspend fun recordBackupFailed(at: Long) { store.edit { it[backupFailedAtKey] = at } }
     suspend fun setSuggestionDismissed(month: String) { store.edit { it[suggestionDismissedKey] = month } }
     suspend fun setProfileName(v: String?) { store.edit { if (v.isNullOrBlank()) it.remove(profileNameKey) else it[profileNameKey] = v.trim() } }
@@ -479,6 +518,12 @@ class SettingsStore @Inject constructor(
         backupLastBytes = p[backupLastBytesKey],
         backupFailedAt = p[backupFailedAtKey],
         backupKey = p[backupKeyKey],
+        notifOn = p[notifOnKey] ?: emptySet(),
+        notifOff = p[notifOffKey] ?: emptySet(),
+        notifSent = p[notifSentKey] ?: emptySet(),
+        notifDay = p[notifDayKey],
+        notifCount = p[notifCountKey] ?: 0,
+        notifLow = p[notifLowKey]?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet(),
     )
 
     private fun encodeMap(m: Map<Long, Long>) = m.entries.joinToString(",") { e -> "${e.key}:${e.value}" }

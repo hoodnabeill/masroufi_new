@@ -102,6 +102,15 @@ class DutyRepository @Inject constructor(
         return UpcomingDuty(next, person, ChronoUnit.DAYS.between(today, next.date), person?.let { suggestion(it.id) })
     }
 
+    /** Someone else's occasions on [date] (the notification a week ahead), with what that person gave the user. */
+    suspend fun theirsOn(date: LocalDate): List<UpcomingDuty> {
+        val today = LocalDate.now(clock)
+        return dao.occasionsNow().filter { it.whose == OccasionOwner.THEIRS && it.date == date }.map { o ->
+            val person = o.personId?.let { peopleDao.personById(it) }
+            UpcomingDuty(o, person, ChronoUnit.DAYS.between(today, o.date), person?.let { suggestion(it.id) })
+        }
+    }
+
     /** The user's own occasion: what came in and from how many people; null when [occasionId] is not theirs. */
     suspend fun ownTotals(occasionId: Long): Pair<Long, Int>? {
         val o = dao.occasionsNow().firstOrNull { it.id == occasionId && it.whose == OccasionOwner.MINE } ?: return null

@@ -60,7 +60,6 @@ import com.masroufi.app.feature.installments.InstallmentsScreen
 import com.masroufi.app.feature.home.HomeScreen
 import com.masroufi.app.feature.match.MatchScreen
 import com.masroufi.app.feature.profile.ProfileScreen
-import com.masroufi.app.feature.placeholder.ComingSoonScreen
 import com.masroufi.app.feature.add.AddViewModel
 import com.masroufi.app.feature.onboarding.OnboardingScreen
 import com.masroufi.app.feature.payday.PaydayRitualScreen
@@ -109,6 +108,9 @@ import com.masroufi.app.ui.nav.Legal
 import com.masroufi.app.ui.nav.Licences
 import com.masroufi.app.ui.nav.LockSettings
 import com.masroufi.app.ui.nav.NotificationSettings
+import com.masroufi.app.domain.NotifKind
+import com.masroufi.app.notify.NotifTarget
+import com.masroufi.app.feature.settings.NotificationSettingsScreen
 import com.masroufi.app.feature.settings.LegalScreen
 import com.masroufi.app.feature.settings.LicencesScreen
 import com.masroufi.app.feature.settings.SettingsNav
@@ -242,6 +244,19 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null, bil
     }
 }
 
+/** The screen a tapped notification opens; null = just Home. */
+private fun notificationRoute(t: NotifTarget): Any? = when (t.kind) {
+    NotifKind.EVENING, NotifKind.STREAK -> t.arg?.let { CloseDay(it) }
+    NotifKind.MORNING -> null
+    NotifKind.BILL -> FixedCosts
+    NotifKind.GAMEYA_DUE, NotifKind.GAMEYA_TURN -> GameyaScreen
+    NotifKind.WISH -> BeforeYouBuy
+    NotifKind.OCCASION -> DutyLedger
+    NotifKind.TRIAL_PLUS -> Paywall()
+    NotifKind.TRIAL_SUB -> Subscriptions
+    NotifKind.LOW_BALANCE -> t.arg?.let { PocketDetail(it) }
+}
+
 @Composable
 private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleData: DebugSampleData?, billing: StubBilling?, startAtOnboarding: Boolean) {
     run {
@@ -261,6 +276,14 @@ private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleDa
         // The add sheet is closed by the time a saved income is judged; Home and the roll are behind this push.
         val addViewModel: AddViewModel = hiltViewModel()
         LaunchedEffect(addViewModel) { addViewModel.ritualOffer.collect { nav.navigate(PaydayRitual(it)) } }
+        // A tapped notification opens its screen on top of Home (once the app is composed: after the lock, never in onboarding).
+        val notifTarget by root.notifTarget.collectAsStateWithLifecycle()
+        LaunchedEffect(notifTarget, startAtOnboarding) {
+            val t = notifTarget ?: return@LaunchedEffect
+            if (startAtOnboarding) return@LaunchedEffect
+            notificationRoute(t)?.let { route -> nav.navigate(route) { launchSingleTop = true } }
+            root.consumeNotifTarget()
+        }
         val reduce = LocalReduceMotion.current
         // Leading edge = start edge: right in RTL, left in LTR.
         val sign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) 1 else -1
@@ -387,7 +410,7 @@ private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleDa
                     composable<Licences> { LicencesScreen(onBack = { nav.popBackStack() }) }
                     composable<LockSettings> { LockSettingsScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                     composable<BackupSettings> { BackupScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
-                    composable<NotificationSettings> { ComingSoonScreen(R.string.soon_notifications) { nav.popBackStack() } }
+                    composable<NotificationSettings> { NotificationSettingsScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                     composable<RollTab> {
                         RollScreen(
                             viewModel = hiltViewModel(), onOpenAddSheet = ::openAddSheet, onPayday = { nav.navigate(PaydayRitual(it)) },

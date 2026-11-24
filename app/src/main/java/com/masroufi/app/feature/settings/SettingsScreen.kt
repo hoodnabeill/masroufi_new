@@ -196,17 +196,7 @@ private fun SettingsSheets(ui: SettingsUi, vm: SettingsActions) {
                 if (other) PaydayDayChips(ui.payday, vm::setPayday) else PaydayChoices(ui.payday, vm::setPayday, onOther = { other = true })
             }
         }
-        SettingsSheet.Reminder -> TzSheet(vm::closeSheet) {
-            Column(Modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.ob_reminder_title), style = TzType.cardHeading.copy(color = Tz.text))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // The hours onboarding offers; a stored hour outside them shows in the row and no chip is on.
-                    listOf<Pair<Int?, Int>>(20 to R.string.ob_reminder_8, 21 to R.string.ob_reminder_9, 22 to R.string.ob_reminder_10, null to R.string.ob_reminder_none).forEach { (h, label) ->
-                        TzChip(stringResource(label), ui.reminderHour == h, { vm.setReminderHour(h) }, Modifier.weight(1f), style = ChipStyle.Choice)
-                    }
-                }
-            }
-        }
+        SettingsSheet.Reminder -> ReminderSheet(ui.reminderHour, vm::setReminderHour, vm::closeSheet)
         SettingsSheet.Leftover -> TzSheet(vm::closeSheet) {
             Column(Modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.settings_leftover_title), style = TzType.cardHeading.copy(color = Tz.text))
@@ -232,6 +222,22 @@ private fun SettingsSheets(ui: SettingsUi, vm: SettingsActions) {
     }
 }
 
+/** The tear-off reminder's hour: the chips onboarding offers; shared with the notification settings. */
+@Composable
+internal fun ReminderSheet(hour: Int?, onPick: (Int?) -> Unit, onClose: () -> Unit) {
+    TzSheet(onClose) {
+        Column(Modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.ob_reminder_title), style = TzType.cardHeading.copy(color = Tz.text))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // The hours onboarding offers; a stored hour outside them shows in the row and no chip is on.
+                listOf<Pair<Int?, Int>>(20 to R.string.ob_reminder_8, 21 to R.string.ob_reminder_9, 22 to R.string.ob_reminder_10, null to R.string.ob_reminder_none).forEach { (h, label) ->
+                    TzChip(stringResource(label), hour == h, { onPick(h) }, Modifier.weight(1f), style = ChipStyle.Choice)
+                }
+            }
+        }
+    }
+}
+
 private fun leftoverName(d: LeftoverDestination) = when (d) {
     LeftoverDestination.JAR -> R.string.close_dest_jar
     LeftoverDestination.TOMORROW -> R.string.close_dest_tomorrow
@@ -246,7 +252,7 @@ private fun paydayText(p: Payday): String = when (p) {
 }
 
 @Composable
-private fun hourText(h: Int?): String =
+internal fun hourText(h: Int?): String =
     if (h == null) stringResource(R.string.ob_reminder_none)
     else stringResource(if (h < 12) R.string.settings_time_am else R.string.settings_time_pm, (if (h % 12 == 0) 12 else h % 12).toString())
 
