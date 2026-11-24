@@ -51,8 +51,8 @@ class ProverbRewardViewModelTest {
         )
     }
 
-    private fun vm(date: LocalDate = nov12) =
-        ProverbRewardViewModel(db.dayTicketDao(), db.proverbDao(), SavedStateHandle(mapOf("date" to date.toEpochDay())))
+    private fun vm(date: LocalDate = nov12, plus: Boolean = false) =
+        ProverbRewardViewModel(db.dayTicketDao(), db.proverbDao(), com.masroufi.app.entitlements.DebugEntitlements(plus), SavedStateHandle(mapOf("date" to date.toEpochDay())))
 
     private fun ProverbRewardViewModel.settled(): ProverbRewardUi {
         val end = System.nanoTime() + 10_000_000_000L
@@ -73,6 +73,12 @@ class ProverbRewardViewModelTest {
         assertEquals("k of 7 this week", 3, s.weekDays)
         assertEquals(5, s.proverb.number)
         assertEquals(10_000L, s.leftover)
+    }
+
+    @Test fun streakBridgesOneMissedDayWhenPlus() {
+        day(nov12.minusDays(3)); day(nov12.minusDays(1)); day(nov12)
+        assertEquals("a missed day ends the Free streak", 2, (vm().settled() as ProverbRewardUi.Ready).streak)
+        assertEquals("the safety ticket bridges it", 3, (vm(plus = true).settled() as ProverbRewardUi.Ready).streak)
     }
 
     @Test fun autoClosedDayHasNothingToReward() {

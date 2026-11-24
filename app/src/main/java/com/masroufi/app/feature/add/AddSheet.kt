@@ -420,9 +420,12 @@ private fun NoteField(note: String, onNote: (String) -> Unit, modifier: Modifier
 /** Collapsed by default: the item bought and what one unit cost, so the basket can follow its price. */
 @Composable
 private fun ItemRow(item: String, unitPrice: String, onItem: (String) -> Unit, onUnitPrice: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(item.isNotEmpty() || unitPrice.isNotEmpty()) }
-    if (!expanded) {
-        TextLink(stringResource(R.string.add_item_open), { expanded = true })
+    var tapped by remember { mutableStateOf(false) }
+    // A saved item loads after the sheet opens: filled fields open the row on their own and keep it open while they are cleared.
+    val filled = item.isNotEmpty() || unitPrice.isNotEmpty()
+    LaunchedEffect(filled) { if (filled) tapped = true }
+    if (!tapped && !filled) {
+        TextLink(stringResource(R.string.add_item_open), { tapped = true })
         return
     }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

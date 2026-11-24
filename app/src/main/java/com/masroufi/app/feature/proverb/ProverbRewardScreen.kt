@@ -52,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.domain.Proverb
 import com.masroufi.app.domain.ProverbCatalog
@@ -61,6 +60,7 @@ import com.masroufi.app.feature.home.HomeSkeleton
 import com.masroufi.app.ui.components.Odometer
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.SecondaryButton
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.motion.LocalReduceMotion
@@ -196,7 +196,7 @@ private fun Ready(s: ProverbRewardUi.Ready, onShare: (Proverb) -> Unit, onHome: 
                 } else {
                     val withSaving = s.leftover > 0 && s.destination == LeftoverDestination.JAR
                     val line = if (withSaving) {
-                        s.proverb.line + " " + stringResource(R.string.proverb_line_saved, formatPounds(s.leftover))
+                        s.proverb.line + " " + stringResource(R.string.proverb_line_saved, poundsText(s.leftover))
                     } else {
                         s.proverb.line
                     }

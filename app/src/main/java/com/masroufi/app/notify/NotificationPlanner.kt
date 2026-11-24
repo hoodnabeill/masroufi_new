@@ -1,5 +1,6 @@
 package com.masroufi.app.notify
 
+import com.masroufi.app.core.billTitle
 import com.masroufi.app.core.formatPounds
 import com.masroufi.app.domain.NotifKind
 import java.time.LocalDateTime
@@ -76,7 +77,7 @@ object NotificationPlanner {
         }
         if (h in DAYTIME) {
             if (on(NotifKind.BILL)) {
-                facts.billsTomorrow.forEach { out += Notice(NotifKind.BILL, daily("bill:${it.id}"), listOf(it.name, money(it.amount))) }
+                facts.billsTomorrow.forEach { out += Notice(NotifKind.BILL, daily("bill:${it.id}"), listOf(billTitle(it.name), money(it.amount))) }
             }
             if (on(NotifKind.GAMEYA_DUE)) {
                 facts.gameyaDueTomorrow.forEach { out += Notice(NotifKind.GAMEYA_DUE, daily("gdue:${it.id}"), listOf(money(it.amount))) }

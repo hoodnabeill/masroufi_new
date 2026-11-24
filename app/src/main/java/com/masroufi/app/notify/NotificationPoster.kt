@@ -60,6 +60,9 @@ fun noticeText(kind: NotifKind, alt: Boolean): Int = when (kind) {
     NotifKind.MORNING -> R.string.notif_morning
 }
 
+/** One id per item, so two bills on the same day both stay on screen; the day part of the key is dropped so an item replaces its own earlier one. */
+fun noticeId(notice: Notice): Int = notice.key.substringBefore('@').hashCode() and Int.MAX_VALUE
+
 fun channelId(kind: NotifKind) = "notif_${kind.name.lowercase()}"
 
 /** Posts notices through the system: one channel per kind, a tap opens [MainActivity] with the target in the intent. */
@@ -91,7 +94,7 @@ class NotificationPoster @Inject constructor(@ApplicationContext private val app
             .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             .putExtra(EXTRA_NOTIF_KIND, notice.kind.name)
             .also { i -> notice.arg?.let { i.putExtra(EXTRA_NOTIF_ARG, it) } }
-        val id = notice.kind.ordinal + 1
+        val id = noticeId(notice)
         val text = ctx.getString(noticeText(notice.kind, notice.alt), *notice.args.toTypedArray())
         val n = NotificationCompat.Builder(app, channelId(notice.kind))
             .setSmallIcon(R.drawable.ic_stat_ticket)

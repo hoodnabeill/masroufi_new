@@ -8,6 +8,7 @@ import com.masroufi.app.data.db.CategoryDao
 import com.masroufi.app.data.db.CategoryEntity
 import com.masroufi.app.data.db.EnvelopeEntity
 import com.masroufi.app.data.db.EnvelopeKind
+import com.masroufi.app.data.db.RecurringKind
 import com.masroufi.app.data.db.RecurringRow
 import com.masroufi.app.data.repo.CATEGORY_COLORS
 import com.masroufi.app.data.repo.EnvelopeRepository
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -69,7 +71,7 @@ class EnvelopeFormViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val categories = categoryDao.all().first().sortedBy { it.id }
-            val fixed = recurring.observe().first()
+            val fixed = fixedCosts().first()
             val saved = if (id != 0L) envelopes.saved(id) else null
             stored = saved?.first
             _form.update {
@@ -86,9 +88,12 @@ class EnvelopeFormViewModel @Inject constructor(
                 }
             }
             // The fixed-cost list stays current while the user adds one from this screen.
-            recurring.observe().collect { rows -> _form.update { it.copy(fixedCosts = rows) } }
+            fixedCosts().collect { rows -> _form.update { it.copy(fixedCosts = rows) } }
         }
     }
+
+    /** The fixed costs an envelope can hold: the kids' weekly item belongs to the Kids screen, not here. */
+    private fun fixedCosts() = recurring.observe().map { rows -> rows.filter { it.kind != RecurringKind.KIDS } }
 
     fun setName(text: String) = _form.update { it.copy(name = text.take(NAME_MAX), failed = false) }
     fun setColor(index: Int) = _form.update { it.copy(colorIndex = index) }
@@ -113,7 +118,7 @@ class EnvelopeFormViewModel @Inject constructor(
                     it.id
                 } ?: envelopes.create(f.name.trim(), color, f.monthly.toPiastres(), f.kind, f.categoryIds)
                 // The fixed cost the envelope holds: the picked one points here, the others do not.
-                recurring.observe().first().forEach { r ->
+                fixedCosts().first().forEach { r ->
                     val want = f.kind == EnvelopeKind.FIXED && r.id == f.recurringId
                     val item = if (want && r.envelopeId != envelopeId) recurring.get(r.id) else if (!want && r.envelopeId == envelopeId) recurring.get(r.id) else null
                     item?.let { recurring.update(it.copy(envelopeId = if (want) envelopeId else null)) }

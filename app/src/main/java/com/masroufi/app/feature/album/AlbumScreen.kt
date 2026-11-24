@@ -56,7 +56,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.formatDayMonth
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.CollectedProverb
 import com.masroufi.app.data.repo.Milestone
 import com.masroufi.app.domain.GoalKind
@@ -75,6 +74,7 @@ import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzPanel
 import com.masroufi.app.ui.components.TzProgressBar
 import com.masroufi.app.ui.components.pluralText
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -407,9 +407,9 @@ private fun StubTile(d: MatchDay, tilt: Float, modifier: Modifier) {
         else -> Tz.turquoise to Tz.turquoiseInk
     }
     val amount = when {
-        d.goal == GoalKind.AGAINST -> "-${formatPounds(d.amount)}"
+        d.goal == GoalKind.AGAINST -> "-${poundsText(d.amount)}"
         d.amount == 0L -> stringResource(R.string.album_stub_ok)
-        else -> "+${formatPounds(d.amount)}"
+        else -> "+${poundsText(d.amount)}"
     }
     val cd = stringResource(R.string.album_stub_cd, d.date.dayOfMonth.toString(), amount)
     Column(

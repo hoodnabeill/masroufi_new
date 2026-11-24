@@ -38,7 +38,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.PIN_MIN_DIGITS
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.ChoreView
 import com.masroufi.app.data.repo.KidsView
 import com.masroufi.app.feature.add.AmountInput
@@ -55,6 +54,7 @@ import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzCard
 import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.components.TzSheet
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -95,7 +95,7 @@ fun KidsScreen(viewModel: KidsViewModel, onBack: () -> Unit, onNewChild: () -> U
         if (ui.notice == KidsNotice.CHORE_TAKEN) Text(stringResource(R.string.kids_chore_taken), style = TzType.label, color = Tz.text2)
         HintCard(ui.tickets.filter { it.view.editable }, viewModel::openChildScreen)
         PrimaryButton(
-            stringResource(R.string.kids_handover, dayName(view.handoverDay), formatPounds(view.total)),
+            stringResource(R.string.kids_handover, dayName(view.handoverDay), poundsText(view.total)),
             { viewModel.handOver() },
             Modifier.fillMaxWidth(), enabled = ui.total > 0, height = 60.dp, textStyle = TzType.button.copy(fontSize = 22.sp),
         )
@@ -107,7 +107,7 @@ fun KidsScreen(viewModel: KidsViewModel, onBack: () -> Unit, onNewChild: () -> U
 private fun Summary(view: KidsView, onDay: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Text(
-            stringResource(R.string.kids_month_line, formatPounds(view.monthEstimate)) + (view.envelopeName?.let { " · " + stringResource(R.string.kids_from_envelope) } ?: ""),
+            stringResource(R.string.kids_month_line, poundsText(view.monthEstimate)) + (view.envelopeName?.let { " · " + stringResource(R.string.kids_from_envelope) } ?: ""),
             style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2, modifier = Modifier.weight(1f),
         )
         Text(
@@ -128,7 +128,7 @@ private fun ParentTicket(t: ChildTicketUi, day: DayOfWeek, vm: KidsViewModel, on
         hasBelow = jar != null || advance != null || !v.editable,
         below = { c ->
             if (advance != null) {
-                Text(stringResource(R.string.kids_advance_ask, formatPounds(advance.amount)), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = c.ink)
+                Text(stringResource(R.string.kids_advance_ask, poundsText(advance.amount)), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = c.ink)
                 if (v.editable) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TicketPill(stringResource(R.string.kids_advance_yes), c, filled = true, modifier = Modifier.weight(1f)) { vm.answerAdvance(advance.id, true) }
@@ -137,7 +137,7 @@ private fun ParentTicket(t: ChildTicketUi, day: DayOfWeek, vm: KidsViewModel, on
                 }
             }
             if (jar != null) {
-                JarBlock(jar, c, if (jar.matchPer != null && jar.matchAdd != null) stringResource(R.string.kids_match_line, formatPounds(jar.matchPer), formatPounds(jar.matchAdd)) else null)
+                JarBlock(jar, c, if (jar.matchPer != null && jar.matchAdd != null) stringResource(R.string.kids_match_line, poundsText(jar.matchPer), poundsText(jar.matchAdd)) else null)
             }
             if (!v.editable) Text(stringResource(R.string.kids_read_only), style = TzType.caption.copy(fontSize = 12.sp), color = c.ink)
         },
@@ -170,7 +170,7 @@ private fun ChoreRow(row: ChoreView, view: KidsView, onTap: () -> Unit) {
             Text(row.chore.label, style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
             if (whoName != null) Text(whoName, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
         }
-        Text(stringResource(R.string.kids_chore_bonus, formatPounds(row.chore.bonus)), style = TzType.cardHeading.copy(fontSize = 18.sp), color = if (done) Tz.turquoise else Tz.text2)
+        Text(stringResource(R.string.kids_chore_bonus, poundsText(row.chore.bonus)), style = TzType.cardHeading.copy(fontSize = 18.sp), color = if (done) Tz.turquoise else Tz.text2)
     }
 }
 

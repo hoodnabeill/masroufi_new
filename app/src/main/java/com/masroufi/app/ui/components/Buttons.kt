@@ -11,7 +11,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,7 +47,7 @@ import kotlinx.coroutines.launch
 private val Pill = RoundedCornerShape(percent = 50)
 
 /**
- * Yellow pill. Disabled keeps the yellow at 40% and stays tappable: a tap shakes 6 dp twice and fires Reject
+ * Yellow pill, [height] at least. Disabled keeps the yellow at 40% and stays tappable: a tap shakes 6 dp twice and fires Reject
  * (05-MOTION "Buttons and taps"); [onClick] is not called. Pressed: scale 0.97 and brightness -6%.
  * Fires no haptic when enabled: the caller fires the action's own (Confirm, Heavy...), so there is never two.
  * [onDisabledClick] runs on a disabled tap (to pulse the missing field). [icon] sits before the label, 22 dp, gap 10.
@@ -73,7 +73,7 @@ fun PrimaryButton(
         modifier
             .offset { IntOffset(shake.value.dp.roundToPx(), 0) }
             .pressScale(source, PressScale.Primary)
-            .height(height)
+            .heightIn(min = height) // a minimum, so the label grows the pill at 200% font size instead of clipping
             .alpha(if (enabled) 1f else 0.4f)
             .clip(Pill)
             .background(Tz.yellow)
@@ -123,7 +123,7 @@ fun SecondaryButton(
     Box(
         modifier
             .pressScale(source, PressScale.Primary)
-            .height(height)
+            .heightIn(min = height) // a minimum, so the label grows the pill at 200% font size instead of clipping
             .clip(Pill)
             .border(BorderStroke(1.5.dp, Tz.line), Pill)
             .clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onClick)

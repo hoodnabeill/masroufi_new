@@ -686,6 +686,30 @@ class TicketRepositoryTest {
         assertTrue(r.rare)
     }
 
+    /** 31 hand-closed days with one missed day three days back: Plus's safety ticket bridges it, Free's streak stops there. */
+    private suspend fun seedStreakWithOneMiss() {
+        db.stampDao().insert(StampEntity(kind = StampKind.FIRST_TICKET, earnedOn = nov12, updatedAt = 0))
+        db.stampDao().insert(StampEntity(kind = StampKind.FULL_WEEK, earnedOn = nov12, updatedAt = 0))
+        seedHandClosed(nov12.minusDays(30), nov12.minusDays(4))
+        seedHandClosed(nov12.minusDays(2), nov12)
+        today(nov13)
+        tickets.printToday()
+    }
+
+    @Test fun rare30UsesTheSafetyTicketWhenPlus() = runTest {
+        setUp()
+        plus.setDebugOverride(true)
+        seedStreakWithOneMiss()
+        assertEquals(50, tickets.closeDay(nov13, LeftoverDestination.JAR).proverbNumber)
+    }
+
+    @Test fun rare30WithoutPlusStopsAtTheMissedDay() = runTest {
+        setUp()
+        seedStreakWithOneMiss()
+        val r = tickets.closeDay(nov13, LeftoverDestination.JAR)
+        assertFalse(r.rare)
+    }
+
     @Test fun rareNotRepeated() = runTest {
         setUp()
         db.stampDao().insert(StampEntity(kind = StampKind.FIRST_TICKET, earnedOn = nov12, updatedAt = 0))

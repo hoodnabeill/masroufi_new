@@ -13,6 +13,7 @@ import com.masroufi.app.domain.ProverbCatalog
 import com.masroufi.app.domain.TicketStatus
 import com.masroufi.app.domain.streak
 import com.masroufi.app.domain.weekStart
+import com.masroufi.app.entitlements.Entitlements
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +51,7 @@ private const val TAG = "ProverbReward"
 class ProverbRewardViewModel @Inject constructor(
     private val ticketDao: DayTicketDao,
     private val proverbDao: ProverbDao,
+    private val plus: Entitlements,
     savedState: SavedStateHandle,
 ) : ViewModel() {
     /** The nav argument (ProverbReward.date, an epoch day). */
@@ -95,7 +97,7 @@ class ProverbRewardViewModel @Inject constructor(
             allCollected = number == null,
             leftover = row.leftover,
             destination = row.destination,
-            streak = streak(days.map { DayResult(it.date, it.status, it.amount, it.spent) }, date),
+            streak = streak(days.map { DayResult(it.date, it.status, it.amount, it.spent) }, date, plus.isPlus.value),
             weekDays = hand.count { it.date >= weekFrom && it.date <= weekFrom.plusDays(6) },
         )
     }

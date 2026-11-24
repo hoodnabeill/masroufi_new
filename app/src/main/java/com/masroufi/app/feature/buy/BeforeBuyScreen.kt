@@ -70,7 +70,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
 import com.masroufi.app.core.PIASTRES
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.WishView
 import com.masroufi.app.data.db.WishAnswer
 import com.masroufi.app.domain.BeforeBuy
@@ -86,6 +85,7 @@ import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.TzProgressBar
 import com.masroufi.app.ui.components.pluralText
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.motion.LocalReduceMotion
@@ -335,7 +335,7 @@ private fun CashBox(price: Long, days: Int?, modifier: Modifier) {
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(stringResource(R.string.buy_inst_cash), style = TzType.caption.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold), color = Tz.turquoise)
-        Text(formatPounds(price), style = TzType.card.copy(fontSize = 28.sp, lineHeight = 1.1.em), color = Tz.text)
+        Text(poundsText(price), style = TzType.card.copy(fontSize = 28.sp, lineHeight = 1.1.em), color = Tz.text)
         if (days != null) {
             Text(pluralText(R.plurals.buy_cash_days, days), style = TzType.caption.copy(fontSize = 11.sp, lineHeight = 1.5.em), color = Tz.turquoiseDimText)
         }
@@ -345,19 +345,19 @@ private fun CashBox(price: Long, days: Int?, modifier: Modifier) {
 @Composable
 private fun InstallmentBox(monthly: Long, inst: Installment, modifier: Modifier) {
     val shape = RoundedCornerShape(18.dp)
-    val perDay = formatPounds(inst.perDay.coerceAtLeast(PIASTRES))
+    val perDay = poundsText(inst.perDay.coerceAtLeast(PIASTRES))
     val forHowLong = if (inst.months == 12) stringResource(R.string.buy_inst_year) else pluralText(R.plurals.buy_months, inst.months)
     Column(
         modifier.clip(shape).background(Tz.night).border(1.dp, Tz.line, shape).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
-            stringResource(R.string.buy_inst_label, pluralText(R.plurals.buy_months, inst.months), formatPounds(monthly)),
+            stringResource(R.string.buy_inst_label, pluralText(R.plurals.buy_months, inst.months), poundsText(monthly)),
             style = TzType.caption.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold), color = Tz.text2,
         )
-        Text(formatPounds(inst.total), style = TzType.card.copy(fontSize = 28.sp, lineHeight = 1.1.em), color = Tz.text)
+        Text(poundsText(inst.total), style = TzType.card.copy(fontSize = 28.sp, lineHeight = 1.1.em), color = Tz.text)
         Text(
-            if (inst.extra > 0) stringResource(R.string.buy_inst_effect, formatPounds(inst.extra), perDay, forHowLong)
+            if (inst.extra > 0) stringResource(R.string.buy_inst_effect, poundsText(inst.extra), perDay, forHowLong)
             else stringResource(R.string.buy_inst_effect_free, perDay, forHowLong),
             style = TzType.caption.copy(fontSize = 11.sp, lineHeight = 1.5.em), color = Tz.carnelianText,
         )
@@ -413,7 +413,7 @@ private fun WishList(
             Text(stringResource(R.string.buy_list_title), style = TzType.cardHeading, color = Tz.text)
             if (ui.changedMindTotal > 0) {
                 Text(
-                    stringResource(R.string.buy_wish_total, formatPounds(ui.changedMindTotal)),
+                    stringResource(R.string.buy_wish_total, poundsText(ui.changedMindTotal)),
                     style = TzType.label.copy(fontSize = 12.sp, fontWeight = FontWeight.SemiBold), color = Tz.turquoise,
                 )
             }
@@ -441,7 +441,7 @@ private fun WishRow(v: WishView, onChangedMind: () -> Unit, onBought: () -> Unit
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    stringResource(R.string.buy_row_name, w.name, formatPounds(w.price)),
+                    stringResource(R.string.buy_row_name, w.name, poundsText(w.price)),
                     style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, lineHeight = 1.4.em), color = Tz.text,
                     maxLines = 2, overflow = TextOverflow.Ellipsis,
                 )
@@ -455,7 +455,7 @@ private fun WishRow(v: WishView, onChangedMind: () -> Unit, onBought: () -> Unit
                         // Only what really moved: a capped answer shows the capped amount, never the price.
                         val moved = w.movedToJar
                         Text(
-                            if (moved != null && moved > 0) stringResource(R.string.buy_row_changed_jar, formatPounds(moved)) else stringResource(R.string.buy_changed_mind),
+                            if (moved != null && moved > 0) stringResource(R.string.buy_row_changed_jar, poundsText(moved)) else stringResource(R.string.buy_changed_mind),
                             style = TzType.caption.copy(fontSize = 12.sp), color = Tz.turquoise,
                         )
                     }

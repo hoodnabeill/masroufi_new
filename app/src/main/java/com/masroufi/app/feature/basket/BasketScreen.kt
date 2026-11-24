@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.HabitFacts
 import com.masroufi.app.feature.pockets.DashedRow
 import com.masroufi.app.feature.pockets.PushedHeader
@@ -53,6 +52,7 @@ import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.TzSheet
 import com.masroufi.app.ui.components.pluralText
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.paper.Qersh
@@ -129,8 +129,8 @@ private fun Hero(h: HeroUi) {
         Trend.SAME -> R.string.basket_hero_same
     }
     val locale = LocalConfiguration.current.locales[0]
-    val then = formatPounds(h.then)
-    val now = formatPounds(h.now)
+    val then = poundsText(h.then)
+    val now = poundsText(h.now)
     val line = if (h.sinceMonth != null) {
         stringResource(R.string.basket_hero_line, then, Month.of(h.sinceMonth).getDisplayName(TextStyle.FULL_STANDALONE, locale), now)
     } else {
@@ -176,7 +176,7 @@ private fun ItemRow(item: BasketItemUi) {
             if (line != null) Text(line, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
         }
         val price = item.lastPrice
-        if (price != null) Text(formatPounds(price), style = TzType.rowNumber.copy(fontSize = 22.sp), color = Tz.text)
+        if (price != null) Text(poundsText(price), style = TzType.rowNumber.copy(fontSize = 22.sp), color = Tz.text)
         item.changePercent?.let { Badge(it) }
     }
 }
@@ -185,9 +185,9 @@ private fun ItemRow(item: BasketItemUi) {
 private fun lineText(item: BasketItemUi): String? = when (val l = item.line) {
     is ItemLine.LastPlace -> {
         val was = l.was
-        if (was != null) stringResource(R.string.basket_line_place_was, l.place, formatPounds(was)) else stringResource(R.string.basket_line_place, l.place)
+        if (was != null) stringResource(R.string.basket_line_place_was, l.place, poundsText(was)) else stringResource(R.string.basket_line_place, l.place)
     }
-    is ItemLine.Cheapest -> stringResource(R.string.basket_line_cheapest, l.place, formatPounds(l.price))
+    is ItemLine.Cheapest -> stringResource(R.string.basket_line_cheapest, l.place, poundsText(l.price))
     is ItemLine.Times -> stringResource(R.string.basket_line_times, pluralText(R.plurals.basket_times_count, l.perMonth))
     ItemLine.Fell -> stringResource(R.string.basket_line_fell)
     ItemLine.Flat -> stringResource(R.string.basket_line_flat)
@@ -214,7 +214,7 @@ private fun Suggestion(current: Long, suggested: Long, onRaise: () -> Unit, onLe
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.yellowDim).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.basket_sugg_title), style = TzType.cardHeading, color = Tz.yellow)
         Text(
-            stringResource(R.string.basket_sugg_body, formatPounds(suggested), formatPounds(current)),
+            stringResource(R.string.basket_sugg_body, poundsText(suggested), poundsText(current)),
             style = TzType.caption.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Tz.qershOnYellow,
         )
         Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -236,7 +236,7 @@ private fun Suggestion(current: Long, suggested: Long, onRaise: () -> Unit, onLe
 private fun Raised(amount: Long) {
     val shape = RoundedCornerShape(TzRadius.card)
     Box(Modifier.fillMaxWidth().clip(shape).background(Tz.turquoiseDim).padding(16.dp)) {
-        Text(stringResource(R.string.basket_raised, formatPounds(amount)), style = TzType.body.copy(fontSize = 14.sp), color = Tz.turquoiseDimText)
+        Text(stringResource(R.string.basket_raised, poundsText(amount)), style = TzType.body.copy(fontSize = 14.sp), color = Tz.turquoiseDimText)
     }
 }
 
@@ -248,13 +248,13 @@ private fun Habits(h: HabitFacts) {
     h.weekday?.let {
         facts += Triple(
             it.day.getDisplayName(TextStyle.FULL_STANDALONE, locale), Tz.yellow,
-            stringResource(R.string.basket_habit_weekday, formatPounds(it.average), formatPounds(it.restAverage)),
+            stringResource(R.string.basket_habit_weekday, poundsText(it.average), poundsText(it.restAverage)),
         )
     }
     h.lateNight?.let {
         facts += Triple(
             stringResource(R.string.basket_habit_late_tag), Tz.turquoise,
-            stringResource(R.string.basket_habit_late, pluralText(R.plurals.basket_times_count, it.count), formatPounds(it.sum)),
+            stringResource(R.string.basket_habit_late, pluralText(R.plurals.basket_times_count, it.count), poundsText(it.sum)),
         )
     }
     h.cashVsWalletPercent?.takeIf { it != 0 }?.let {

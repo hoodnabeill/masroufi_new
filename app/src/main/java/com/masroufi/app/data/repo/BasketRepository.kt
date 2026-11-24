@@ -95,6 +95,9 @@ class BasketRepository @Inject constructor(
             ?: trackedDao.insert(TrackedItemEntity(name = name.trim(), normalisedName = n, createdAt = clock.millis()))
     }
 
+    /** The name of a tracked item, for the add sheet that edits an entry holding it. */
+    suspend fun nameOf(id: Long): String? = trackedDao.byId(id)?.name
+
     /** "تابع سعر حاجة تانية": tracks [name] now, even before it has two entries. */
     suspend fun track(name: String): Long = db.withTransaction {
         val id = itemIdFor(name)

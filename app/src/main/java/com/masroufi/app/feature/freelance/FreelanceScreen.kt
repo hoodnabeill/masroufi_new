@@ -72,6 +72,7 @@ import com.masroufi.app.ui.components.SecondaryButton
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.components.TzSheet
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.motion.TzSpring
@@ -270,7 +271,7 @@ private fun SalaryCard(s: FreelanceUi, onEdit: () -> Unit) {
             Odometer(s.salary ?: 0L, TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp, color = Tz.night))
             Text(stringResource(R.string.paper_currency), style = TzType.titlePushed.copy(fontSize = 20.sp), color = Tz.night, modifier = Modifier.padding(bottom = 8.dp))
         }
-        val ticket = formatPounds(s.dailyTicket)
+        val ticket = poundsText(s.dailyTicket)
         val line = when (val d = s.daysToPayday) {
             null -> null
             0 -> stringResource(R.string.free_next_today, ticket)
@@ -288,7 +289,7 @@ private fun ChartCard(s: FreelanceUi) {
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
             Text(stringResource(R.string.free_chart_title), style = TzType.cardHeading, color = Tz.text)
-            Text(stringResource(R.string.free_chart_avg, formatPounds(s.average)), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
+            Text(stringResource(R.string.free_chart_avg, poundsText(s.average)), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
         }
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -324,7 +325,7 @@ private fun ChartCard(s: FreelanceUi) {
             Canvas(Modifier.size(width = 18.dp, height = 2.dp)) {
                 drawLine(Tz.yellow, Offset(0f, 1.dp.toPx()), Offset(size.width, 1.dp.toPx()), 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx())))
             }
-            val salary = formatPounds(s.salary ?: 0L)
+            val salary = poundsText(s.salary ?: 0L)
             val empty = s.emptyMonth
             Text(
                 if (empty != null) stringResource(R.string.free_chart_empty, salary, monthLabel(empty, false)) else stringResource(R.string.free_chart_plain, salary),
@@ -344,11 +345,11 @@ private fun SuggestionCard(sg: SalarySuggestion, average: Long, onApply: () -> U
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.turquoiseDim).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(if (raise) R.string.free_raise_title else R.string.free_lower_title), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = Tz.text)
         Text(
-            stringResource(if (raise) R.string.free_raise_body else R.string.free_lower_body, formatPounds(average), formatPounds(sg.amount)),
+            stringResource(if (raise) R.string.free_raise_body else R.string.free_lower_body, poundsText(average), poundsText(sg.amount)),
             style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Tz.turquoiseDimText,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PillButton(stringResource(R.string.free_suggest_yes, formatPounds(sg.amount)), true, Tz.turquoise, Tz.turquoiseInk, onApply, Modifier.weight(1f))
+            PillButton(stringResource(R.string.free_suggest_yes, poundsText(sg.amount)), true, Tz.turquoise, Tz.turquoiseInk, onApply, Modifier.weight(1f))
             PillButton(stringResource(R.string.free_suggest_keep), false, Tz.turquoise, Tz.turquoiseInk, onKeep, Modifier.weight(1f))
         }
     }
@@ -372,7 +373,7 @@ private fun JobsCard(jobs: List<ClientJobView>, owed: Long, onOpen: (Long) -> Un
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
             Text(stringResource(R.string.free_jobs_title), style = TzType.cardHeading, color = Tz.text)
-            Text(formatPounds(owed), style = TzType.cardHeading.copy(fontSize = 18.sp), color = Tz.yellow)
+            Text(poundsText(owed), style = TzType.cardHeading.copy(fontSize = 18.sp), color = Tz.yellow)
         }
         jobs.forEach { j ->
             Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
@@ -388,7 +389,7 @@ private fun JobsCard(jobs: List<ClientJobView>, owed: Long, onOpen: (Long) -> Un
                     )
                 }
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(formatPounds(j.job.amount), style = TzType.rowNumber, color = Tz.text)
+                    Text(poundsText(j.job.amount), style = TzType.rowNumber, color = Tz.text)
                     if (j.overdue) {
                         val pill = RoundedCornerShape(16.dp)
                         Box(
@@ -458,7 +459,7 @@ private fun JobActionsSheet(j: ClientJobView, onDismiss: () -> Unit, onPaid: () 
     TzSheet(onDismiss) {
         Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(jobTitle(j), style = TzType.cardHeading, color = Tz.text)
-            Text(formatPounds(j.job.amount), style = TzType.hero, color = Tz.text)
+            Text(poundsText(j.job.amount), style = TzType.hero, color = Tz.text)
             PrimaryButton(stringResource(R.string.free_job_paid), onPaid, Modifier.fillMaxWidth(), height = 52.dp)
             SecondaryButton(stringResource(R.string.free_job_edit), onEdit, Modifier.fillMaxWidth(), height = 52.dp)
             TextLink(stringResource(R.string.free_job_delete), onDelete, Modifier.align(Alignment.CenterHorizontally))

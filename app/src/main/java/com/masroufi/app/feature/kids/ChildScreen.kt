@@ -26,12 +26,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.PIN_MIN_DIGITS
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.feature.pockets.AmountSheet
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.SecondaryButton
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzSheet
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.theme.Tz
@@ -66,10 +66,10 @@ fun ChildScreen(viewModel: ChildScreenViewModel) {
                 hasBelow = advance != null || jar != null,
                 below = { c ->
                     if (advance != null) {
-                        Text(stringResource(R.string.kids_child_advance_waiting, formatPounds(advance.amount)), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = c.ink)
+                        Text(stringResource(R.string.kids_child_advance_waiting, poundsText(advance.amount)), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = c.ink)
                     }
                     if (jar != null) {
-                        JarBlock(jar, c, if (jar.matchPer != null && jar.matchAdd != null) stringResource(R.string.kids_child_match, formatPounds(jar.matchPer), formatPounds(jar.matchAdd)) else null)
+                        JarBlock(jar, c, if (jar.matchPer != null && jar.matchAdd != null) stringResource(R.string.kids_child_match, poundsText(jar.matchPer), poundsText(jar.matchAdd)) else null)
                     }
                 },
             )
@@ -92,10 +92,10 @@ fun ChildScreen(viewModel: ChildScreenViewModel) {
 
 @Composable
 private fun noticeText(n: ChildNotice): String = when (n) {
-    is ChildNotice.AskParent -> stringResource(R.string.kids_child_ask_parent, formatPounds(n.left))
+    is ChildNotice.AskParent -> stringResource(R.string.kids_child_ask_parent, poundsText(n.left))
     ChildNotice.AdvanceSent -> stringResource(R.string.kids_child_advance_sent)
     ChildNotice.AdvanceOpen -> stringResource(R.string.kids_child_advance_open)
-    is ChildNotice.AdvanceLimit -> if (n.limit > 0) stringResource(R.string.kids_child_advance_limit, formatPounds(n.limit)) else stringResource(R.string.kids_child_advance_none)
+    is ChildNotice.AdvanceLimit -> if (n.limit > 0) stringResource(R.string.kids_child_advance_limit, poundsText(n.limit)) else stringResource(R.string.kids_child_advance_none)
     ChildNotice.NotDone -> stringResource(R.string.kids_child_not_done)
 }
 

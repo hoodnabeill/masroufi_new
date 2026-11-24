@@ -286,6 +286,27 @@ class AddViewModelTest {
         assertTrue("a paused category", (events[1] as PunchFeedback.Saved).pausedHabit)
     }
 
+    @Test fun editingAnEntryShowsItsSavedItemAndUnitPriceAndKeepsThemEditable() {
+        newVm()
+        val item = runBlocking { f.basket.itemIdFor("Milk") }
+        val id = runBlocking {
+            f.entries.log(NewEntry(EntryKind.SPENT, 3_000, cash, happenedAt = clock.millis(), trackedItemId = item, unitPrice = 1_500))
+        }
+        val old = runBlocking { db.entryDao().byId(id)!! }
+        opened(AddPrefill(3_000, null, null, EntryKind.SPENT, cash, null, 0, EditTarget(id, old.happenedAt, null, 0, 3_000)))
+        settle("item shown") { state.form.item == "Milk" && state.form.unitPrice == "15" && state.pocket != null }
+        vm.setUnitPrice("16.5")
+        settle("price typed") { state.unitPrice == 1_650L }
+        assertTrue(vm.save())
+        settle("edited in place") { entries().single().unitPrice == 1_650L }
+        assertEquals("the item stays the same tracked one", item, entries().single().trackedItemId)
+    }
+
+    @Test fun unitPriceTextReadsBackThroughTheParser() {
+        assertEquals(listOf("15", "12.5", "0.05", "12.34"), listOf(1_500L, 1_250L, 5L, 1_234L).map(::unitPriceText))
+        assertEquals(listOf(1_500L, 1_250L, 5L, 1_234L), listOf("15", "12.5", "0.05", "12.34").map(::parseUnitPrice))
+    }
+
     @Test fun editSavesInPlaceAndDeleteGoesToTheUndo() {
         newVm()
         val id = runBlocking { f.entries.log(NewEntry(EntryKind.SPENT, 2_500, cash, note = "فول", happenedAt = clock.millis())) }

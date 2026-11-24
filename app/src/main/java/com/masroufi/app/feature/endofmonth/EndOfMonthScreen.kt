@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
+import com.masroufi.app.core.billTitle
 import com.masroufi.app.data.repo.EndOfMonthState
 import com.masroufi.app.data.repo.Habit
 import com.masroufi.app.data.repo.NO_SPEND_GOAL
@@ -49,6 +49,7 @@ import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.TzPanel
 import com.masroufi.app.ui.components.TzToggle
 import com.masroufi.app.ui.components.pluralText
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -135,7 +136,7 @@ private fun Hero(ui: EndOfMonthUi, s: EndOfMonthState) {
             Text(stringResource(R.string.eom_unit), style = TzType.card.copy(fontSize = 24.sp), color = ink, modifier = Modifier.padding(bottom = 6.dp))
         }
         Text(
-            if (ui.shortfall) stringResource(R.string.eom_short_line) else stringResource(R.string.eom_hero_line, formatPounds(s.ticket)),
+            if (ui.shortfall) stringResource(R.string.eom_short_line) else stringResource(R.string.eom_hero_line, poundsText(s.ticket)),
             style = TzType.body.copy(fontWeight = FontWeight.SemiBold),
             color = ink,
         )
@@ -148,7 +149,7 @@ private fun Strip(ui: EndOfMonthUi, s: EndOfMonthState) {
     TzPanel {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
             Text(pluralText(R.plurals.eom_tickets, s.strip.size), style = TzType.cardHeading, color = Tz.text)
-            Text(stringResource(R.string.eom_each, formatPounds(s.ticket)), style = TzType.caption, color = Tz.text2)
+            Text(stringResource(R.string.eom_each, poundsText(s.ticket)), style = TzType.caption, color = Tz.text2)
         }
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             s.strip.chunked(STRIP_COLUMNS).forEachIndexed { rowIndex, days ->
@@ -161,7 +162,7 @@ private fun Strip(ui: EndOfMonthUi, s: EndOfMonthState) {
         // The first bill by name; with more, a second line counts the rest.
         val bills = ui.bills
         bills.firstOrNull()?.let { b ->
-            val line = stringResource(R.string.eom_bill, b.date.dayOfMonth.toString(), b.name, formatPounds(b.amount), formatPounds(s.pool))
+            val line = stringResource(R.string.eom_bill, b.date.dayOfMonth.toString(), billTitle(b.name), poundsText(b.amount), poundsText(s.pool))
             Text(line, style = TzType.caption.copy(lineHeight = 1.7.em), color = Tz.text2)
         }
         if (bills.size > 1) {
@@ -204,7 +205,7 @@ private fun Habits(habits: List<Habit>, onPause: (Long, Boolean) -> Unit) {
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(h.name, style = TzType.body.copy(fontWeight = FontWeight.SemiBold), color = Tz.text)
-                    Text(stringResource(R.string.eom_habit_line, formatPounds(h.spent)), style = TzType.caption, color = Tz.text2)
+                    Text(stringResource(R.string.eom_habit_line, poundsText(h.spent)), style = TzType.caption, color = Tz.text2)
                 }
                 TzToggle(h.paused, { onPause(h.categoryId, it) }, stringResource(R.string.eom_habit_cd, h.name))
             }
@@ -230,7 +231,7 @@ private fun Challenge(ui: EndOfMonthUi, s: EndOfMonthState) {
         }
         val line = when {
             ui.challengeEarned -> stringResource(R.string.eom_challenge_done)
-            s.boost > 0 -> stringResource(R.string.eom_challenge_line, formatPounds(s.boost))
+            s.boost > 0 -> stringResource(R.string.eom_challenge_line, poundsText(s.boost))
             else -> stringResource(R.string.eom_challenge_line_flat)
         }
         Text(line, style = TzType.label.copy(fontWeight = FontWeight.Normal, lineHeight = 1.7.em), color = Tz.turquoiseDimText)
@@ -245,18 +246,18 @@ private fun Rescue(ui: EndOfMonthUi, onOpenJar: () -> Unit, onRemind: (OwedToMe)
     TzPanel(spacing = 4.dp) {
         Text(stringResource(R.string.eom_rescue_title), style = TzType.cardHeading, color = Tz.text, modifier = Modifier.padding(bottom = 6.dp))
         r.freeJar?.let {
-            RescueRow(stringResource(R.string.eom_rescue_jar), stringResource(R.string.eom_rescue_jar_value, formatPounds(it))) {
+            RescueRow(stringResource(R.string.eom_rescue_jar), stringResource(R.string.eom_rescue_jar_value, poundsText(it))) {
                 haptics.perform(HapticLevel.Tap)
                 onOpenJar()
             }
         }
         r.owedToMe?.let { o ->
-            RescueRow(stringResource(R.string.eom_rescue_owed, o.name), stringResource(R.string.eom_rescue_owed_value, formatPounds(o.amount))) {
+            RescueRow(stringResource(R.string.eom_rescue_owed, o.name), stringResource(R.string.eom_rescue_owed_value, poundsText(o.amount))) {
                 haptics.perform(HapticLevel.Tap)
                 onRemind(o)
             }
         }
-        r.emergency?.let { RescueRow(stringResource(R.string.eom_rescue_emergency), formatPounds(it), null) }
+        r.emergency?.let { RescueRow(stringResource(R.string.eom_rescue_emergency), poundsText(it), null) }
     }
 }
 

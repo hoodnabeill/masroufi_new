@@ -35,6 +35,7 @@ import com.masroufi.app.domain.nextProverb
 import com.masroufi.app.domain.punches
 import com.masroufi.app.domain.raisedTo
 import com.masroufi.app.domain.streak
+import com.masroufi.app.entitlements.Entitlements
 import com.masroufi.app.widget.DaySummaryWriter
 import com.masroufi.app.domain.spentToday
 import java.time.Clock
@@ -105,6 +106,7 @@ class TicketRepository @Inject constructor(
     private val freelance: Provider<FreelanceRepository>,
     private val story: StoryRepository,
     private val summary: DaySummaryWriter,
+    private val plus: Entitlements,
 ) {
     /**
      * Today's ticket: printed once, after auto-closing every earlier open day. Days in a gap get no row (design
@@ -251,7 +253,7 @@ class TicketRepository @Inject constructor(
             val collected = proverbDao.numbers().toSet()
             val rareNumber = when {
                 StampKind.FULL_WEEK in newStamps && RARE_FULL_WEEK !in collected -> RARE_FULL_WEEK
-                streak(days, date) >= RARE_STREAK_DAYS && RARE_STREAK !in collected -> RARE_STREAK
+                streak(days, date, plus.isPlus.value) >= RARE_STREAK_DAYS && RARE_STREAK !in collected -> RARE_STREAK
                 else -> null
             }
             val proverb = rareNumber

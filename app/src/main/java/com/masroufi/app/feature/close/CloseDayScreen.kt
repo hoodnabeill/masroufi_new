@@ -85,7 +85,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.formatDayDate
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.feature.home.HomeError
 import com.masroufi.app.feature.home.HomeSkeleton
@@ -343,7 +342,7 @@ private fun CloseDayReady(
             val p = flight.value
             val target = to - Offset(labelSize.width / 2f, labelSize.height / 2f)
             Text(
-                stringResource(R.string.close_stub_amount, formatPounds(s.leftover)),
+                stringResource(R.string.close_stub_amount, poundsText(s.leftover)),
                 style = TzType.rowNumber,
                 color = Tz.yellow,
                 modifier = Modifier
@@ -379,13 +378,13 @@ private fun Header(date: LocalDate, locale: Locale, onBack: () -> Unit) {
 private fun TicketTop(s: CloseDayUi.Ready, weekday: String) {
     val line = when {
         s.over > 0 && s.spreadDays >= 1 ->
-            stringResource(R.string.close_over_spread, formatPounds(s.over), s.spreadDays.toString(), formatPounds(s.spreadPerDay))
-        s.over > 0 -> stringResource(R.string.close_over, formatPounds(s.over))
+            stringResource(R.string.close_over_spread, poundsText(s.over), s.spreadDays.toString(), poundsText(s.spreadPerDay))
+        s.over > 0 -> stringResource(R.string.close_over, poundsText(s.over))
         s.leftover == 0L -> stringResource(R.string.close_zero)
         s.biggest?.categoryName != null -> stringResource(
-            R.string.close_line_biggest, formatPounds(s.spent), s.holes.toString(), s.biggest.categoryName, formatPounds(s.biggest.amount),
+            R.string.close_line_biggest, poundsText(s.spent), s.holes.toString(), s.biggest.categoryName, poundsText(s.biggest.amount),
         )
-        else -> stringResource(R.string.close_line, formatPounds(s.spent), s.holes.toString())
+        else -> stringResource(R.string.close_line, poundsText(s.spent), s.holes.toString())
     }
     Column(
         Modifier.fillMaxWidth().clip(TicketTopShape).background(Tz.yellow)
@@ -461,7 +460,7 @@ private fun Stub(
     ) {
         Text(stringResource(R.string.close_stub_title), style = TzType.label.copy(fontWeight = FontWeight.Bold), color = Tz.night)
         Text(
-            stringResource(R.string.close_stub_amount, formatPounds(amount)),
+            stringResource(R.string.close_stub_amount, poundsText(amount)),
             style = TzType.rowNumber,
             color = Tz.night,
             modifier = Modifier
@@ -486,7 +485,7 @@ private fun Destinations(
     val rolling = tearing && !landed
     Column(Modifier.padding(top = 4.dp).selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            stringResource(R.string.close_where, formatPounds(s.leftover)),
+            stringResource(R.string.close_where, poundsText(s.leftover)),
             style = TzType.cardHeading,
             color = Tz.text,
             modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 8.dp).semantics { heading() },
@@ -502,7 +501,7 @@ private fun Destinations(
         ) { onSelect(LeftoverDestination.JAR) }
         DestinationCard(
             title = stringResource(R.string.close_dest_tomorrow),
-            template = stringResource(R.string.close_dest_tomorrow_sub, tomorrowName, MARK, formatPounds(s.tomorrowWithout)),
+            template = stringResource(R.string.close_dest_tomorrow_sub, tomorrowName, MARK, poundsText(s.tomorrowWithout)),
             value = if (selected == LeftoverDestination.TOMORROW && rolling) s.tomorrowWithout else s.tomorrowWith,
             icon = TzIcons.today, tileBg = Tz.yellowDim, tileFg = Tz.yellow, accent = Tz.yellow,
             selected = selected == LeftoverDestination.TOMORROW,

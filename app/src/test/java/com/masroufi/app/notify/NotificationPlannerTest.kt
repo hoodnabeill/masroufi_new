@@ -81,6 +81,21 @@ class NotificationPlannerTest {
 
     // the day-before ones
 
+    @Test fun aBillNameThatSaysBillIsNotDoubled() {
+        val n = plan(at(10), NotifFacts(billsTomorrow = listOf(DueItem(1, "فاتورة الكهربا", 25_000)))).single()
+        assertEquals(listOf("الكهربا", "250"), n.args)
+    }
+
+    @Test fun twoBillsTheSameDayGetTwoNotificationIds() {
+        val notices = plan(at(10), NotifFacts(billsTomorrow = listOf(DueItem(1, "النت", 100), DueItem(2, "الغاز", 100))))
+        // the daily cap is 2, so both come out
+        assertEquals(2, notices.size)
+        assertEquals(2, notices.map { noticeId(it) }.toSet().size)
+        // the same item tomorrow keeps its id, a different kind never shares one
+        assertEquals(noticeId(notices[0]), noticeId(notices[0].copy(key = notices[0].key.substringBefore('@') + "@1")))
+        assertTrue(noticeId(Notice(EVENING, "evening@1", emptyList())) != noticeId(Notice(STREAK, "streak@1", emptyList())))
+    }
+
     @Test fun billTomorrowFiresInTheDaytimeOnly() {
         val facts = NotifFacts(billsTomorrow = listOf(DueItem(3, "النت", 25_000)))
         val n = plan(at(10), facts).single()

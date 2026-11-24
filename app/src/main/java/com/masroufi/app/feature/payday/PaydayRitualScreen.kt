@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.formatDayDate
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.JarShare
 import com.masroufi.app.data.repo.RitualView
 import com.masroufi.app.feature.add.AmountInput
@@ -49,6 +48,7 @@ import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzProgressBar
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -125,7 +125,7 @@ private fun Hero(salary: Long, pocket: String) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.payday_title), style = TzType.titleTab, color = Tz.turquoiseInk)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                Text(formatPounds(salary), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.turquoiseInk)
+                Text(poundsText(salary), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.turquoiseInk)
                 Text(stringResource(R.string.payday_currency), style = TzType.cardHeading, color = Tz.turquoiseInk, modifier = Modifier.padding(bottom = 8.dp))
             }
             Text(
@@ -159,10 +159,10 @@ private fun JarStep(ui: RitualUi, vm: PaydayRitualViewModel, view: RitualView) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    stringResource(R.string.payday_jar_line, formatPounds(view.jarShare)),
+                    stringResource(R.string.payday_jar_line, poundsText(view.jarShare)),
                     style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text,
                 )
-                val after = formatPounds(ui.jarTotal + view.jarShare)
+                val after = poundsText(ui.jarTotal + view.jarShare)
                 val share = ui.share
                 Text(
                     if (share is JarShare.Percent) stringResource(R.string.payday_jar_sub_pct, share.percent, after)
@@ -223,7 +223,7 @@ private fun DebtsStep(ui: RitualUi, vm: PaydayRitualViewModel) {
                         if (on) TzIcon(TzIcons.check, 14.dp, null, tint = Tz.night)
                     }
                     Text(d.person.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, modifier = Modifier.weight(1f), maxLines = 1)
-                    Text(formatPounds(d.debt.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
+                    Text(poundsText(d.debt.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
                 }
             }
         }
@@ -248,7 +248,7 @@ private fun FixedStep(number: Int, view: RitualView, salary: Long, onEdit: () ->
                             },
                             style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Normal), color = Tz.text2, modifier = Modifier.weight(1f),
                         )
-                        Text(formatPounds(it.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
+                        Text(poundsText(it.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
                     }
                 }
             }
@@ -293,7 +293,7 @@ private fun Legend(dot: Color, label: String, amount: Long, labelColor: Color, m
         Box(Modifier.size(8.dp).clip(CircleShape).background(dot))
         Text(label, style = TzType.caption.copy(fontSize = 13.sp), color = labelColor, modifier = Modifier.weight(1f))
         Text(
-            formatPounds(amount),
+            poundsText(amount),
             style = TzType.caption.copy(fontSize = 13.sp, fontWeight = if (bold) FontWeight.Bold else FontWeight.SemiBold),
             color = if (bold) Tz.yellow else Tz.text,
         )
@@ -310,13 +310,13 @@ private fun TicketCard(view: RitualView) {
             val diff = if (last == null) 0L else view.ticket - last
             if (diff != 0L) {
                 Text(
-                    stringResource(if (diff > 0) R.string.payday_more else R.string.payday_less, formatPounds(abs(diff))),
+                    stringResource(if (diff > 0) R.string.payday_more else R.string.payday_less, poundsText(abs(diff))),
                     style = TzType.caption.copy(fontWeight = FontWeight.SemiBold), color = TicketInk,
                 )
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-            Text(formatPounds(view.ticket), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.night)
+            Text(poundsText(view.ticket), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.night)
             Text(stringResource(R.string.payday_per_day), style = TzType.cardHeading, color = Tz.night, modifier = Modifier.padding(bottom = 8.dp))
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {

@@ -6,7 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
@@ -76,7 +76,7 @@ fun TzChip(
         label = "chipLabel",
     ).value
     val height = if (style == ChipStyle.Choice) 44.dp else 40.dp
-    val shape = RoundedCornerShape(height / 2)
+    val shape = RoundedCornerShape(percent = 50)
     Box(
         modifier
             .minimumInteractiveComponentSize()
@@ -95,7 +95,7 @@ fun TzChip(
             Modifier
                 .pressScale(source, PressScale.Chip, release = TzSpring.Snappy)
                 .graphicsLayer { scaleX = pop.value; scaleY = pop.value }
-                .height(height)
+                .heightIn(min = height)
                 .widthIn(min = 48.dp)
                 .clip(shape)
                 .background(fill)

@@ -57,7 +57,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.core.formatDayMonth
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.FeaturePitch
 import com.masroufi.app.data.repo.LossRow
 import com.masroufi.app.data.repo.PlusFeature
@@ -65,6 +64,7 @@ import com.masroufi.app.entitlements.PlusPlan
 import com.masroufi.app.entitlements.TrialState
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.pluralText
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -288,7 +288,7 @@ private fun rowTexts(row: PaywallRow, stopping: Boolean): Triple<String?, String
                 pitch ?: stringResource(if (stopping) R.string.loss_sub_gold_loss else R.string.loss_sub_gold),
             )
             is LossRow.RoundUps -> Triple(
-                stringResource(R.string.paywall_val_pounds, formatPounds(r.value)), stringResource(R.string.loss_title_roundups),
+                stringResource(R.string.paywall_val_pounds, poundsText(r.value)), stringResource(R.string.loss_title_roundups),
                 pitch ?: stringResource(R.string.loss_sub_roundups),
             )
             is LossRow.Seasons -> Triple(
@@ -322,7 +322,7 @@ internal fun grams(hundredths: Long): String = String.format(Locale.US, "%d.%02d
 private fun seasonsSub(r: LossRow.Seasons): String {
     val base = if (r.nearestDaysUntil <= 0) stringResource(R.string.loss_sub_seasons_today, r.nearestName)
     else stringResource(R.string.loss_sub_seasons, r.nearestName, r.nearestDaysUntil.toInt())
-    return if (r.nearestSaved > 0) base + " " + stringResource(R.string.loss_sub_seasons_saved, formatPounds(r.nearestSaved)) else base
+    return if (r.nearestSaved > 0) base + " " + stringResource(R.string.loss_sub_seasons_saved, poundsText(r.nearestSaved)) else base
 }
 
 @Composable
@@ -354,7 +354,7 @@ private fun pitchTitle(f: PlusFeature) = when (f) {
 /** What the feature would do with the user's data; with nothing to say, the feature's own plain line. */
 @Composable
 private fun pitchLine(p: FeaturePitch): String {
-    val amount = p.amount?.let(::formatPounds)
+    val amount = p.amount?.let { poundsText(it) }
     val count = p.count
     return when (p.feature) {
         PlusFeature.GOLD ->

@@ -23,11 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.db.WishEntity
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.SecondaryButton
 import com.masroufi.app.ui.components.TzSheet
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.paper.Qersh
@@ -101,8 +101,8 @@ fun JarAskSheet(ask: WishAsk, onAnswer: (toJar: Boolean) -> Unit, onDismiss: () 
         ) {
             Text(stringResource(R.string.wish_jar_title, ask.name), style = TzType.cardHeading, color = Tz.text)
             Text(
-                if (ask.offer < ask.price) stringResource(R.string.wish_jar_body_capped, formatPounds(ask.offer), formatPounds(ask.price))
-                else stringResource(R.string.wish_jar_body, formatPounds(ask.offer)),
+                if (ask.offer < ask.price) stringResource(R.string.wish_jar_body_capped, poundsText(ask.offer), poundsText(ask.price))
+                else stringResource(R.string.wish_jar_body, poundsText(ask.offer)),
                 style = TzType.body, color = Tz.text2,
             )
             PrimaryButton(stringResource(R.string.wish_jar_move), { haptics.perform(HapticLevel.Confirm); onAnswer(true) }, Modifier.fillMaxWidth(), height = 52.dp)

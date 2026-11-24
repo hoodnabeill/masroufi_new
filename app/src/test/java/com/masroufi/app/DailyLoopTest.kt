@@ -231,7 +231,7 @@ class DailyLoopTest {
         assertTrue(card!! in 1..ProverbCatalog.all.size)
 
         // Reward: ticket number 1 and the drawn card.
-        val reward = ProverbRewardViewModel(db.dayTicketDao(), db.proverbDao(), SavedStateHandle(mapOf("date" to nov12.toEpochDay())))
+        val reward = ProverbRewardViewModel(db.dayTicketDao(), db.proverbDao(), com.masroufi.app.entitlements.DebugEntitlements(), SavedStateHandle(mapOf("date" to nov12.toEpochDay())))
         settle("reward") { reward.state.value is ProverbRewardUi.Ready }
         val r = reward.state.value as ProverbRewardUi.Ready
         assertEquals("first hand-closed ticket", 1, r.ticketNumber)

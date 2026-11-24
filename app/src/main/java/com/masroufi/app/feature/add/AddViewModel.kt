@@ -128,6 +128,10 @@ internal fun parseUnitPrice(text: String): Long {
     return AmountInput(t.trimEnd('.')).toPiastres()
 }
 
+/** 1250 -> "12.5", the text [parseUnitPrice] reads back. */
+internal fun unitPriceText(piastres: Long): String =
+    if (piastres % 100 == 0L) (piastres / 100).toString() else "${piastres / 100}.${(piastres % 100).toString().padStart(2, '0')}".trimEnd('0')
+
 private const val TAG = "AddSheet"
 private const val DOUBLE_TAP_MS = 400L
 private const val PENDING_CATCH_UP_MS = 2_000L
@@ -196,6 +200,8 @@ class AddViewModel @Inject constructor(
                 pockets = old.pockets,
             )
         }
+        val editing = prefill?.edit
+        if (editing != null && !keep) viewModelScope.launch { fillItem(editing.id) }
         viewModelScope.launch {
             val pockets = pocketDao.all().first().filterNot { it.archived }.sortedBy { it.id }
             val all = categoryDao.all().first().sortedBy { it.id }
@@ -213,6 +219,22 @@ class AddViewModel @Inject constructor(
                     toPocketId = f.toPocketId.kept(),
                 )
             }
+        }
+    }
+
+    /** An edited entry shows its saved item name and unit price, unless the user already typed there. */
+    private suspend fun fillItem(entryId: Long) {
+        try {
+            val e = entryDao.byId(entryId) ?: return
+            val name = e.trackedItemId?.let { basket.nameOf(it) } ?: return
+            val price = e.unitPrice ?: return
+            form.update { f ->
+                if (f.edit?.id == entryId && f.item.isEmpty() && f.unitPrice.isEmpty()) f.copy(item = name, unitPrice = unitPriceText(price)) else f
+            }
+        } catch (ex: CancellationException) {
+            throw ex
+        } catch (ex: Exception) {
+            Log.e(TAG, "item of the edited entry failed to load", ex)
         }
     }
 

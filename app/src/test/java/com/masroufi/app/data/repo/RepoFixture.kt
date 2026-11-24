@@ -58,7 +58,7 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val daySummary = DaySummaryWriter(db.dayTicketDao(), db.entryDao(), db.categoryDao(), settings, summaryStore, plus, clock, widgets, CoroutineScope(SupervisorJob() + Dispatchers.IO))
     val tickets: TicketRepository = TicketRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
-        db.stampDao(), settings, clock, stamps, Provider { eom }, Provider { installments }, Provider { freelance }, story, daySummary,
+        db.stampDao(), settings, clock, stamps, Provider { eom }, Provider { installments }, Provider { freelance }, story, daySummary, plus,
     )
     val eom = EndOfMonthRepository(
         settings, tickets, db.dayTicketDao(), db.entryDao(), db.categoryDao(), db.recurringDao(), db.pocketDao(), db.jarDao(),

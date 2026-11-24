@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.feature.plan.AmountSheet
 import com.masroufi.app.feature.plan.PillButton
@@ -65,6 +64,7 @@ import com.masroufi.app.ui.components.EmptyState
 import com.masroufi.app.ui.components.Odometer
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.RowSkeleton
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -125,7 +125,7 @@ fun InstallmentsScreen(viewModel: InstallmentsViewModel, onBack: () -> Unit, onN
     if (paying && early != null) {
         AmountSheet(stringResource(R.string.inst_pay_title, early.name), { paying = false }, AmountInput.of(early.amount)) { amount ->
             PrimaryButton(
-                stringResource(R.string.inst_pay_confirm, formatPounds(amount)),
+                stringResource(R.string.inst_pay_confirm, poundsText(amount)),
                 { viewModel.payOff(early.planId, amount); paying = false }, // the end motion fires the Milestone once the plan is really finished
                 Modifier.fillMaxWidth(), enabled = amount > 0, height = 52.dp,
             )
@@ -205,7 +205,7 @@ private fun FreedomCard(s: InstallmentsUi) {
                 }
             }
         }
-        val steps = s.growth.map { stringResource(R.string.inst_growth_step, formatPounds(it.growth), monthLabel(it.month, it.withYear)) }
+        val steps = s.growth.map { stringResource(R.string.inst_growth_step, poundsText(it.growth), monthLabel(it.month, it.withYear)) }
         Text(
             stringResource(R.string.inst_growth_line, steps.joinToString(stringResource(R.string.inst_growth_sep))),
             style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium), color = Tz.turquoiseInk,
@@ -275,7 +275,7 @@ private fun PlanRow(row: PlanRowUi, today: YearMonth, filled: Boolean, first: Bo
                 Text(plan.item.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
                 Text(lineText(row.line, today), style = TzType.caption.copy(fontSize = 12.sp), color = if (soon) Tz.turquoise else Tz.text2, maxLines = 2)
             }
-            Text(formatPounds(plan.monthly), style = TzType.rowNumber, color = Tz.text)
+            Text(poundsText(plan.monthly), style = TzType.rowNumber, color = Tz.text)
         }
         val total = plan.total
         if (total != null) PlanBar(if (filled) total else plan.paid.coerceAtMost(total - 1).coerceAtLeast(0), total, ink)
@@ -324,12 +324,12 @@ private fun EarlyCard(e: EarlyUi, failed: Boolean, onPay: () -> Unit, onKeep: ()
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.yellowDim).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.inst_early_title, e.name), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = Tz.yellow)
         Text(
-            stringResource(R.string.inst_early_body, formatPounds(e.amount), formatPounds(e.growth)),
+            stringResource(R.string.inst_early_body, poundsText(e.amount), poundsText(e.growth)),
             style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Color(0xFFF0E3B5),
         )
         if (failed) Text(stringResource(R.string.inst_early_failed), style = TzType.label.copy(fontSize = 13.sp), color = Tz.carnelianText)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PillButton(stringResource(R.string.inst_early_pay, formatPounds(e.amount)), true, Tz.yellow, Tz.night, onPay, Modifier.weight(1f))
+            PillButton(stringResource(R.string.inst_early_pay, poundsText(e.amount)), true, Tz.yellow, Tz.night, onPay, Modifier.weight(1f))
             PillButton(stringResource(R.string.inst_early_keep), false, Tz.yellow, Tz.night, onKeep, Modifier.weight(1f))
         }
     }

@@ -60,7 +60,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.data.repo.PlusFeature
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.domain.EventKind
 import com.masroufi.app.domain.GoalKind
 import com.masroufi.app.domain.HatTrick
@@ -77,6 +76,7 @@ import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.TzPanel
 import com.masroufi.app.ui.components.pluralText
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.motion.LocalReduceMotion
@@ -263,12 +263,12 @@ private fun EventRow(e: MatchEvent, dayName: String, landed: Boolean) {
         }
     }
     val text = when (e.kind) {
-        EventKind.GOAL -> stringResource(R.string.match_ev_goal, formatPounds(e.amount))
+        EventKind.GOAL -> stringResource(R.string.match_ev_goal, poundsText(e.amount))
         EventKind.EXACT -> stringResource(R.string.match_ev_exact)
-        EventKind.BEST -> stringResource(R.string.match_ev_best, formatPounds(e.amount))
-        EventKind.LAST_MINUTE -> stringResource(R.string.match_ev_last, formatPounds(e.amount))
-        EventKind.AGAINST -> stringResource(R.string.match_ev_against, formatPounds(e.amount))
-        EventKind.OPEN -> stringResource(R.string.match_ev_open, formatPounds(e.amount))
+        EventKind.BEST -> stringResource(R.string.match_ev_best, poundsText(e.amount))
+        EventKind.LAST_MINUTE -> stringResource(R.string.match_ev_last, poundsText(e.amount))
+        EventKind.AGAINST -> stringResource(R.string.match_ev_against, poundsText(e.amount))
+        EventKind.OPEN -> stringResource(R.string.match_ev_open, poundsText(e.amount))
     }
     val open = e.kind == EventKind.OPEN
     Row(
@@ -404,7 +404,7 @@ private fun LeagueRowView(r: LeagueRow) {
             r.days.forEach { g -> Dot(g, r.current) }
         }
         Text(
-            formatPounds(r.saved),
+            poundsText(r.saved),
             Modifier.width(56.dp),
             style = TzType.card.copy(fontSize = 16.sp, textAlign = TextAlign.End),
             color = Tz.text,

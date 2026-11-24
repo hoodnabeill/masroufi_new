@@ -32,9 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.SecondaryButton
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcons
@@ -92,11 +92,11 @@ fun RevealStep(state: OnboardingUi, actions: OnboardingActions) {
                     label = stringResource(R.string.ob_ticket_label, reveal.paydayDay.toString()),
                     amountLabel = null,
                     leftPiastres = reveal.amount,
-                    subLine = if (reveal.endOfMonth) stringResource(R.string.home_ticket_short, formatPounds(reveal.shortfall)) else stringResource(R.string.ob_ticket_line),
+                    subLine = if (reveal.endOfMonth) stringResource(R.string.home_ticket_short, poundsText(reveal.shortfall)) else stringResource(R.string.ob_ticket_line),
                     holes = 0,
                     caption = null,
                     stub = { Facts(state, reveal) },
-                    contentDescription = stringResource(R.string.ob_ticket_cd, formatPounds(reveal.amount)),
+                    contentDescription = stringResource(R.string.ob_ticket_cd, poundsText(reveal.amount)),
                     qershScale = qershScale,
                     modifier = Modifier.graphicsLayer(slide).rotate(-2f),
                     showHoles = false,
@@ -134,8 +134,8 @@ private fun Facts(state: OnboardingUi, reveal: RevealUi) {
     val style = TzType.label.copy(fontWeight = FontWeight.SemiBold, color = Tz.yellowInk)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         // A skipped money question has no number to show.
-        if (!state.moneySkipped) Text(stringResource(R.string.ob_fact_have, formatPounds(state.money.toPiastres())), style = style)
-        Text(stringResource(R.string.ob_fact_reserved, formatPounds(state.fixedTotal)), style = style)
+        if (!state.moneySkipped) Text(stringResource(R.string.ob_fact_have, poundsText(state.money.toPiastres())), style = style)
+        Text(stringResource(R.string.ob_fact_reserved, poundsText(state.fixedTotal)), style = style)
         Text(stringResource(R.string.ob_days, reveal.days.toString()), style = style)
     }
 }

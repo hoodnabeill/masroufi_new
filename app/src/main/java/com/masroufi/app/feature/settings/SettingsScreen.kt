@@ -1,7 +1,10 @@
 package com.masroufi.app.feature.settings
 
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -188,6 +191,9 @@ fun SettingsContent(ui: SettingsUi, vm: SettingsActions, nav: SettingsNav, suppo
 
 @Composable
 private fun SettingsSheets(ui: SettingsUi, vm: SettingsActions) {
+    val context = LocalContext.current
+    // Picking an hour needs the notification permission on Android 13+, asked the way the notifications screen does; a refusal is shown there.
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     when (ui.sheet) {
         SettingsSheet.Payday -> TzSheet(vm::closeSheet) {
             var other by remember { mutableStateOf(false) }
@@ -196,7 +202,14 @@ private fun SettingsSheets(ui: SettingsUi, vm: SettingsActions) {
                 if (other) PaydayDayChips(ui.payday, vm::setPayday) else PaydayChoices(ui.payday, vm::setPayday, onOther = { other = true })
             }
         }
-        SettingsSheet.Reminder -> ReminderSheet(ui.reminderHour, vm::setReminderHour, vm::closeSheet)
+        SettingsSheet.Reminder -> ReminderSheet(
+            ui.reminderHour,
+            { hour ->
+                vm.setReminderHour(hour)
+                if (hour != null && needsPermission(context)) permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            },
+            vm::closeSheet,
+        )
         SettingsSheet.Leftover -> TzSheet(vm::closeSheet) {
             Column(Modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.settings_leftover_title), style = TzType.cardHeading.copy(color = Tz.text))

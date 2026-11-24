@@ -126,7 +126,7 @@ class NotificationSettingsViewModel @Inject constructor(private val settings: Se
     }
 }
 
-private fun needsPermission(context: Context) =
+internal fun needsPermission(context: Context) =
     Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
 
 @Composable

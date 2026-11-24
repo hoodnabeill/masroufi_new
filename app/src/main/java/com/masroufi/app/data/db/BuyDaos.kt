@@ -25,6 +25,7 @@ interface TrackedItemDao {
     @Insert suspend fun insert(item: TrackedItemEntity): Long
     @Update suspend fun update(item: TrackedItemEntity)
     @Query("SELECT * FROM tracked_item WHERE normalisedName = :normalised LIMIT 1") suspend fun byNormalised(normalised: String): TrackedItemEntity?
+    @Query("SELECT * FROM tracked_item WHERE id = :id") suspend fun byId(id: Long): TrackedItemEntity?
     @Query("SELECT * FROM tracked_item ORDER BY id") fun all(): Flow<List<TrackedItemEntity>>
     @Query("SELECT * FROM tracked_item ORDER BY id") suspend fun allNow(): List<TrackedItemEntity>
 }

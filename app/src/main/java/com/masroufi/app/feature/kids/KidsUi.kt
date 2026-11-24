@@ -43,11 +43,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.masroufi.app.R
 import com.masroufi.app.core.PIN_MAX_DIGITS
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.data.repo.ChildJar
 import com.masroufi.app.feature.pockets.pocketColor
 import com.masroufi.app.ui.components.Odometer
 import com.masroufi.app.ui.components.PrimaryButton
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -117,7 +117,7 @@ internal fun KidsTicket(
                     )
                 }
                 Text(
-                    stringResource(R.string.kids_weekly, formatPounds(t.view.child.weekly)),
+                    stringResource(R.string.kids_weekly, poundsText(t.view.child.weekly)),
                     style = TzType.caption.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold), color = c.ink,
                 )
             }
@@ -174,8 +174,8 @@ private fun Tear(c: TicketColors) {
 /** "الحصّالة: 120 من 1,500 · العجلة", the bar and its percent; [matchLine] is the line under it. */
 @Composable
 internal fun JarBlock(jar: ChildJar, c: TicketColors, matchLine: String?) {
-    val saved = formatPounds(jar.saved)
-    val amounts = if (jar.target != null) stringResource(R.string.kids_jar_of, saved, formatPounds(jar.target)) else saved
+    val saved = poundsText(jar.saved)
+    val amounts = if (jar.target != null) stringResource(R.string.kids_jar_of, saved, poundsText(jar.target)) else saved
     val title = stringResource(R.string.kids_jar_title, listOfNotNull(amounts, jar.label).joinToString(" · "))
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

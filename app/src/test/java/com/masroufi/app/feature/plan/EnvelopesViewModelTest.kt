@@ -211,6 +211,28 @@ class EnvelopesViewModelTest {
         assertEquals("nothing was created", 4, state.cards.size)
     }
 
+    @Test fun theFormNeitherListsNorUnlinksTheKidsItem() {
+        fill()
+        val food = card("food").view.id
+        val kidsId = runBlocking {
+            db.recurringDao().insert(
+                RecurringEntity(
+                    name = "kids", amount = 20_000, pocketId = cash, scheduleDay = 6, nextDue = d(11, 14), envelopeId = food,
+                    kind = RecurringKind.KIDS,
+                ),
+            )
+        }
+        val form = ViewModelProvider.create(
+            store,
+            viewModelFactory { initializer { EnvelopeFormViewModel(f.envelopes, f.recurring, db.categoryDao(), SavedStateHandle(mapOf("id" to food))) } },
+        )[EnvelopeFormViewModel::class]
+        settle("form loaded") { form.form.value.loaded }
+        assertEquals("only the bill is offered", listOf("net"), form.form.value.fixedCosts.map { it.name })
+        form.save()
+        settle("saved") { form.form.value.saved }
+        assertEquals("the kids item keeps its envelope", food, runBlocking { db.recurringDao().allNow().first { it.id == kidsId } }.envelopeId)
+    }
+
     @Test fun aDropOpensTheMoveSheetAndConfirmingMovesTheAmount() {
         fill()
         val transport = card("transport").view

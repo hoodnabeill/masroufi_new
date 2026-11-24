@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.close
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -8,6 +9,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.data.repo.BiggestPunch
 import com.masroufi.app.domain.LeftoverDestination
+import com.masroufi.app.ui.components.LocalHideAmounts
 import com.masroufi.app.ui.theme.MasroufiTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -45,6 +47,16 @@ class CloseDayScreenTest {
         rule.onNodeWithText("الجمعة تبقى 312 بدل 240", substring = true).assertExists()
         rule.onNodeWithText("فيه 600 دلوقتي", substring = true).assertExists()
         rule.onNodeWithText("الحصّالة", substring = true).assertIsSelected()
+    }
+
+    @Test fun hideAmountsMasksTheTextLines() {
+        rule.setContent {
+            MasroufiTheme { CompositionLocalProvider(LocalHideAmounts provides true) { CloseDayContent(under, TearState.Idle, {}, {}, {}) } }
+        }
+        rule.onNodeWithText("صرفت ••• في 6 مرات", substring = true).assertExists()
+        rule.onNodeWithText("الـ ••• يروحوا فين؟").assertExists()
+        rule.onNodeWithText("168", substring = true).assertDoesNotExist()
+        rule.onNodeWithText("الـ 72", substring = true).assertDoesNotExist()
     }
 
     @Test fun buttonTearsToTheChosenCard() {

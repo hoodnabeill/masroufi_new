@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
-import com.masroufi.app.core.formatPounds
 import com.masroufi.app.domain.MainGoal
 import com.masroufi.app.domain.WorkKind
 import com.masroufi.app.feature.people.rememberShareText
@@ -67,6 +66,7 @@ import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.components.TzSheet
+import com.masroufi.app.ui.components.poundsText
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -263,7 +263,7 @@ private fun Gift(g: GiftUi, onEdit: () -> Unit) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.profile_gift_title), style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = Tz.text)
             Text(
-                stringResource(R.string.profile_gift_line, g.perDayPounds.toString(), formatPounds(g.target)),
+                stringResource(R.string.profile_gift_line, g.perDayPounds.toString(), poundsText(g.target)),
                 style = TzType.caption.copy(fontSize = 12.sp, lineHeight = 20.sp), color = Tz.turquoiseDimText,
             )
         }
