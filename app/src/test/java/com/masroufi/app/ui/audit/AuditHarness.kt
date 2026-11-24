@@ -61,7 +61,7 @@ data class AuditConfig(
 /** Fails with every finding listed, one per line. */
 fun List<AuditFinding>.assertNone() {
     // One line: the CI annotation keeps only the first line of a failure message.
-    if (isNotEmpty()) throw AssertionError("$size audit finding(s): " + joinToString(" || ") { "$it" })
+    if (isNotEmpty()) throw AssertionError("$size audit finding(s): " + joinToString(" || ") { "${it.rule}: ${it.detail.removePrefix("text overflows its box: ")} -> ${it.node.substringBefore(" role=")}" })
 }
 
 fun ComposeContentTestRule.audit(config: AuditConfig = AuditConfig(), content: @Composable () -> Unit): List<AuditFinding> {

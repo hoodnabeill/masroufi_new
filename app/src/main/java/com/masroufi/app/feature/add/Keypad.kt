@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.add
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -71,7 +72,7 @@ private fun Key(fill: Color, modifier: Modifier, onClick: () -> Unit, content: @
     Box(
         modifier
             .pressScale(source, PressScale.Chip, release = TzSpring.Snappy)
-            .height(56.dp)
+            .heightIn(min = 56.dp)
             .clip(KeyShape)
             .background(fill)
             .clickable(interactionSource = source, indication = null, role = Role.Button) {

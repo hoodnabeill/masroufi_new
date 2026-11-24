@@ -278,7 +278,7 @@ internal fun PinKey(
     val source = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(corner)
     Box(
-        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).height(height).clip(shape).background(fill)
+        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).heightIn(min = height).clip(shape).background(fill)
             .then(if (outline != null) Modifier.border(1.dp, outline, shape) else Modifier)
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,

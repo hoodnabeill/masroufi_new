@@ -377,7 +377,7 @@ private fun PocketButton(label: String, pocket: PocketEntity?, modifier: Modifie
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
-        Text(pocket?.name.orEmpty(), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).padding(start = 6.dp))
+        Text(pocket?.name.orEmpty(), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).padding(start = 6.dp))
     }
 }
 
@@ -396,7 +396,7 @@ private fun FeeField(fee: AmountInput, focused: Boolean, modifier: Modifier, onF
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(stringResource(R.string.add_fee), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
-        Text(fee.text.ifEmpty { "0" }, style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
+        Text(fee.text.ifEmpty { "0" }, style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text)
     }
 }
 
@@ -412,8 +412,8 @@ private fun NoteField(note: String, onNote: (String) -> Unit, modifier: Modifier
         singleLine = true,
         cursorBrush = SolidColor(Tz.yellow),
         decorationBox = { inner ->
-            Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
-                if (note.isEmpty()) Text(hint, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2, maxLines = 1)
+            Box(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 6.dp), contentAlignment = Alignment.CenterStart) {
+                if (note.isEmpty()) Text(hint, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
                 inner()
             }
         },
@@ -448,8 +448,8 @@ private fun ItemField(value: String, hint: String, keyboard: KeyboardType, onVal
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
         cursorBrush = SolidColor(Tz.yellow),
         decorationBox = { inner ->
-            Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
-                if (value.isEmpty()) Text(hint, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2, maxLines = 1)
+            Box(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 6.dp), contentAlignment = Alignment.CenterStart) {
+                if (value.isEmpty()) Text(hint, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
                 inner()
             }
         },
