@@ -3,6 +3,7 @@ package com.masroufi.app.feature.onboarding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.masroufi.app.core.Payday
 import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.ui.audit.assertNone
 import com.masroufi.app.ui.audit.audit
