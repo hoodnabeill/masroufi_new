@@ -41,6 +41,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import com.masroufi.app.ui.AndroidAppLocales
 import com.masroufi.app.ui.AppLocales
+import com.masroufi.app.widget.GlanceWidgetRefresher
+import com.masroufi.app.widget.WidgetRefresher
 import java.time.Clock
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -109,6 +111,8 @@ object AppModule {
     /** Phase 13 swaps the Google Play implementation in here; until then release has no products and no purchase. */
     @Provides @Singleton
     fun billing(clock: Clock): Billing = StubBilling(debug = BuildConfig.DEBUG, clock = clock)
+
+    @Provides @Singleton fun widgetRefresher(@ApplicationContext context: Context): WidgetRefresher = GlanceWidgetRefresher(context)
 
     @Provides @Singleton fun appLocales(): AppLocales = AndroidAppLocales()
 

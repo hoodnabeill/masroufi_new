@@ -11,6 +11,7 @@ import com.masroufi.app.data.repo.SeedData
 import com.masroufi.app.di.AppScope
 import com.masroufi.app.notify.NotificationPoster
 import com.masroufi.app.notify.NotificationSchedule
+import com.masroufi.app.widget.DaySummaryWriter
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +31,7 @@ class MasroufiApplication : Application(), Configuration.Provider {
     @Inject lateinit var clock: Clock
     @Inject @AppScope lateinit var appScope: CoroutineScope
     @Inject lateinit var poster: NotificationPoster
+    @Inject lateinit var daySummary: DaySummaryWriter
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
@@ -54,6 +56,10 @@ class MasroufiApplication : Application(), Configuration.Provider {
             } catch (e: Exception) {
                 Log.e("MasroufiApplication", "scheduling the background jobs failed", e)
             }
+        }
+        // The widgets read the stored day summary: written at start (a restore or a wipe changed the data under it) and when the lock settings change.
+        appScope.launch {
+            settings.settings.map { it.lockOn to it.hideAmounts }.distinctUntilChanged().collect { daySummary.refresh() }
         }
         // The notification jobs follow the reminder hour: queued at start, and moved when the hour changes (onboarding, Settings, a restore).
         appScope.launch {

@@ -35,6 +35,7 @@ import com.masroufi.app.domain.nextProverb
 import com.masroufi.app.domain.punches
 import com.masroufi.app.domain.raisedTo
 import com.masroufi.app.domain.streak
+import com.masroufi.app.widget.DaySummaryWriter
 import com.masroufi.app.domain.spentToday
 import java.time.Clock
 import java.time.Instant
@@ -103,6 +104,7 @@ class TicketRepository @Inject constructor(
     private val installments: Provider<InstallmentRepository>,
     private val freelance: Provider<FreelanceRepository>,
     private val story: StoryRepository,
+    private val summary: DaySummaryWriter,
 ) {
     /**
      * Today's ticket: printed once, after auto-closing every earlier open day. Days in a gap get no row (design
@@ -112,7 +114,7 @@ class TicketRepository @Inject constructor(
     suspend fun printToday(startAfterPayday: Boolean = false): DayTicketEntity {
         // A new pay cycle ends the mode before anything prints; the settings are read again after it.
         val s = eom.get().endIfCycleChanged(settings.current())
-        return db.withTransaction {
+        val printed = db.withTransaction {
             val today = LocalDate.now(clock)
             // Installments due today log themselves and the freelancer pays themselves before the ticket is cut from the
             // pockets (inside the transaction: no extra suspension points before it, which hung a main-thread Home test).
@@ -153,6 +155,8 @@ class TicketRepository @Inject constructor(
             }.copy(spent = spent, entryCount = entryCount)
             row.copy(id = ticketDao.insert(row))
         }
+        summary.refresh()
+        return printed
     }
 
     /**
@@ -205,6 +209,7 @@ class TicketRepository @Inject constructor(
             }
             ticketDao.update(updated.copy(updatedAt = clock.millis()))
         }
+        summary.refresh()
     }
 
     /** Payday is today or tomorrow (never for a not-fixed payday). */
@@ -259,8 +264,10 @@ class TicketRepository @Inject constructor(
         }
         // Outside the transaction: the settings are not part of it. A no-spend day in the mode can earn tight fist.
         if (closedNow && s.eomActiveOn(date) && eom.get().onClosedByHand(date)) {
+            summary.refresh()
             return result.copy(newStamps = result.newStamps + StampKind.TIGHT_FIST)
         }
+        if (closedNow) summary.refresh()
         return result
     }
 

@@ -10,6 +10,9 @@ import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.entitlements.DebugEntitlements
 import com.masroufi.app.entitlements.PlusRepository
 import com.masroufi.app.entitlements.StubBilling
+import com.masroufi.app.widget.DaySummaryStore
+import com.masroufi.app.widget.DaySummaryWriter
+import com.masroufi.app.widget.WidgetRefresher
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.time.Clock
@@ -22,6 +25,12 @@ class TestClock(var instant: Instant, private val zoneId: ZoneId = ZoneId.of("Af
     override fun getZone(): ZoneId = zoneId
     override fun withZone(zone: ZoneId): Clock = TestClock(instant, zone)
     override fun instant(): Instant = instant
+}
+
+/** Stands in for the widgets: counts how often they were told to redraw. */
+class CountingRefresher : WidgetRefresher {
+    var updates = 0
+    override suspend fun update() { updates++ }
 }
 
 /** The plain test cipher; [broken] makes every read fail like a lost Keystore key. */
@@ -41,16 +50,20 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     val story = StoryRepository(
         db.storyDao(), db.dayTicketDao(), db.entryDao(), db.categoryDao(), db.envelopeDao(), db.jarDao(), db.proverbDao(), clock,
     )
+    // Its own file, like the PIN's; the widgets are counted, not drawn.
+    val summaryStore = DaySummaryStore(PreferenceDataStoreFactory.create(scope = scope) { File(dir, "summary.preferences_pb") })
+    val widgets = CountingRefresher()
+    val daySummary = DaySummaryWriter(db.dayTicketDao(), db.entryDao(), db.categoryDao(), settings, summaryStore, plus, clock, widgets)
     val tickets: TicketRepository = TicketRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
-        db.stampDao(), settings, clock, stamps, Provider { eom }, Provider { installments }, Provider { freelance }, story,
+        db.stampDao(), settings, clock, stamps, Provider { eom }, Provider { installments }, Provider { freelance }, story, daySummary,
     )
     val eom = EndOfMonthRepository(
         settings, tickets, db.dayTicketDao(), db.entryDao(), db.categoryDao(), db.recurringDao(), db.pocketDao(), db.jarDao(),
         db.peopleDao(), stamps, clock,
     )
     val eomMode = EndOfMonthMode(settings, db.dayTicketDao(), clock)
-    val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), db.peopleDao(), db.clientJobDao(), tickets, settings, plus, clock)
+    val entries: EntryRepository = EntryRepository(db, db.entryDao(), db.pocketDao(), db.jarDao(), db.recurringDao(), db.peopleDao(), db.clientJobDao(), tickets, settings, plus, clock, daySummary)
     val home = HomeRepository(
         db.pocketDao(), db.entryDao(), db.categoryDao(), db.dayTicketDao(), db.jarDao(), db.proverbDao(), db.recurringDao(),
         settings, clock, plus,

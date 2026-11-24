@@ -13,6 +13,7 @@ import com.masroufi.app.data.db.RecurringDao
 import com.masroufi.app.data.prefs.Settings
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.domain.DayResult
+import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.domain.TomorrowBasis
 import com.masroufi.app.domain.punched
@@ -36,6 +37,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 data class RepeatChip(val categoryId: Long, val categoryName: String, val amount: Long, val pocketId: Long)
+
+/** What one tap on a repeat chip logs: Home and the wide widget both use this. */
+fun RepeatChip.toEntry(now: Long) = NewEntry(EntryKind.SPENT, amount, pocketId, categoryId = categoryId, happenedAt = now)
 
 data class HomeData(
     val today: DayTicketEntity?,

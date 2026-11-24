@@ -8,15 +8,14 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.masroufi.app.MainActivity
 import com.masroufi.app.R
+import com.masroufi.app.core.inAppLanguage
 import com.masroufi.app.domain.NotifKind
 import dagger.Binds
 import dagger.Module
@@ -67,11 +66,7 @@ fun channelId(kind: NotifKind) = "notif_${kind.name.lowercase()}"
 @Singleton
 class NotificationPoster @Inject constructor(@ApplicationContext private val app: Context) : NoticeSink {
     /** The app's language even before Android 13 hands it to the application context. */
-    private fun localized(): Context {
-        val chosen = AppCompatDelegate.getApplicationLocales()
-        if (chosen.isEmpty) return app
-        return app.createConfigurationContext(Configuration(app.resources.configuration).apply { setLocale(chosen[0]) })
-    }
+    private fun localized(): Context = app.inAppLanguage()
 
     /** Creates (or renames, after a language switch) the channels; safe to call on every start. */
     fun ensureChannels() {

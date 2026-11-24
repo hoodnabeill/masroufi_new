@@ -21,6 +21,7 @@ import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.roundUp
 import com.masroufi.app.domain.sharedGroupName
 import com.masroufi.app.entitlements.Entitlements
+import com.masroufi.app.widget.DaySummaryWriter
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
@@ -73,11 +74,12 @@ class EntryRepository @Inject constructor(
     private val settings: SettingsStore,
     private val entitlements: Entitlements,
     private val clock: Clock,
+    private val summary: DaySummaryWriter,
 ) {
     suspend fun log(entry: NewEntry): Long {
         requireNotFuture(entry)
         val step = activeStep()
-        return db.withTransaction {
+        val id = db.withTransaction {
             checkInputs(entry)
             val now = clock.millis()
             val rounded = if (step != null && qualifies(entry)) roundUp(entry.amount, step) else 0L
@@ -91,6 +93,8 @@ class EntryRepository @Inject constructor(
             tickets.recalcDay(clock.dayOf(entry.happenedAt))
             id
         }
+        summary.refresh()
+        return id
     }
 
     suspend fun edit(id: Long, entry: NewEntry) {
@@ -122,6 +126,7 @@ class EntryRepository @Inject constructor(
             tickets.recalcDay(newDay)
             if (oldDay != newDay) tickets.recalcDay(oldDay)
         }
+        summary.refresh()
     }
 
     suspend fun delete(id: Long) {
@@ -134,6 +139,7 @@ class EntryRepository @Inject constructor(
             clientJobDao.unpay(id) // a client job this entry paid is unpaid again
             tickets.recalcDay(clock.dayOf(old.happenedAt))
         }
+        summary.refresh()
     }
 
     /** Caller holds the transaction. */

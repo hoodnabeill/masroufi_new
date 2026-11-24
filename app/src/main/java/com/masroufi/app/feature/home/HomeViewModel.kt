@@ -23,6 +23,7 @@ import com.masroufi.app.data.repo.NOTE_MAX_CHARS
 import com.masroufi.app.data.repo.NewEntry
 import com.masroufi.app.data.repo.OnboardingRepository
 import com.masroufi.app.data.repo.RepeatChip
+import com.masroufi.app.data.repo.toEntry
 import com.masroufi.app.data.repo.StoryRepository
 import com.masroufi.app.data.repo.TicketRepository
 import com.masroufi.app.data.repo.WishRepository
@@ -437,7 +438,7 @@ class HomeViewModel @Inject constructor(
     fun punchRepeat(chip: RepeatChip) {
         if (doubleTap("chip:${chip.categoryId}:${chip.amount}:${chip.pocketId}")) return
         viewModelScope.launch {
-            punch(NewEntry(EntryKind.SPENT, chip.amount, chip.pocketId, categoryId = chip.categoryId, happenedAt = clock.millis()))
+            punch(chip.toEntry(clock.millis()))
         }
     }
 

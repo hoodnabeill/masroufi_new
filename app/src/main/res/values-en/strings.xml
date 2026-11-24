@@ -1668,4 +1668,17 @@
     <string name="notif_trial_plus">Your Plus trial ends tomorrow. Everything you entered stays as it is.</string>
     <string name="notif_trial_sub">The %1$s trial ends tomorrow. Your call whether to keep it.</string>
     <string name="notif_low">%1$s has %2$s left.</string>
+
+    <!-- Widgets (Task 58) -->
+    <string name="widget_closed">Closed today</string>
+    <string name="widget_over">Over the ticket</string>
+    <string name="widget_pound">EGP</string>
+    <string name="widget_of_holes">of %1$s · %2$s holes</string>
+    <string name="widget_locked">The lock is on: amounts are hidden outside the app</string>
+    <string name="widget_ticket_name">Ticket</string>
+    <string name="widget_ticket_desc">What you have today and how many holes are in the ticket.</string>
+    <string name="widget_match_name">Weekly match</string>
+    <string name="widget_match_desc">This week\'s score against last week\'s.</string>
+    <string name="widget_wide_name">Ticket and one-tap logging</string>
+    <string name="widget_wide_desc">The ticket and three buttons that log what you repeat in one tap.</string>
 </resources>

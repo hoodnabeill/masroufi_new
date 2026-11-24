@@ -245,7 +245,7 @@ fun AppRoot(entitlements: Entitlements, sampleData: DebugSampleData? = null, bil
 }
 
 /** The screen a tapped notification opens; null = just Home. */
-private fun notificationRoute(t: NotifTarget): Any? = when (t.kind) {
+private fun notificationRoute(t: NotifTarget): Any? = if (t.match) Match else when (t.kind) {
     NotifKind.EVENING, NotifKind.STREAK -> t.arg?.let { CloseDay(it) }
     NotifKind.MORNING -> null
     NotifKind.BILL -> FixedCosts

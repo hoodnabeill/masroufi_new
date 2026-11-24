@@ -1735,4 +1735,17 @@
     <string name="notif_trial_plus">تجربة بلس بتخلص بكره. اللي كتبته كله هيفضل زي ما هو.</string>
     <string name="notif_trial_sub">تجربة %1$s بتخلص بكره. إنت اللي تقرر تكمّل ولا لأ.</string>
     <string name="notif_low">%1$s فاضل فيه %2$s.</string>
+
+    <!-- Widgets (Task 58) -->
+    <string name="widget_closed">قفلت النهارده</string>
+    <string name="widget_over">عدّيت التذكرة</string>
+    <string name="widget_pound">ج</string>
+    <string name="widget_of_holes">من %1$s · %2$s خروم</string>
+    <string name="widget_locked">القفل شغّال: الأرقام مستخبية برّه التطبيق</string>
+    <string name="widget_ticket_name">التذكرة</string>
+    <string name="widget_ticket_desc">معاك كام النهارده وكام خرم في التذكرة.</string>
+    <string name="widget_match_name">ماتش الأسبوع</string>
+    <string name="widget_match_desc">نتيجتك الأسبوع ده قدّام الأسبوع اللي فات.</string>
+    <string name="widget_wide_name">التذكرة وتسجيل بدوسة</string>
+    <string name="widget_wide_desc">التذكرة وتلات أزرار بتسجّل اللي بيتكرر معاك بدوسة واحدة.</string>
 </resources>
