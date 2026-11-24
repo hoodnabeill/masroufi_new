@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.ui.Alignment
@@ -93,9 +95,10 @@ class AuditHarnessTest {
         }.assertNone()
     }
 
+    // The test screen is 470 dp tall: the cards sit in a scrolling column so they get the height they would on a real screen.
     @Test fun thePlusCardPasses() {
         rule.audit {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 PlusLocked(R.string.env_plus_line, PlusFeature.ENVELOPES) { Text("محتوى") }
                 PlusSheetContent(R.string.env_plus_line, PlusFeature.ENVELOPES) {}
             }

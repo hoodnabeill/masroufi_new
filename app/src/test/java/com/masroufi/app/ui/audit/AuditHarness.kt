@@ -132,7 +132,8 @@ private fun overflowFindings(root: SemanticsNode, config: AuditConfig): List<Aud
         node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
         val r = layouts.firstOrNull() ?: return@walk
         if (config.allowOverflow.any { text(node).contains(it) }) return@walk
-        val widest = (0 until r.lineCount).maxOfOrNull { r.getLineRight(it) } ?: 0f
+        // A line's own width: right-to-left lines sit at the right edge of the paragraph, so the right edge alone says nothing.
+        val widest = (0 until r.lineCount).maxOfOrNull { r.getLineRight(it) - r.getLineLeft(it) } ?: 0f
         val why = when {
             r.multiParagraph.didExceedMaxLines -> "more lines than the ${r.layoutInput.maxLines} allowed"
             (0 until r.lineCount).any { r.isLineEllipsized(it) } -> "a line is cut with an ellipsis"
