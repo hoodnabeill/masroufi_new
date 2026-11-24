@@ -84,7 +84,7 @@ private fun style(color: Color, size: Int, bold: Boolean = false, center: Boolea
     textAlign = if (center) TextAlign.Center else null,
 )
 
-private fun Context.home() = actionStartActivity<MainActivity>()
+private fun Context.home() = actionStartActivity(Intent(this, MainActivity::class.java))
 
 private fun Context.match() = actionStartActivity(
     Intent(this, MainActivity::class.java)
