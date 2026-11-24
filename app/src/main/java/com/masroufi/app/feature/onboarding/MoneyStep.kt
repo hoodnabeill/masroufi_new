@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.onboarding
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -69,14 +70,14 @@ fun MoneyStep(state: OnboardingUi, actions: OnboardingActions) {
                 val source = remember { MutableInteractionSource() }
                 val shape = RoundedCornerShape(22.dp)
                 Box(
-                    Modifier.weight(1f).pressScale(source, PressScale.Chip, release = TzSpring.Snappy).height(44.dp).clip(shape)
+                    Modifier.weight(1f).pressScale(source, PressScale.Chip, release = TzSpring.Snappy).heightIn(min = 48.dp).clip(shape)
                         .background(Tz.surface).border(1.dp, Tz.line, shape)
                         .clickable(interactionSource = source, indication = null, role = Role.Button) {
                             haptics.perform(HapticLevel.Tick)
                             actions.addMoney(amount)
                         },
                     contentAlignment = Alignment.Center,
-                ) { Text("+" + formatPounds(amount), style = TzType.button.copy(fontSize = 16.sp, color = Tz.turquoise)) }
+                ) { Text("+" + formatPounds(amount), style = TzType.button.copy(fontSize = 16.sp, color = Tz.turquoise, textAlign = androidx.compose.ui.text.style.TextAlign.Center)) }
             }
         }
         Keypad(actions::digit, actions::point, actions::backspace)

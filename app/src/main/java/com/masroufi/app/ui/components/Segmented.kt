@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
@@ -58,7 +60,8 @@ fun Segmented(
     Box(
         modifier
             .fillMaxWidth()
-            .height(if (compact) 44.dp else 48.dp)
+            .heightIn(min = 48.dp)
+            .height(IntrinsicSize.Min)
             .clip(track)
             .background(if (compact) Tz.night else Tz.surface)
             .then(if (compact) Modifier else Modifier.border(1.dp, Tz.line, track))
@@ -93,7 +96,7 @@ fun Segmented(
                 ) {
                     Text(
                         label,
-                        Modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy),
+                        Modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).padding(vertical = 12.dp),
                         style = TzType.button.copy(fontSize = if (compact) 16.sp else 17.sp, color = color),
                     )
                 }

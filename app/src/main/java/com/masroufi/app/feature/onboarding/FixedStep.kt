@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.onboarding
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -114,7 +115,7 @@ private fun FixedChipView(label: String, amount: Long?, open: Boolean, dashed: B
         else -> Modifier.background(Tz.surface).border(1.dp, Tz.line, shape)
     }
     Row(
-        Modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).height(56.dp).clip(shape).then(look)
+        Modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).heightIn(min = 56.dp).clip(shape).then(look)
             .semantics { selected = filled }
             .clickable(interactionSource = source, indication = null, role = Role.Button) {
                 haptics.perform(HapticLevel.Tick)

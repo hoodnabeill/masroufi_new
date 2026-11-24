@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.onboarding
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -147,7 +148,7 @@ private fun PaydayTile(selected: Boolean, onClick: () -> Unit, modifier: Modifie
     val haptics = LocalHaptics.current
     val source = remember { MutableInteractionSource() }
     Box(
-        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).height(64.dp).clip(Tile)
+        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).heightIn(min = 64.dp).clip(Tile)
             .background(if (selected) Tz.yellow else Tz.surface)
             .then(if (selected) Modifier else Modifier.border(1.dp, Tz.line, Tile))
             .selectable(selected, interactionSource = source, indication = null, role = Role.RadioButton) {
@@ -156,7 +157,7 @@ private fun PaydayTile(selected: Boolean, onClick: () -> Unit, modifier: Modifie
             },
         contentAlignment = Alignment.Center,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) { content() }
+        Column(Modifier.padding(horizontal = 4.dp), horizontalAlignment = Alignment.CenterHorizontally) { content() }
     }
 }
 
@@ -165,7 +166,7 @@ private fun NotFixedRow(selected: Boolean, onClick: () -> Unit) {
     val haptics = LocalHaptics.current
     val source = remember { MutableInteractionSource() }
     Row(
-        Modifier.fillMaxWidth().pressScale(source, PressScale.Chip, release = TzSpring.Snappy).height(64.dp).clip(Tile)
+        Modifier.fillMaxWidth().pressScale(source, PressScale.Chip, release = TzSpring.Snappy).heightIn(min = 64.dp).clip(Tile)
             .then(if (selected) Modifier.border(1.5.dp, Tz.yellow, Tile) else Modifier.dashedBorder(Tz.dashed, 20.dp))
             .selectable(selected, interactionSource = source, indication = null, role = Role.RadioButton) {
                 if (!selected) haptics.perform(HapticLevel.Tick)
@@ -175,7 +176,7 @@ private fun NotFixedRow(selected: Boolean, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.ob_payday_notfixed), style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Tz.text))
             Text(stringResource(R.string.ob_payday_notfixed_sub), style = TzType.caption.copy(color = Tz.text2))
         }

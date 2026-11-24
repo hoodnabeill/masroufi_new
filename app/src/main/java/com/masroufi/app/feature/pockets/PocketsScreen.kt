@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.pockets
 
+import androidx.compose.foundation.layout.heightIn
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.foundation.background
@@ -71,6 +72,39 @@ fun PocketsScreen(
     val s by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val haptics = LocalHaptics.current
+    PocketsContent(
+        s, onBack, onOpenPocket, onNewPocket,
+        onTransfer = { onOpenAddSheet(viewModel.transferPrefill()) },
+        onAtm = { onOpenAddSheet(viewModel.atmPrefill()) },
+        onTopUp = { onOpenAddSheet(viewModel.topUpPrefill()) },
+        onStep = viewModel::step,
+        onChange = viewModel::setChange,
+        onReconcile = { haptics.perform(HapticLevel.Confirm); viewModel.reconcile() },
+        onPaste = { haptics.perform(HapticLevel.Tap); viewModel.pasteSms(readClipboard(context)) },
+        onLogSms = {
+            haptics.perform(HapticLevel.Confirm)
+            viewModel.smsPrefill()?.let { onOpenAddSheet(it) }
+            viewModel.clearSms()
+        },
+    )
+}
+
+/** Stateless pockets list: skeleton rows (after 150 ms) while the first load runs. */
+@Composable
+fun PocketsContent(
+    s: PocketsUi,
+    onBack: () -> Unit,
+    onOpenPocket: (Long) -> Unit,
+    onNewPocket: () -> Unit,
+    onTransfer: () -> Unit,
+    onAtm: () -> Unit,
+    onTopUp: () -> Unit,
+    onStep: (Int, Int) -> Unit,
+    onChange: (String) -> Unit,
+    onReconcile: () -> Unit,
+    onPaste: () -> Unit,
+    onLogSms: () -> Unit,
+) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -79,15 +113,13 @@ fun PocketsScreen(
         PushedHeader(stringResource(R.string.pockets_title), onBack) {
             CircleButton(TzIcons.add, stringResource(R.string.pockets_new_cd), onNewPocket)
         }
-        if (s.loading) return@Column
+        if (s.loading) {
+            LoadingRows()
+            return@Column
+        }
         Total(s)
         s.cash?.let { cash ->
-            CashCard(
-                cash, s,
-                onStep = viewModel::step,
-                onChange = viewModel::setChange,
-                onReconcile = { haptics.perform(HapticLevel.Confirm); viewModel.reconcile() },
-            )
+            CashCard(cash, s, onStep = onStep, onChange = onChange, onReconcile = onReconcile)
         }
         if (s.others.isNotEmpty()) {
             TzCard(padding = 0.dp) {
@@ -98,19 +130,11 @@ fun PocketsScreen(
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            QuickAction(TzIcons.swap, Tz.sky, R.string.pockets_quick_transfer, Modifier.weight(1f)) { onOpenAddSheet(viewModel.transferPrefill()) }
-            QuickAction(TzIcons.withdraw, Tz.turquoise, R.string.pockets_quick_atm, Modifier.weight(1f)) { onOpenAddSheet(viewModel.atmPrefill()) }
-            QuickAction(TzIcons.list, Tz.yellow, R.string.pockets_quick_topup, Modifier.weight(1f)) { onOpenAddSheet(viewModel.topUpPrefill()) }
+            QuickAction(TzIcons.swap, Tz.sky, R.string.pockets_quick_transfer, Modifier.weight(1f), onTransfer)
+            QuickAction(TzIcons.withdraw, Tz.turquoise, R.string.pockets_quick_atm, Modifier.weight(1f), onAtm)
+            QuickAction(TzIcons.list, Tz.yellow, R.string.pockets_quick_topup, Modifier.weight(1f), onTopUp)
         }
-        SmsCard(
-            s.sms,
-            onPaste = { haptics.perform(HapticLevel.Tap); viewModel.pasteSms(readClipboard(context)) },
-            onLog = {
-                haptics.perform(HapticLevel.Confirm)
-                viewModel.smsPrefill()?.let { onOpenAddSheet(it) }
-                viewModel.clearSms()
-            },
-        )
+        SmsCard(s.sms, onPaste = onPaste, onLog = onLogSms)
         DashedRow(stringResource(R.string.pockets_new_row), onNewPocket)
     }
 }
@@ -159,7 +183,7 @@ private fun CashCard(cash: PocketRowUi, s: PocketsUi, onStep: (Int, Int) -> Unit
         }
         NoteCounter(s.counter, onStep, onChange)
         Box(
-            Modifier.fillMaxWidth().defaultMinSize(minHeight = 44.dp).clip(pill).border(2.dp, Tz.night, pill)
+            Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).clip(pill).border(2.dp, Tz.night, pill)
                 .clickable(role = Role.Button, onClick = onReconcile).padding(horizontal = 16.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -196,7 +220,7 @@ private fun QuickAction(icon: TzIconDef, tint: androidx.compose.ui.graphics.Colo
     val haptics = LocalHaptics.current
     val shape = RoundedCornerShape(20.dp)
     Column(
-        modifier.height(84.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
+        modifier.heightIn(min = 84.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
             .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }.padding(horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),

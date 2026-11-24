@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.pockets
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -44,8 +45,27 @@ import com.masroufi.app.ui.theme.TzType
 @Composable
 fun NewPocketScreen(viewModel: NewPocketViewModel, onBack: () -> Unit) {
     val f by viewModel.form.collectAsStateWithLifecycle()
-    val haptics = LocalHaptics.current
     LaunchedEffect(f.saved) { if (f.saved) onBack() }
+    NewPocketContent(
+        f, onBack, viewModel::setName, viewModel::setKind, viewModel::digit, viewModel::point, viewModel::backspace,
+        viewModel::setCountsInTicket, viewModel::save,
+    )
+}
+
+/** Stateless new-pocket form. */
+@Composable
+fun NewPocketContent(
+    f: NewPocketForm,
+    onBack: () -> Unit,
+    onName: (String) -> Unit,
+    onKind: (PocketKind) -> Unit,
+    onDigit: (Int) -> Unit,
+    onPoint: () -> Unit,
+    onBackspace: () -> Unit,
+    onCounts: (Boolean) -> Unit,
+    onSave: () -> Unit,
+) {
+    val haptics = LocalHaptics.current
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().imePadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -57,11 +77,11 @@ fun NewPocketScreen(viewModel: NewPocketViewModel, onBack: () -> Unit) {
             val shape = RoundedCornerShape(16.dp)
             BasicTextField(
                 value = f.name,
-                onValueChange = viewModel::setName,
+                onValueChange = onName,
                 singleLine = true,
                 textStyle = TzType.body.copy(fontSize = 17.sp, color = Tz.text),
                 cursorBrush = SolidColor(Tz.yellow),
-                modifier = Modifier.fillMaxWidth().background(Tz.night, shape).border(1.dp, Tz.line, shape).padding(horizontal = 14.dp, vertical = 14.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).background(Tz.night, shape).border(1.dp, Tz.line, shape).padding(horizontal = 14.dp, vertical = 14.dp),
                 decorationBox = { inner ->
                     if (f.name.isEmpty()) Text(stringResource(R.string.new_pocket_name_hint), style = TzType.body.copy(fontSize = 17.sp), color = Tz.text3)
                     inner()
@@ -73,7 +93,7 @@ fun NewPocketScreen(viewModel: NewPocketViewModel, onBack: () -> Unit) {
             NEW_POCKET_KINDS.chunked(2).forEach { pair ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     pair.forEach { kind ->
-                        TzChip(stringResource(kind.label()), f.kind == kind, { viewModel.setKind(kind) }, style = ChipStyle.Choice)
+                        TzChip(stringResource(kind.label()), f.kind == kind, { onKind(kind) }, style = ChipStyle.Choice)
                     }
                 }
             }
@@ -84,7 +104,7 @@ fun NewPocketScreen(viewModel: NewPocketViewModel, onBack: () -> Unit) {
                 Text(f.opening.text.ifEmpty { "0" }, style = TzType.hero, color = Tz.text)
                 Text(stringResource(R.string.paper_currency), style = TzType.titlePushed, color = Tz.text2, modifier = Modifier.padding(bottom = 8.dp))
             }
-            Keypad(viewModel::digit, viewModel::point, viewModel::backspace)
+            Keypad(onDigit, onPoint, onBackspace)
         }
 
         TzCard {
@@ -93,14 +113,14 @@ fun NewPocketScreen(viewModel: NewPocketViewModel, onBack: () -> Unit) {
                     Text(stringResource(R.string.pocket_counts_title), style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
                     Text(stringResource(R.string.pocket_counts_caption), style = TzType.caption, color = Tz.text2)
                 }
-                TzToggle(f.countsInTicket, viewModel::setCountsInTicket, stringResource(R.string.pocket_counts_title))
+                TzToggle(f.countsInTicket, onCounts, stringResource(R.string.pocket_counts_title))
             }
         }
 
         if (f.failed) Text(stringResource(R.string.new_pocket_failed), style = TzType.label, color = Tz.carnelianText)
         PrimaryButton(
             stringResource(R.string.new_pocket_save),
-            { haptics.perform(HapticLevel.Confirm); viewModel.save() },
+            { haptics.perform(HapticLevel.Confirm); onSave() },
             Modifier.fillMaxWidth(),
             enabled = f.canSave,
         )

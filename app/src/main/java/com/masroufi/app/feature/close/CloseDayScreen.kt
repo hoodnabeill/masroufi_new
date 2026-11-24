@@ -1,5 +1,7 @@
 package com.masroufi.app.feature.close
 
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
@@ -363,14 +365,16 @@ private fun Header(date: LocalDate, locale: Locale, onBack: () -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         val source = remember { MutableInteractionSource() }
         Box(
-            Modifier.pressScale(source, PressScale.Chip).size(44.dp).clip(CircleShape).background(Tz.surface).border(1.dp, Tz.line, CircleShape)
+            Modifier.pressScale(source, PressScale.Chip).minimumInteractiveComponentSize()
                 .clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onBack),
             contentAlignment = Alignment.Center,
         ) {
-            TzIcon(TzIcons.back, 20.dp, stringResource(R.string.close_back), tint = Tz.text)
+            Box(Modifier.size(44.dp).clip(CircleShape).background(Tz.surface).border(1.dp, Tz.line, CircleShape), contentAlignment = Alignment.Center) {
+                TzIcon(TzIcons.back, 20.dp, stringResource(R.string.close_back), tint = Tz.text)
+            }
         }
         Text(formatDayDate(date, locale), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
-        Spacer(Modifier.width(44.dp))
+        Spacer(Modifier.width(48.dp))
     }
 }
 
@@ -445,7 +449,7 @@ private fun Stub(
     onLabel: (Offset, IntSize) -> Unit,
 ) {
     Row(
-        modifier.width(250.dp).clip(StubShape).background(Tz.yellow)
+        modifier.widthIn(min = 250.dp).clip(StubShape).background(Tz.yellow)
             .drawWithContent {
                 drawContent()
                 val y = 1.dp.toPx()

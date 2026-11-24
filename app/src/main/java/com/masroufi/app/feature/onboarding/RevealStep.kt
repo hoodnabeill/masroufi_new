@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.onboarding
 
+import androidx.compose.foundation.layout.heightIn
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -147,7 +148,7 @@ private fun ReminderChip(label: String, selected: Boolean, none: Boolean, modifi
     val shape = RoundedCornerShape(24.dp)
     val style = if (none) TzType.caption else TzType.button.copy(fontSize = 17.sp)
     Box(
-        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).height(48.dp).clip(shape)
+        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).heightIn(min = 48.dp).clip(shape)
             .then(if (selected) Modifier.background(Tz.turquoise) else Modifier.background(Tz.night).border(1.dp, Tz.line, shape))
             .selectable(selected, interactionSource = source, indication = null, role = Role.RadioButton) {
                 if (!selected) haptics.perform(HapticLevel.Tick)
@@ -155,7 +156,7 @@ private fun ReminderChip(label: String, selected: Boolean, none: Boolean, modifi
             },
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, style = style.copy(color = if (selected) Tz.turquoiseInk else if (none) Tz.text2 else Tz.text))
+        Text(label, Modifier.padding(horizontal = 4.dp), style = style.copy(color = if (selected) Tz.turquoiseInk else if (none) Tz.text2 else Tz.text, textAlign = androidx.compose.ui.text.style.TextAlign.Center))
     }
 }
 

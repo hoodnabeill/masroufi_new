@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.onboarding
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -78,7 +79,7 @@ fun WelcomeStep(actions: OnboardingActions) {
             Row {
                 val pill = RoundedCornerShape(22.dp)
                 Box(
-                    Modifier.height(44.dp).clip(pill).border(BorderStroke(2.dp, Tz.night), pill)
+                    Modifier.heightIn(min = 48.dp).clip(pill).border(BorderStroke(2.dp, Tz.night), pill)
                         .clickable(role = Role.Button) {
                             // The activity recreates in the other language; the step is persisted, so it stays.
                             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(if (arabic) "en" else "ar"))
@@ -114,7 +115,7 @@ fun WelcomeStep(actions: OnboardingActions) {
                 )
                 val source = remember { MutableInteractionSource() }
                 Box(
-                    Modifier.fillMaxWidth().pressScale(source, PressScale.Primary).height(60.dp).clip(RoundedCornerShape(30.dp)).background(Tz.night)
+                    Modifier.fillMaxWidth().pressScale(source, PressScale.Primary).heightIn(min = 60.dp).clip(RoundedCornerShape(30.dp)).background(Tz.night)
                         .clickable(interactionSource = source, indication = null, role = Role.Button) {
                             haptics.perform(HapticLevel.Tap)
                             actions.next()

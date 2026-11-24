@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.kids
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -113,7 +114,7 @@ internal fun KidsTicket(
                     }
                     Text(
                         stringResource(R.string.kids_name_age, name, ageText(t.view.age)),
-                        style = TzType.card.copy(fontSize = 24.sp, lineHeight = 28.sp), color = c.ink, maxLines = 1,
+                        style = TzType.card.copy(fontSize = 24.sp, lineHeight = 28.sp), color = c.ink, maxLines = 2,
                     )
                 }
                 Text(
@@ -202,7 +203,7 @@ internal fun TicketPill(text: String, c: TicketColors, filled: Boolean, modifier
     val source = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(percent = 50)
     Box(
-        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).height(44.dp).clip(shape)
+        modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy).heightIn(min = 48.dp).clip(shape)
             .then(if (filled) Modifier.background(c.ink) else Modifier.border(2.dp, c.ink, shape))
             .clickable(interactionSource = source, indication = null, role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }
             .padding(horizontal = 12.dp),

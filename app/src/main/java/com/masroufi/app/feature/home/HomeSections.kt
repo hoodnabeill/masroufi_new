@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
@@ -28,6 +29,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +44,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -123,9 +127,10 @@ internal fun HomeHeader(today: LocalDate, greeting: Greeting, streak: Int, onOpe
             val cd = stringResource(R.string.home_streak_cd, streak.toString())
             val shape = RoundedCornerShape(22.dp)
             val haptics = LocalHaptics.current
+            val source = remember { MutableInteractionSource() }
             Row(
-                Modifier.height(44.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
-                    .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpenAlbum() }
+                Modifier.pressScale(source, PressScale.Chip).heightIn(min = 48.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
+                    .clickable(interactionSource = source, indication = null, role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpenAlbum() }
                     .clearAndSetSemantics { contentDescription = cd }
                     .padding(horizontal = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -158,7 +163,7 @@ internal fun TicketStub(onCloseDay: () -> Unit) {
         }
         val source = remember { MutableInteractionSource() }
         Box(
-            Modifier.pressScale(source, PressScale.Primary).height(48.dp).clip(CircleShape).background(Tz.night)
+            Modifier.pressScale(source, PressScale.Primary).heightIn(min = 48.dp).clip(CircleShape).background(Tz.night)
                 .clickable(interactionSource = source, indication = null, role = Role.Button) {
                     haptics.perform(HapticLevel.Tap)
                     onCloseDay()
@@ -209,7 +214,7 @@ internal fun QuickLogField(text: String, onText: (String) -> Unit, onSubmit: () 
     val label = stringResource(R.string.home_quick_label)
     val micLabel = stringResource(R.string.home_mic)
     Row(
-        Modifier.fillMaxWidth().height(56.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
+        Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
             .padding(start = 18.dp, end = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -293,7 +298,7 @@ internal fun RepeatChips(repeats: List<RepeatChip>, onChip: (RepeatChip) -> Unit
                 val source = remember { MutableInteractionSource() }
                 val shape = RoundedCornerShape(TzRadius.chip)
                 Column(
-                    Modifier.weight(1f).pressScale(source, PressScale.Chip).height(60.dp).clip(shape).background(Tz.surface)
+                    Modifier.weight(1f).pressScale(source, PressScale.Chip).heightIn(min = 60.dp).clip(shape).background(Tz.surface)
                         .border(1.dp, Tz.line, shape)
                         .clickable(interactionSource = source, indication = null, role = Role.Button) {
                             haptics.perform(HapticLevel.Confirm)
@@ -303,7 +308,7 @@ internal fun RepeatChips(repeats: List<RepeatChip>, onChip: (RepeatChip) -> Unit
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
                 ) {
-                    Text(chip.categoryName, style = TzType.label, color = Tz.text, maxLines = 1)
+                    Text(chip.categoryName, style = TzType.label.copy(textAlign = TextAlign.Center), color = Tz.text)
                     Text(poundsText(chip.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.yellow)
                 }
             }
@@ -328,17 +333,26 @@ internal fun WeekCard(week: List<WeekStub>, closedUnder: Int, onClick: (() -> Un
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             week.forEachIndexed { i, stub ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                  CappedFont {
                     Text(
                         days[i],
                         style = TzType.caption.copy(fontSize = 11.sp, fontWeight = if (stub.isToday) FontWeight.Bold else FontWeight.Normal),
                         color = if (stub.isToday) Tz.yellow else Tz.text2,
                     )
                     WeekStubBox(stub)
+                  }
                 }
             }
         }
         Spacer(Modifier.height(2.dp))
     }
+}
+
+/** shortcut: the seven-day strip caps text at 130% (a day is about 40 dp wide), the card's own heading and count still grow; revisit with a two-row week. */
+@Composable
+private fun CappedFont(content: @Composable () -> Unit) {
+    val d = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(d.density, minOf(d.fontScale, 1.3f))) { content() }
 }
 
 @Composable

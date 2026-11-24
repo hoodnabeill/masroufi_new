@@ -47,6 +47,27 @@ fun ChildScreen(viewModel: ChildScreenViewModel) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val haptics = LocalHaptics.current
     LaunchedEffect(viewModel) { viewModel.haptics.collect { haptics.perform(it) } }
+    ChildContent(
+        ui,
+        onExit = viewModel::openUnlock,
+        onSheet = viewModel::openSheet,
+        onSubmit = viewModel::submit,
+        onDismissSheet = viewModel::dismissSheet,
+        unlockSheet = { UnlockSheet(it, viewModel) },
+    )
+}
+
+/** Stateless child screen. */
+@Composable
+fun ChildContent(
+    ui: ChildUi,
+    onExit: () -> Unit,
+    onSheet: (ChildSheet) -> Unit,
+    onSubmit: (Long) -> Unit,
+    onDismissSheet: () -> Unit,
+    unlockSheet: @Composable (UnlockUi) -> Unit = {},
+) {
+    val haptics = LocalHaptics.current
     val child = ui.child
     Column(
         Modifier.fillMaxSize().background(Tz.night).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
@@ -55,7 +76,7 @@ fun ChildScreen(viewModel: ChildScreenViewModel) {
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.kids_child_title), style = TzType.titlePushed, color = Tz.text)
-            TextLink(stringResource(R.string.kids_child_exit), { haptics.perform(HapticLevel.Tap); viewModel.openUnlock() })
+            TextLink(stringResource(R.string.kids_child_exit), { haptics.perform(HapticLevel.Tap); onExit() })
         }
         if (child != null) {
             val t = ChildTicketUi(child, ui.finishedOn, ui.slots)
@@ -74,20 +95,20 @@ fun ChildScreen(viewModel: ChildScreenViewModel) {
                 },
             )
             ui.notice?.let { Text(noticeText(it), style = TzType.label.copy(fontSize = 14.sp), color = Tz.text) }
-            PrimaryButton(stringResource(R.string.kids_child_spent), { haptics.perform(HapticLevel.Tap); viewModel.openSheet(ChildSheet.SPEND) }, Modifier.fillMaxWidth(), height = 60.dp, textStyle = TzType.button.copy(fontSize = 22.sp))
+            PrimaryButton(stringResource(R.string.kids_child_spent), { haptics.perform(HapticLevel.Tap); onSheet(ChildSheet.SPEND) }, Modifier.fillMaxWidth(), height = 60.dp, textStyle = TzType.button.copy(fontSize = 22.sp))
             if (jar != null) {
-                SecondaryButton(stringResource(R.string.kids_child_save), { haptics.perform(HapticLevel.Tap); viewModel.openSheet(ChildSheet.SAVE) }, Modifier.fillMaxWidth())
+                SecondaryButton(stringResource(R.string.kids_child_save), { haptics.perform(HapticLevel.Tap); onSheet(ChildSheet.SAVE) }, Modifier.fillMaxWidth())
             }
-            SecondaryButton(stringResource(R.string.kids_child_advance), { haptics.perform(HapticLevel.Tap); viewModel.openSheet(ChildSheet.ADVANCE) }, Modifier.fillMaxWidth())
+            SecondaryButton(stringResource(R.string.kids_child_advance), { haptics.perform(HapticLevel.Tap); onSheet(ChildSheet.ADVANCE) }, Modifier.fillMaxWidth())
         }
     }
     when (ui.sheet) {
-        ChildSheet.SPEND -> AmountSheet(stringResource(R.string.kids_child_spent_q), null, stringResource(R.string.kids_child_ok), viewModel::submit, viewModel::dismissSheet)
-        ChildSheet.SAVE -> AmountSheet(stringResource(R.string.kids_child_save_q), null, stringResource(R.string.kids_child_ok), viewModel::submit, viewModel::dismissSheet)
-        ChildSheet.ADVANCE -> AmountSheet(stringResource(R.string.kids_child_advance_q), null, stringResource(R.string.kids_child_ok), viewModel::submit, viewModel::dismissSheet)
+        ChildSheet.SPEND -> AmountSheet(stringResource(R.string.kids_child_spent_q), null, stringResource(R.string.kids_child_ok), onSubmit, onDismissSheet)
+        ChildSheet.SAVE -> AmountSheet(stringResource(R.string.kids_child_save_q), null, stringResource(R.string.kids_child_ok), onSubmit, onDismissSheet)
+        ChildSheet.ADVANCE -> AmountSheet(stringResource(R.string.kids_child_advance_q), null, stringResource(R.string.kids_child_ok), onSubmit, onDismissSheet)
         null -> Unit
     }
-    ui.unlock?.let { UnlockSheet(it, viewModel) }
+    ui.unlock?.let { unlockSheet(it) }
 }
 
 @Composable

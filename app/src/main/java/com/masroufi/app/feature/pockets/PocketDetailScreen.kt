@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.pockets
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -73,21 +74,60 @@ fun PocketDetailScreen(
     onOpenAddSheet: (AddPrefill?) -> Unit,
 ) {
     val s by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(s.missing) { if (s.missing) onBack() }
+    PocketDetailContent(
+        s, onBack, onOpenRoll,
+        onReceive = { onOpenAddSheet(viewModel.receivePrefill()) },
+        onMove = { onOpenAddSheet(viewModel.transferPrefill()) },
+        onCashOut = { onOpenAddSheet(viewModel.cashOutPrefill()) },
+        onStep = viewModel::step,
+        onChange = viewModel::setChange,
+        onReconcileCounted = viewModel::reconcileCounted,
+        onReconcile = viewModel::reconcile,
+        onSetLimit = viewModel::setLimit,
+        onSetThreshold = viewModel::setLowBalanceThreshold,
+        onCountsInTicket = viewModel::setCountsInTicket,
+        onLowAlert = viewModel::setLowBalanceAlert,
+        onArchive = viewModel::archive,
+    )
+}
+
+/** Stateless one-pocket screen. */
+@Composable
+fun PocketDetailContent(
+    s: PocketDetailUi,
+    onBack: () -> Unit,
+    onOpenRoll: () -> Unit,
+    onReceive: () -> Unit,
+    onMove: () -> Unit,
+    onCashOut: () -> Unit,
+    onStep: (Int, Int) -> Unit,
+    onChange: (String) -> Unit,
+    onReconcileCounted: () -> Unit,
+    onReconcile: (Long) -> Unit,
+    onSetLimit: (Long?) -> Unit,
+    onSetThreshold: (Long) -> Unit,
+    onCountsInTicket: (Boolean) -> Unit,
+    onLowAlert: (Boolean) -> Unit,
+    onArchive: () -> Unit,
+) {
     val haptics = LocalHaptics.current
     var sheet by remember { mutableStateOf<DetailSheet?>(null) }
-    LaunchedEffect(s.missing) { if (s.missing) onBack() }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         PushedHeader(s.name, onBack)
-        if (s.loading || s.missing) return@Column
+        if (s.loading || s.missing) {
+            if (s.loading) LoadingRows()
+            return@Column
+        }
         Hero(s)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Action(TzIcons.arrowUp, Tz.turquoise, R.string.pocket_act_receive, Modifier.weight(1f)) { onOpenAddSheet(viewModel.receivePrefill()) }
-            Action(TzIcons.swap, Tz.sky, R.string.pocket_act_move, Modifier.weight(1f)) { onOpenAddSheet(viewModel.transferPrefill()) }
-            if (!s.isCash) Action(TzIcons.withdraw, Tz.yellow, R.string.pocket_act_cash, Modifier.weight(1f)) { onOpenAddSheet(viewModel.cashOutPrefill()) }
+            Action(TzIcons.arrowUp, Tz.turquoise, R.string.pocket_act_receive, Modifier.weight(1f), onReceive)
+            Action(TzIcons.swap, Tz.sky, R.string.pocket_act_move, Modifier.weight(1f), onMove)
+            if (!s.isCash) Action(TzIcons.withdraw, Tz.yellow, R.string.pocket_act_cash, Modifier.weight(1f), onCashOut)
             Action(TzIcons.refresh, Tz.lilac, R.string.pocket_act_reconcile, Modifier.weight(1f)) { sheet = DetailSheet.Reconcile }
         }
         s.reconciled?.let {
@@ -95,27 +135,27 @@ fun PocketDetailScreen(
             Text(stringResource(line), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.turquoise, modifier = Modifier.padding(horizontal = 4.dp))
         }
         if (s.isCash) {
-            CounterCard(s, viewModel, onReconcile = { haptics.perform(HapticLevel.Confirm); viewModel.reconcileCounted() })
+            CounterCard(s, onStep, onChange, onReconcile = { haptics.perform(HapticLevel.Confirm); onReconcileCounted() })
         } else {
             LimitCard(s, onEdit = { sheet = DetailSheet.Limit })
             FeesCard(s)
         }
         RecentCard(s, onOpenRoll)
-        Switches(s, viewModel, onEditThreshold = { sheet = DetailSheet.Low })
+        Switches(s, onCountsInTicket, onLowAlert, onEditThreshold = { sheet = DetailSheet.Low })
         TextLink(stringResource(R.string.pocket_archive), { sheet = DetailSheet.Archive }, Modifier.align(Alignment.CenterHorizontally))
     }
     when (sheet) {
         DetailSheet.Reconcile -> AmountSheet(
             stringResource(R.string.pocket_reconcile_sheet), s.balance, stringResource(R.string.pocket_act_reconcile),
-            onDone = { viewModel.reconcile(it); sheet = null }, onDismiss = { sheet = null },
+            onDone = { onReconcile(it); sheet = null }, onDismiss = { sheet = null },
         )
         DetailSheet.Limit -> AmountSheet(
             stringResource(R.string.pocket_limit_sheet), s.limit, stringResource(R.string.pocket_sheet_done),
-            onDone = { viewModel.setLimit(it); sheet = null }, onDismiss = { sheet = null },
+            onDone = { onSetLimit(it); sheet = null }, onDismiss = { sheet = null },
         )
         DetailSheet.Low -> AmountSheet(
             stringResource(R.string.pocket_low_sheet), s.lowBalanceThreshold, stringResource(R.string.pocket_sheet_done),
-            onDone = { viewModel.setLowBalanceThreshold(it); sheet = null }, onDismiss = { sheet = null },
+            onDone = { onSetThreshold(it); sheet = null }, onDismiss = { sheet = null },
         )
         DetailSheet.Archive -> TzSheet(onDismiss = { sheet = null }) {
             Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -123,7 +163,7 @@ fun PocketDetailScreen(
                 Text(stringResource(R.string.pocket_archive_line), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
                 PrimaryButton(
                     stringResource(R.string.pocket_archive_confirm),
-                    { haptics.perform(HapticLevel.Heavy); viewModel.archive(); sheet = null },
+                    { haptics.perform(HapticLevel.Heavy); onArchive(); sheet = null },
                     Modifier.fillMaxWidth(), height = 52.dp,
                 )
                 TextLink(stringResource(R.string.pocket_archive_cancel), { sheet = null }, Modifier.align(Alignment.CenterHorizontally))
@@ -169,7 +209,7 @@ private fun Action(icon: TzIconDef, tint: Color, label: Int, modifier: Modifier,
     val haptics = LocalHaptics.current
     val shape = RoundedCornerShape(20.dp)
     Column(
-        modifier.height(76.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
+        modifier.heightIn(min = 76.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
             .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }.padding(horizontal = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
@@ -180,11 +220,11 @@ private fun Action(icon: TzIconDef, tint: Color, label: Int, modifier: Modifier,
 }
 
 @Composable
-private fun CounterCard(s: PocketDetailUi, viewModel: PocketDetailViewModel, onReconcile: () -> Unit) {
+private fun CounterCard(s: PocketDetailUi, onStep: (Int, Int) -> Unit, onChange: (String) -> Unit, onReconcile: () -> Unit) {
     TzCard {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.pockets_counter_counted, poundsText(s.counter.total)), style = TzType.cardHeading, color = Tz.text)
-            NoteCounter(s.counter, viewModel::step, viewModel::setChange)
+            NoteCounter(s.counter, onStep, onChange)
             PrimaryButton(stringResource(R.string.pockets_reconcile), onReconcile, Modifier.fillMaxWidth(), height = 48.dp, textStyle = TzType.button.copy(fontSize = 16.sp))
         }
     }
@@ -276,14 +316,14 @@ private fun RecentCard(s: PocketDetailUi, onOpenRoll: () -> Unit) {
 }
 
 @Composable
-private fun Switches(s: PocketDetailUi, viewModel: PocketDetailViewModel, onEditThreshold: () -> Unit) {
+private fun Switches(s: PocketDetailUi, onCountsInTicket: (Boolean) -> Unit, onLowAlert: (Boolean) -> Unit, onEditThreshold: () -> Unit) {
     TzCard {
         Column(Modifier.fillMaxWidth()) {
             val countsTitle = stringResource(R.string.pocket_counts_title)
-            SwitchRow(countsTitle, stringResource(R.string.pocket_counts_caption), s.countsInTicket, viewModel::setCountsInTicket)
+            SwitchRow(countsTitle, stringResource(R.string.pocket_counts_caption), s.countsInTicket, onCountsInTicket)
             Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
             val lowTitle = stringResource(R.string.pocket_low_title, poundsText(s.lowBalanceThreshold))
-            SwitchRow(lowTitle, stringResource(R.string.pocket_low_caption), s.lowBalanceAlert, viewModel::setLowBalanceAlert) {
+            SwitchRow(lowTitle, stringResource(R.string.pocket_low_caption), s.lowBalanceAlert, onLowAlert) {
                 TextLink(stringResource(R.string.pocket_low_edit), onEditThreshold)
             }
         }

@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.onboarding
 
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -111,10 +112,13 @@ private fun StepHeader(filled: Int, onBack: () -> Unit) {
     val progress = stringResource(R.string.ob_progress_cd, filled.toString())
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(
-            Modifier.size(44.dp).clip(CircleShape).background(Tz.surface).border(1.dp, Tz.line, CircleShape)
-                .clickable(role = Role.Button, onClick = onBack),
+            Modifier.minimumInteractiveComponentSize().clickable(role = Role.Button, onClick = onBack),
             contentAlignment = Alignment.Center,
-        ) { TzIcon(TzIcons.back, 20.dp, stringResource(R.string.ob_back), tint = Tz.text) }
+        ) {
+            Box(Modifier.size(44.dp).clip(CircleShape).background(Tz.surface).border(1.dp, Tz.line, CircleShape), contentAlignment = Alignment.Center) {
+                TzIcon(TzIcons.back, 20.dp, stringResource(R.string.ob_back), tint = Tz.text)
+            }
+        }
         Row(Modifier.weight(1f).semantics(mergeDescendants = true) { contentDescription = progress }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             repeat(3) { i ->
                 Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(if (i < filled) Tz.yellow else Tz.line))

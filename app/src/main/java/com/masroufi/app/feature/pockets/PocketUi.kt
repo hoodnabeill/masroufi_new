@@ -1,5 +1,10 @@
 package com.masroufi.app.feature.pockets
 
+import com.masroufi.app.ui.components.skeletonPulse
+import com.masroufi.app.ui.components.TzCard
+import com.masroufi.app.ui.components.RowSkeleton
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +16,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -97,17 +104,19 @@ internal fun lastMoveCaption(date: LocalDate?, today: LocalDate): String = when 
 internal fun CircleButton(icon: TzIconDef, description: String, onClick: () -> Unit) {
     val source = remember { MutableInteractionSource() }
     Box(
-        Modifier.pressScale(source, PressScale.Chip).size(44.dp).clip(CircleShape).background(Tz.surface).border(1.dp, Tz.line, CircleShape)
+        Modifier.pressScale(source, PressScale.Chip).minimumInteractiveComponentSize()
             .clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        TzIcon(icon, 20.dp, description, tint = Tz.text)
+        Box(Modifier.size(44.dp).clip(CircleShape).background(Tz.surface).border(1.dp, Tz.line, CircleShape), contentAlignment = Alignment.Center) {
+            TzIcon(icon, 20.dp, description, tint = Tz.text)
+        }
     }
 }
 
 /** Back button, Lalezar 22 title, an optional round button (or a 44 dp gap) at the other end. */
 @Composable
-internal fun PushedHeader(title: String, onBack: () -> Unit, trailing: @Composable () -> Unit = { Spacer(Modifier.size(44.dp)) }) {
+internal fun PushedHeader(title: String, onBack: () -> Unit, trailing: @Composable () -> Unit = { Spacer(Modifier.size(48.dp)) }) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         CircleButton(TzIcons.back, stringResource(R.string.close_back), onBack)
         Text(title, style = TzType.titlePushed, color = Tz.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).padding(horizontal = 8.dp))
@@ -131,7 +140,7 @@ internal fun DashedRow(text: String, onClick: () -> Unit, modifier: Modifier = M
     val haptics = LocalHaptics.current
     val shape = RoundedCornerShape(24.dp)
     Row(
-        modifier.fillMaxWidth().height(64.dp).clip(shape)
+        modifier.fillMaxWidth().heightIn(min = 64.dp).clip(shape)
             .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }
             .drawBehind {
                 drawRoundRect(
@@ -162,7 +171,7 @@ internal fun NoteCounter(counter: CashCounter, onStep: (denomination: Int, delta
             }
         }
         Column(Modifier.weight(1f).clip(chip).background(Tz.night), horizontalAlignment = Alignment.CenterHorizontally) {
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(48.dp))
             Text(stringResource(R.string.pockets_counter_change), style = TzType.cardHeading.copy(fontSize = 18.sp), color = Tz.yellow)
             BasicTextField(
                 value = counter.change.text,
@@ -179,7 +188,7 @@ internal fun NoteCounter(counter: CashCounter, onStep: (denomination: Int, delta
                     }
                 },
             )
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(48.dp))
         }
     }
 }
@@ -188,7 +197,7 @@ internal fun NoteCounter(counter: CashCounter, onStep: (denomination: Int, delta
 private fun Stepper(icon: TzIconDef, description: String, onClick: () -> Unit) {
     val haptics = LocalHaptics.current
     Box(
-        Modifier.fillMaxWidth().height(32.dp).clickable(role = Role.Button) { haptics.perform(HapticLevel.Tick); onClick() },
+        Modifier.fillMaxWidth().height(48.dp).clickable(role = Role.Button) { haptics.perform(HapticLevel.Tick); onClick() },
         contentAlignment = Alignment.Center,
     ) {
         TzIcon(icon, 16.dp, description, tint = Tz.yellow)
@@ -209,6 +218,25 @@ internal fun AmountSheet(title: String, initial: Long?, confirm: String, onDone:
             }
             Keypad({ input = input.digit(it) }, { input = input.point() }, { input = input.backspace() })
             PrimaryButton(confirm, { haptics.perform(HapticLevel.Confirm); onDone(input.toPiastres()) }, Modifier.fillMaxWidth(), height = 52.dp)
+        }
+    }
+}
+
+/** Rows of the shape the screen will have, shown only when the load takes over 150 ms (10-PERFORMANCE). */
+@Composable
+internal fun LoadingRows() {
+    var due by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(150)
+        due = true
+    }
+    if (due) {
+        Column(Modifier.skeletonPulse(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            TzCard {
+                RowSkeleton(0.5f, 0.3f, 44.dp)
+                Spacer(Modifier.height(14.dp))
+                RowSkeleton(0.4f, 0.4f, 44.dp)
+            }
         }
     }
 }

@@ -45,7 +45,10 @@ import androidx.compose.ui.unit.sp
 import com.masroufi.app.R
 import com.masroufi.app.ui.components.Odometer
 import com.masroufi.app.ui.motion.LocalReduceMotion
+import com.masroufi.app.ui.motion.PressScale
 import com.masroufi.app.ui.motion.TzSpring
+import com.masroufi.app.ui.motion.pressScale
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.masroufi.app.ui.motion.spec
 import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzRadius
@@ -120,13 +123,14 @@ fun Ticket(
     }
 
     val shape = RoundedCornerShape(TzRadius.hero)
+    val bodySource = remember { MutableInteractionSource() }
     Box(modifier.graphicsLayer { translationY = recoil.value * 3.dp.toPx() }) {
         Box(Modifier.fillMaxWidth().clip(shape).background(Tz.yellow)) {
             Guilloche(Tz.yellowRule2, Modifier.align(Alignment.TopEnd).offset(x = 70.dp, y = (-70).dp).size(220.dp))
             Column {
                 Column(
                     Modifier.fillMaxWidth()
-                        .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+                        .then(if (onClick != null) Modifier.pressScale(bodySource, PressScale.Card).clickable(interactionSource = bodySource, indication = null, role = Role.Button, onClick = onClick) else Modifier)
                         .clearAndSetSemantics { this.contentDescription = contentDescription }
                         .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 18.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),

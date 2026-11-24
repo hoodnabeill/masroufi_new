@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.add
 
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -266,7 +269,7 @@ private fun AmountBlock(state: AddUiState, scale: Float, onTap: () -> Unit) {
                 modifier = Modifier.padding(bottom = 12.dp),
             )
         }
-        Text(liveLine(state), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2, maxLines = 1)
+        Text(liveLine(state), style = TzType.label.copy(fontWeight = FontWeight.Normal, textAlign = TextAlign.Center), color = Tz.text2, maxLines = 2)
     }
 }
 
@@ -308,7 +311,7 @@ private fun CategoryChip(c: CategoryEntity, selected: Boolean, onClick: () -> Un
     val shape = RoundedCornerShape(24.dp)
     Row(
         Modifier.pressScale(source, PressScale.Chip, release = TzSpring.Snappy)
-            .height(48.dp)
+            .heightIn(min = 48.dp)
             .clip(shape)
             .background(if (selected) Tz.turquoiseDim else Tz.raised)
             .border(if (selected) 2.dp else 1.dp, if (selected) Tz.turquoise else Tz.line, shape)
@@ -358,7 +361,7 @@ private fun PocketFields(state: AddUiState, actions: AddSheetActions, toScale: F
 }
 
 private fun Modifier.field(borderColor: Color = Tz.line) =
-    height(48.dp).clip(FieldShape).background(Tz.night).border(1.dp, borderColor, FieldShape)
+    heightIn(min = 48.dp).clip(FieldShape).background(Tz.night).border(1.dp, borderColor, FieldShape)
 
 @Composable
 private fun PocketButton(label: String, pocket: PocketEntity?, modifier: Modifier, onClick: () -> Unit) {
@@ -374,7 +377,7 @@ private fun PocketButton(label: String, pocket: PocketEntity?, modifier: Modifie
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
-        Text(pocket?.name.orEmpty(), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
+        Text(pocket?.name.orEmpty(), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).padding(start = 6.dp))
     }
 }
 
@@ -459,7 +462,7 @@ private fun RoundUpRow(state: AddUiState, onRoundUp: (Boolean) -> Unit) {
     val change = stringResource(R.string.add_round_up_change, formatPounds(offer))
     val line = stringResource(R.string.add_round_up, formatPounds(state.amount + offer), change)
     Row(
-        Modifier.fillMaxWidth().height(44.dp).clip(FieldShape).background(Tz.turquoiseDim).padding(start = 14.dp, end = 8.dp),
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(FieldShape).background(Tz.turquoiseDim).padding(start = 14.dp, end = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -467,8 +470,7 @@ private fun RoundUpRow(state: AddUiState, onRoundUp: (Boolean) -> Unit) {
             highlighted(line, change, SpanStyle(color = Tz.turquoise, fontWeight = FontWeight.SemiBold)),
             style = TzType.label.copy(fontWeight = FontWeight.Normal),
             color = Tz.text,
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
+            modifier = Modifier.weight(1f).padding(vertical = 6.dp),
         )
         TzToggle(state.form.roundUpOn, onRoundUp, contentDescription = line)
     }

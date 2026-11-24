@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.roll
 
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
@@ -292,14 +295,18 @@ private fun Header(state: RollUi, onSearch: () -> Unit, onPickMonth: () -> Unit)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             val label = stringResource(if (state.searching) R.string.roll_search_close else R.string.roll_search)
             Box(
-                Modifier.size(44.dp).clip(CircleShape).background(Tz.surface).border(1.dp, Tz.line, CircleShape)
+                Modifier.minimumInteractiveComponentSize()
                     .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onSearch() }
                     .semantics { contentDescription = label },
                 contentAlignment = Alignment.Center,
-            ) { TzIcon(if (state.searching) TzIcons.close else TzIcons.search, 20.dp, null, tint = Tz.text) }
+            ) {
+                Box(Modifier.size(44.dp).clip(CircleShape).background(Tz.surface).border(1.dp, Tz.line, CircleShape), contentAlignment = Alignment.Center) {
+                    TzIcon(if (state.searching) TzIcons.close else TzIcons.search, 20.dp, null, tint = Tz.text)
+                }
+            }
             val pill = RoundedCornerShape(22.dp)
             Row(
-                Modifier.height(44.dp).clip(pill).background(Tz.surface).border(1.dp, Tz.line, pill)
+                Modifier.heightIn(min = 48.dp).clip(pill).background(Tz.surface).border(1.dp, Tz.line, pill)
                     .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onPickMonth() }
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -321,7 +328,7 @@ private fun SearchField(query: String, onQuery: (String) -> Unit) {
     BasicTextField(
         value = query,
         onValueChange = onQuery,
-        modifier = Modifier.fillMaxWidth().height(48.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.yellow, shape)
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.yellow, shape)
             .focusRequester(focus).semantics { contentDescription = hint },
         textStyle = TzType.label.copy(fontWeight = FontWeight.Normal, color = Tz.text),
         singleLine = true,
@@ -658,14 +665,15 @@ internal fun EntryLine(
                 highlighted(entryTitle(e, salaryDay), highlight),
                 style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
                 color = Tz.text,
-                maxLines = 1,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
-            Text(entrySub(e), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2, maxLines = 1)
+            Text(entrySub(e), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val links = LocalInstallmentLinks.current
             if (links != null && e.recurringId != null && e.recurringId in links.ids) {
                 Text(
                     stringResource(R.string.roll_installments_link),
-                    Modifier.clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); links.onOpen() }.padding(vertical = 4.dp),
+                    Modifier.minimumInteractiveComponentSize().clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); links.onOpen() },
                     style = TzType.caption.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold), color = Tz.yellow,
                 )
             }
