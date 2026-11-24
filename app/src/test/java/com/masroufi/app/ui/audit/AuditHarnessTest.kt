@@ -46,7 +46,6 @@ class AuditHarnessTest {
                 Text("سطر قصير")
             }
         }
-        assertTrue(findings.joinToString("\n"), findings.isEmpty())
         findings.assertNone()
     }
 
