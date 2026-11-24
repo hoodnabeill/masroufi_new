@@ -8,10 +8,13 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import com.masroufi.app.ui.motion.LocalReduceMotion
 import com.masroufi.app.ui.theme.MasroufiTheme
@@ -33,7 +36,8 @@ import java.util.Locale
  *  - [AuditRule.TOUCH_TARGET]: a node with a click action whose touch bounds (the minimum-interactive expansion included)
  *    are under [AuditConfig.minTouchDp] in either direction.
  *  - [AuditRule.LABEL]: a node with a click action that has no text, content description or typed text for TalkBack.
- *  - [AuditRule.OVERFLOW]: text whose layout overflows its box (single line cut off, or more lines than the box holds).
+ *  - [AuditRule.OVERFLOW]: text that does not fit its box (more lines than allowed, a line wider than the box, taller than
+ *    the box, or an ellipsis).
  *    Text that is meant to be cut (an ellipsis on a name) goes in [AuditConfig.allowOverflow] by a part of its text.
  *
  * The content goes inside [MasroufiTheme]; wrap it in whatever providers the screen needs (state, `LocalHideAmounts`...)
@@ -56,7 +60,8 @@ data class AuditConfig(
 
 /** Fails with every finding listed, one per line. */
 fun List<AuditFinding>.assertNone() {
-    if (isNotEmpty()) throw AssertionError("${size} audit finding(s):\n" + joinToString("\n") { "  $it" })
+    // One line: the CI annotation keeps only the first line of a failure message.
+    if (isNotEmpty()) throw AssertionError("$size audit finding(s): " + joinToString(" || ") { "$it" })
 }
 
 fun ComposeContentTestRule.audit(config: AuditConfig = AuditConfig(), content: @Composable () -> Unit): List<AuditFinding> {
@@ -65,46 +70,78 @@ fun ComposeContentTestRule.audit(config: AuditConfig = AuditConfig(), content: @
         setContent {
             MasroufiTheme {
                 val base = LocalDensity.current
+                val viewConfig = LocalViewConfiguration.current
+                // Compose widens every pointer target to 48 dp on its own; switched off so the node's own size is what is measured.
+                val exact = object : ViewConfiguration by viewConfig {
+                    override val minimumTouchTargetSize: DpSize = DpSize.Zero
+                }
                 CompositionLocalProvider(
                     LocalDensity provides Density(base.density, config.fontScale),
                     LocalLayoutDirection provides if (config.rtl) LayoutDirection.Rtl else LayoutDirection.Ltr,
                     LocalReduceMotion provides true,
+                    LocalViewConfiguration provides exact,
                 ) { content() }
             }
         }
         mainClock.advanceTimeBy(1_000)
-        val roots = onAllNodes(isRoot()).fetchSemanticsNodes()
-        return roots.flatMap { auditTree(it, config) }
+        // Clicks and labels as TalkBack sees them (merged); text boxes one by one (unmerged).
+        val merged = onAllNodes(isRoot()).fetchSemanticsNodes().flatMap { clickFindings(it, config) }
+        val unmerged = onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().flatMap { overflowFindings(it, config) }
+        return merged + unmerged
     } finally {
         mainClock.autoAdvance = true
     }
 }
 
-private fun auditTree(root: SemanticsNode, config: AuditConfig): List<AuditFinding> {
+private fun walk(node: SemanticsNode, visit: (SemanticsNode) -> Unit) {
+    if (node.config.contains(SemanticsProperties.InvisibleToUser)) return
+    visit(node)
+    node.children.forEach { walk(it, visit) }
+}
+
+/**
+ * The touch area counts the node's own bounds and the whole layout it sits in, so a `minimumInteractiveComponentSize()`
+ * around a smaller control is a 48 dp target (the same approximation Compose's own check makes).
+ */
+private fun clickFindings(root: SemanticsNode, config: AuditConfig): List<AuditFinding> {
     val out = mutableListOf<AuditFinding>()
-    fun visit(node: SemanticsNode) {
-        val cfg = node.config
-        if (!cfg.contains(SemanticsProperties.InvisibleToUser)) {
-            if (cfg.contains(SemanticsActions.OnClick)) {
-                val d = node.layoutInfo.density.density
-                val b = node.touchBoundsInRoot
-                val w = b.width / d
-                val h = b.height / d
-                // Half a pixel of rounding is not a failure.
-                if (w < config.minTouchDp - 0.5f || h < config.minTouchDp - 0.5f) {
-                    out += AuditFinding(AuditRule.TOUCH_TARGET, describe(node), "touch target %.1f x %.1f dp, under %.0f".format(Locale.US, w, h, config.minTouchDp))
-                }
-                if (label(node).isBlank()) out += AuditFinding(AuditRule.LABEL, describe(node), "clickable with no text or description for TalkBack")
+    walk(root) { node ->
+        if (node.config.contains(SemanticsActions.OnClick)) {
+            val d = node.layoutInfo.density.density
+            val w = maxOf(node.touchBoundsInRoot.width, node.layoutInfo.width.toFloat()) / d
+            val h = maxOf(node.touchBoundsInRoot.height, node.layoutInfo.height.toFloat()) / d
+            // Half a pixel of rounding is not a failure.
+            if (w < config.minTouchDp - 0.5f || h < config.minTouchDp - 0.5f) {
+                out += AuditFinding(AuditRule.TOUCH_TARGET, describe(node), "touch target %.1f x %.1f dp, under %.0f".format(Locale.US, w, h, config.minTouchDp))
             }
-            val layouts = mutableListOf<TextLayoutResult>()
-            cfg.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
-            if (layouts.any { it.hasVisualOverflow } && config.allowOverflow.none { text(node).contains(it) }) {
-                out += AuditFinding(AuditRule.OVERFLOW, describe(node), "text overflows its box")
-            }
+            if (label(node).isBlank()) out += AuditFinding(AuditRule.LABEL, describe(node), "clickable with no text or description for TalkBack")
         }
-        node.children.forEach(::visit)
     }
-    visit(root)
+    return out
+}
+
+/**
+ * The text layout the semantics hand out is laid out again from the box's constraints, so its own `hasVisualOverflow` is
+ * true for any text narrower than its box. What is checked instead: more lines than allowed, a line wider than the box,
+ * a paragraph taller than the box, or a cut-off line (ellipsis).
+ */
+private fun overflowFindings(root: SemanticsNode, config: AuditConfig): List<AuditFinding> {
+    val out = mutableListOf<AuditFinding>()
+    walk(root) { node ->
+        val layouts = mutableListOf<TextLayoutResult>()
+        node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
+        val r = layouts.firstOrNull() ?: return@walk
+        if (config.allowOverflow.any { text(node).contains(it) }) return@walk
+        val widest = (0 until r.lineCount).maxOfOrNull { r.getLineRight(it) } ?: 0f
+        val why = when {
+            r.multiParagraph.didExceedMaxLines -> "more lines than the ${r.layoutInput.maxLines} allowed"
+            (0 until r.lineCount).any { r.isLineEllipsized(it) } -> "a line is cut with an ellipsis"
+            widest > node.size.width + 1 -> "a line is %.0f px wide in a %d px box".format(Locale.US, widest, node.size.width)
+            r.multiParagraph.height > node.size.height + 1 -> "text is %.0f px tall in a %d px box".format(Locale.US, r.multiParagraph.height, node.size.height)
+            else -> null
+        }
+        if (why != null) out += AuditFinding(AuditRule.OVERFLOW, describe(node), "text overflows its box: $why")
+    }
     return out
 }
 
