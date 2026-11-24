@@ -13,6 +13,8 @@ import com.masroufi.app.domain.buildMatch
 import com.masroufi.app.domain.streak
 import com.masroufi.app.entitlements.Entitlements
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Clock
@@ -47,9 +49,12 @@ class DaySummaryWriter @Inject constructor(
 
     suspend fun refresh() {
         try {
-            lock.withLock {
-                store.write(build())
-                widgets.update()
+            // Off the caller's dispatcher: a DataStore edit runs its transform on it, which deadlocks a blocked test main thread.
+            withContext(Dispatchers.IO) {
+                lock.withLock {
+                    store.write(build())
+                    widgets.update()
+                }
             }
         } catch (e: CancellationException) {
             throw e
