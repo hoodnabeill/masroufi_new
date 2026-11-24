@@ -6,6 +6,7 @@ import com.masroufi.app.data.db.DayTicketDao
 import com.masroufi.app.data.db.EntryDao
 import com.masroufi.app.data.prefs.SettingsStore
 import com.masroufi.app.data.repo.RepeatChip
+import com.masroufi.app.di.AppScope
 import com.masroufi.app.domain.DayResult
 import com.masroufi.app.domain.HatTrick
 import com.masroufi.app.domain.TicketStatus
@@ -13,8 +14,8 @@ import com.masroufi.app.domain.buildMatch
 import com.masroufi.app.domain.streak
 import com.masroufi.app.entitlements.Entitlements
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Clock
@@ -32,7 +33,7 @@ private const val REPEAT_DAYS = 30L
 
 /**
  * Writes the [DaySummary] and then redraws the widgets. Called after a ticket prints, after every punch, edit, delete
- * and close, and when the lock settings change. A failure here is logged and never fails the action that called it.
+ * and close, and when the lock settings change. A failure here is logged and never fails the action that called it; the write is not awaited.
  */
 @Singleton
 class DaySummaryWriter @Inject constructor(
@@ -44,22 +45,27 @@ class DaySummaryWriter @Inject constructor(
     private val plus: Entitlements,
     private val clock: Clock,
     private val widgets: WidgetRefresher,
+    @AppScope private val scope: CoroutineScope,
 ) {
     private val lock = Mutex()
 
-    suspend fun refresh() {
-        try {
-            // Off the caller's dispatcher: a DataStore edit runs its transform on it, which deadlocks a blocked test main thread.
-            withContext(Dispatchers.IO) {
+    /**
+     * Rewrites the summary in the background and returns at once: the caller (a punch, a print) never waits for the
+     * DataStore, whose edits can be queued behind another edit that needs the caller's thread. Every run rebuilds from
+     * the database, so runs that queue up (they take [lock] in turn) end with the latest state.
+     */
+    fun refresh() {
+        scope.launch {
+            try {
                 lock.withLock {
                     store.write(build())
                     widgets.update()
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("DaySummaryWriter", "writing the day summary failed", e)
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.e("DaySummaryWriter", "writing the day summary failed", e)
         }
     }
 

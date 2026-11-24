@@ -16,12 +16,14 @@ import com.masroufi.app.data.repo.toEntry
 import com.masroufi.app.domain.EntryKind
 import com.masroufi.app.domain.LeftoverDestination
 import com.masroufi.app.entitlements.DebugEntitlements
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -64,7 +66,25 @@ class DaySummaryTest {
         coffee = db.categoryDao().insert(CategoryEntity(name = "قهوة", icon = "c", color = 0))
     }
 
-    private suspend fun summary() = checkNotNull(f.summaryStore.read()) { "no summary stored" }
+    /**
+     * The writer works in the background (it is never awaited by a punch), so a test waits for the stored summary to
+     * match [what]; the delay is real time, not the test's virtual time.
+     */
+    private suspend fun summary(what: String = "a summary", cond: (DaySummary) -> Boolean = { true }): DaySummary {
+        repeat(500) {
+            f.summaryStore.read()?.takeIf(cond)?.let { return it }
+            withContext(Dispatchers.Default) { delay(20) }
+        }
+        throw AssertionError("timed out waiting for $what")
+    }
+
+    private suspend fun redraws(above: Int) {
+        repeat(500) {
+            if (f.widgets.updates > above) return
+            withContext(Dispatchers.Default) { delay(20) }
+        }
+        throw AssertionError("the widgets were not redrawn")
+    }
 
     private suspend fun spend(amount: Long, hour: Int = 10) =
         f.entries.log(NewEntry(EntryKind.SPENT, amount, cash, categoryId = coffee, happenedAt = millis(nov12, hour)))
@@ -72,26 +92,24 @@ class DaySummaryTest {
     @Test fun printingWritesTheSummaryAndRedrawsTheWidgets() = runTest {
         setUp()
         f.tickets.printToday()
-        val s = summary()
+        val s = summary("the printed ticket") { it.printed }
         assertEquals(listOf(nov12.toEpochDay(), true, true), listOf(s.day, s.printed, s.open))
         assertEquals(listOf(30_000L, 30_000L), listOf(s.amount, s.left))
         assertEquals(0, s.punches)
-        assertTrue(f.widgets.updates > 0)
+        redraws(above = 0)
     }
 
     @Test fun aPunchAnEditAndADeleteRewriteIt() = runTest {
         setUp()
         f.tickets.printToday()
         val id = spend(2_500)
-        assertEquals(27_500L, summary().left)
-        assertEquals(1, summary().punches)
+        assertEquals(27_500L, summary("the punch") { it.punches == 1 }.left)
         val before = f.widgets.updates
         f.entries.edit(id, NewEntry(EntryKind.SPENT, 4_000, cash, categoryId = coffee, happenedAt = millis(nov12, 10)))
-        assertEquals(26_000L, summary().left)
-        assertTrue("the edit redrew the widgets", f.widgets.updates > before)
+        assertEquals(26_000L, summary("the edit") { it.left == 26_000L }.left)
+        redraws(above = before)
         f.entries.delete(id)
-        assertEquals(30_000L, summary().left)
-        assertEquals(0, summary().punches)
+        assertEquals(30_000L, summary("the delete") { it.punches == 0 }.left)
     }
 
     @Test fun closingTheDayMarksItClosed() = runTest {
@@ -99,9 +117,7 @@ class DaySummaryTest {
         f.tickets.printToday()
         spend(10_000)
         f.tickets.closeDay(nov12, LeftoverDestination.JAR)
-        val s = summary()
-        assertFalse(s.open)
-        assertEquals(20_000L, s.left)
+        assertEquals(20_000L, summary("the close") { !it.open }.left)
     }
 
     @Test fun theMidnightPrintWritesTheNewDay() = runTest {
@@ -109,8 +125,8 @@ class DaySummaryTest {
         f.tickets.printToday()
         clock.instant = at(nov12.plusDays(1), 0)
         f.tickets.printToday() // what MidnightPrintWorker calls
-        val s = summary()
-        assertEquals(listOf(nov12.plusDays(1).toEpochDay(), true), listOf(s.day, s.open))
+        val s = summary("the new day") { it.day == nov12.plusDays(1).toEpochDay() }
+        assertTrue(s.open)
     }
 
     @Test fun theSummaryCarriesTheRepeatChipsAndTheLockSettings() = runTest {
@@ -120,9 +136,9 @@ class DaySummaryTest {
         spend(2_500, 11)
         f.settings.setLockOn(true)
         f.daySummary.refresh()
-        val s = summary()
+        val s = summary("the chips and the lock") { it.lockOn && it.chips.isNotEmpty() }
         assertEquals(listOf(RepeatChip(coffee, "قهوة", 2_500, cash)), s.chips)
-        assertEquals(listOf(true, false), listOf(s.lockOn, s.hideAmounts))
+        assertFalse(s.hideAmounts)
     }
 
     @Test fun theRepeatActionLogsHomesChipEntryAndUpdatesTheSummary() = runTest {
@@ -130,7 +146,7 @@ class DaySummaryTest {
         f.tickets.printToday()
         spend(2_500, 10)
         spend(2_500, 11)
-        val chip = summary().chips.single()
+        val chip = summary("the chip") { it.punches == 2 && it.chips.isNotEmpty() }.chips.single()
         val punch = WidgetPunch(f.summaryStore, f.settings, f.entries, clock)
         val before = f.widgets.updates
         assertTrue(punch.punch(chip))
@@ -138,9 +154,9 @@ class DaySummaryTest {
         // The same fields Home's chip logs: HomeViewModel.punchRepeat builds this through RepeatChip.toEntry.
         assertEquals(chip.toEntry(logged.happenedAt).let { listOf(it.kind, it.amount, it.pocketId, it.categoryId) }, entryFields(logged))
         assertEquals(listOf(EntryKind.SPENT, 2_500L, cash, coffee), entryFields(logged))
-        assertEquals(22_500L, summary().left)
-        assertEquals(3, summary().punches)
-        assertTrue("the widgets redrew at once", f.widgets.updates > before)
+        val s = summary("the third hole") { it.punches == 3 }
+        assertEquals(22_500L, s.left)
+        redraws(above = before)
     }
 
     @Test fun theRepeatActionDoesNothingWhileTheLockIsOn() = runTest {
@@ -148,11 +164,10 @@ class DaySummaryTest {
         f.tickets.printToday()
         spend(2_500, 10)
         spend(2_500, 11)
+        val chip = summary("the chip") { it.punches == 2 && it.chips.isNotEmpty() }.chips.single()
         f.settings.setLockOn(true)
-        f.daySummary.refresh()
-        val chip = summary().chips.single()
         assertFalse(WidgetPunch(f.summaryStore, f.settings, f.entries, clock).punch(chip))
-        assertEquals(2, summary().punches)
+        assertEquals(2, db.entryDao().forDay(millis(nov12, 0), millis(nov12.plusDays(1), 0)).size)
     }
 
     @Test fun theRepeatActionIgnoresAClosedDayAndAChipThatIsGone() = runTest {
@@ -160,12 +175,12 @@ class DaySummaryTest {
         f.tickets.printToday()
         spend(2_500, 10)
         spend(2_500, 11)
-        val chip = summary().chips.single()
+        val chip = summary("the chip") { it.punches == 2 && it.chips.isNotEmpty() }.chips.single()
         val punch = WidgetPunch(f.summaryStore, f.settings, f.entries, clock)
         assertFalse("a chip the summary does not show", punch.punch(chip.copy(amount = 9_900)))
         f.tickets.closeDay(nov12, LeftoverDestination.JAR)
+        summary("the close") { !it.open }
         assertFalse("a closed day", punch.punch(chip))
-        assertNotNull(summary())
     }
 
     private fun entryFields(e: EntryEntity) = listOf(e.kind, e.amount, e.pocketId, e.categoryId)

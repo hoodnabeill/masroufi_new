@@ -14,6 +14,8 @@ import com.masroufi.app.widget.DaySummaryStore
 import com.masroufi.app.widget.DaySummaryWriter
 import com.masroufi.app.widget.WidgetRefresher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import java.io.File
 import java.time.Clock
 import java.time.Instant
@@ -29,7 +31,7 @@ class TestClock(var instant: Instant, private val zoneId: ZoneId = ZoneId.of("Af
 
 /** Stands in for the widgets: counts how often they were told to redraw. */
 class CountingRefresher : WidgetRefresher {
-    var updates = 0
+    @Volatile var updates = 0
     override suspend fun update() { updates++ }
 }
 
@@ -53,7 +55,7 @@ class RepoFixture(db: TazkaraDatabase, scope: CoroutineScope, dir: File, clock: 
     // Its own file, like the PIN's; the widgets are counted, not drawn.
     val summaryStore = DaySummaryStore(PreferenceDataStoreFactory.create(scope = scope) { File(dir, "summary.preferences_pb") })
     val widgets = CountingRefresher()
-    val daySummary = DaySummaryWriter(db.dayTicketDao(), db.entryDao(), db.categoryDao(), settings, summaryStore, plus, clock, widgets)
+    val daySummary = DaySummaryWriter(db.dayTicketDao(), db.entryDao(), db.categoryDao(), settings, summaryStore, plus, clock, widgets, CoroutineScope(SupervisorJob() + Dispatchers.IO))
     val tickets: TicketRepository = TicketRepository(
         db, db.pocketDao(), db.entryDao(), db.dayTicketDao(), db.recurringDao(), db.jarDao(), db.proverbDao(),
         db.stampDao(), settings, clock, stamps, Provider { eom }, Provider { installments }, Provider { freelance }, story, daySummary,
