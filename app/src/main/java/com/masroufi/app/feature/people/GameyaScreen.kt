@@ -312,7 +312,7 @@ private fun InstallmentCard(v: GameyaView, vm: GameyaActions) {
                     modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(Tz.turquoiseDim).padding(horizontal = 12.dp, vertical = 5.dp),
                 )
             } else {
-                PrimaryButton(stringResource(R.string.gameya_pay_mine), { haptics.perform(HapticLevel.Confirm); vm.openPay() }, height = 44.dp, textStyle = TzType.button.copy(fontSize = 16.sp))
+                PrimaryButton(stringResource(R.string.gameya_pay_mine), { haptics.perform(HapticLevel.Confirm); vm.openPay() }, height = 48.dp, textStyle = TzType.button.copy(fontSize = 16.sp))
             }
         }
         Row(Modifier.fillMaxWidth().height(12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {

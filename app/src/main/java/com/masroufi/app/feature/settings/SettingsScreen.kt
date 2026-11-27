@@ -62,6 +62,7 @@ import com.masroufi.app.ui.components.PlusSheet
 import com.masroufi.app.feature.plan.ChipRow
 import com.masroufi.app.feature.plan.SplitRow
 import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.components.CappedFontScale
 import com.masroufi.app.ui.components.isLargeFont
 import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.components.Segmented
@@ -281,7 +282,8 @@ private fun ProfileRow(ui: SettingsUi, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(Modifier.size(52.dp).clip(CircleShape).background(Tz.yellow), contentAlignment = Alignment.Center) {
-            Text(ui.initial, style = TzType.titleTab.copy(fontSize = 26.sp), color = Tz.night)
+            // shortcut: the initial sits in a fixed 52 dp disc, so it keeps the normal font size.
+            CappedFontScale { Text(ui.initial, style = TzType.titleTab.copy(fontSize = 26.sp), color = Tz.night) }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(ui.name.ifBlank { stringResource(R.string.profile_name_blank) }, style = TzType.cardHeading.copy(fontSize = 22.sp), color = Tz.text)

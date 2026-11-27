@@ -35,6 +35,7 @@ import com.masroufi.app.data.db.PersonKind
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.feature.plan.ChipRow
 import com.masroufi.app.feature.pockets.PushedHeader
+import com.masroufi.app.ui.components.CappedFontScale
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.haptics.HapticLevel
@@ -59,7 +60,8 @@ fun Avatar(person: PersonEntity) {
     val (bg, ink) = if (person.kind == PersonKind.SHOP) Tz.yellow to Tz.night else AvatarColors[(person.id % AvatarColors.size).toInt()]
     Box(Modifier.size(46.dp).clip(CircleShape).background(bg), contentAlignment = Alignment.Center) {
         if (person.kind == PersonKind.SHOP) TzIcon(TzIcons.shop, 22.dp, null, tint = ink)
-        else Text(person.name.trim().take(1), style = TzType.button.copy(fontSize = 20.sp), color = ink)
+        // shortcut: the initial sits in a fixed 46 dp disc, so it keeps the normal font size.
+        else CappedFontScale { Text(person.name.trim().take(1), style = TzType.button.copy(fontSize = 20.sp), color = ink) }
     }
 }
 
