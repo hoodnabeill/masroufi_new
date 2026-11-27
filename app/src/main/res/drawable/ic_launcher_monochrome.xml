@@ -1,23 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Themed icon: one ink, so the coin's ring is a gap and the pocket is cut around the coin to keep them apart. -->
+<!-- Themed icon: ticket and fin in one ink, the hole and notches cut out; same placement as the foreground. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <group
-        android:pivotX="50"
-        android:pivotY="52.75"
-        android:scaleX="0.95"
-        android:scaleY="0.95"
-        android:translateX="4"
-        android:translateY="1.25">
-        <path
-            android:fillColor="#FF000000"
-            android:fillType="evenOdd"
-            android:pathData="M33,38a17,17 0,1 0,34 0a17,17 0,1 0,-34 0zM37.5,38a12.5,12.5 0,1 0,25 0a12.5,12.5 0,1 0,-25 0zM39.5,38a10.5,10.5 0,1 0,21 0a10.5,10.5 0,1 0,-21 0z" />
-        <path
-            android:fillColor="#FF000000"
-            android:pathData="M23,45H31.8A19.5,19.5 0,0 0,68.2 45H77V65Q77,71.5 71,74.5L54,82.5Q50,84.5 46,82.5L29,74.5Q23,71.5 23,65Z" />
+        android:pivotX="54"
+        android:pivotY="48"
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:translateY="6">
+        <group
+            android:pivotX="54"
+            android:pivotY="57"
+            android:rotation="-10">
+            <path android:fillColor="#FF000000" android:pathData="M42,36Q49,10 68,22Q59,26 60,37Z" />
+            <path
+                android:fillColor="#FF000000"
+                android:fillType="evenOdd"
+                android:pathData="M26,35h36a5,5 0 0 0 10,0h10a9,9 0 0 1 9,9v28a9,9 0 0 1 -9,9H72a5,5 0 0 0 -10,0H26a9,9 0 0 1 -9,-9V44a9,9 0 0 1 9,-9zM40,50a8,8 0 1 0 0,16a8,8 0 1 0 0,-16z" />
+        </group>
     </group>
 </vector>

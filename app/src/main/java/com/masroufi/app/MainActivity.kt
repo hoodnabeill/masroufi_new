@@ -6,6 +6,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.masroufi.app.data.repo.DebugSampleData
 import com.masroufi.app.entitlements.Billing
 import com.masroufi.app.entitlements.Entitlements
@@ -23,6 +24,11 @@ class MainActivity : AppCompatActivity() {
     @Inject lateinit var router: NotificationRouter
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // The splash ticket slides down 12 dp and fades, so Home's ticket can take over from the same spot.
+        installSplashScreen().setOnExitAnimationListener { splash ->
+            splash.view.animate().translationY(12 * resources.displayMetrics.density).alpha(0f).setDuration(220L)
+                .withEndAction { splash.remove() }.start()
+        }
         super.onCreate(savedInstanceState)
         router.handle(intent)
         enableEdgeToEdge(
