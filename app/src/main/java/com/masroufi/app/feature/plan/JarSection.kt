@@ -1,6 +1,7 @@
 package com.masroufi.app.feature.plan
 
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.FlowRow
 import com.masroufi.app.ui.components.CappedFontScale
 import com.masroufi.app.ui.components.LARGE_FONT_SCALE
@@ -291,7 +292,7 @@ private fun GoalsCard(ui: JarUi, onNew: () -> Unit, onGoal: (Long) -> Unit, onSe
             }
             ui.goals.forEach { g ->
                 val goal = g.view.goal
-                Column(Modifier.fillMaxWidth().pressClickable { onGoal(goal.id) }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(Modifier.fillMaxWidth().pressClickable { onGoal(goal.id) }.defaultMinSize(minHeight = 48.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(goal.name, style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
                         Text(stringResource(R.string.jar_goal_amounts, poundsText(g.view.earmarked), poundsText(goal.target)), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
@@ -302,7 +303,7 @@ private fun GoalsCard(ui: JarUi, onNew: () -> Unit, onGoal: (Long) -> Unit, onSe
             }
             ui.season?.let { s ->
                 if (ui.goals.isNotEmpty()) Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
-                Column(Modifier.fillMaxWidth().pressClickable(onClick = onSeasons), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(Modifier.fillMaxWidth().pressClickable(onClick = onSeasons).defaultMinSize(minHeight = 48.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(s.season.name, style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
                         Text(stringResource(R.string.jar_season_link, poundsText(s.saved), poundsText(s.season.target)), style = TzType.label, color = Tz.yellow)

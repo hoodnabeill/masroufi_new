@@ -229,7 +229,7 @@ private fun FreedomCard(s: InstallmentsUi) {
                         }
                         Text(
                             label, Modifier.weight(bar.weight.toFloat()), style = TzType.caption.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
-                            color = Tz.turquoiseInk, maxLines = 1, textAlign = if (bar.kind == BarKind.FREE) TextAlign.End else TextAlign.Start,
+                            color = Tz.turquoiseInk, maxLines = 1, softWrap = false, textAlign = if (bar.kind == BarKind.FREE) TextAlign.End else TextAlign.Start,
                         )
                     }
                 }

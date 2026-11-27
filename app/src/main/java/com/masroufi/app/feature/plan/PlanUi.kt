@@ -141,13 +141,13 @@ fun MoveSheet(sheet: EnvelopeSheet.Move, cards: List<EnvelopeCardUi>, onConfirm:
         ) {
             Text(stringResource(R.string.env_move_title, input.text.ifEmpty { "0" }), style = TzType.cardHeading, color = Tz.text)
             Text(stringResource(R.string.env_move_from), style = TzType.caption, color = Tz.text2)
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChipRow {
                 cards.filter { it.line !is CardLine.Sealed && it.view.left > 0 }.forEach {
                     TzChip(it.view.name, from == it.view.id, { from = it.view.id; if (to == it.view.id) to = null }, style = ChipStyle.Filter)
                 }
             }
             Text(stringResource(R.string.env_move_to), style = TzType.caption, color = Tz.text2)
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChipRow {
                 cards.filter { it.view.id != from }.forEach {
                     TzChip(it.view.name, to == it.view.id, { to = it.view.id }, style = ChipStyle.Filter)
                 }

@@ -8,6 +8,7 @@ import com.masroufi.app.data.db.RecurringEntity
 import com.masroufi.app.data.db.RecurringKind
 import com.masroufi.app.data.repo.InstallmentPlan
 import com.masroufi.app.feature.add.AmountInput
+import com.masroufi.app.ui.audit.AuditConfig
 import com.masroufi.app.ui.audit.assertNone
 import com.masroufi.app.ui.audit.audit
 import org.junit.Rule
@@ -51,7 +52,8 @@ class InstallmentsAuditTest {
     )
 
     private fun audit(s: InstallmentsUi, paying: Boolean = false) {
-        rule.audit { InstallmentsContent(s, {}, {}, {}, {}, {}, { _, _ -> }, {}, payingOpen = paying) }.assertNone()
+        // allowOverflow: the month labels under the freedom chart stay on one line at their normal size (fixed-size chart art, bars a few dp wide).
+        rule.audit(AuditConfig(allowOverflow = listOf("دلوقتي", "ديسمبر", "خلصت", "يناير", "فبراير", "مارس", "أبريل", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر"))) { InstallmentsContent(s, {}, {}, {}, {}, {}, { _, _ -> }, {}, payingOpen = paying) }.assertNone()
     }
 
     @Test fun installments() = audit(ui)

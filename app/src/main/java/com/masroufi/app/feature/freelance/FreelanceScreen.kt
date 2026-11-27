@@ -359,7 +359,7 @@ private fun ChartCard(s: FreelanceUi) {
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     s.bars.forEach { bar ->
-                        Text(monthLabel(bar.month, false), Modifier.weight(1f), style = TzType.caption.copy(fontSize = 10.sp), color = Tz.text2, maxLines = 1, textAlign = TextAlign.Center)
+                        Text(monthLabel(bar.month, false), Modifier.weight(1f), style = TzType.caption.copy(fontSize = 10.sp), color = Tz.text2, maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
                     }
                 }
             }
