@@ -275,20 +275,20 @@ private fun Rescue(ui: EndOfMonthUi, onOpenJar: () -> Unit, onRemind: (OwedToMe)
 }
 
 /** A label and its value; with [onClick] the value reads as a link and the row is a 48 dp target. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RescueRow(label: String, value: String, onClick: (() -> Unit)?) {
     val row = if (onClick != null) Modifier.pressClickable(onClick = onClick) else Modifier
-    Row(
+    FlowRow(
         row.fillMaxWidth().heightIn(min = 48.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2, modifier = Modifier.weight(1f, fill = false))
+        Text(label, style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
         Text(
             value,
             style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
             color = if (onClick != null) Tz.yellow else Tz.text,
-            modifier = Modifier.padding(start = 12.dp),
         )
     }
 }

@@ -337,7 +337,7 @@ private fun ChartCard(s: FreelanceUi) {
         CappedFontScale { CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(Modifier.fillMaxWidth().height(CHART_HEIGHT)) {
-                    Row(Modifier.fillMaxWidth().height(CHART_HEIGHT), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
+                    Row(Modifier.fillMaxWidth().height(CHART_HEIGHT), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.Bottom) {
                         s.bars.forEach { bar ->
                             val f by animateFloatAsState(bar.fraction, motionSpec(TzSpring.Move), label = "incomeBar")
                             val color = when (bar.tone) {
@@ -357,9 +357,9 @@ private fun ChartCard(s: FreelanceUi) {
                         }
                     }
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     s.bars.forEach { bar ->
-                        Text(monthLabel(bar.month, false), Modifier.weight(1f), style = TzType.caption.copy(fontSize = 11.sp), color = Tz.text2, maxLines = 1, textAlign = TextAlign.Center)
+                        Text(monthLabel(bar.month, false), Modifier.weight(1f), style = TzType.caption.copy(fontSize = 10.sp), color = Tz.text2, maxLines = 1, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -467,6 +467,7 @@ private const val FIELD_MAX = 30
 private val DUE_CHOICES = listOf(0 to R.string.free_due_today, 7 to R.string.free_due_week, 14 to R.string.free_due_2weeks, 30 to R.string.free_due_month)
 
 /** A job: client, what for, how much, and when it is due (a chip; an edit keeps its date until one is tapped). */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun JobSheet(client0: String, label0: String, amount0: Long?, editing: Boolean, onDismiss: () -> Unit, onConfirm: (String, String, Long, Int?) -> Unit) {
     var client by remember { mutableStateOf(client0) }
@@ -481,7 +482,7 @@ private fun JobSheet(client0: String, label0: String, amount0: Long?, editing: B
             NameField(label, { label = it.take(FIELD_MAX) }, R.string.free_label_hint)
             AmountKeypad(input, { input = input.digit(it) }, { input = input.point() }, { input = input.backspace() })
             Text(stringResource(R.string.free_job_due_q), style = TzType.caption, color = Tz.text2)
-            ChipRow {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DUE_CHOICES.forEach { (d, text) -> TzChip(stringResource(text), days == d, { days = d }, style = ChipStyle.Choice) }
             }
             PrimaryButton(
