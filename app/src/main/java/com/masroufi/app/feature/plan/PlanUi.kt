@@ -164,10 +164,11 @@ fun MoveSheet(sheet: EnvelopeSheet.Move, cards: List<EnvelopeCardUi>, onConfirm:
     }
 }
 
-/** A row of chips that scrolls sideways instead of overflowing. */
+/** A row of chips that wraps onto more lines instead of hiding some off the edge (a large font fits them all). */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChipRow(content: @Composable () -> Unit) {
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) { content() }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { content() }
 }
 
 /** A round colour swatch; the selected one carries a Text ring. */

@@ -6,6 +6,7 @@ import com.masroufi.app.data.db.ClientJobEntity
 import com.masroufi.app.data.repo.ClientJobView
 import com.masroufi.app.data.repo.SalarySuggestion
 import com.masroufi.app.data.repo.SuggestionKind
+import com.masroufi.app.ui.audit.AuditConfig
 import com.masroufi.app.ui.audit.assertNone
 import com.masroufi.app.ui.audit.audit
 import org.junit.Rule
@@ -41,7 +42,8 @@ class FreelanceAuditTest {
     )
 
     private fun audit(s: FreelanceUi, sheet: Sheet? = null) {
-        rule.audit { FreelanceContent(s, {}, FreelanceActions.None, sheet) }.assertNone()
+        // allowOverflow: the longest month name under a 34 dp chart column stays on one line at its normal size (fixed-size chart art).
+        rule.audit(AuditConfig(allowOverflow = listOf("أغسطس"))) { FreelanceContent(s, {}, FreelanceActions.None, sheet) }.assertNone()
     }
 
     @Test fun turnOnBlock() = audit(FreelanceUi(loading = false))
