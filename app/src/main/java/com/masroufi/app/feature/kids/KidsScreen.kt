@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.kids
 
 import androidx.compose.foundation.background
@@ -63,6 +65,15 @@ import com.masroufi.app.ui.paper.BlankSheet
 import com.masroufi.app.ui.paper.Qersh
 import com.masroufi.app.ui.paper.QershMood
 import com.masroufi.app.ui.theme.Tz
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.selection.toggleable
+import com.masroufi.app.feature.plan.SplitRow
+import com.masroufi.app.feature.plan.TwoUp
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.pressClickable
+import com.masroufi.app.ui.motion.pressScale
 import com.masroufi.app.ui.theme.TzType
 import java.time.DayOfWeek
 
@@ -72,6 +83,13 @@ fun KidsScreen(viewModel: KidsViewModel, onBack: () -> Unit, onNewChild: () -> U
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val haptics = LocalHaptics.current
     LaunchedEffect(viewModel) { viewModel.haptics.collect { haptics.perform(it) } }
+    KidsContent(ui, viewModel, onBack, onNewChild, onEditChild)
+}
+
+/** The screen with its state and actions passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun KidsContent(ui: KidsUi, viewModel: KidsActions, onBack: () -> Unit, onNewChild: () -> Unit, onEditChild: (Long) -> Unit) {
+    val haptics = LocalHaptics.current
     val view = ui.view
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
@@ -84,7 +102,10 @@ fun KidsScreen(viewModel: KidsViewModel, onBack: () -> Unit, onNewChild: () -> U
                 if (view == null || view.canAddChild) onNewChild() else viewModel.openPlus()
             }
         }
-        if (ui.loading || view == null) return@Column
+        if (ui.loading || view == null) {
+            LoadingRows()
+            return@Column
+        }
         if (view.children.isEmpty()) {
             EmptyState({ BlankSheet() }, R.string.kids_empty_title, R.string.kids_empty_line, R.string.kids_empty_action, onNewChild, primaryAction = true)
             return@Column
@@ -105,21 +126,26 @@ fun KidsScreen(viewModel: KidsViewModel, onBack: () -> Unit, onNewChild: () -> U
 
 @Composable
 private fun Summary(view: KidsView, onDay: () -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            stringResource(R.string.kids_month_line, poundsText(view.monthEstimate)) + (view.envelopeName?.let { " · " + stringResource(R.string.kids_from_envelope) } ?: ""),
-            style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2, modifier = Modifier.weight(1f),
-        )
-        Text(
-            stringResource(R.string.kids_handover_on, dayName(view.handoverDay, bare = true)),
-            style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold), color = Tz.turquoise,
-            modifier = Modifier.heightIn(min = 44.dp).clickable(role = Role.Button, onClick = onDay).padding(start = 8.dp),
-        )
+    SplitRow(
+        Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        info = { m ->
+            Text(
+                stringResource(R.string.kids_month_line, poundsText(view.monthEstimate)) + (view.envelopeName?.let { " · " + stringResource(R.string.kids_from_envelope) } ?: ""),
+                style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2, modifier = m,
+            )
+        },
+    ) {
+        Box(Modifier.pressClickable(onClick = onDay).heightIn(min = 48.dp).padding(start = 8.dp), contentAlignment = Alignment.Center) {
+            Text(
+                stringResource(R.string.kids_handover_on, dayName(view.handoverDay, bare = true)),
+                style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold), color = Tz.turquoise,
+            )
+        }
     }
 }
 
 @Composable
-private fun ParentTicket(t: ChildTicketUi, day: DayOfWeek, vm: KidsViewModel, onEdit: () -> Unit) {
+private fun ParentTicket(t: ChildTicketUi, day: DayOfWeek, vm: KidsActions, onEdit: () -> Unit) {
     val v = t.view
     val jar = v.jar
     val advance = v.waitingAdvance
@@ -130,10 +156,10 @@ private fun ParentTicket(t: ChildTicketUi, day: DayOfWeek, vm: KidsViewModel, on
             if (advance != null) {
                 Text(stringResource(R.string.kids_advance_ask, poundsText(advance.amount)), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = c.ink)
                 if (v.editable) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TicketPill(stringResource(R.string.kids_advance_yes), c, filled = true, modifier = Modifier.weight(1f)) { vm.answerAdvance(advance.id, true) }
-                        TicketPill(stringResource(R.string.kids_advance_wait, dayName(day)), c, filled = false, modifier = Modifier.weight(1f)) { vm.answerAdvance(advance.id, false) }
-                    }
+                    TwoUp(
+                        { m -> TicketPill(stringResource(R.string.kids_advance_yes), c, filled = true, modifier = m) { vm.answerAdvance(advance.id, true) } },
+                        { m -> TicketPill(stringResource(R.string.kids_advance_wait, dayName(day)), c, filled = false, modifier = m) { vm.answerAdvance(advance.id, false) } },
+                    )
                 }
             }
             if (jar != null) {
@@ -145,10 +171,10 @@ private fun ParentTicket(t: ChildTicketUi, day: DayOfWeek, vm: KidsViewModel, on
 }
 
 @Composable
-private fun ChoresCard(view: KidsView, vm: KidsViewModel) {
+private fun ChoresCard(view: KidsView, vm: KidsActions) {
     val haptics = LocalHaptics.current
     TzCard {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.kids_chores_title), style = TzType.cardHeading, color = Tz.text)
             TextLink(stringResource(R.string.kids_chores_add), { haptics.perform(HapticLevel.Tap); vm.openAddChore() })
         }
@@ -161,15 +187,20 @@ private fun ChoreRow(row: ChoreView, view: KidsView, onTap: () -> Unit) {
     val done = row.tickedBy != null
     val who = row.chore.childId ?: row.tickedBy
     val whoName = view.children.firstOrNull { it.child.id == who }?.child?.name
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 44.dp).clickable(role = Role.Checkbox, onClick = onTap),
-        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
+    val source = remember { MutableInteractionSource() }
+    SplitRow(
+        Modifier.pressScale(source, PressScale.Card).fillMaxWidth().heightIn(min = 48.dp)
+            .toggleable(value = done, interactionSource = source, indication = null, role = Role.Checkbox) { onTap() },
+        info = { m ->
+            Row(m, horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Tick(done)
+                Column(Modifier.weight(1f)) {
+                    Text(row.chore.label, style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
+                    if (whoName != null) Text(whoName, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
+                }
+            }
+        },
     ) {
-        Tick(done)
-        Column(Modifier.weight(1f)) {
-            Text(row.chore.label, style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
-            if (whoName != null) Text(whoName, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
-        }
         Text(stringResource(R.string.kids_chore_bonus, poundsText(row.chore.bonus)), style = TzType.cardHeading.copy(fontSize = 18.sp), color = if (done) Tz.turquoise else Tz.text2)
     }
 }
@@ -205,7 +236,7 @@ private fun HintCard(editable: List<ChildTicketUi>, onOpen: (Long) -> Unit) {
 }
 
 @Composable
-private fun KidsSheets(ui: KidsUi, vm: KidsViewModel) {
+internal fun KidsSheets(ui: KidsUi, vm: KidsActions) {
     val view = ui.view ?: return
     when (val s = ui.sheet) {
         KidsSheet.HandoverDay -> TzSheet(vm::dismissSheet) {
@@ -232,7 +263,7 @@ private fun KidsSheets(ui: KidsUi, vm: KidsViewModel) {
 
 /** "ضيف": label, bonus and for which child (or any). */
 @Composable
-private fun AddChoreSheet(view: KidsView, vm: KidsViewModel) {
+private fun AddChoreSheet(view: KidsView, vm: KidsActions) {
     val haptics = LocalHaptics.current
     var label by remember { mutableStateOf("") }
     var bonus by remember { mutableStateOf(AmountInput()) }
@@ -261,7 +292,7 @@ private fun AddChoreSheet(view: KidsView, vm: KidsViewModel) {
 
 /** The first child screen: the parent types a PIN and then types it again (4 to 6 digits). */
 @Composable
-private fun PinSetupSheet(s: PinSetup, vm: KidsViewModel) {
+private fun PinSetupSheet(s: PinSetup, vm: KidsActions) {
     TzSheet(vm::cancelPinSetup) {
         Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.kids_pin_set_title), style = TzType.cardHeading, color = Tz.text)

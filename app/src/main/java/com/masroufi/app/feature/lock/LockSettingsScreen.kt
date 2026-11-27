@@ -38,7 +38,7 @@ fun LockSettingsScreen(viewModel: LockSettingsViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-fun LockSettingsContent(ui: LockSettingsUi, vm: LockSettingsViewModel, onBack: () -> Unit) {
+fun LockSettingsContent(ui: LockSettingsUi, vm: LockSettingsActions, onBack: () -> Unit) {
     val haptics = LocalHaptics.current
     Column(
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())

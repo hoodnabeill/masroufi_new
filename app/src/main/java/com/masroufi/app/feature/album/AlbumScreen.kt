@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.album
 
 import androidx.annotation.StringRes
@@ -69,7 +71,12 @@ import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.EmptyState
 import com.masroufi.app.ui.components.PrimaryButton
-import com.masroufi.app.ui.components.RowSkeleton
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.isLargeFont
+import com.masroufi.app.ui.motion.pressClickable
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzPanel
 import com.masroufi.app.ui.components.TzProgressBar
@@ -94,6 +101,10 @@ private const val CELEBRATION_MS = 2_400L
 
 private const val GRID_COLUMNS = 3
 private const val STUBS_SHOWN = 6
+
+/** Three cards a row; one at a large font, where a card's proverb would not fit a third of the width. */
+@Composable
+private fun gridColumns(): Int = if (isLargeFont()) 1 else GRID_COLUMNS
 
 /** One cell of the proverb grid. [key] is stable across the list changing. */
 private sealed class Cell(val key: String) {
@@ -147,6 +158,7 @@ fun AlbumContent(
     val cells: List<Cell> = remember(ui.cards, ui.locked) {
         ui.cards.mapIndexed { i, c -> Cell.Collected(c, isNew = i == 0) } + ui.locked.map { Cell.Locked(it) }
     }
+    val columns = gridColumns()
     Box(modifier.fillMaxSize()) {
         LazyColumn(
             Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
@@ -160,7 +172,7 @@ fun AlbumContent(
                 }
             }
             if (album == null) {
-                items(3, key = { "skeleton$it" }) { RowSkeleton(modifier = Modifier.padding(bottom = 14.dp)) }
+                item(key = "skeleton") { LoadingRows() }
                 return@LazyColumn
             }
             item(key = "identity") { Box(Modifier.padding(bottom = 14.dp)) { Identity(ui, onOpenProfile) } }
@@ -175,7 +187,7 @@ fun AlbumContent(
                 }
             } else {
                 item(key = "proverbs-title") {
-                    Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+                    FlowRow(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.Bottom) {
                         Text(stringResource(R.string.album_proverbs_title), style = TzType.titlePushed, color = Tz.text)
                         Text(
                             stringResource(R.string.album_proverbs_count, ui.cards.size.toString(), ui.totalCards.toString()),
@@ -183,7 +195,7 @@ fun AlbumContent(
                         )
                     }
                 }
-                val rows = cells.chunked(GRID_COLUMNS)
+                val rows = cells.chunked(columns)
                 items(rows, key = { it.first().key }) { row ->
                     Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         row.forEach { cell ->
@@ -192,7 +204,7 @@ fun AlbumContent(
                                 is Cell.Locked -> LockedCell(cell.hint, Modifier.weight(1f))
                             }
                         }
-                        repeat(GRID_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+                        repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
                 item(key = "stamps") { Box(Modifier.padding(top = 6.dp, bottom = 14.dp)) { Stamps(ui) } }
@@ -224,8 +236,7 @@ private fun Identity(ui: AlbumUi, onOpenProfile: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(
-            Modifier.fillMaxWidth()
-                .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpenProfile() }
+            Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onOpenProfile() }.fillMaxWidth()
                 .semantics(mergeDescendants = true) { contentDescription = identityCd },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -242,7 +253,7 @@ private fun Identity(ui: AlbumUi, onOpenProfile: () -> Unit) {
         }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             TzProgressBar(listOf(ui.progress to Tz.yellow), height = 10.dp)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(stringResource(R.string.album_cut, a.handClosed.toString()), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
                 // Hidden at the top level.
                 if (a.ticketsToNext != null) {
@@ -254,10 +265,18 @@ private fun Identity(ui: AlbumUi, onOpenProfile: () -> Unit) {
                 }
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Tile(a.streak, R.string.album_tile_streak, Tz.yellow, Modifier.weight(1f))
-            Tile(a.longestStreak, R.string.album_tile_longest, Tz.text, Modifier.weight(1f))
-            Tile(a.daysUnder, R.string.album_tile_under, Tz.turquoise, Modifier.weight(1f))
+        if (isLargeFont()) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Tile(a.streak, R.string.album_tile_streak, Tz.yellow, Modifier.fillMaxWidth())
+                Tile(a.longestStreak, R.string.album_tile_longest, Tz.text, Modifier.fillMaxWidth())
+                Tile(a.daysUnder, R.string.album_tile_under, Tz.turquoise, Modifier.fillMaxWidth())
+            }
+        } else {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Tile(a.streak, R.string.album_tile_streak, Tz.yellow, Modifier.weight(1f))
+                Tile(a.longestStreak, R.string.album_tile_longest, Tz.text, Modifier.weight(1f))
+                Tile(a.daysUnder, R.string.album_tile_under, Tz.turquoise, Modifier.weight(1f))
+            }
         }
     }
 }
@@ -289,8 +308,7 @@ private fun CardCell(cell: Cell.Collected, modifier: Modifier, onOpen: () -> Uni
     val ink = inkOn(color)
     val cd = stringResource(R.string.album_card_cd, p.number.toString(), p.text)
     Column(
-        modifier.height(140.dp).clip(RoundedCornerShape(18.dp)).background(color)
-            .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpen() }
+        modifier.pressClickable { haptics.perform(HapticLevel.Tap); onOpen() }.heightIn(min = 140.dp).clip(RoundedCornerShape(18.dp)).background(color)
             .semantics(mergeDescendants = true) { contentDescription = cd }
             .padding(12.dp),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -314,7 +332,7 @@ private fun LockedCell(hint: LockHint, modifier: Modifier) {
     )
     val cd = stringResource(R.string.album_locked_cd, label)
     Column(
-        modifier.height(140.dp).drawBehind {
+        modifier.heightIn(min = 140.dp).drawBehind {
             val w = 1.5.dp.toPx()
             drawRoundRect(
                 Tz.dashed, Offset(w / 2f, w / 2f), Size(size.width - w, size.height - w), CornerRadius(18.dp.toPx() - w / 2f),
@@ -363,7 +381,8 @@ private fun Stamps(ui: AlbumUi) {
     val locale = LocalConfiguration.current.locales[0]
     TzPanel(spacing = 14.dp) {
         Text(stringResource(R.string.album_stamps_title), style = TzType.titlePushed, color = Tz.text)
-        ui.stamps.chunked(GRID_COLUMNS).forEachIndexed { r, row ->
+        val columns = gridColumns()
+        ui.stamps.chunked(columns).forEachIndexed { r, row ->
             Row(Modifier.fillMaxWidth()) {
                 row.forEachIndexed { c, slot ->
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -373,10 +392,10 @@ private fun Stamps(ui: AlbumUi) {
                             slot.count > 1 -> pluralText(R.plurals.album_stamp_times, slot.count)
                             else -> formatDayMonth(earned, locale)
                         }
-                        Stamp(stringResource(slot.kind.nameRes()), if (earned != null) slot.kind.stampColor() else null, sub, Tilts[(r * GRID_COLUMNS + c) % Tilts.size])
+                        Stamp(stringResource(slot.kind.nameRes()), if (earned != null) slot.kind.stampColor() else null, sub, Tilts[(r * columns + c) % Tilts.size])
                     }
                 }
-                repeat(GRID_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
@@ -388,7 +407,7 @@ private val StubTilts = listOf(0f, -3f, 0f, 2f, 0f, -2f)
 private fun Stubs(stubs: List<MatchDay>, onOpenRoll: () -> Unit) {
     val haptics = LocalHaptics.current
     TzPanel {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.album_stubs_title), style = TzType.titlePushed, color = Tz.text)
             TextLink(stringResource(R.string.album_stubs_all), { haptics.perform(HapticLevel.Tap); onOpenRoll() })
         }
@@ -425,8 +444,11 @@ private fun StubTile(d: MatchDay, tilt: Float, modifier: Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(d.date.dayOfMonth.toString(), style = TzType.card.copy(fontSize = 18.sp, lineHeight = 1.em), color = ink)
-        Text(amount, style = TzType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold), color = ink, maxLines = 1)
+        // shortcut: a ticket stub is fixed-size art, so its two numbers keep the normal font size (TalkBack reads the description).
+        CappedFontScale {
+            Text(d.date.dayOfMonth.toString(), style = TzType.card.copy(fontSize = 18.sp, lineHeight = 1.em), color = ink)
+            Text(amount, style = TzType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold), color = ink, maxLines = 1)
+        }
     }
 }
 
@@ -444,7 +466,7 @@ private fun Links(onOpenStories: () -> Unit, onOpenBasket: () -> Unit, onOpenPoc
 @Composable
 private fun LinkRow(@StringRes text: Int, onClick: () -> Unit, divider: Boolean) {
     val haptics = LocalHaptics.current
-    Column(Modifier.clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }) {
+    Column(Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onClick() }) {
         Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(text), style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, modifier = Modifier.weight(1f))
             TzIcon(TzIcons.chevron, 18.dp, null, tint = Tz.text2)

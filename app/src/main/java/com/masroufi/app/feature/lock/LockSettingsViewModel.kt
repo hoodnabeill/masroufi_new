@@ -38,13 +38,24 @@ data class LockSettingsUi(
     val waitSeconds: Long = 0,
 )
 
+/** What the lock settings screen calls on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface LockSettingsActions {
+    fun toggleLock(on: Boolean) {}
+    fun startChange() {}
+    fun setFingerprint(on: Boolean) {}
+    fun cancel() {}
+    fun digit(d: Int) {}
+    fun backspace() {}
+    fun ok() {}
+}
+
 /** Turn the lock on (set a PIN if none: enter + repeat), change the PIN (verify the old first), turn it off (verify first), fingerprint on/off. */
 @HiltViewModel
 class LockSettingsViewModel @Inject constructor(
     private val pin: PinStore,
     private val settings: SettingsStore,
     private val appLock: AppLock,
-) : ViewModel() {
+) : ViewModel(), LockSettingsActions {
     private class Local(
         val step: LockStep = LockStep.None,
         val digits: String = "",
@@ -63,7 +74,7 @@ class LockSettingsViewModel @Inject constructor(
         LockSettingsUi(false, s.lockOn, s.lockFingerprint, l.step, l.digits, l.error, l.triesLeft, l.waitSeconds)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LockSettingsUi())
 
-    fun toggleLock(on: Boolean) = act {
+    override fun toggleLock(on: Boolean) = act {
         if (on) {
             when {
                 !pin.isSet() -> go(LockStep.Create)
@@ -73,15 +84,15 @@ class LockSettingsViewModel @Inject constructor(
         } else if (pin.isSet()) go(LockStep.VerifyForOff) else settings.setLockOn(false)
     }
 
-    fun startChange() = act { go(LockStep.VerifyForChange) }
-    fun setFingerprint(on: Boolean) = act { settings.setLockFingerprint(on) }
-    fun cancel() = local.update { Local() }
+    override fun startChange() = act { go(LockStep.VerifyForChange) }
+    override fun setFingerprint(on: Boolean) = act { settings.setLockFingerprint(on) }
+    override fun cancel() = local.update { Local() }
 
-    fun digit(d: Int) = local.update { if (it.step == LockStep.None || it.digits.length >= PIN_MAX_DIGITS) it else Local(it.step, it.digits + d) }
-    fun backspace() = local.update { Local(it.step, it.digits.dropLast(1)) }
+    override fun digit(d: Int) = local.update { if (it.step == LockStep.None || it.digits.length >= PIN_MAX_DIGITS) it else Local(it.step, it.digits + d) }
+    override fun backspace() = local.update { Local(it.step, it.digits.dropLast(1)) }
 
     /** The check mark of the pad. */
-    fun ok() {
+    override fun ok() {
         val l = local.value
         if (l.digits.length < PIN_MIN_DIGITS) return
         act {

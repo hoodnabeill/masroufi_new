@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.people
 
 import androidx.compose.foundation.background
@@ -53,6 +55,10 @@ import com.masroufi.app.ui.components.PlusLocked
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.SecondaryButton
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.LARGE_FONT_SCALE
+import com.masroufi.app.ui.motion.pressClickable
+import com.masroufi.app.feature.pockets.LoadingRows
 import com.masroufi.app.ui.components.Segmented
 import com.masroufi.app.ui.components.TextLink
 import com.masroufi.app.ui.components.TzChip
@@ -74,6 +80,12 @@ private val SheetPad = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.d
 @Composable
 fun DutyLedgerScreen(viewModel: DutyLedgerViewModel, onBack: () -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
+    DutyLedgerContent(ui, viewModel, onBack)
+}
+
+/** The ledger with its state and actions passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun DutyLedgerContent(ui: DutyUi, viewModel: DutyActions, onBack: () -> Unit) {
     val haptics = LocalHaptics.current
     Column(
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, top = 24.dp),
@@ -96,10 +108,10 @@ fun DutyLedgerScreen(viewModel: DutyLedgerViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun DutyContent(ui: DutyUi, vm: DutyLedgerViewModel) {
+private fun DutyContent(ui: DutyUi, vm: DutyActions) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         when {
-            ui.loading -> repeat(3) { RowSkeleton() }
+            ui.loading -> LoadingRows()
             ui.empty -> EmptyState({ BlankSheet() }, R.string.duty_empty_title, R.string.duty_empty_line, R.string.duty_empty_action, { vm.openOccasion() }, primaryAction = true)
             else -> {
                 ui.upcoming?.let { Column(Modifier.fillMaxWidth().clip(CardShape).background(Tz.lilac).padding(12.dp)) { DutyUpcoming(it) } }
@@ -111,19 +123,19 @@ private fun DutyContent(ui: DutyUi, vm: DutyLedgerViewModel) {
 }
 
 @Composable
-private fun Group(title: Int, list: List<OccasionView>, vm: DutyLedgerViewModel) {
+private fun Group(title: Int, list: List<OccasionView>, vm: DutyActions) {
     if (list.isEmpty()) return
     Text(stringResource(title), style = TzType.cardHeading, color = Tz.text2, modifier = Modifier.padding(horizontal = 4.dp))
     list.forEach { OccasionCard(it, vm) }
 }
 
 @Composable
-private fun OccasionCard(v: OccasionView, vm: DutyLedgerViewModel) {
+private fun OccasionCard(v: OccasionView, vm: DutyActions) {
     val haptics = LocalHaptics.current
     val o = v.occasion
     Column(Modifier.fillMaxWidth().clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape).padding(vertical = 8.dp)) {
         Column(
-            Modifier.fillMaxWidth().clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); vm.openOccasion(v) }.padding(horizontal = 16.dp, vertical = 8.dp),
+            Modifier.pressClickable { haptics.perform(HapticLevel.Tap); vm.openOccasion(v) }.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(o.name, style = TzType.cardHeading, color = Tz.text)
@@ -144,11 +156,11 @@ private fun OccasionCard(v: OccasionView, vm: DutyLedgerViewModel) {
 private fun GiftLine(g: GiftRow, onClick: () -> Unit) {
     val received = g.gift.direction == GiftDirection.RECEIVED
     Row(
-        Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
+        Modifier.pressClickable(onClick = onClick).fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(g.person?.name.orEmpty(), style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
+            Text(g.person?.name.orEmpty(), style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
             Text(stringResource(if (received) R.string.duty_received else R.string.duty_given), style = TzType.caption, color = Tz.text2)
         }
         Text(poundsText(g.gift.amount), style = TzType.rowNumber, color = if (received) Tz.turquoise else Tz.text)
@@ -156,7 +168,7 @@ private fun GiftLine(g: GiftRow, onClick: () -> Unit) {
 }
 
 @Composable
-private fun DutySheets(ui: DutyUi, vm: DutyLedgerViewModel) {
+internal fun DutySheets(ui: DutyUi, vm: DutyActions) {
     when (val s = ui.sheet) {
         null -> Unit
         is DutySheet.Occasion -> OccasionSheet(ui, s, vm)
@@ -177,7 +189,7 @@ private const val NAME_MAX = 40
 
 /** Name, whose, the person it is about (optional) and the date as month chips with day and year steppers. */
 @Composable
-private fun OccasionSheet(ui: DutyUi, s: DutySheet.Occasion, vm: DutyLedgerViewModel) {
+private fun OccasionSheet(ui: DutyUi, s: DutySheet.Occasion, vm: DutyActions) {
     val haptics = LocalHaptics.current
     val locale = LocalConfiguration.current.locales[0]
     val e = s.editing
@@ -225,14 +237,15 @@ private fun OccasionSheet(ui: DutyUi, s: DutySheet.Occasion, vm: DutyLedgerViewM
 private fun Stepper(value: String, lessCd: String, moreCd: String, onLess: () -> Unit, onMore: () -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
         CircleButton(TzIcons.minus, lessCd, onLess)
-        Text(value, style = TzType.hero.copy(fontSize = 32.sp), color = Tz.text, modifier = Modifier.defaultMinSize(minWidth = 64.dp))
+        // shortcut: the number stops growing past 130% font size so the row fits; revisit with a layout that can grow.
+        CappedFontScale(LARGE_FONT_SCALE) { Text(value, style = TzType.hero.copy(fontSize = 32.sp), color = Tz.text, modifier = Modifier.defaultMinSize(minWidth = 64.dp)) }
         CircleButton(TzIcons.add, moreCd, onMore)
     }
 }
 
 /** Who (picked or new), how much, and which way it went. */
 @Composable
-private fun GiftSheet(ui: DutyUi, s: DutySheet.Gift, vm: DutyLedgerViewModel) {
+private fun GiftSheet(ui: DutyUi, s: DutySheet.Gift, vm: DutyActions) {
     val haptics = LocalHaptics.current
     val e = s.editing
     val people = ui.persons.filter { it.kind == PersonKind.PERSON }

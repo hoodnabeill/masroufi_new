@@ -37,6 +37,7 @@ import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcons
+import com.masroufi.app.ui.components.CappedFontScale
 import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
 
@@ -45,8 +46,14 @@ import com.masroufi.app.ui.theme.TzType
 fun ChildFormScreen(viewModel: ChildFormViewModel, onBack: () -> Unit) {
     val f by viewModel.form.collectAsStateWithLifecycle()
     val gone by viewModel.gone.collectAsStateWithLifecycle()
-    val haptics = LocalHaptics.current
     LaunchedEffect(f.saved, gone) { if (f.saved || gone) onBack() }
+    ChildFormContent(f, viewModel, onBack)
+}
+
+/** The form with its state and actions passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun ChildFormContent(f: ChildForm, viewModel: ChildFormActions, onBack: () -> Unit) {
+    val haptics = LocalHaptics.current
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().imePadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -59,13 +66,14 @@ fun ChildFormScreen(viewModel: ChildFormViewModel, onBack: () -> Unit) {
         FormBlock(R.string.kids_form_year_q) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                 CircleButton(TzIcons.minus, stringResource(R.string.kids_form_year_minus)) { haptics.perform(HapticLevel.Tick); viewModel.setBirthYear(f.birthYear - 1) }
-                Text(f.birthYear.toString(), style = TzType.hero, color = Tz.text)
+                // shortcut: the year keeps its size at a large system font so the row fits; revisit with a layout that can grow.
+                CappedFontScale { Text(f.birthYear.toString(), style = TzType.hero, color = Tz.text) }
                 CircleButton(TzIcons.add, stringResource(R.string.kids_form_year_plus)) { haptics.perform(HapticLevel.Tick); viewModel.setBirthYear(f.birthYear + 1) }
             }
         }
 
         FormBlock(R.string.kids_form_color_q) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ChipRow {
                 CATEGORY_COLORS.forEachIndexed { i, argb ->
                     Swatch(Color(argb), f.colorIndex == i, stringResource(R.string.env_color_desc, (i + 1).toString())) { viewModel.setColor(i) }
                 }

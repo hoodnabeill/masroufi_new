@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.settings
 
 import android.Manifest
@@ -57,7 +59,11 @@ import com.masroufi.app.ui.components.LocalEndOfMonthMode
 import com.masroufi.app.ui.components.LocalOpenPaywall
 import com.masroufi.app.ui.components.PlusSettingsRow
 import com.masroufi.app.ui.components.PlusSheet
-import com.masroufi.app.ui.components.RowSkeleton
+import com.masroufi.app.feature.plan.ChipRow
+import com.masroufi.app.feature.plan.SplitRow
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.components.isLargeFont
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.components.Segmented
 import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.components.TzSheet
@@ -103,7 +109,7 @@ fun SettingsContent(ui: SettingsUi, vm: SettingsActions, nav: SettingsNav, suppo
     ) {
         PushedHeader(stringResource(R.string.settings_title), nav.onBack)
         if (ui.loading) {
-            repeat(3) { RowSkeleton() }
+            LoadingRows()
             return@Column
         }
         ProfileRow(ui, nav.onProfile)
@@ -128,16 +134,15 @@ fun SettingsContent(ui: SettingsUi, vm: SettingsActions, nav: SettingsNav, suppo
         }
 
         Group(R.string.settings_group_feel) {
-            Row(
-                Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
+            SplitRow(
+                Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                info = { m -> Box(m) { RowTitle(R.string.settings_language, null) } },
             ) {
-                RowTitle(R.string.settings_language, null)
                 Segmented(
                     listOf(stringResource(R.string.settings_lang_ar), stringResource(R.string.settings_lang_en)),
                     if (arabic) 0 else 1,
                     { vm.setLanguage(if (it == 0) "ar" else "en") },
-                    Modifier.width(190.dp),
+                    if (isLargeFont()) Modifier.fillMaxWidth() else Modifier.width(190.dp),
                 )
             }
             Divider()
@@ -157,13 +162,10 @@ fun SettingsContent(ui: SettingsUi, vm: SettingsActions, nav: SettingsNav, suppo
                 },
                 onClick = nav.onBackup,
             )
-            Row(
+            SplitRow(
                 Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).alpha(0.6f).padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                RowTitle(R.string.settings_sms, R.string.settings_sms_sub)
-                Text(stringResource(R.string.settings_soon), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
-            }
+                info = { m -> Box(m) { RowTitle(R.string.settings_sms, R.string.settings_sms_sub) } },
+            ) { Text(stringResource(R.string.settings_soon), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2) }
         }
 
         Group(R.string.settings_group_about) {
@@ -176,13 +178,10 @@ fun SettingsContent(ui: SettingsUi, vm: SettingsActions, nav: SettingsNav, suppo
                     }
                 }
             }
-            Row(
-                Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                RowTitle(R.string.settings_version, null)
-                Text(versionName, style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
-            }
+            SplitRow(
+                Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                info = { m -> Box(m) { RowTitle(R.string.settings_version, null) } },
+            ) { Text(versionName, style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2) }
         }
         Text(stringResource(R.string.settings_footer), Modifier.fillMaxWidth(), color = Tz.text2, style = TzType.caption.copy(textAlign = TextAlign.Center))
     }
@@ -222,10 +221,10 @@ private fun SettingsSheets(ui: SettingsUi, vm: SettingsActions) {
             Column(Modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.jar_round_title), style = TzType.cardHeading.copy(color = Tz.text))
                 Text(stringResource(R.string.jar_round_line, if (ui.roundUpStep > 0) ui.roundUpStep else 5), style = TzType.caption, color = Tz.text2)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TzChip(stringResource(R.string.settings_off), ui.roundUpStep == 0, { vm.setRoundUpStep(0) }, Modifier.weight(1f), style = ChipStyle.Choice)
+                ChipRow {
+                    TzChip(stringResource(R.string.settings_off), ui.roundUpStep == 0, { vm.setRoundUpStep(0) }, style = ChipStyle.Choice)
                     listOf(5, 10, 50).forEach { n ->
-                        TzChip(stringResource(R.string.jar_round_to, n), ui.roundUpStep == n, { vm.setRoundUpStep(n) }, Modifier.weight(1f), style = ChipStyle.Choice)
+                        TzChip(stringResource(R.string.jar_round_to, n), ui.roundUpStep == n, { vm.setRoundUpStep(n) }, style = ChipStyle.Choice)
                     }
                 }
             }
@@ -241,10 +240,10 @@ internal fun ReminderSheet(hour: Int?, onPick: (Int?) -> Unit, onClose: () -> Un
     TzSheet(onClose) {
         Column(Modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.ob_reminder_title), style = TzType.cardHeading.copy(color = Tz.text))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChipRow {
                 // The hours onboarding offers; a stored hour outside them shows in the row and no chip is on.
                 listOf<Pair<Int?, Int>>(20 to R.string.ob_reminder_8, 21 to R.string.ob_reminder_9, 22 to R.string.ob_reminder_10, null to R.string.ob_reminder_none).forEach { (h, label) ->
-                    TzChip(stringResource(label), hour == h, { onPick(h) }, Modifier.weight(1f), style = ChipStyle.Choice)
+                    TzChip(stringResource(label), hour == h, { onPick(h) }, style = ChipStyle.Choice)
                 }
             }
         }
@@ -277,8 +276,7 @@ private fun roundText(step: Int): String =
 private fun ProfileRow(ui: SettingsUi, onClick: () -> Unit) {
     val haptics = LocalHaptics.current
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Tz.surface)
-            .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }
+        Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onClick() }.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Tz.surface)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -316,11 +314,10 @@ internal fun RowTitle(title: Int, sub: Int?) {
 @Composable
 internal fun ValueRow(title: Int, value: String?, last: Boolean = false, onClick: () -> Unit) {
     val haptics = LocalHaptics.current
-    Row(
-        Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }.padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
+    SplitRow(
+        Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onClick() }.fillMaxWidth().defaultMinSize(minHeight = 56.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+        info = { m -> Box(m) { RowTitle(title, null) } },
     ) {
-        RowTitle(title, null)
         if (value != null) Text(value, style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.yellow)
         else TzIcon(TzIcons.chevron, 18.dp, null, tint = Tz.text2)
     }
@@ -330,12 +327,9 @@ internal fun ValueRow(title: Int, value: String?, last: Boolean = false, onClick
 @Composable
 internal fun SwitchRow(title: Int, sub: Int?, checked: Boolean, onChange: (Boolean) -> Unit, last: Boolean = false) {
     val label = stringResource(title)
-    Row(
+    SplitRow(
         Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        RowTitle(title, sub)
-        TzToggle(checked, onChange, label)
-    }
+        info = { m -> Box(m) { RowTitle(title, sub) } },
+    ) { TzToggle(checked, onChange, label) }
     if (!last) Divider()
 }

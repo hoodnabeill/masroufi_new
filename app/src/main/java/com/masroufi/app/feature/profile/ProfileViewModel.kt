@@ -69,6 +69,23 @@ private data class Local(
     val wiped: Boolean = false,
 )
 
+/** What the profile screen and its sheets call on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface ProfileActions {
+    fun setName(v: String) {}
+    fun setBirthday(v: LocalDate?) {}
+    fun setWorkKind(k: WorkKind) {}
+    fun setMainGoal(g: MainGoal) {}
+    fun stepSize(delta: Int) {}
+    fun stepSchool(delta: Int) {}
+    fun open(sheet: ProfileSheet) {}
+    fun closeSheet() {}
+    fun digit(d: Int) {}
+    fun point() {}
+    fun backspace() {}
+    fun saveTarget() {}
+    fun wipe() {}
+}
+
 private const val TAG = "Profile"
 
 /** ملفك: every field optional, saved on the phone as it changes. */
@@ -78,7 +95,7 @@ class ProfileViewModel @Inject constructor(
     album: AlbumRepository,
     match: MatchRepository,
     private val dataWipe: DataWipe,
-) : ViewModel() {
+) : ViewModel(), ProfileActions {
     private val local = MutableStateFlow(Local())
 
     /** Saves run one at a time: a stepper tapped twice quickly reads what the first tap wrote. */
@@ -100,35 +117,35 @@ class ProfileViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileUi())
 
-    fun setName(v: String) {
+    override fun setName(v: String) {
         val t = v.take(NAME_MAX)
         local.update { it.copy(name = t) }
         act { profile.setName(t) }
     }
 
-    fun setBirthday(v: LocalDate?) {
+    override fun setBirthday(v: LocalDate?) {
         closeSheet()
         act { profile.setBirthday(v) }
     }
 
     /** Tapping the chosen kind again clears it (every field is optional). */
-    fun setWorkKind(k: WorkKind) = act { profile.setWorkKind(k.takeIf { it != profile.profile.first().workKind }) }
+    override fun setWorkKind(k: WorkKind) = act { profile.setWorkKind(k.takeIf { it != profile.profile.first().workKind }) }
 
-    fun setMainGoal(g: MainGoal) = act { profile.setMainGoal(g.takeIf { it != profile.profile.first().mainGoal }) }
+    override fun setMainGoal(g: MainGoal) = act { profile.setMainGoal(g.takeIf { it != profile.profile.first().mainGoal }) }
 
-    fun stepSize(delta: Int) = act {
+    override fun stepSize(delta: Int) = act {
         val s = profile.profile.first()
         val size = ((s.householdSize ?: DEFAULT_HOUSEHOLD) + delta).coerceIn(1, HOUSEHOLD_MAX)
         profile.setHousehold(size, s.inSchool?.coerceAtMost(size))
     }
 
-    fun stepSchool(delta: Int) = act {
+    override fun stepSchool(delta: Int) = act {
         val s = profile.profile.first()
         val size = s.householdSize ?: DEFAULT_HOUSEHOLD
         profile.setHousehold(size, ((s.inSchool ?: 0) + delta).coerceIn(0, size))
     }
 
-    fun open(sheet: ProfileSheet) {
+    override fun open(sheet: ProfileSheet) {
         local.update {
             it.copy(
                 sheet = sheet,
@@ -137,21 +154,21 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun closeSheet() = local.update { it.copy(sheet = null) }
+    override fun closeSheet() = local.update { it.copy(sheet = null) }
 
-    fun digit(d: Int) = local.update { it.copy(target = it.target.digit(d)) }
-    fun point() = local.update { it.copy(target = it.target.point()) }
-    fun backspace() = local.update { it.copy(target = it.target.backspace()) }
+    override fun digit(d: Int) = local.update { it.copy(target = it.target.digit(d)) }
+    override fun point() = local.update { it.copy(target = it.target.point()) }
+    override fun backspace() = local.update { it.copy(target = it.target.backspace()) }
 
     /** An empty or zero target goes back to the default (1,000). */
-    fun saveTarget() {
+    override fun saveTarget() {
         val piastres = local.value.target.toPiastres()
         closeSheet()
         act { profile.setBirthdayTarget(piastres.takeIf { it > 0 }) }
     }
 
     /** Delete all my data (decision 6): after this the screen relaunches the app so nothing in memory survives. */
-    fun wipe() {
+    override fun wipe() {
         if (local.value.wiped) return
         closeSheet()
         act {

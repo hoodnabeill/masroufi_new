@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.people
 
 import androidx.compose.foundation.Canvas
@@ -64,6 +66,13 @@ import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.feature.plan.AmountKeypad
 import com.masroufi.app.feature.plan.ChipRow
 import com.masroufi.app.feature.plan.NameField
+import com.masroufi.app.feature.plan.SplitRow
+import com.masroufi.app.feature.plan.TwoUp
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.motion.pressClickable
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.ChipStyle
@@ -101,6 +110,12 @@ private fun YearMonth.label(locale: Locale): String = month.getDisplayName(TextS
 @Composable
 fun GameyaMainScreen(viewModel: GameyaViewModel, onBack: () -> Unit, onNew: () -> Unit, onEdit: (Long) -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
+    GameyaContent(ui, viewModel, onBack, onNew, onEdit)
+}
+
+/** The screen with its state and actions passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun GameyaContent(ui: GameyaUi, viewModel: GameyaActions, onBack: () -> Unit, onNew: () -> Unit, onEdit: (Long) -> Unit) {
     val haptics = LocalHaptics.current
     val current = ui.current
     Column(
@@ -118,7 +133,7 @@ fun GameyaMainScreen(viewModel: GameyaViewModel, onBack: () -> Unit, onNew: () -
         )
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             when {
-                ui.loading -> repeat(3) { RowSkeleton() }
+                ui.loading -> LoadingRows()
                 current == null -> EmptyState({ BlankSheet() }, R.string.empty_gameya_title, R.string.empty_gameya_line, R.string.empty_gameya_action, onNew, primaryAction = true)
                 else -> {
                     if (ui.gameyas.size > 1) {
@@ -136,7 +151,7 @@ fun GameyaMainScreen(viewModel: GameyaViewModel, onBack: () -> Unit, onNew: () -
 }
 
 @Composable
-private fun GameyaBody(v: GameyaView, vm: GameyaViewModel) {
+private fun GameyaBody(v: GameyaView, vm: GameyaActions) {
     val haptics = LocalHaptics.current
     val share = rememberShareText()
     val statementTitle = stringResource(R.string.gameya_share)
@@ -144,10 +159,10 @@ private fun GameyaBody(v: GameyaView, vm: GameyaViewModel) {
     TurnCard(v)
     InstallmentCard(v, vm)
     PlanCard(v, vm)
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        ActionTile(TzIcons.swap, Tz.lilac, R.string.gameya_swap, Modifier.weight(1f)) { haptics.perform(HapticLevel.Tap); vm.openSwap() }
-        ActionTile(TzIcons.share, Tz.turquoise, R.string.gameya_share, Modifier.weight(1f)) { haptics.perform(HapticLevel.Tap); share(gameyaStatement(v), statementTitle) }
-    }
+    TwoUp(
+        { m -> ActionTile(TzIcons.swap, Tz.lilac, R.string.gameya_swap, m) { haptics.perform(HapticLevel.Tap); vm.openSwap() } },
+        { m -> ActionTile(TzIcons.share, Tz.turquoise, R.string.gameya_share, m) { haptics.perform(HapticLevel.Tap); share(gameyaStatement(v), statementTitle) } },
+    )
     Text(stringResource(R.string.gameya_records_only), style = TzType.caption.copy(fontSize = 12.sp, lineHeight = 20.sp), color = Tz.text2, modifier = Modifier.padding(horizontal = 4.dp))
 }
 
@@ -155,7 +170,7 @@ private fun GameyaBody(v: GameyaView, vm: GameyaViewModel) {
 private fun ActionTile(icon: TzIconDef, tint: Color, label: Int, modifier: Modifier, onClick: () -> Unit) {
     val shape = RoundedCornerShape(22.dp)
     Column(
-        modifier.height(84.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).clickable(role = Role.Button, onClick = onClick),
+        modifier.pressClickable(onClick = onClick).heightIn(min = 84.dp).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
     ) {
         TzIcon(icon, 22.dp, null, tint = tint)
@@ -188,16 +203,19 @@ private fun Wheel(v: GameyaView) {
                 val angle = Math.toRadians(-90.0 + 360.0 * i / n)
                 Seat(slot, base.dp, Modifier.absoluteOffset((130 * cos(angle)).dp, (130 * sin(angle)).dp))
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(stringResource(R.string.gameya_payout), style = TzType.label.copy(fontSize = 16.sp), color = Tz.text2)
-                Text(poundsText(v.payout), style = TzType.hero.copy(fontSize = 44.sp), color = Tz.text)
-                Text(
-                    if (v.finished) stringResource(R.string.people_gameya_done) else stringResource(R.string.gameya_month_of, v.monthNumber.coerceAtLeast(1).toString(), v.people.toString()),
-                    style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2,
-                )
+            // shortcut: the wheel is fixed-size art, so its centre text keeps the normal font size (TalkBack reads the same words).
+            CappedFontScale {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(stringResource(R.string.gameya_payout), style = TzType.label.copy(fontSize = 16.sp), color = Tz.text2)
+                    Text(poundsText(v.payout), style = TzType.hero.copy(fontSize = 44.sp), color = Tz.text)
+                    Text(
+                        if (v.finished) stringResource(R.string.people_gameya_done) else stringResource(R.string.gameya_month_of, v.monthNumber.coerceAtLeast(1).toString(), v.people.toString()),
+                        style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2,
+                    )
+                }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        FlowRow(Modifier.padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Legend(stringResource(R.string.gameya_leg_out)) { Box(Modifier.size(10.dp).clip(CircleShape).background(Tz.turquoise)) }
             Legend(stringResource(R.string.gameya_leg_now)) { Box(Modifier.size(10.dp).clip(CircleShape).background(Tz.yellow)) }
             Legend(stringResource(R.string.gameya_leg_me)) { Box(Modifier.size(10.dp).clip(CircleShape).border(2.dp, Tz.yellow, CircleShape)) }
@@ -239,10 +257,13 @@ private fun Seat(slot: WheelSlot, base: Dp, modifier: Modifier) {
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            name, style = TzType.cardHeading.copy(fontSize = (base.value * 0.36f).sp), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 3.dp),
-        )
+        // shortcut: a seat of the wheel is fixed-size art, so its name keeps the normal font size.
+        CappedFontScale {
+            Text(
+                name, style = TzType.cardHeading.copy(fontSize = (base.value * 0.36f).sp), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 3.dp),
+            )
+        }
     }
 }
 
@@ -263,14 +284,15 @@ private fun TurnCard(v: GameyaView) {
             stringResource(R.string.gameya_turn_title, v.gameya.myTurn.toString(), v.myTurnMonth.label(locale)),
             style = TzType.label.copy(fontWeight = FontWeight.Bold), color = Tz.night,
         )
-        Text(big, style = TzType.hero.copy(fontSize = 52.sp, lineHeight = 52.sp), color = Tz.night)
+        // shortcut: the 52 sp hero line keeps its size at a large system font; revisit with a layout that can grow.
+        CappedFontScale { Text(big, style = TzType.hero.copy(fontSize = 52.sp, lineHeight = 52.sp), color = Tz.night) }
         Text(stringResource(R.string.gameya_saved_line, poundsText(v.myPaidSoFar), poundsText(v.payout)), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.yellowInk)
     }
 }
 
 /** This month's installment: the user's own (paid pill or button), who else paid, "فكّرهم", and the ticks. */
 @Composable
-private fun InstallmentCard(v: GameyaView, vm: GameyaViewModel) {
+private fun InstallmentCard(v: GameyaView, vm: GameyaActions) {
     val haptics = LocalHaptics.current
     val locale = LocalConfiguration.current.locales[0]
     val share = rememberShareText()
@@ -280,8 +302,10 @@ private fun InstallmentCard(v: GameyaView, vm: GameyaViewModel) {
     val remindText = stringResource(R.string.gameya_remind_text, v.gameya.name, poundsText(v.gameya.monthly), v.unpaidMembers.joinToString("، ") { it.name })
     val remindTitle = stringResource(R.string.gameya_remind)
     Column(Modifier.fillMaxWidth().clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.gameya_installment, month, poundsText(v.gameya.monthly)), style = TzType.cardHeading, color = Tz.text, modifier = Modifier.weight(1f))
+        SplitRow(
+            Modifier.fillMaxWidth(),
+            info = { m -> Text(stringResource(R.string.gameya_installment, month, poundsText(v.gameya.monthly)), style = TzType.cardHeading, color = Tz.text, modifier = m) },
+        ) {
             if (v.myPaidThisMonth) {
                 Text(
                     stringResource(R.string.gameya_i_paid), style = TzType.label.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold), color = Tz.turquoise,
@@ -295,7 +319,9 @@ private fun InstallmentCard(v: GameyaView, vm: GameyaViewModel) {
             if (v.paidCount > 0) Box(Modifier.weight(v.paidCount.toFloat()).height(12.dp).clip(RoundedCornerShape(6.dp)).background(Tz.turquoise))
             if (v.people > v.paidCount) Box(Modifier.weight((v.people - v.paidCount).toFloat()).height(12.dp).clip(RoundedCornerShape(6.dp)).background(Tz.line))
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        SplitRow(
+            Modifier.fillMaxWidth(),
+            info = { m ->
             Text(
                 buildAnnotatedString {
                     append(stringResource(R.string.gameya_paid_count, v.paidCount.toString(), v.people.toString()))
@@ -304,13 +330,15 @@ private fun InstallmentCard(v: GameyaView, vm: GameyaViewModel) {
                         withStyle(SpanStyle(color = Tz.text, fontWeight = FontWeight.SemiBold)) { append(unpaid.joinToString("، ")) }
                     }
                 },
-                style = TzType.caption.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Tz.text2, modifier = Modifier.weight(1f),
+                style = TzType.caption.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Tz.text2, modifier = m,
             )
+            },
+        ) {
             if (v.unpaidMembers.isNotEmpty()) {
                 val shape = RoundedCornerShape(22.dp)
                 Box(
-                    Modifier.height(44.dp).clip(shape).border(1.dp, Tz.yellow, shape)
-                        .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); share(remindText, remindTitle) }.padding(horizontal = 16.dp),
+                    Modifier.pressClickable { haptics.perform(HapticLevel.Tap); share(remindText, remindTitle) }.heightIn(min = 48.dp).clip(shape).border(1.dp, Tz.yellow, shape)
+                        .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.Center,
                 ) { Text(stringResource(R.string.gameya_remind), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.yellow) }
             }
@@ -327,7 +355,7 @@ private fun InstallmentCard(v: GameyaView, vm: GameyaViewModel) {
 
 /** "الـ 20,000 هيروحوا فين": a bar and the rows (tap one to edit), then "ضيف بند". */
 @Composable
-private fun PlanCard(v: GameyaView, vm: GameyaViewModel) {
+private fun PlanCard(v: GameyaView, vm: GameyaActions) {
     val haptics = LocalHaptics.current
     Column(Modifier.fillMaxWidth().clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.gameya_plan_title, poundsText(v.payout)), style = TzType.cardHeading, color = Tz.text)
@@ -340,11 +368,11 @@ private fun PlanCard(v: GameyaView, vm: GameyaViewModel) {
             }
             v.plan.forEachIndexed { i, row ->
                 Row(
-                    Modifier.fillMaxWidth().clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); vm.openPlan(row) }.padding(vertical = 6.dp),
+                    Modifier.pressClickable { haptics.perform(HapticLevel.Tap); vm.openPlan(row) }.fillMaxWidth().heightIn(min = 48.dp).padding(vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(PlanColors[i % PlanColors.size]))
-                    Text(row.label, style = TzType.body.copy(fontSize = 14.sp), color = Tz.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(row.label, style = TzType.body.copy(fontSize = 14.sp), color = Tz.text, modifier = Modifier.weight(1f))
                     Text(poundsText(row.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
                 }
             }
@@ -356,7 +384,7 @@ private fun PlanCard(v: GameyaView, vm: GameyaViewModel) {
 }
 
 @Composable
-private fun GameyaSheets(ui: GameyaUi, v: GameyaView, vm: GameyaViewModel) {
+private fun GameyaSheets(ui: GameyaUi, v: GameyaView, vm: GameyaActions) {
     val locale = LocalConfiguration.current.locales[0]
     when (val s = ui.sheet) {
         null -> Unit
@@ -381,8 +409,8 @@ private fun GameyaSheets(ui: GameyaUi, v: GameyaView, vm: GameyaViewModel) {
                 v.wheel.filter { !it.isMe && it.state != SlotState.PAID_OUT }.forEach { slot ->
                     val m = checkNotNull(slot.member)
                     Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Tz.raised)
-                            .clickable(role = Role.Button) { haptics.perform(HapticLevel.Confirm); vm.swapWith(m.id) }.padding(horizontal = 16.dp, vertical = 14.dp),
+                        Modifier.pressClickable { haptics.perform(HapticLevel.Confirm); vm.swapWith(m.id) }.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Tz.raised)
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(stringResource(R.string.gameya_swap_row, m.name, slot.turn.toString()), style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
@@ -395,7 +423,7 @@ private fun GameyaSheets(ui: GameyaUi, v: GameyaView, vm: GameyaViewModel) {
 }
 
 @Composable
-private fun PlanSheet(editing: GameyaPlanEntity?, vm: GameyaViewModel) {
+private fun PlanSheet(editing: GameyaPlanEntity?, vm: GameyaActions) {
     val haptics = LocalHaptics.current
     var label by remember { mutableStateOf(editing?.label.orEmpty()) }
     var input by remember { mutableStateOf(editing?.let { AmountInput.of(it.amount) } ?: AmountInput()) }

@@ -118,6 +118,28 @@ data class PeopleUi(
     val notice: PeopleNotice? = null,
 )
 
+/** What the People screen and its sheets call on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface PeopleActions {
+    fun setFilter(f: PeopleFilter) {}
+    fun openAdd() {}
+    fun openSplit() {}
+    fun dismissSheet() {}
+    fun onAction(row: PersonRow) {}
+    fun reminded() {}
+    fun clearNotice() {}
+    fun settleTab(personId: Long, name: String, pocketId: Long) {}
+    fun repayAll(personId: Long, pocketId: Long?) {}
+    fun add(mode: AddMode, personId: Long?, newName: String?, amount: Long, text: String?, pocketId: Long?, dueInDays: Int?) {}
+    fun splitDigit(d: Int) {}
+    fun splitPoint() {}
+    fun splitBackspace() {}
+    fun splitPocket(id: Long) {}
+    fun toggleParticipant(id: Long) {}
+    fun editShare(id: Long, text: String) {}
+    fun addSplitPerson(name: String) {}
+    fun confirmSplit() {}
+}
+
 private const val TAG = "People"
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -130,7 +152,7 @@ class PeopleViewModel @Inject constructor(
     kidsRepo: KidsRepository,
     entitlements: Entitlements,
     private val clock: Clock,
-) : ViewModel() {
+) : ViewModel(), PeopleActions {
     private val filter = MutableStateFlow(PeopleFilter.ALL)
     private val sheet = MutableStateFlow<PeopleSheet?>(null)
     private val split = MutableStateFlow(SplitDraft())
@@ -168,25 +190,25 @@ class PeopleViewModel @Inject constructor(
         c.copy(plus = plus, duty = dutyCard, gameya = gameya, kids = k, sheet = s, split = d, notice = n)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PeopleUi())
 
-    fun setFilter(f: PeopleFilter) {
+    override fun setFilter(f: PeopleFilter) {
         filter.value = f
     }
 
     // -- sheets
 
-    fun openAdd() = sheet.update { PeopleSheet.Add }
+    override fun openAdd() = sheet.update { PeopleSheet.Add }
 
-    fun openSplit() {
+    override fun openSplit() {
         split.value = SplitDraft(pocketId = state.value.pockets.firstOrNull()?.id)
         sheet.value = PeopleSheet.Split
     }
 
-    fun dismissSheet() {
+    override fun dismissSheet() {
         sheet.value = null
     }
 
     /** The row's button: a reminder is the screen's (it needs the share sheet), the others open their pocket sheet. */
-    fun onAction(row: PersonRow) {
+    override fun onAction(row: PersonRow) {
         when (rowAction(row)) {
             RowAction.SETTLE_TAB -> sheet.value = PeopleSheet.SettleTab(row.person.id, row.person.name, row.onTab)
             RowAction.REPAY -> sheet.value = PeopleSheet.Repay(row.person.id, row.person.name, row.iOweLoans)
@@ -194,27 +216,27 @@ class PeopleViewModel @Inject constructor(
         }
     }
 
-    fun reminded() {
+    override fun reminded() {
         notice.value = PeopleNotice(NoticeKind.REMINDED)
     }
 
-    fun clearNotice() {
+    override fun clearNotice() {
         notice.value = null
     }
 
     // -- settle
 
     /** One SPENT entry from [pocketId] for the open tab items; the notice names the shop. */
-    fun settleTab(personId: Long, name: String, pocketId: Long) = launchSafe("settle tab") {
-        people.settleTab(personId, pocketId)
+    override fun settleTab(personId: Long, name: String, pocketId: Long) = launchSafe("settle tab") {
         sheet.value = null
+        people.settleTab(personId, pocketId)
         notice.value = PeopleNotice(NoticeKind.TAB_SETTLED, name)
     }
 
     /** Pays back every open loan the user owes [personId], each in full; [pocketId] null records only. */
-    fun repayAll(personId: Long, pocketId: Long?) = launchSafe("repay") {
-        people.debtsIOwe().filter { it.person.id == personId }.forEach { people.repay(it.debt.id, it.debt.amount, pocketId) }
+    override fun repayAll(personId: Long, pocketId: Long?) = launchSafe("repay") {
         sheet.value = null
+        people.debtsIOwe().filter { it.person.id == personId }.forEach { people.repay(it.debt.id, it.debt.amount, pocketId) }
         notice.value = PeopleNotice(NoticeKind.REPAID)
     }
 
@@ -224,7 +246,8 @@ class PeopleViewModel @Inject constructor(
      * "سجّل مع حد": a loan either way or a tab item. [personId] null makes a new person named [newName] (a shop for the
      * tab). [text] is the reason, or the tab item's label.
      */
-    fun add(mode: AddMode, personId: Long?, newName: String?, amount: Long, text: String?, pocketId: Long?, dueInDays: Int?) = launchSafe("add") {
+    override fun add(mode: AddMode, personId: Long?, newName: String?, amount: Long, text: String?, pocketId: Long?, dueInDays: Int?) = launchSafe("add") {
+        sheet.value = null
         val due = dueInDays?.let { LocalDate.now(clock).plusDays(it.toLong()) }
         val id = personId ?: people.addPerson(requireNotNull(newName), kind = if (mode == AddMode.TAB) PersonKind.SHOP else PersonKind.PERSON)
         val reason = text?.trim()?.ifEmpty { null }
@@ -233,38 +256,37 @@ class PeopleViewModel @Inject constructor(
             AddMode.I_OWE -> people.borrow(id, amount, pocketId, reason, due)
             AddMode.TAB -> people.addTabItem(id, requireNotNull(reason), amount)
         }
-        sheet.value = null
     }
 
     // -- quick split
 
-    fun splitDigit(d: Int) = split.update { it.copy(amount = it.amount.digit(d)) }
-    fun splitPoint() = split.update { it.copy(amount = it.amount.point()) }
-    fun splitBackspace() = split.update { it.copy(amount = it.amount.backspace()) }
-    fun splitPocket(id: Long) = split.update { it.copy(pocketId = id) }
+    override fun splitDigit(d: Int) = split.update { it.copy(amount = it.amount.digit(d)) }
+    override fun splitPoint() = split.update { it.copy(amount = it.amount.point()) }
+    override fun splitBackspace() = split.update { it.copy(amount = it.amount.backspace()) }
+    override fun splitPocket(id: Long) = split.update { it.copy(pocketId = id) }
 
     /** Selects or drops a participant; a dropped one forgets the share typed for them. */
-    fun toggleParticipant(id: Long) = split.update {
+    override fun toggleParticipant(id: Long) = split.update {
         if (id in it.participants) it.copy(participants = it.participants - id, edited = it.edited - id)
         else it.copy(participants = it.participants + id)
     }
 
     /** The share typed over for [id]; blank goes back to the equal share. */
-    fun editShare(id: Long, text: String) = split.update { it.copy(edited = if (text.isBlank()) it.edited - id else it.edited + (id to text)) }
+    override fun editShare(id: Long, text: String) = split.update { it.copy(edited = if (text.isBlank()) it.edited - id else it.edited + (id to text)) }
 
     /** A person added in the split sheet joins it. */
-    fun addSplitPerson(name: String) = launchSafe("add split person") {
+    override fun addSplitPerson(name: String) = launchSafe("add split person") {
         if (name.isBlank()) return@launchSafe
         val id = people.addPerson(name)
         split.update { it.copy(participants = it.participants + id) }
     }
 
-    fun confirmSplit() = launchSafe("split") {
+    override fun confirmSplit() = launchSafe("split") {
         val d = split.value
         val shares = d.shares ?: return@launchSafe
         if (!d.canSave) return@launchSafe
-        people.split(d.total, checkNotNull(d.pocketId), shares.filter { (id, v) -> id != ME && v > 0 })
         sheet.value = null
+        people.split(d.total, checkNotNull(d.pocketId), shares.filter { (id, v) -> id != ME && v > 0 })
         notice.value = PeopleNotice(NoticeKind.SPLIT)
     }
 

@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.people
 
 import androidx.compose.foundation.Canvas
@@ -7,6 +9,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,10 +53,16 @@ import com.masroufi.app.data.repo.PeopleFilter
 import com.masroufi.app.data.repo.PeopleTotals
 import com.masroufi.app.data.repo.UpcomingDuty
 import com.masroufi.app.feature.pockets.CircleButton
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.feature.plan.ChipRow
+import com.masroufi.app.feature.plan.SplitRow
+import com.masroufi.app.feature.plan.TwoUp
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.EmptyState
 import com.masroufi.app.ui.components.PlusLocked
-import com.masroufi.app.ui.components.RowSkeleton
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.isLargeFont
 import com.masroufi.app.ui.components.TzCard
 import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.haptics.HapticLevel
@@ -78,8 +88,17 @@ private val CardShape = RoundedCornerShape(24.dp)
 @Composable
 fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpenDuty: () -> Unit, onOpenGameya: () -> Unit, onNewGameya: () -> Unit, onOpenKids: () -> Unit = {}) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
-    val haptics = LocalHaptics.current
     val remind = rememberReminder(viewModel::reminded)
+    PeopleContent(ui, viewModel, remind, onOpenPerson, onOpenDuty, onOpenGameya, onNewGameya, onOpenKids)
+}
+
+/** The tab with its state and actions passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun PeopleContent(
+    ui: PeopleUi, viewModel: PeopleActions, remind: (name: String, owed: Long) -> Unit,
+    onOpenPerson: (Long) -> Unit, onOpenDuty: () -> Unit, onOpenGameya: () -> Unit, onNewGameya: () -> Unit, onOpenKids: () -> Unit = {},
+) {
+    val haptics = LocalHaptics.current
     LazyColumn(
         Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -87,7 +106,7 @@ fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpe
     ) {
         item(key = "header") {
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.tab_people), style = TzType.titleTab, color = Tz.text)
+                Text(stringResource(R.string.tab_people), style = TzType.titleTab, color = Tz.text, modifier = Modifier.weight(1f))
                 CircleButton(TzIcons.add, stringResource(R.string.people_add_cd)) { haptics.perform(HapticLevel.Tap); viewModel.openAdd() }
             }
         }
@@ -95,7 +114,7 @@ fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpe
         item(key = "totals") { Totals(ui.totals) }
         item(key = "chips") { FilterChips(ui.filter, viewModel::setFilter) }
         when {
-            ui.loading -> items(3, key = { "skeleton$it" }) { RowSkeleton() }
+            ui.loading -> item(key = "skeleton") { LoadingRows() }
             ui.rows.isEmpty() -> item(key = "empty") {
                 EmptyState({ BlankSheet() }, R.string.empty_people_title, R.string.empty_people_line, R.string.empty_people_action, viewModel::openAdd, primaryAction = true)
             }
@@ -121,24 +140,32 @@ fun PeopleScreen(viewModel: PeopleViewModel, onOpenPerson: (Long) -> Unit, onOpe
 
 @Composable
 private fun Totals(t: PeopleTotals) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Column(Modifier.weight(1f).clip(CardShape).background(Tz.turquoise).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(stringResource(R.string.people_owed_title), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.turquoiseInk)
-            Text(poundsText(t.theyOwe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.turquoiseInk)
-            Text(fromPeople(t.theyOweCount), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.turquoiseInk)
-        }
-        Column(Modifier.weight(1f).clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(stringResource(R.string.people_owe_title), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.text2)
-            Text(poundsText(t.iOwe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.text)
-            Text(
-                when {
-                    t.onTab > 0 -> stringResource(R.string.people_owe_on_tab, poundsText(t.onTab))
-                    t.iOwe == 0L -> stringResource(R.string.people_owe_none)
-                    else -> ""
-                },
-                style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2,
-            )
-        }
+    TwoUp({ m -> OwedTile(t, m) }, { m -> OweTile(t, m) })
+}
+
+@Composable
+private fun OwedTile(t: PeopleTotals, m: Modifier) {
+    Column(m.clip(CardShape).background(Tz.turquoise).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(stringResource(R.string.people_owed_title), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.turquoiseInk)
+        // shortcut: the 40 sp hero number keeps its size at a large system font (it would not fit a tile); revisit with a layout that can grow.
+        CappedFontScale { Text(poundsText(t.theyOwe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.turquoiseInk) }
+        Text(fromPeople(t.theyOweCount), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.turquoiseInk)
+    }
+}
+
+@Composable
+private fun OweTile(t: PeopleTotals, m: Modifier) {
+    Column(m.clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(stringResource(R.string.people_owe_title), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.text2)
+        CappedFontScale { Text(poundsText(t.iOwe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.text) }
+        Text(
+            when {
+                t.onTab > 0 -> stringResource(R.string.people_owe_on_tab, poundsText(t.onTab))
+                t.iOwe == 0L -> stringResource(R.string.people_owe_none)
+                else -> ""
+            },
+            style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2,
+        )
     }
 }
 
@@ -153,7 +180,7 @@ private fun fromPeople(n: Int): String = when {
 
 @Composable
 private fun FilterChips(selected: PeopleFilter, onSelect: (PeopleFilter) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    ChipRow {
         listOf(
             PeopleFilter.ALL to R.string.people_filter_all, PeopleFilter.LOANS to R.string.people_filter_loans,
             PeopleFilter.TAB to R.string.people_filter_tab, PeopleFilter.DUTY to R.string.people_filter_duty,
@@ -201,16 +228,19 @@ private fun PersonRowCard(ui: PersonRowUi, first: Boolean, last: Boolean, onOpen
     val top = if (first) 24.dp else 0.dp
     val bottom = if (last) 24.dp else 0.dp
     val shape = RoundedCornerShape(topStart = top, topEnd = top, bottomStart = bottom, bottomEnd = bottom)
-    Row(
-        Modifier.fillMaxWidth().then(if (first) Modifier else Modifier.offset(y = (-1).dp)).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
-            .clickable(role = Role.Button, onClick = onOpen).padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
+    SplitRow(
+        Modifier.pressClickable(onClick = onOpen).fillMaxWidth().then(if (first) Modifier else Modifier.offset(y = (-1).dp)).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        info = { m ->
+            Row(m, horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Avatar(r.person)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(r.person.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
+                    Text(contextLine(ui), style = TzType.caption.copy(fontSize = 12.sp), color = if (ui.overdue) Tz.carnelianText else Tz.text2)
+                }
+            }
+        },
     ) {
-        Avatar(r.person)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(r.person.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
-            Text(contextLine(ui), style = TzType.caption.copy(fontSize = 12.sp), color = if (ui.overdue) Tz.carnelianText else Tz.text2, maxLines = 2)
-        }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 when {
@@ -235,10 +265,10 @@ private fun PersonRowCard(ui: PersonRowUi, first: Boolean, last: Boolean, onOpen
 private fun DutyCard(duty: DutyCardUi, onOpen: () -> Unit) {
     val haptics = LocalHaptics.current
     Column(
-        Modifier.fillMaxWidth().clip(CardShape).background(Tz.lilac).clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpen() }.padding(18.dp),
+        Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onOpen() }.fillMaxWidth().clip(CardShape).background(Tz.lilac).padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(6.dp), itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.people_duty_title), style = TzType.cardHeading.copy(fontSize = 24.sp), color = LilacInk)
             Text(
                 stringResource(R.string.people_duty_badge),
@@ -249,7 +279,7 @@ private fun DutyCard(duty: DutyCardUi, onOpen: () -> Unit) {
         Text(stringResource(R.string.people_duty_line), style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium), color = LilacInk)
         duty.upcoming?.let { DutyUpcoming(it) }
         if (duty.ownGivers > 0) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     stringResource(R.string.people_duty_own, poundsText(duty.ownTotal), duty.ownGivers.toString()),
                     style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold), color = LilacInk, modifier = Modifier.weight(1f),
@@ -264,10 +294,10 @@ private fun DutyCard(duty: DutyCardUi, onOpen: () -> Unit) {
 @Composable
 internal fun DutyUpcoming(u: UpcomingDuty) {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(LilacInk).padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(4.dp), itemVerticalAlignment = Alignment.Bottom) {
             Text(
                 "${u.occasion.name} · ${formatShortDate(u.occasion.date)}",
-                style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = LilacText, modifier = Modifier.weight(1f),
+                style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = LilacText,
             )
             Text(
                 if (u.daysUntil == 0L) stringResource(R.string.people_duty_today) else stringResource(R.string.people_duty_in_days, u.daysUntil.toString()),
@@ -283,7 +313,7 @@ internal fun DutyUpcoming(u: UpcomingDuty) {
 
 @Composable
 private fun DutyLine(label: String, value: String, valueColor: Color) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(2.dp), itemVerticalAlignment = Alignment.CenterVertically) {
         Text(label, style = TzType.caption.copy(fontSize = 13.sp), color = LilacMuted)
         Text(value, style = TzType.rowNumber.copy(fontSize = 18.sp), color = valueColor)
     }
@@ -294,8 +324,8 @@ private fun GameyaCard(g: GameyaView?, onOpen: () -> Unit) {
     val haptics = LocalHaptics.current
     val progress = if (g == null) 0f else (g.monthNumber.toFloat() / g.people).coerceIn(0f, 1f)
     Row(
-        Modifier.fillMaxWidth().clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape)
-            .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpen() }.padding(16.dp),
+        Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onOpen() }.fillMaxWidth().clip(CardShape).background(Tz.surface).border(1.dp, Tz.line, CardShape)
+            .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically,
     ) {
         Canvas(Modifier.size(56.dp)) {
@@ -330,7 +360,7 @@ private fun SplitHint(onOpen: () -> Unit) {
     val haptics = LocalHaptics.current
     val shape = RoundedCornerShape(22.dp)
     Column(
-        Modifier.fillMaxWidth().clip(shape).clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpen() }
+        Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onOpen() }.fillMaxWidth().clip(shape)
             .drawBehind {
                 drawRoundRect(
                     Tz.dashed, cornerRadius = CornerRadius(22.dp.toPx()),

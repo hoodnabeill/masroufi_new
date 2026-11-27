@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.profile
 
 import androidx.compose.foundation.background
@@ -75,6 +77,15 @@ import com.masroufi.app.ui.icons.TzIcons
 import com.masroufi.app.ui.paper.Qersh
 import com.masroufi.app.ui.paper.QershMood
 import com.masroufi.app.ui.theme.Tz
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.minimumInteractiveComponentSize
+import com.masroufi.app.feature.plan.SplitRow
+import com.masroufi.app.feature.plan.TwoUp
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.components.isLargeFont
+import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.theme.TzRadius
 import com.masroufi.app.ui.theme.TzType
 import java.time.Instant
@@ -91,6 +102,12 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit, onOpenFreelan
     val share = rememberShareText()
     // The data is gone: a clean relaunch, not just a trip to onboarding.
     LaunchedEffect(ui.wiped) { if (ui.wiped) restartApp(context) }
+    ProfileContent(ui, viewModel, { share(profileShareText(context, ui), it) }, onBack, onOpenFreelance, onOpenSettings)
+}
+
+/** The screen with its state and actions passed in, so a test can render it (no behaviour of its own). [share] gets the chooser's title. */
+@Composable
+fun ProfileContent(ui: ProfileUi, viewModel: ProfileActions, share: (title: String) -> Unit, onBack: () -> Unit, onOpenFreelance: () -> Unit = {}, onOpenSettings: () -> Unit = {}) {
     Column(
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -100,10 +117,10 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit, onOpenFreelan
             CircleButton(TzIcons.settings, stringResource(R.string.album_settings_cd), onOpenSettings)
         }
         if (ui.loading) {
-            repeat(3) { RowSkeleton() }
+            LoadingRows()
         } else {
             val shareTitle = stringResource(R.string.profile_share)
-            Identity(ui) { share(profileShareText(context, ui), shareTitle) }
+            Identity(ui) { share(shareTitle) }
             Fields(ui, viewModel, onOpenFreelance)
             ui.gift?.let { Gift(it) { viewModel.open(ProfileSheet.Target) } }
             Household(ui, viewModel)
@@ -148,16 +165,23 @@ private fun Identity(ui: ProfileUi, onShare: () -> Unit) {
                 )
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Stat(ui.streak.toString(), R.string.profile_stat_streak, Modifier.weight(1f))
-            Stat(ui.proverbs.toString(), R.string.profile_stat_proverbs, Modifier.weight(1f))
-            Stat("${ui.wonOf} / ${ui.ofLast}", R.string.profile_stat_matches, Modifier.weight(1f))
+        if (isLargeFont()) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Stat(ui.streak.toString(), R.string.profile_stat_streak, Modifier.fillMaxWidth())
+                Stat(ui.proverbs.toString(), R.string.profile_stat_proverbs, Modifier.fillMaxWidth())
+                Stat("${ui.wonOf} / ${ui.ofLast}", R.string.profile_stat_matches, Modifier.fillMaxWidth())
+            }
+        } else {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Stat(ui.streak.toString(), R.string.profile_stat_streak, Modifier.weight(1f))
+                Stat(ui.proverbs.toString(), R.string.profile_stat_proverbs, Modifier.weight(1f))
+                Stat("${ui.wonOf} / ${ui.ofLast}", R.string.profile_stat_matches, Modifier.weight(1f))
+            }
         }
         val pill = RoundedCornerShape(percent = 50)
         val haptics = LocalHaptics.current
         Box(
-            Modifier.fillMaxWidth().height(44.dp).clip(pill).border(2.dp, Tz.night, pill)
-                .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onShare() },
+            Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onShare() }.fillMaxWidth().heightIn(min = 48.dp).clip(pill).border(2.dp, Tz.night, pill).padding(horizontal = 12.dp),
             contentAlignment = Alignment.Center,
         ) { Text(stringResource(R.string.profile_share), style = TzType.button.copy(fontSize = 16.sp), color = Tz.night) }
     }
@@ -175,29 +199,30 @@ private fun Stat(value: String, label: Int, modifier: Modifier) {
 }
 
 @Composable
-private fun Fields(ui: ProfileUi, vm: ProfileViewModel, onOpenFreelance: () -> Unit) {
+private fun Fields(ui: ProfileUi, vm: ProfileActions, onOpenFreelance: () -> Unit) {
     val shape = RoundedCornerShape(TzRadius.card)
     val locale = LocalConfiguration.current.locales[0]
     val nameLabel = stringResource(R.string.profile_name_label)
     // The field owns its text (the saved value arrives a frame late and would eat fast typing); Fields composes after loading.
     var name by rememberSaveable { mutableStateOf(ui.name) }
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(nameLabel, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
             BasicTextField(
                 value = name,
                 onValueChange = { name = it.take(NAME_MAX); vm.setName(it) },
-                modifier = Modifier.fillMaxWidth().height(32.dp).semantics { contentDescription = nameLabel },
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = nameLabel },
                 textStyle = TzType.body.copy(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Tz.text),
                 singleLine = true,
                 cursorBrush = SolidColor(Tz.yellow),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                decorationBox = { inner -> Box(Modifier.heightIn(min = 48.dp), contentAlignment = Alignment.CenterStart) { inner() } },
             )
         }
         Divider()
-        Row(
-            Modifier.fillMaxWidth().clickable(role = Role.Button) { vm.open(ProfileSheet.Birthday) }.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
+        FlowRow(
+            Modifier.pressClickable { vm.open(ProfileSheet.Birthday) }.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            itemVerticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(stringResource(R.string.profile_birthday_label), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
@@ -227,10 +252,10 @@ private fun Fields(ui: ProfileUi, vm: ProfileViewModel, onOpenFreelance: () -> U
             if (ui.workKind == WorkKind.FREELANCE) {
                 val haptics = LocalHaptics.current
                 Row(
-                    Modifier.fillMaxWidth().clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpenFreelance() }.padding(vertical = 8.dp),
+                    Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onOpenFreelance() }.fillMaxWidth().heightIn(min = 48.dp).padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(stringResource(R.string.profile_free_link), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.yellow)
+                    Text(stringResource(R.string.profile_free_link), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.yellow, modifier = Modifier.weight(1f))
                     TzIcon(TzIcons.chevron, 18.dp, null)
                 }
             }
@@ -256,11 +281,11 @@ private fun fullDate(d: LocalDate, locale: java.util.Locale): String =
 private fun Gift(g: GiftUi, onEdit: () -> Unit) {
     val shape = RoundedCornerShape(TzRadius.card)
     Row(
-        Modifier.fillMaxWidth().clip(shape).background(Tz.turquoiseDim).clickable(role = Role.Button, onClick = onEdit).padding(16.dp),
+        Modifier.pressClickable(onClick = onEdit).fillMaxWidth().clip(shape).background(Tz.turquoiseDim).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Qersh(QershMood.Happy, 52.dp)
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.profile_gift_title), style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = Tz.text)
             Text(
                 stringResource(R.string.profile_gift_line, g.perDayPounds.toString(), poundsText(g.target)),
@@ -271,7 +296,7 @@ private fun Gift(g: GiftUi, onEdit: () -> Unit) {
 }
 
 @Composable
-private fun Household(ui: ProfileUi, vm: ProfileViewModel) {
+private fun Household(ui: ProfileUi, vm: ProfileActions) {
     val shape = RoundedCornerShape(TzRadius.card)
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)) {
         Text(
@@ -293,17 +318,18 @@ private fun Household(ui: ProfileUi, vm: ProfileViewModel) {
 
 @Composable
 private fun Stepper(title: Int, sub: String, value: Int, onMinus: () -> Unit, onPlus: () -> Unit) {
-    Row(
+    SplitRow(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
+        info = { m ->
+            Column(m, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(title), style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
+                Text(sub, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
+            }
+        },
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(stringResource(title), style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
-            Text(sub, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
-        }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StepButton(TzIcons.minus, R.string.profile_less, onMinus)
-            Text(value.toString(), Modifier.width(28.dp), style = TzType.titleTab.copy(fontSize = 24.sp), color = Tz.text)
+            Text(value.toString(), Modifier.widthIn(min = 28.dp), style = TzType.titleTab.copy(fontSize = 24.sp), color = Tz.text)
             StepButton(TzIcons.add, R.string.profile_more, onPlus)
         }
     }
@@ -312,11 +338,12 @@ private fun Stepper(title: Int, sub: String, value: Int, onMinus: () -> Unit, on
 @Composable
 private fun StepButton(icon: TzIconDef, description: Int, onClick: () -> Unit) {
     val haptics = LocalHaptics.current
-    Box(
-        Modifier.size(44.dp).clip(CircleShape).background(Tz.raised).border(1.dp, Tz.line, CircleShape)
-            .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tick); onClick() },
-        contentAlignment = Alignment.Center,
-    ) { TzIcon(icon, 16.dp, stringResource(description), tint = Tz.text) }
+    // drawn 44 dp, a 48 dp touch target
+    Box(Modifier.minimumInteractiveComponentSize().pressClickable(PressScale.Chip) { haptics.perform(HapticLevel.Tick); onClick() }, contentAlignment = Alignment.Center) {
+        Box(Modifier.size(44.dp).clip(CircleShape).background(Tz.raised).border(1.dp, Tz.line, CircleShape), contentAlignment = Alignment.Center) {
+            TzIcon(icon, 16.dp, stringResource(description), tint = Tz.text)
+        }
+    }
 }
 
 private fun goalLabel(g: MainGoal) = when (g) {
@@ -327,7 +354,7 @@ private fun goalLabel(g: MainGoal) = when (g) {
 }
 
 @Composable
-private fun MainGoalCard(ui: ProfileUi, vm: ProfileViewModel) {
+private fun MainGoalCard(ui: ProfileUi, vm: ProfileActions) {
     val shape = RoundedCornerShape(TzRadius.card)
     val haptics = LocalHaptics.current
     Column(
@@ -336,27 +363,30 @@ private fun MainGoalCard(ui: ProfileUi, vm: ProfileViewModel) {
     ) {
         Text(stringResource(R.string.profile_goal_title), style = TzType.cardHeading, color = Tz.text)
         MainGoal.entries.chunked(2).forEach { pair ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                pair.forEach { g ->
-                    val on = ui.mainGoal == g
-                    val box = RoundedCornerShape(18.dp)
-                    Box(
-                        Modifier.weight(1f).height(56.dp).clip(box).background(if (on) Tz.yellowDim else androidx.compose.ui.graphics.Color.Transparent)
-                            .border(if (on) 2.dp else 1.dp, if (on) Tz.yellow else Tz.line, box)
-                            .semantics { role = Role.RadioButton; selected = on }
-                            .clickable { if (!on) haptics.perform(HapticLevel.Tick); vm.setMainGoal(g) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            stringResource(goalLabel(g)),
-                            style = TzType.caption.copy(fontSize = 13.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal),
-                            color = if (on) Tz.yellow else Tz.text,
-                        )
-                    }
-                }
-            }
+            TwoUp(
+                { m -> GoalBox(pair[0], ui.mainGoal == pair[0], m) { if (ui.mainGoal != pair[0]) haptics.perform(HapticLevel.Tick); vm.setMainGoal(pair[0]) } },
+                { m -> if (pair.size > 1) GoalBox(pair[1], ui.mainGoal == pair[1], m) { if (ui.mainGoal != pair[1]) haptics.perform(HapticLevel.Tick); vm.setMainGoal(pair[1]) } },
+            )
         }
         Text(stringResource(R.string.profile_goal_note), style = TzType.caption.copy(fontSize = 12.sp, lineHeight = 20.sp), color = Tz.text2)
+    }
+}
+
+@Composable
+private fun GoalBox(g: MainGoal, on: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val box = RoundedCornerShape(18.dp)
+    Box(
+        modifier.pressClickable(role = Role.RadioButton, onClick = onClick).heightIn(min = 56.dp).clip(box)
+            .background(if (on) Tz.yellowDim else androidx.compose.ui.graphics.Color.Transparent)
+            .border(if (on) 2.dp else 1.dp, if (on) Tz.yellow else Tz.line, box)
+            .semantics { selected = on }.padding(horizontal = 8.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            stringResource(goalLabel(g)),
+            style = TzType.caption.copy(fontSize = 13.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal),
+            color = if (on) Tz.yellow else Tz.text,
+        )
     }
 }
 
@@ -372,7 +402,7 @@ private fun Privacy(onWipe: () -> Unit) {
             Text(stringResource(R.string.profile_privacy_title), style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
         }
         Text(stringResource(R.string.profile_privacy_body), style = TzType.caption.copy(fontSize = 12.sp, lineHeight = 20.sp), color = Tz.text2)
-        Box(Modifier.height(44.dp).clickable(role = Role.Button, onClick = onWipe), contentAlignment = Alignment.CenterStart) {
+        Box(Modifier.pressClickable(onClick = onWipe).heightIn(min = 48.dp), contentAlignment = Alignment.CenterStart) {
             Text(stringResource(R.string.profile_wipe), style = TzType.body.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold), color = Tz.carnelianText)
         }
     }
@@ -402,7 +432,7 @@ private fun BirthdayPicker(current: LocalDate?, onPick: (LocalDate?) -> Unit, on
 }
 
 @Composable
-private fun TargetSheet(ui: ProfileUi, vm: ProfileViewModel) {
+internal fun TargetSheet(ui: ProfileUi, vm: ProfileActions) {
     val haptics = LocalHaptics.current
     TzSheet(vm::closeSheet) {
         Column(
@@ -418,7 +448,7 @@ private fun TargetSheet(ui: ProfileUi, vm: ProfileViewModel) {
 
 /** The one confirmation (decision 6): what goes, that there is no way back; no backup offer until Phase 11. */
 @Composable
-private fun WipeSheet(onCancel: () -> Unit, onWipe: () -> Unit) {
+internal fun WipeSheet(onCancel: () -> Unit, onWipe: () -> Unit) {
     val haptics = LocalHaptics.current
     TzSheet(onCancel) {
         Column(
@@ -430,8 +460,7 @@ private fun WipeSheet(onCancel: () -> Unit, onWipe: () -> Unit) {
             Text(stringResource(R.string.profile_wipe_body), style = TzType.body.copy(fontSize = 14.sp, lineHeight = 24.sp), color = Tz.text2)
             val pill = RoundedCornerShape(percent = 50)
             Box(
-                Modifier.fillMaxWidth().height(52.dp).clip(pill).background(Tz.carnelian)
-                    .clickable(role = Role.Button) { haptics.perform(HapticLevel.Heavy); onWipe() },
+                Modifier.pressClickable { haptics.perform(HapticLevel.Heavy); onWipe() }.fillMaxWidth().heightIn(min = 52.dp).clip(pill).background(Tz.carnelian).padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center,
             ) { Text(stringResource(R.string.profile_wipe_go), style = TzType.button, color = Tz.carnelianInk) }
             TextLink(stringResource(R.string.profile_wipe_cancel), onCancel)

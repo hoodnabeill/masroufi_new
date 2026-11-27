@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -42,6 +43,8 @@ import com.masroufi.app.ui.icons.TzIcon
 import com.masroufi.app.ui.icons.TzIcons
 import com.masroufi.app.ui.paper.Qersh
 import com.masroufi.app.ui.paper.QershMood
+import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
 import kotlinx.coroutines.delay
@@ -99,18 +102,20 @@ fun NoticeLine(notice: PeopleNotice?, onClear: () -> Unit) {
 
 private const val NOTICE_MS = 4_000L
 
-/** The 32 dp action pill of a person row: outlined turquoise (a nudge) or filled yellow (a payment). */
+/** The action pill of a person row, drawn 32 dp tall with a 48 dp touch target: outlined turquoise (a nudge) or filled yellow (a payment). */
 @Composable
 fun SmallPill(text: String, filled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val haptics = LocalHaptics.current
     val shape = RoundedCornerShape(16.dp)
-    Box(
-        modifier.height(32.dp).clip(shape)
-            .then(if (filled) Modifier.background(Tz.yellow) else Modifier.border(1.dp, Tz.turquoise, shape))
-            .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }.padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, style = TzType.label.copy(fontSize = 12.sp, fontWeight = if (filled) FontWeight.Bold else FontWeight.SemiBold), color = if (filled) Tz.night else Tz.turquoise, maxLines = 1)
+    Box(modifier.minimumInteractiveComponentSize().pressClickable(PressScale.Chip) { haptics.perform(HapticLevel.Tap); onClick() }, contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.heightIn(min = 32.dp).clip(shape)
+                .then(if (filled) Modifier.background(Tz.yellow) else Modifier.border(1.dp, Tz.turquoise, shape))
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text, style = TzType.label.copy(fontSize = 12.sp, fontWeight = if (filled) FontWeight.Bold else FontWeight.SemiBold), color = if (filled) Tz.night else Tz.turquoise)
+        }
     }
 }
 

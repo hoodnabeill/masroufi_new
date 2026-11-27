@@ -91,6 +91,21 @@ data class PersonDetailUi(
     val person: PersonEntity? get() = row?.person
 }
 
+/** What the person screen and its sheets call on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface PersonDetailActions {
+    fun openSettle() {}
+    fun openMoney(debt: DebtEntity) {}
+    fun openEdit() {}
+    fun openDelete() {}
+    fun dismissSheet() {}
+    fun reminded() {}
+    fun clearNotice() {}
+    fun settleTab(pocketId: Long) {}
+    fun settleDebt(debt: DebtEntity, amount: Long, pocketId: Long?) {}
+    fun saveEdit(name: String, phone: String, kind: PersonKind) {}
+    fun delete() {}
+}
+
 private const val TAG = "PersonDetail"
 
 /** Person detail (pushed): totals, history, "سدّد" / "فكّره بلُطف", edit, settle the tab, delete. */
@@ -100,7 +115,7 @@ class PersonDetailViewModel @Inject constructor(
     pocketRepo: PocketRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
-) : ViewModel() {
+) : ViewModel(), PersonDetailActions {
     /** The nav argument (PersonDetail.id). */
     val id: Long = checkNotNull(savedState.get<Long>("id")) { "PersonDetail needs an id" }
 
@@ -120,36 +135,36 @@ class PersonDetailViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PersonDetailUi())
 
-    fun openSettle() { sheet.value = DetailSheet.Settle }
-    fun openMoney(debt: DebtEntity) { sheet.value = DetailSheet.Money(debt) }
-    fun openEdit() { sheet.value = DetailSheet.Edit }
-    fun openDelete() { sheet.value = DetailSheet.Delete }
-    fun dismissSheet() { sheet.value = null }
-    fun reminded() { notice.value = PeopleNotice(NoticeKind.REMINDED) }
-    fun clearNotice() { notice.value = null }
+    override fun openSettle() { sheet.value = DetailSheet.Settle }
+    override fun openMoney(debt: DebtEntity) { sheet.value = DetailSheet.Money(debt) }
+    override fun openEdit() { sheet.value = DetailSheet.Edit }
+    override fun openDelete() { sheet.value = DetailSheet.Delete }
+    override fun dismissSheet() { sheet.value = null }
+    override fun reminded() { notice.value = PeopleNotice(NoticeKind.REMINDED) }
+    override fun clearNotice() { notice.value = null }
 
     /** One SPENT entry from [pocketId] for the open tab items. */
-    fun settleTab(pocketId: Long) = launchSafe("settle tab") {
+    override fun settleTab(pocketId: Long) = launchSafe("settle tab") {
         val name = state.value.person?.name.orEmpty()
-        people.settleTab(id, pocketId)
         sheet.value = null
+        people.settleTab(id, pocketId)
         notice.value = PeopleNotice(NoticeKind.TAB_SETTLED, name)
     }
 
     /** [amount] of [debt] paid either way; [pocketId] null records only. */
-    fun settleDebt(debt: DebtEntity, amount: Long, pocketId: Long?) = launchSafe("repay") {
-        people.repay(debt.id, amount, pocketId)
+    override fun settleDebt(debt: DebtEntity, amount: Long, pocketId: Long?) = launchSafe("repay") {
         sheet.value = null
+        people.repay(debt.id, amount, pocketId)
         notice.value = PeopleNotice(if (debt.direction == DebtDirection.THEY_OWE) NoticeKind.RECEIVED else NoticeKind.REPAID)
     }
 
-    fun saveEdit(name: String, phone: String, kind: PersonKind) = launchSafe("edit") {
-        people.updatePerson(id, name, phone, kind)
+    override fun saveEdit(name: String, phone: String, kind: PersonKind) = launchSafe("edit") {
         sheet.value = null
+        people.updatePerson(id, name, phone, kind)
     }
 
     /** Deletes the person with their debts, tab items and gifts (the screen asked first); the state turns "missing". */
-    fun delete() = launchSafe("delete") {
+    override fun delete() = launchSafe("delete") {
         people.deletePerson(id)
         sheet.value = null
     }

@@ -1,8 +1,10 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -57,7 +59,7 @@ fun PlusSettingsRow(
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.plus_row_title), style = TzType.cardHeading, color = Tz.text)
             Text(status, style = TzType.body, color = Tz.text2)
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                 TextLink(stringResource(R.string.plus_row_manage), { haptics.perform(HapticLevel.Tap); onManage() }, Modifier.testTag(PlusManageTag))
                 TextLink(stringResource(R.string.plus_row_restore), { haptics.perform(HapticLevel.Tap); onRestore() }, Modifier.testTag(PlusRestoreTag))
             }

@@ -75,6 +75,10 @@ import com.masroufi.app.ui.motion.LocalReduceMotion
 import com.masroufi.app.ui.theme.Alexandria
 import com.masroufi.app.ui.theme.Lalezar
 import com.masroufi.app.ui.theme.Tz
+import com.masroufi.app.data.repo.MonthStory
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.pressClickable
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.Locale
@@ -106,6 +110,25 @@ fun StoryScreen(viewModel: StoryViewModel, onClose: () -> Unit) {
         }
     }
     BackHandler(onBack = close)
+    StoryContent(
+        ui, progress, viewModel, close,
+        onShare = { story, slide ->
+            scope.launch {
+                try {
+                    StoryShare.share(context, "${viewModel.id}_${slide.name.lowercase()}", slideText(context, story, slide, ui.hideAmounts))
+                } catch (e: IOException) {
+                    Log.e(TAG, "share failed", e)
+                    Toast.makeText(context, R.string.story_share_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        },
+    )
+}
+
+/** The story with its state and actions passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun StoryContent(ui: StoryUi, progress: androidx.compose.runtime.State<Float>, viewModel: StoryActions, close: () -> Unit, onShare: (MonthStory, StorySlide) -> Unit) {
+    val context = LocalContext.current
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
 
     Box(
@@ -147,8 +170,8 @@ fun StoryScreen(viewModel: StoryViewModel, onClose: () -> Unit) {
         ) {
             Segments(ui.slides.size, ui.index, progress, stringResource(R.string.story_slide_cd, (ui.index + 1).toString(), ui.slides.size.toString()))
             val header = remember(story) { slideText(context, story, StorySlide.OPENING, hide = false).header }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(header, style = alexandria(14, FontWeight.Bold), color = Tz.night)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(header, style = alexandria(14, FontWeight.Bold), color = Tz.night, modifier = Modifier.weight(1f))
                 CloseButton(close)
             }
             Crossfade(ui.index, Modifier.weight(1f).fillMaxWidth(), animationSpec = tween(CROSSFADE_MS), label = "storySlide") { i ->
@@ -160,16 +183,7 @@ fun StoryScreen(viewModel: StoryViewModel, onClose: () -> Unit) {
                 onHide = { viewModel.setHideAmounts(it) },
                 showNext = !ui.isLast,
                 onNext = viewModel::next,
-                onShare = {
-                    scope.launch {
-                        try {
-                            StoryShare.share(context, "${viewModel.id}_${slide.name.lowercase()}", slideText(context, story, slide, ui.hideAmounts))
-                        } catch (e: IOException) {
-                            Log.e(TAG, "share failed", e)
-                            Toast.makeText(context, R.string.story_share_failed, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                },
+                onShare = { onShare(story, slide) },
             )
         }
     }
@@ -201,8 +215,7 @@ private fun Segments(count: Int, index: Int, progress: androidx.compose.runtime.
 @Composable
 private fun CloseButton(onClick: () -> Unit) {
     Box(
-        Modifier.size(44.dp).clip(CircleShape).background(Tz.night)
-            .clickable(role = Role.Button, onClick = onClick),
+        Modifier.pressClickable(PressScale.Chip, onClick = onClick).size(48.dp).clip(CircleShape).background(Tz.night),
         contentAlignment = Alignment.Center,
     ) {
         TzIcon(TzIcons.close, 18.dp, stringResource(R.string.story_close_cd), tint = Tz.yellow)
@@ -223,15 +236,18 @@ private fun SlideBody(t: SlideText, modifier: Modifier = Modifier) {
             t.kicker?.let { Text(it, style = alexandria(16, FontWeight.SemiBold), color = Tz.yellowInk) }
             if (t.big.isNotEmpty()) {
                 val shown = t.bigValue?.let { v -> format((v * count.value).roundToLong(), t.bigIsMoney) } ?: t.big
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        shown,
-                        style = androidx.compose.ui.text.TextStyle(
-                            fontFamily = Lalezar, fontSize = bigSize(t.big.length).sp, lineHeight = (bigSize(t.big.length) * 0.9f).sp,
-                        ),
-                        color = Tz.night, maxLines = 1,
-                    )
-                    t.suffix?.let { Text(it, style = androidx.compose.ui.text.TextStyle(fontFamily = Lalezar, fontSize = 34.sp, lineHeight = 37.sp), color = Tz.night) }
+                // shortcut: the big number is poster art sized to fit its length, so it keeps the normal font size at a large system font.
+                CappedFontScale {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            shown,
+                            style = androidx.compose.ui.text.TextStyle(
+                                fontFamily = Lalezar, fontSize = bigSize(t.big.length).sp, lineHeight = (bigSize(t.big.length) * 0.9f).sp,
+                            ),
+                            color = Tz.night, maxLines = 1,
+                        )
+                        t.suffix?.let { Text(it, style = androidx.compose.ui.text.TextStyle(fontFamily = Lalezar, fontSize = 34.sp, lineHeight = 37.sp), color = Tz.night) }
+                    }
                 }
             }
         }
@@ -318,7 +334,7 @@ private fun Controls(hide: Boolean, onHide: (Boolean) -> Unit, showNext: Boolean
     val haptics = LocalHaptics.current
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
-            Modifier.fillMaxWidth().heightIn(min = 44.dp).toggleable(hide, role = Role.Switch) { haptics.perform(HapticLevel.Tap); onHide(it) },
+            Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(hide, role = Role.Switch) { haptics.perform(HapticLevel.Tap); onHide(it) },
             horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(R.string.story_share_hide), style = alexandria(13, FontWeight.SemiBold), color = Tz.night, modifier = Modifier.weight(1f))
@@ -331,15 +347,14 @@ private fun Controls(hide: Boolean, onHide: (Boolean) -> Unit, showNext: Boolean
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(
-                Modifier.weight(1f).height(56.dp).clip(RoundedCornerShape(28.dp)).background(Tz.night)
-                    .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onShare() },
+                Modifier.weight(1f).pressClickable { haptics.perform(HapticLevel.Tap); onShare() }.heightIn(min = 56.dp).clip(RoundedCornerShape(28.dp)).background(Tz.night).padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(stringResource(R.string.story_share), style = androidx.compose.ui.text.TextStyle(fontFamily = Lalezar, fontSize = 20.sp), color = Tz.yellow)
             }
             if (showNext) {
                 Box(
-                    Modifier.size(56.dp).clip(CircleShape).border(2.dp, Tz.night, CircleShape).clickable(role = Role.Button, onClick = onNext),
+                    Modifier.pressClickable(PressScale.Chip, onClick = onNext).size(56.dp).clip(CircleShape).border(2.dp, Tz.night, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     TzIcon(TzIcons.chevron, 22.dp, stringResource(R.string.story_next_cd), tint = Tz.night)

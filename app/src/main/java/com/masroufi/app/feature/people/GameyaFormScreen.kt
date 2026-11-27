@@ -38,6 +38,9 @@ import com.masroufi.app.feature.plan.NameField
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.ChipStyle
+import com.masroufi.app.ui.components.isLargeFont
+import com.masroufi.app.feature.plan.SplitRow
+import androidx.compose.ui.text.style.TextAlign
 import com.masroufi.app.ui.components.PlusSheet
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.SecondaryButton
@@ -58,6 +61,12 @@ import java.time.format.TextStyle
 @Composable
 fun GameyaFormScreen(viewModel: GameyaFormViewModel, onBack: () -> Unit) {
     val f by viewModel.form.collectAsStateWithLifecycle()
+    GameyaFormContent(f, viewModel, onBack)
+}
+
+/** The form with its state and actions passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun GameyaFormContent(f: GameyaFormState, viewModel: GameyaFormActions, onBack: () -> Unit) {
     val haptics = LocalHaptics.current
     val locale = LocalConfiguration.current.locales[0]
     LaunchedEffect(f.saved) { if (f.saved) onBack() }
@@ -72,10 +81,10 @@ fun GameyaFormScreen(viewModel: GameyaFormViewModel, onBack: () -> Unit) {
             FormBlock(R.string.gameya_monthly_q) { AmountKeypad(f.amount, viewModel::digit, viewModel::point, viewModel::backspace) }
             if (!f.editing) {
                 FormBlock(R.string.gameya_members_q) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.weight(1f)) { NameField(f.newMember, viewModel::setNewMember, R.string.gameya_member_hint) }
-                        PrimaryButton(stringResource(R.string.gameya_member_add), { haptics.perform(HapticLevel.Tick); viewModel.addMember() }, enabled = f.newMember.isNotBlank(), height = 52.dp)
-                    }
+                    SplitRow(
+                        Modifier.fillMaxWidth(),
+                        info = { m -> Box(m) { NameField(f.newMember, viewModel::setNewMember, R.string.gameya_member_hint) } },
+                    ) { PrimaryButton(stringResource(R.string.gameya_member_add), { haptics.perform(HapticLevel.Tick); viewModel.addMember() }, enabled = f.newMember.isNotBlank(), height = 52.dp) }
                     (1..f.participants).forEach { turn ->
                         val mine = turn == f.myTurn
                         val name = if (mine) stringResource(R.string.gameya_me) else f.members[if (turn < f.myTurn) turn - 1 else turn - 2]
@@ -86,7 +95,8 @@ fun GameyaFormScreen(viewModel: GameyaFormViewModel, onBack: () -> Unit) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                         CircleButton(TzIcons.minus, stringResource(R.string.gameya_start_less)) { haptics.perform(HapticLevel.Tick); viewModel.shiftStart(-1) }
                         Text(
-                            "${f.start.month.getDisplayName(TextStyle.FULL, locale)} ${f.start.year}", style = TzType.cardHeading.copy(fontSize = 24.sp), color = Tz.text,
+                            "${f.start.month.getDisplayName(TextStyle.FULL, locale)} ${f.start.year}", style = TzType.cardHeading.copy(fontSize = 24.sp, textAlign = TextAlign.Center), color = Tz.text,
+                            modifier = if (isLargeFont()) Modifier.weight(1f) else Modifier,
                         )
                         CircleButton(TzIcons.add, stringResource(R.string.gameya_start_more)) { haptics.perform(HapticLevel.Tick); viewModel.shiftStart(1) }
                     }
@@ -122,7 +132,7 @@ fun GameyaFormScreen(viewModel: GameyaFormViewModel, onBack: () -> Unit) {
 
 /** One seat of the turn order: its number, the name, and earlier / later (and remove, for the others). */
 @Composable
-private fun SeatRow(turn: Int, name: String, mine: Boolean, seats: Int, vm: GameyaFormViewModel) {
+private fun SeatRow(turn: Int, name: String, mine: Boolean, seats: Int, vm: GameyaFormActions) {
     val haptics = LocalHaptics.current
     val shape = RoundedCornerShape(16.dp)
     Row(
@@ -131,7 +141,7 @@ private fun SeatRow(turn: Int, name: String, mine: Boolean, seats: Int, vm: Game
     ) {
         Text(
             stringResource(R.string.gameya_member_row, turn.toString(), name), style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
-            color = if (mine) Tz.yellow else Tz.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+            color = if (mine) Tz.yellow else Tz.text, modifier = Modifier.weight(1f),
         )
         if (turn > 1) CircleButton(TzIcons.arrowUp, stringResource(R.string.gameya_member_up_cd, name)) { haptics.perform(HapticLevel.Tick); vm.moveSeat(turn, -1) }
         if (turn < seats) CircleButton(TzIcons.chevronDown, stringResource(R.string.gameya_member_down_cd, name)) { haptics.perform(HapticLevel.Tick); vm.moveSeat(turn, 1) }

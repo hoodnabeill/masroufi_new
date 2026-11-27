@@ -1,3 +1,5 @@
+
+
 package com.masroufi.app.feature.people
 
 import androidx.compose.foundation.background
@@ -6,7 +8,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -44,11 +50,17 @@ import com.masroufi.app.feature.add.AmountInput
 import com.masroufi.app.feature.plan.AmountKeypad
 import com.masroufi.app.feature.plan.ChipRow
 import com.masroufi.app.feature.plan.NameField
+import com.masroufi.app.feature.plan.SplitRow
 import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.PrimaryButton
 import com.masroufi.app.ui.components.Segmented
 import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.components.TzSheet
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.LARGE_FONT_SCALE
+import com.masroufi.app.ui.components.isLargeFont
+import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.pressScale
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -60,7 +72,7 @@ private val SheetPadding = Modifier.fillMaxWidth().padding(start = 16.dp, end = 
 
 /** The tab's sheets: the new record, the quick split, and the tab or loans to settle. */
 @Composable
-internal fun PeopleSheets(ui: PeopleUi, vm: PeopleViewModel) {
+internal fun PeopleSheets(ui: PeopleUi, vm: PeopleActions) {
     val haptics = LocalHaptics.current
     when (val s = ui.sheet) {
         null -> Unit
@@ -111,7 +123,8 @@ internal fun PocketPaySheet(
             if (editable) {
                 AmountKeypad(input, { input = input.digit(it) }, { input = input.point() }, { input = input.backspace() })
             } else {
-                Text(poundsText(amount) + " " + stringResource(R.string.paper_currency), style = TzType.hero, color = Tz.text)
+                // shortcut: the hero number stops growing past 130% font size so it stays on one line.
+                CappedFontScale(LARGE_FONT_SCALE) { Text(poundsText(amount) + " " + stringResource(R.string.paper_currency), style = TzType.hero, color = Tz.text) }
             }
             Text(stringResource(pocketQuestion), style = TzType.caption, color = Tz.text2)
             PocketPicker(pockets, pocket, allowNone) { pocket = it }
@@ -127,7 +140,7 @@ private val DueChoices = listOf(null to R.string.people_due_none, 7 to R.string.
 
 /** "+" : they owe me / I owe / a tab item, for a person picked or new. */
 @Composable
-private fun AddRecordSheet(ui: PeopleUi, vm: PeopleViewModel) {
+internal fun AddRecordSheet(ui: PeopleUi, vm: PeopleActions) {
     val haptics = LocalHaptics.current
     var mode by remember { mutableStateOf(AddMode.THEY_OWE) }
     var personId by remember { mutableStateOf<Long?>(null) }
@@ -186,7 +199,7 @@ private const val NOTE_MAX = 60
 
 /** Quick split: the amount, the pocket, who is in (the user too) and each share, equal until typed over. */
 @Composable
-private fun SplitSheet(ui: PeopleUi, vm: PeopleViewModel) {
+internal fun SplitSheet(ui: PeopleUi, vm: PeopleActions) {
     val haptics = LocalHaptics.current
     val d = ui.split
     val shares = d.shares
@@ -200,10 +213,10 @@ private fun SplitSheet(ui: PeopleUi, vm: PeopleViewModel) {
             Text(stringResource(R.string.people_split_who), style = TzType.caption, color = Tz.text2)
             ParticipantRow(ME, stringResource(R.string.people_split_me), d, shares, vm)
             ui.persons.filter { it.kind == PersonKind.PERSON }.forEach { p -> ParticipantRow(p.id, p.name, d, shares, vm) }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f)) { NameField(newName, { newName = it.take(NAME_MAX) }, R.string.people_split_new_hint) }
-                SmallPill(stringResource(R.string.people_split_add), true, { vm.addSplitPerson(newName); newName = "" })
-            }
+            SplitRow(
+                Modifier.fillMaxWidth(),
+                info = { m -> Box(m) { NameField(newName, { newName = it.take(NAME_MAX) }, R.string.people_split_new_hint) } },
+            ) { SmallPill(stringResource(R.string.people_split_add), true, { vm.addSplitPerson(newName); newName = "" }) }
             if (shares == null && d.total > 0) Text(stringResource(R.string.people_split_mismatch), style = TzType.caption, color = Tz.carnelianText)
             PrimaryButton(
                 stringResource(R.string.people_split_save), { haptics.perform(HapticLevel.Confirm); vm.confirmSplit() },
@@ -215,32 +228,41 @@ private fun SplitSheet(ui: PeopleUi, vm: PeopleViewModel) {
 
 /** One person of the split: a tick disc, the name and, when in, the share as a field to type over. */
 @Composable
-private fun ParticipantRow(id: Long, name: String, d: SplitDraft, shares: Map<Long, Long>?, vm: PeopleViewModel) {
+private fun ParticipantRow(id: Long, name: String, d: SplitDraft, shares: Map<Long, Long>?, vm: PeopleActions) {
     val haptics = LocalHaptics.current
     val on = id in d.participants
     val shape = RoundedCornerShape(16.dp)
-    Row(
-        Modifier.fillMaxWidth().clip(shape).background(if (on) Tz.raised else Tz.night).border(1.dp, if (on) Tz.yellow else Tz.line, shape)
-            .clickable(role = Role.Checkbox) { haptics.perform(HapticLevel.Tick); vm.toggleParticipant(id) }.padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
+    val source = remember { MutableInteractionSource() }
+    Column(
+        Modifier.pressScale(source, PressScale.Card).fillMaxWidth().clip(shape).background(if (on) Tz.raised else Tz.night).border(1.dp, if (on) Tz.yellow else Tz.line, shape)
+            .toggleable(value = on, interactionSource = source, indication = null, role = Role.Checkbox) { haptics.perform(HapticLevel.Tick); vm.toggleParticipant(id) }
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(Modifier.size(24.dp).clip(CircleShape).background(if (on) Tz.yellow else Tz.line), contentAlignment = Alignment.Center) {
-            if (on) TzIcon(TzIcons.check, 14.dp, null, tint = Tz.night)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(24.dp).clip(CircleShape).background(if (on) Tz.yellow else Tz.line), contentAlignment = Alignment.Center) {
+                if (on) TzIcon(TzIcons.check, 14.dp, null, tint = Tz.night)
+            }
+            Text(name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, modifier = Modifier.weight(1f))
+            if (on && !isLargeFont()) ShareField(id, name, d, shares, vm, Modifier.width(88.dp))
         }
-        Text(name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, modifier = Modifier.weight(1f), maxLines = 1)
-        if (on) {
-            val shown = d.edited[id] ?: shares?.get(id)?.let { AmountInput.of(it).text.ifEmpty { "0" } } ?: ""
-            val label = stringResource(R.string.people_split_share_cd, name)
-            BasicTextField(
-                value = shown,
-                onValueChange = { vm.editShare(id, it) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                textStyle = TzType.rowNumber.copy(fontSize = 18.sp, color = Tz.text, textAlign = TextAlign.Center),
-                cursorBrush = SolidColor(Tz.yellow),
-                modifier = Modifier.width(88.dp).clip(RoundedCornerShape(12.dp)).background(Tz.night).padding(horizontal = 8.dp, vertical = 8.dp)
-                    .semantics { contentDescription = label },
-            )
-        }
+        if (on && isLargeFont()) ShareField(id, name, d, shares, vm, Modifier.fillMaxWidth())
     }
+}
+
+/** The share of one person, typed over the equal one. */
+@Composable
+private fun ShareField(id: Long, name: String, d: SplitDraft, shares: Map<Long, Long>?, vm: PeopleActions, modifier: Modifier) {
+    val shown = d.edited[id] ?: shares?.get(id)?.let { AmountInput.of(it).text.ifEmpty { "0" } } ?: ""
+    val label = stringResource(R.string.people_split_share_cd, name)
+    BasicTextField(
+        value = shown,
+        onValueChange = { vm.editShare(id, it) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        textStyle = TzType.rowNumber.copy(fontSize = 18.sp, color = Tz.text, textAlign = TextAlign.Center),
+        cursorBrush = SolidColor(Tz.yellow),
+        modifier = modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).background(Tz.night).padding(horizontal = 8.dp, vertical = 8.dp)
+            .semantics { contentDescription = label },
+    )
 }

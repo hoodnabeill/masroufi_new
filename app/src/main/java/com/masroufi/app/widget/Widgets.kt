@@ -35,6 +35,8 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.masroufi.app.MainActivity
@@ -258,7 +260,8 @@ private fun ChipButton(c: ChipView, modifier: GlanceModifier) {
 
 @Composable
 private fun PlusButton(ctx: Context, modifier: GlanceModifier) {
-    Box(modifier = modifier.background(Tz.yellow).cornerRadius(16.dp).clickable(ctx.home()), contentAlignment = Alignment.Center) {
+    val label = ctx.getString(R.string.add_punch)
+    Box(modifier = modifier.background(Tz.yellow).cornerRadius(16.dp).clickable(ctx.home()).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
         Text("+", style = style(Tz.night, 28, bold = true, center = true))
     }
 }

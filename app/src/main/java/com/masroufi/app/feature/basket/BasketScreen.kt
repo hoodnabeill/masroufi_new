@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.basket
 
 import androidx.compose.foundation.background
@@ -58,6 +60,14 @@ import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.paper.Qersh
 import com.masroufi.app.ui.paper.QershMood
 import com.masroufi.app.ui.theme.Tz
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import com.masroufi.app.feature.plan.SplitRow
+import com.masroufi.app.feature.plan.TwoUp
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.theme.TzRadius
 import com.masroufi.app.ui.theme.TzType
 import java.time.Month
@@ -67,6 +77,12 @@ import java.time.format.TextStyle
 @Composable
 fun BasketScreen(viewModel: BasketViewModel, onBack: () -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
+    BasketContent(ui, viewModel, onBack)
+}
+
+/** The screen with its state and actions passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun BasketContent(ui: BasketUi, viewModel: BasketActions, onBack: () -> Unit) {
     Column(
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -74,7 +90,7 @@ fun BasketScreen(viewModel: BasketViewModel, onBack: () -> Unit) {
     ) {
         PushedHeader(stringResource(R.string.basket_title), onBack)
         when {
-            ui.loading -> repeat(3) { RowSkeleton() }
+            ui.loading -> LoadingRows()
             ui.locked -> PlusLocked(R.string.basket_locked_what, PlusFeature.BASKET) { Sample() }
             ui.empty -> {
                 EmptyState(
@@ -90,7 +106,7 @@ fun BasketScreen(viewModel: BasketViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun Body(ui: BasketUi, vm: BasketViewModel) {
+private fun Body(ui: BasketUi, vm: BasketActions) {
     ui.hero?.let { Hero(it) }
     ItemsCard(ui.items)
     DashedRow(stringResource(R.string.basket_add), vm::openAdd)
@@ -141,8 +157,9 @@ private fun Hero(h: HeroUi) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(stringResource(R.string.basket_hero_label), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2)
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(big, style = TzType.hero.copy(fontSize = 72.sp, lineHeight = 72.sp), color = color)
+        FlowRow(itemVerticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // shortcut: the 72 sp hero number keeps its size at a large system font (it would not fit the card); revisit with a layout that can grow.
+            CappedFontScale { Text(big, style = TzType.hero.copy(fontSize = 72.sp, lineHeight = 72.sp), color = color) }
             Text(stringResource(word), style = TzType.titlePushed, color = Tz.text, modifier = Modifier.padding(bottom = 10.dp))
         }
         Text(
@@ -165,16 +182,16 @@ private fun ItemsCard(items: List<BasketItemUi>) {
 
 @Composable
 private fun ItemRow(item: BasketItemUi) {
-    Row(
+    SplitRow(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        info = { m ->
+            Column(m, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(item.name, style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
+                val line = lineText(item)
+                if (line != null) Text(line, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
+            }
+        },
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(item.name, style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
-            val line = lineText(item)
-            if (line != null) Text(line, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
-        }
         val price = item.lastPrice
         if (price != null) Text(poundsText(price), style = TzType.rowNumber.copy(fontSize = 22.sp), color = Tz.text)
         item.changePercent?.let { Badge(it) }
@@ -202,7 +219,7 @@ private fun Badge(percent: Int) {
         percent < 0 -> Triple(Tz.turquoiseDim, Tz.turquoise, "$percent%")
         else -> Triple(Tz.raised, Tz.text2, same)
     }
-    Box(Modifier.width(64.dp).clip(RoundedCornerShape(12.dp)).background(bg).padding(vertical = 5.dp), contentAlignment = Alignment.Center) {
+    Box(Modifier.widthIn(min = 64.dp).clip(RoundedCornerShape(12.dp)).background(bg).padding(vertical = 5.dp), contentAlignment = Alignment.Center) {
         Text(text, style = TzType.caption.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center), color = fg)
     }
 }
@@ -217,17 +234,22 @@ private fun Suggestion(current: Long, suggested: Long, onRaise: () -> Unit, onLe
             stringResource(R.string.basket_sugg_body, poundsText(suggested), poundsText(current)),
             style = TzType.caption.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Tz.qershOnYellow,
         )
-        Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PrimaryButton(
-                stringResource(R.string.basket_sugg_raise), { haptics.perform(HapticLevel.Confirm); onRaise() },
-                Modifier.weight(1f), height = 44.dp, textStyle = TzType.button.copy(fontSize = 16.sp),
+        Box(Modifier.padding(top = 4.dp)) {
+            TwoUp(
+                { m ->
+                    PrimaryButton(
+                        stringResource(R.string.basket_sugg_raise), { haptics.perform(HapticLevel.Confirm); onRaise() },
+                        m, height = 48.dp, textStyle = TzType.button.copy(fontSize = 16.sp),
+                    )
+                },
+                { m ->
+                    val pill = RoundedCornerShape(percent = 50)
+                    Box(
+                        m.pressClickable { haptics.perform(HapticLevel.Tap); onLeave() }.heightIn(min = 48.dp).clip(pill).border(1.5.dp, Tz.yellow, pill).padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { Text(stringResource(R.string.basket_sugg_leave), style = TzType.button.copy(fontSize = 16.sp), color = Tz.yellow) }
+                },
             )
-            val pill = RoundedCornerShape(percent = 50)
-            Box(
-                Modifier.weight(1f).height(44.dp).clip(pill).border(1.5.dp, Tz.yellow, pill)
-                    .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onLeave() },
-                contentAlignment = Alignment.Center,
-            ) { Text(stringResource(R.string.basket_sugg_leave), style = TzType.button.copy(fontSize = 16.sp), color = Tz.yellow) }
         }
     }
 }
@@ -270,8 +292,8 @@ private fun Habits(h: HabitFacts) {
         facts.forEachIndexed { i, (tag, color, text) ->
             if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(tag, Modifier.width(52.dp), style = TzType.rowNumber.copy(fontSize = 22.sp), color = color)
-                Text(text, style = TzType.caption.copy(fontSize = 13.sp, lineHeight = 21.sp), color = Tz.text2)
+                Text(tag, Modifier.widthIn(min = 52.dp), style = TzType.rowNumber.copy(fontSize = 22.sp), color = color)
+                Text(text, style = TzType.caption.copy(fontSize = 13.sp, lineHeight = 21.sp), color = Tz.text2, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -279,7 +301,7 @@ private fun Habits(h: HabitFacts) {
 
 /** "تابع سعر حاجة تانية": an item name; it is tracked at once, prices come from later entries. */
 @Composable
-private fun AddItemSheet(onDismiss: () -> Unit, onTrack: (String) -> Unit) {
+internal fun AddItemSheet(onDismiss: () -> Unit, onTrack: (String) -> Unit) {
     var name by remember { mutableStateOf("") }
     val shape = RoundedCornerShape(16.dp)
     val haptics = LocalHaptics.current
@@ -292,7 +314,7 @@ private fun AddItemSheet(onDismiss: () -> Unit, onTrack: (String) -> Unit) {
             BasicTextField(
                 value = name,
                 onValueChange = { name = it.take(40) },
-                modifier = Modifier.fillMaxWidth().height(48.dp).clip(shape).background(Tz.night).border(1.dp, Tz.line, shape),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(shape).background(Tz.night).border(1.dp, Tz.line, shape),
                 textStyle = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Tz.text),
                 singleLine = true,
                 cursorBrush = SolidColor(Tz.yellow),

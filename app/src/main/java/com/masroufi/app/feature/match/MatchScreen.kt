@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.match
 
 import androidx.compose.animation.AnimatedContent
@@ -28,6 +30,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.widthIn
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.isLargeFont
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -130,7 +137,7 @@ fun MatchContent(ui: MatchUi, onBack: () -> Unit, onContinue: () -> Unit, modifi
     ) {
         item(key = "header") { PushedHeader(stringResource(R.string.match_title), onBack) }
         if (view == null) {
-            items(3, key = { "skeleton$it" }) { RowSkeleton() }
+            item(key = "skeleton") { LoadingRows() }
         } else {
             item(key = "scoreboard") {
                 if (view.firstWeek) {
@@ -177,6 +184,8 @@ private fun Scoreboard(v: MatchView, shownFor: Int, bounce: Boolean) {
                 color = Tz.turquoise,
                 modifier = Modifier.clip(pillShape).background(Tz.turquoiseInk).padding(horizontal = 14.dp, vertical = 5.dp),
             )
+            // shortcut: the scoreboard is fixed-size art, so its numbers keep the normal font size (TalkBack reads the score).
+            CappedFontScale {
             Row(
                 Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = cd },
                 verticalAlignment = Alignment.CenterVertically,
@@ -208,6 +217,7 @@ private fun Scoreboard(v: MatchView, shownFor: Int, bounce: Boolean) {
                     }
                     Text(stringResource(R.string.match_last_week), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.turquoiseDimText)
                 }
+            }
             }
             Text(
                 stringResource(R.string.match_rule),
@@ -283,7 +293,7 @@ private fun EventRow(e: MatchEvent, dayName: String, landed: Boolean) {
             dayName,
             style = TzType.caption.copy(fontSize = 12.sp, fontWeight = if (open) FontWeight.Bold else FontWeight.Normal),
             color = if (open) Tz.yellow else Tz.text2,
-            modifier = Modifier.width(44.dp),
+            modifier = Modifier.widthIn(min = 44.dp),
         )
         Box(Modifier.size(22.dp).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
             when (e.kind) {
@@ -320,11 +330,14 @@ private fun HatTrickCard(done: Boolean) {
                 .then(if (done) Modifier.background(Tz.yellow) else Modifier.border(3.dp, Tz.yellow, CircleShape)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                stringResource(R.string.match_hat_stamp),
-                style = TzType.cardHeading.copy(fontSize = 13.sp, lineHeight = 1.1.em, textAlign = TextAlign.Center),
-                color = if (done) Tz.night else Tz.yellow,
-            )
+            // shortcut: the stamp is a fixed 52 dp ring, so its word keeps the normal font size.
+            CappedFontScale {
+                Text(
+                    stringResource(R.string.match_hat_stamp),
+                    style = TzType.cardHeading.copy(fontSize = 13.sp, lineHeight = 1.1.em, textAlign = TextAlign.Center),
+                    color = if (done) Tz.night else Tz.yellow,
+                )
+            }
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
@@ -344,11 +357,11 @@ private fun HatTrickCard(done: Boolean) {
 @Composable
 private fun League(v: MatchView) {
     TzPanel(spacing = 10.dp) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.Bottom) {
             Text(stringResource(R.string.match_league_title), style = TzType.cardHeading, color = Tz.text)
             Text(stringResource(R.string.match_league_sub), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (!isLargeFont()) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.match_col_week), Modifier.width(LABEL_WIDTH), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2)
             Text(stringResource(R.string.match_col_result), Modifier.weight(1f), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2)
             Text(stringResource(R.string.match_col_saved), Modifier.width(56.dp), style = TzType.caption.copy(fontSize = 13.sp, textAlign = TextAlign.End), color = Tz.text2)
@@ -388,6 +401,23 @@ private fun LeagueRowView(r: LeagueRow) {
         else -> r.number.toString()
     }
     val shape = RoundedCornerShape(14.dp)
+    if (isLargeFont()) {
+        // the table's three columns do not fit a large font: the week and the sum on one line, the seven days under them
+        Column(
+            Modifier.fillMaxWidth().then(if (r.current) Modifier.clip(shape).background(Tz.night) else Modifier).padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    label, style = TzType.body.copy(fontSize = 14.sp, fontWeight = if (r.current) FontWeight.Bold else FontWeight.Normal),
+                    color = if (r.current) Tz.yellow else Tz.text2,
+                )
+                Text(poundsText(r.saved), style = TzType.card.copy(fontSize = 16.sp), color = Tz.text)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) { r.days.forEach { g -> Dot(g, r.current) } }
+        }
+        return
+    }
     Row(
         Modifier.fillMaxWidth().then(if (r.current) Modifier.clip(shape).background(Tz.night) else Modifier).padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,

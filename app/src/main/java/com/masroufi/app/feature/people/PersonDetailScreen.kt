@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.people
 
 import androidx.compose.foundation.background
@@ -39,6 +41,10 @@ import com.masroufi.app.data.db.PersonKind
 import com.masroufi.app.data.repo.PersonRow
 import com.masroufi.app.feature.plan.ChipRow
 import com.masroufi.app.feature.plan.NameField
+import com.masroufi.app.feature.plan.SplitRow
+import com.masroufi.app.feature.plan.TwoUp
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.components.CappedFontScale
 import com.masroufi.app.feature.pockets.CircleButton
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.ChipStyle
@@ -57,12 +63,22 @@ import com.masroufi.app.ui.theme.TzType
 @Composable
 fun PersonDetailScreen(viewModel: PersonDetailViewModel, onBack: () -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
-    val haptics = LocalHaptics.current
     val remind = rememberReminder(viewModel::reminded)
     LaunchedEffect(ui.missing) { if (ui.missing) onBack() }
+    PersonDetailContent(ui, viewModel, remind, onBack)
+}
+
+/** The screen with its state and actions passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun PersonDetailContent(ui: PersonDetailUi, viewModel: PersonDetailActions, remind: (name: String, owed: Long) -> Unit, onBack: () -> Unit) {
+    val haptics = LocalHaptics.current
     val row = ui.row
     if (row == null) {
-        Box(Modifier.fillMaxSize())
+        // a gone person leaves at once; while loading the rows show their shape after 150 ms
+        Column(Modifier.fillMaxSize().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            PushedHeader("", onBack)
+            if (!ui.missing) LoadingRows()
+        }
         return
     }
     LazyColumn(
@@ -131,16 +147,21 @@ fun PersonDetailScreen(viewModel: PersonDetailViewModel, onBack: () -> Unit) {
 @Composable
 private fun DetailTotals(row: PersonRow) {
     val shape = RoundedCornerShape(24.dp)
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Column(Modifier.weight(1f).clip(shape).background(Tz.turquoise).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(stringResource(R.string.people_detail_owed), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.turquoiseInk)
-            Text(poundsText(row.owedToMe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.turquoiseInk)
-        }
-        Column(Modifier.weight(1f).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(stringResource(R.string.people_detail_owe), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.text2)
-            Text(poundsText(row.iOweLoans + row.onTab), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.text)
-        }
-    }
+    TwoUp(
+        { m ->
+            Column(m.clip(shape).background(Tz.turquoise).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.people_detail_owed), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.turquoiseInk)
+                // shortcut: the 40 sp hero number keeps its size at a large system font (it would not fit a tile); revisit with a layout that can grow.
+                CappedFontScale { Text(poundsText(row.owedToMe), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.turquoiseInk) }
+            }
+        },
+        { m ->
+            Column(m.clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.people_detail_owe), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.text2)
+                CappedFontScale { Text(poundsText(row.iOweLoans + row.onTab), style = TzType.hero.copy(fontSize = 40.sp, lineHeight = 42.sp), color = Tz.text) }
+            }
+        },
+    )
 }
 
 /** A debt, a repayment or a tab item; open debts carry their own "سدّد" / "استلمت". Rows overlap by their borders like the list on the tab. */
@@ -166,15 +187,16 @@ private fun HistoryRow(h: HistoryItem, first: Boolean, last: Boolean, onMoney: (
             sub = formatShortDate(h.item.date)
         }
     }
-    Row(
+    SplitRow(
         Modifier.fillMaxWidth().then(if (first) Modifier else Modifier.offset(y = (-1).dp)).clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
+        info = { m ->
+            Column(m, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
+                Text(sub, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
+            }
+        },
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
-            Text(sub, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
-        }
         when (h) {
             is HistoryItem.Loan -> if (h.debt.settled) {
                 Text(stringResource(R.string.people_h_done), style = TzType.caption, color = Tz.text2)
@@ -197,7 +219,7 @@ private fun HistoryRow(h: HistoryItem, first: Boolean, last: Boolean, onMoney: (
 }
 
 @Composable
-private fun EditSheet(row: PersonRow, vm: PersonDetailViewModel) {
+internal fun EditSheet(row: PersonRow, vm: PersonDetailActions) {
     val haptics = LocalHaptics.current
     var name by remember { mutableStateOf(row.person.name) }
     var phone by remember { mutableStateOf(row.person.phone.orEmpty()) }
@@ -221,7 +243,7 @@ private fun EditSheet(row: PersonRow, vm: PersonDetailViewModel) {
 
 /** Asks first and says what goes with the person. */
 @Composable
-private fun DeleteSheet(row: PersonRow, history: List<HistoryItem>, vm: PersonDetailViewModel) {
+internal fun DeleteSheet(row: PersonRow, history: List<HistoryItem>, vm: PersonDetailActions) {
     val haptics = LocalHaptics.current
     val loans = history.count { it is HistoryItem.Loan }
     val items = history.count { it is HistoryItem.TabLine }

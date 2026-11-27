@@ -57,6 +57,7 @@ import com.masroufi.app.ui.icons.TzIcon
 import com.masroufi.app.ui.icons.TzIcons
 import com.masroufi.app.ui.motion.PressScale
 import com.masroufi.app.ui.motion.TzSpring
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.motion.pressScale
 import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
@@ -106,7 +107,7 @@ internal fun KidsTicket(
     Column(modifier.fillMaxWidth().clip(shape).background(c.paper)) {
         Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             FlowRow(
-                Modifier.fillMaxWidth().then(if (onHeader != null) Modifier.clickable(role = Role.Button, onClick = onHeader) else Modifier),
+                (if (onHeader != null) Modifier.pressClickable(onClick = onHeader) else Modifier).fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 itemVerticalAlignment = Alignment.CenterVertically,
             ) {
@@ -211,7 +212,7 @@ internal fun TicketPill(text: String, c: TicketColors, filled: Boolean, modifier
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, style = TzType.button.copy(fontSize = 16.sp), color = if (filled) c.paper else c.ink, maxLines = 1)
+        Text(text, style = TzType.button.copy(fontSize = 16.sp), color = if (filled) c.paper else c.ink)
     }
 }
 

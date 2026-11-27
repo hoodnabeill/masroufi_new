@@ -54,6 +54,25 @@ data class GameyaFormState(
             (editing || (members.isNotEmpty() && myTurn in 1..participants && pocketId != null))
 }
 
+/** What the gameya form calls on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface GameyaFormActions {
+    val isEdit: Boolean get() = false
+    fun setName(text: String) {}
+    fun digit(d: Int) {}
+    fun point() {}
+    fun backspace() {}
+    fun setPocket(pocketId: Long) {}
+    fun setNewMember(text: String) {}
+    fun addMember() {}
+    fun removeSeat(turn: Int) {}
+    fun moveSeat(turn: Int, delta: Int) {}
+    fun shiftStart(months: Int) {}
+    fun save() {}
+    fun askArchive() {}
+    fun dismissArchive() {}
+    fun archive() {}
+}
+
 private const val TAG = "GameyaForm"
 private const val NAME_MAX = 30
 private const val MEMBERS_MAX = 60
@@ -66,9 +85,9 @@ class GameyaFormViewModel @Inject constructor(
     private val entitlements: Entitlements,
     private val clock: Clock,
     savedState: SavedStateHandle,
-) : ViewModel() {
+) : ViewModel(), GameyaFormActions {
     private val id: Long = savedState.get<Long>("id") ?: 0L
-    val isEdit: Boolean get() = id != 0L
+    override val isEdit: Boolean get() = id != 0L
 
     private val _form = MutableStateFlow(GameyaFormState(editing = id != 0L))
     val form: StateFlow<GameyaFormState> = _form.asStateFlow()
@@ -88,28 +107,28 @@ class GameyaFormViewModel @Inject constructor(
         }
     }
 
-    fun setName(text: String) = _form.update { it.copy(name = text.take(NAME_MAX), failed = false) }
-    fun digit(d: Int) = _form.update { it.copy(amount = it.amount.digit(d)) }
-    fun point() = _form.update { it.copy(amount = it.amount.point()) }
-    fun backspace() = _form.update { it.copy(amount = it.amount.backspace()) }
-    fun setPocket(pocketId: Long) = _form.update { it.copy(pocketId = pocketId) }
-    fun setNewMember(text: String) = _form.update { it.copy(newMember = text.take(NAME_MAX)) }
+    override fun setName(text: String) = _form.update { it.copy(name = text.take(NAME_MAX), failed = false) }
+    override fun digit(d: Int) = _form.update { it.copy(amount = it.amount.digit(d)) }
+    override fun point() = _form.update { it.copy(amount = it.amount.point()) }
+    override fun backspace() = _form.update { it.copy(amount = it.amount.backspace()) }
+    override fun setPocket(pocketId: Long) = _form.update { it.copy(pocketId = pocketId) }
+    override fun setNewMember(text: String) = _form.update { it.copy(newMember = text.take(NAME_MAX)) }
 
     /** Adds the typed name at the end of the turn order. */
-    fun addMember() = _form.update {
+    override fun addMember() = _form.update {
         val name = it.newMember.trim()
         if (name.isEmpty() || it.members.size >= MEMBERS_MAX) it else it.copy(members = it.members + name, newMember = "")
     }
 
     /** Removes the other member sitting at [turn]; the user's own seat stays. */
-    fun removeSeat(turn: Int) = _form.update {
+    override fun removeSeat(turn: Int) = _form.update {
         val index = if (turn < it.myTurn) turn - 1 else turn - 2
         if (turn == it.myTurn || index !in it.members.indices) it
         else it.members.filterIndexed { i, _ -> i != index }.let { rest -> it.copy(members = rest, myTurn = it.myTurn.coerceAtMost(rest.size + 1)) }
     }
 
     /** Moves the seat with turn number [turn] by [delta] places (-1 earlier, +1 later); the user's seat moves like any other. */
-    fun moveSeat(turn: Int, delta: Int) = _form.update {
+    override fun moveSeat(turn: Int, delta: Int) = _form.update {
         val to = turn + delta
         fun index(t: Int) = if (t < it.myTurn) t - 1 else t - 2 // the member list skips the user's seat
         when {
@@ -120,10 +139,10 @@ class GameyaFormViewModel @Inject constructor(
         }
     }
 
-    fun shiftStart(months: Int) = _form.update { it.copy(start = it.start.plusMonths(months.toLong())) }
+    override fun shiftStart(months: Int) = _form.update { it.copy(start = it.start.plusMonths(months.toLong())) }
     fun setMyTurn(turn: Int) = _form.update { it.copy(myTurn = turn.coerceIn(1, it.participants)) }
 
-    fun save() {
+    override fun save() {
         val f = _form.value
         if (!f.canSave) return
         _form.update { it.copy(saving = true, failed = false) }
@@ -143,11 +162,11 @@ class GameyaFormViewModel @Inject constructor(
         }
     }
 
-    fun askArchive() = _form.update { it.copy(askArchive = true) }
-    fun dismissArchive() = _form.update { it.copy(askArchive = false) }
+    override fun askArchive() = _form.update { it.copy(askArchive = true) }
+    override fun dismissArchive() = _form.update { it.copy(askArchive = false) }
 
     /** After the question: the gameya leaves the list and so does its installment. */
-    fun archive() {
+    override fun archive() {
         if (!isEdit) return
         viewModelScope.launch {
             try {

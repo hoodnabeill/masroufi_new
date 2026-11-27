@@ -22,6 +22,22 @@ import javax.inject.Inject
 private const val NAME_MAX = 20
 private const val LABEL_MAX = 24
 private const val DEFAULT_AGE = 8
+/** What the child form calls on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface ChildFormActions {
+    val isEdit: Boolean get() = false
+    fun setName(text: String) {}
+    fun setBirthYear(year: Int) {}
+    fun setColor(index: Int) {}
+    fun setJar(on: Boolean) {}
+    fun setJarLabel(text: String) {}
+    fun setMatch(on: Boolean) {}
+    fun digit(field: ChildAmount, d: Int) {}
+    fun point(field: ChildAmount) {}
+    fun backspace(field: ChildAmount) {}
+    fun save() {}
+    fun delete() {}
+}
+
 private const val TAG = "ChildForm"
 
 /** The four amounts of the form, each with its own keypad. */
@@ -54,7 +70,7 @@ class ChildFormViewModel @Inject constructor(
     private val kids: KidsRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
-) : ViewModel() {
+) : ViewModel(), ChildFormActions {
     private val id: Long = savedState.get<Long>("id") ?: 0L
     private val _form = MutableStateFlow(ChildForm())
     val form: StateFlow<ChildForm> = _form.asStateFlow()
@@ -62,7 +78,7 @@ class ChildFormViewModel @Inject constructor(
     val gone: StateFlow<Boolean> = _gone.asStateFlow()
     private var original: ChildEntity? = null
 
-    val isEdit: Boolean get() = id != 0L
+    override val isEdit: Boolean get() = id != 0L
     val thisYear: Int get() = LocalDate.now(clock).year
 
     init {
@@ -84,12 +100,12 @@ class ChildFormViewModel @Inject constructor(
         }
     }
 
-    fun setName(text: String) = _form.update { it.copy(name = text.take(NAME_MAX), failed = false) }
-    fun setBirthYear(year: Int) = _form.update { it.copy(birthYear = year.coerceIn(thisYear - 25, thisYear)) }
-    fun setColor(index: Int) = _form.update { it.copy(colorIndex = index) }
-    fun setJar(on: Boolean) = _form.update { it.copy(jar = on, match = it.match && on) }
-    fun setJarLabel(text: String) = _form.update { it.copy(jarLabel = text.take(LABEL_MAX)) }
-    fun setMatch(on: Boolean) = _form.update { it.copy(match = on) }
+    override fun setName(text: String) = _form.update { it.copy(name = text.take(NAME_MAX), failed = false) }
+    override fun setBirthYear(year: Int) = _form.update { it.copy(birthYear = year.coerceIn(thisYear - 25, thisYear)) }
+    override fun setColor(index: Int) = _form.update { it.copy(colorIndex = index) }
+    override fun setJar(on: Boolean) = _form.update { it.copy(jar = on, match = it.match && on) }
+    override fun setJarLabel(text: String) = _form.update { it.copy(jarLabel = text.take(LABEL_MAX)) }
+    override fun setMatch(on: Boolean) = _form.update { it.copy(match = on) }
 
     private fun change(field: ChildAmount, edit: (AmountInput) -> AmountInput) = _form.update {
         when (field) {
@@ -100,11 +116,11 @@ class ChildFormViewModel @Inject constructor(
         }
     }
 
-    fun digit(field: ChildAmount, d: Int) = change(field) { it.digit(d) }
-    fun point(field: ChildAmount) = change(field) { it.point() }
-    fun backspace(field: ChildAmount) = change(field) { it.backspace() }
+    override fun digit(field: ChildAmount, d: Int) = change(field) { it.digit(d) }
+    override fun point(field: ChildAmount) = change(field) { it.point() }
+    override fun backspace(field: ChildAmount) = change(field) { it.backspace() }
 
-    fun save() {
+    override fun save() {
         val f = _form.value
         if (!f.canSave) return
         _form.update { it.copy(saving = true, failed = false) }
@@ -131,7 +147,7 @@ class ChildFormViewModel @Inject constructor(
         }
     }
 
-    fun delete() {
+    override fun delete() {
         if (!isEdit) return
         viewModelScope.launch {
             try {

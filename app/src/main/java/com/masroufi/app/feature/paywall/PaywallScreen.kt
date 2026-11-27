@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.masroufi.app.feature.paywall
 
 import androidx.compose.animation.animateColorAsState
@@ -27,6 +29,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.FlowRow
+import com.masroufi.app.ui.components.isLargeFont
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -104,7 +108,7 @@ fun PaywallContent(ui: PaywallUi, onSelect: (PlusPlan) -> Unit, onBuy: () -> Uni
             .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
             val tag = tagText(ui)
             if (tag != null) {
                 Text(
@@ -122,18 +126,24 @@ fun PaywallContent(ui: PaywallUi, onSelect: (PlusPlan) -> Unit, onBuy: () -> Uni
                 contentAlignment = Alignment.Center,
             ) { TzIcon(TzIcons.close, 18.dp, null, tint = Tz.text) }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Sad while something stops; delighted once bought; otherwise just thinking (nothing is about to stop).
-            Qersh(
-                when {
-                    done -> QershMood.Delighted
-                    ui.stops -> QershMood.Sad
-                    else -> QershMood.Thinking
-                },
-                92.dp,
-                contentDescription = stringResource(if (done) R.string.paywall_qersh_happy else R.string.paywall_qersh_sad),
-            )
-            Text(stringResource(headlineRes(ui.headline)), style = TzType.hero.copy(fontSize = 36.sp, lineHeight = 1.2.em), color = Tz.text, modifier = Modifier.weight(1f))
+        // Sad while something stops; delighted once bought; otherwise just thinking (nothing is about to stop).
+        val mood = when {
+            done -> QershMood.Delighted
+            ui.stops -> QershMood.Sad
+            else -> QershMood.Thinking
+        }
+        val moodCd = stringResource(if (done) R.string.paywall_qersh_happy else R.string.paywall_qersh_sad)
+        val headline = stringResource(headlineRes(ui.headline))
+        if (isLargeFont()) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Qersh(mood, 92.dp, contentDescription = moodCd)
+                Text(headline, style = TzType.hero.copy(fontSize = 36.sp, lineHeight = 1.2.em), color = Tz.text, modifier = Modifier.fillMaxWidth())
+            }
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Qersh(mood, 92.dp, contentDescription = moodCd)
+                Text(headline, style = TzType.hero.copy(fontSize = 36.sp, lineHeight = 1.2.em), color = Tz.text, modifier = Modifier.weight(1f))
+            }
         }
         Rows(ui, done)
         Text(
@@ -142,14 +152,19 @@ fun PaywallContent(ui: PaywallUi, onSelect: (PlusPlan) -> Unit, onBuy: () -> Uni
             style = TzType.caption.copy(fontSize = 12.sp, lineHeight = 1.7.em), color = Tz.text2,
         )
         if (ui.pricesAvailable) {
-            Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            val planCards: @Composable (Boolean) -> Unit = { stacked ->
                 ui.plans.forEach { p ->
-                    PlanCard(p, selected = p.plan == ui.selected, enabled = ui.purchase != PurchaseState.Buying && !done, modifier = Modifier.weight(1f)) {
+                    PlanCard(
+                        p, selected = p.plan == ui.selected, enabled = ui.purchase != PurchaseState.Buying && !done,
+                        modifier = if (stacked) Modifier.fillMaxWidth() else Modifier.weight(1f),
+                    ) {
                         if (p.plan != ui.selected) haptics.perform(HapticLevel.Tick)
                         onSelect(p.plan)
                     }
                 }
             }
+            if (isLargeFont()) Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(18.dp)) { planCards(true) }
+            else Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { planCards(false) }
         } else {
             Text(stringResource(R.string.paywall_prices_unavailable), style = TzType.body, color = Tz.text2, modifier = Modifier.padding(horizontal = 4.dp))
         }
@@ -253,8 +268,7 @@ private fun Rows(ui: PaywallUi, done: Boolean) {
 private fun LossRowView(row: PaywallRow, outline: Color, dashed: Boolean, modifier: Modifier, stopping: Boolean) {
     val (value, title, sub) = rowTexts(row, stopping)
     val radius = 18.dp
-    Row(
-        modifier.fillMaxWidth().testTag("paywall_row_${row.feature.name}").clip(RoundedCornerShape(radius)).background(Tz.surface)
+    val rowModifier = modifier.fillMaxWidth().testTag("paywall_row_${row.feature.name}").clip(RoundedCornerShape(radius)).background(Tz.surface)
             .drawBehind {
                 val w = 1.dp.toPx()
                 drawRoundRect(
@@ -264,14 +278,23 @@ private fun LossRowView(row: PaywallRow, outline: Color, dashed: Boolean, modifi
                     style = Stroke(w, pathEffect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())) else null),
                 )
             }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (value != null) Text(value, Modifier.width(64.dp), style = TzType.rowNumber.copy(fontSize = 22.sp), color = Tz.yellow)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    val texts: @Composable (Modifier) -> Unit = { m ->
+        Column(m, verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(title, style = TzType.label.copy(fontSize = 14.sp), color = Tz.text)
             if (sub.isNotEmpty()) Text(sub, style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
+        }
+    }
+    if (isLargeFont()) {
+        // the number gets its own line: at this size it would squeeze the words beside it
+        Column(rowModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (value != null) Text(value, style = TzType.rowNumber.copy(fontSize = 22.sp), color = Tz.yellow)
+            texts(Modifier.fillMaxWidth())
+        }
+    } else {
+        Row(rowModifier, horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (value != null) Text(value, Modifier.width(64.dp), style = TzType.rowNumber.copy(fontSize = 22.sp), color = Tz.yellow)
+            texts(Modifier.weight(1f))
         }
     }
 }
@@ -395,13 +418,13 @@ private fun PlanCard(p: PlanUi, selected: Boolean, enabled: Boolean, modifier: M
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(name, style = TzType.label.copy(fontSize = 14.sp), color = Tz.text)
+                Text(name, style = TzType.label.copy(fontSize = 14.sp), color = Tz.text, modifier = Modifier.weight(1f))
                 Box(Modifier.size(20.dp).clip(CircleShape).border(2.dp, if (selected) Tz.yellow else Tz.text3, CircleShape), contentAlignment = Alignment.Center) {
                     if (selected) Box(Modifier.size(10.dp).clip(CircleShape).background(Tz.yellow))
                 }
             }
             // The store's own text, as given (the stub's debug prices carry "(debug)").
-            Text(p.priceText, style = TzType.card.copy(fontSize = 26.sp, lineHeight = 1.15.em), color = color, maxLines = 2)
+            Text(p.priceText, style = TzType.card.copy(fontSize = 26.sp, lineHeight = 1.15.em), color = color)
             val sub = when {
                 p.perMonth != null ->
                     if (p.currency == "EGP") stringResource(R.string.paywall_per_month, p.perMonth.toString())

@@ -44,7 +44,8 @@ import com.masroufi.app.domain.NotifKind
 import com.masroufi.app.feature.onboarding.DEFAULT_REMINDER_HOUR
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.notify.channelName
-import com.masroufi.app.ui.components.RowSkeleton
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.theme.Tz
 import com.masroufi.app.ui.theme.TzType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -184,7 +185,7 @@ fun NotificationSettingsContent(ui: NotificationSettingsUi, vm: NotificationActi
     ) {
         PushedHeader(stringResource(R.string.settings_notifications), onBack)
         if (ui.loading) {
-            repeat(3) { RowSkeleton() }
+            LoadingRows()
             return@Column
         }
         Group(R.string.notif_group) {
@@ -201,7 +202,7 @@ fun NotificationSettingsContent(ui: NotificationSettingsUi, vm: NotificationActi
                 Text(stringResource(R.string.notif_blocked), style = TzType.caption, color = Tz.text)
                 Text(
                     stringResource(R.string.notif_open_system),
-                    Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).clickable(role = Role.Button, onClick = onOpenSystem),
+                    Modifier.pressClickable(onClick = onOpenSystem).fillMaxWidth().defaultMinSize(minHeight = 48.dp),
                     style = TzType.body.copy(fontWeight = FontWeight.SemiBold), color = Tz.yellow,
                 )
             }

@@ -51,6 +51,15 @@ data class BasketUi(
     val hasHabits: Boolean get() = habits.weekday != null || habits.lateNight != null || habits.cashVsWalletPercent != null
 }
 
+/** What the basket screen calls on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface BasketActions {
+    fun openAdd() {}
+    fun dismissAdd() {}
+    fun track(name: String) {}
+    fun raise() {}
+    fun leave() {}
+}
+
 private const val TAG = "Basket"
 
 /** "N times a month" is worth saying from about weekly. */
@@ -75,7 +84,7 @@ internal fun BasketData.toUi(): Triple<List<BasketItemUi>, HeroUi?, SuggestedTic
 )
 
 @HiltViewModel
-class BasketViewModel @Inject constructor(private val basket: BasketRepository) : ViewModel() {
+class BasketViewModel @Inject constructor(private val basket: BasketRepository) : ViewModel(), BasketActions {
     private val addSheet = MutableStateFlow(false)
     private val raisedTo = MutableStateFlow<Long?>(null)
 
@@ -92,20 +101,20 @@ class BasketViewModel @Inject constructor(private val basket: BasketRepository) 
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BasketUi())
 
-    fun openAdd() { addSheet.value = true }
-    fun dismissAdd() { addSheet.value = false }
+    override fun openAdd() { addSheet.value = true }
+    override fun dismissAdd() { addSheet.value = false }
 
     /** "تابع سعر حاجة تانية". */
-    fun track(name: String) {
+    override fun track(name: String) {
         addSheet.value = false
         if (name.isNotBlank()) act { basket.track(name) }
     }
 
     /** "زوّد التذكرة". */
-    fun raise() = act { raisedTo.value = basket.applySuggestedTicket() }
+    override fun raise() { act { raisedTo.value = basket.applySuggestedTicket() } }
 
     /** "سيبها": nothing more this month. */
-    fun leave() = act { basket.dismissSuggestion() }
+    override fun leave() { act { basket.dismissSuggestion() } }
 
     private fun act(block: suspend () -> Unit) {
         viewModelScope.launch {

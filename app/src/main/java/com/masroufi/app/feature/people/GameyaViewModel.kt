@@ -42,6 +42,22 @@ data class GameyaUi(
     val empty: Boolean get() = !loading && gameyas.isEmpty()
 }
 
+/** What the gameya screen and its sheets call on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface GameyaActions {
+    fun select(id: Long) {}
+    fun openPay() {}
+    fun openSwap() {}
+    fun openPlan(editing: GameyaPlanEntity? = null) {}
+    fun dismissSheet() {}
+    fun dismissPlus() {}
+    fun requestNew(onGo: () -> Unit) {}
+    fun payMine(pocketId: Long) {}
+    fun togglePaid(memberId: Long) {}
+    fun swapWith(memberId: Long) {}
+    fun savePlan(editing: GameyaPlanEntity?, label: String, amount: Long) {}
+    fun deletePlan(id: Long) {}
+}
+
 private const val TAG = "Gameya"
 
 @HiltViewModel
@@ -49,7 +65,7 @@ class GameyaViewModel @Inject constructor(
     private val gameyas: GameyaRepository,
     pocketRepo: PocketRepository,
     private val entitlements: Entitlements,
-) : ViewModel() {
+) : ViewModel(), GameyaActions {
     private val selected = MutableStateFlow<Long?>(null)
     private val sheet = MutableStateFlow<GameyaSheet?>(null)
     private val plusSheet = MutableStateFlow(false)
@@ -62,49 +78,49 @@ class GameyaViewModel @Inject constructor(
         c.copy(selectedId = id, sheet = s, plusSheet = p)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GameyaUi())
 
-    fun select(id: Long) { selected.value = id }
-    fun openPay() { sheet.value = GameyaSheet.Pay }
-    fun openSwap() { sheet.value = GameyaSheet.Swap }
-    fun openPlan(editing: GameyaPlanEntity? = null) { sheet.value = GameyaSheet.Plan(editing) }
-    fun dismissSheet() { sheet.value = null }
-    fun dismissPlus() { plusSheet.value = false }
+    override fun select(id: Long) { selected.value = id }
+    override fun openPay() { sheet.value = GameyaSheet.Pay }
+    override fun openSwap() { sheet.value = GameyaSheet.Swap }
+    override fun openPlan(editing: GameyaPlanEntity?) { sheet.value = GameyaSheet.Plan(editing) }
+    override fun dismissSheet() { sheet.value = null }
+    override fun dismissPlus() { plusSheet.value = false }
 
     /** The "+" button: the form, or the Plus card when Free already has its one gameya. */
-    fun requestNew(onGo: () -> Unit) {
+    override fun requestNew(onGo: () -> Unit) {
         if (!entitlements.isPlus.value && state.value.gameyas.size >= FREE_GAMEYAS) plusSheet.value = true else onGo()
     }
 
     /** Records the user's installment from [pocketId]; the card then reads "إنت دفعت". */
-    fun payMine(pocketId: Long) = launchSafe("pay") {
+    override fun payMine(pocketId: Long) = launchSafe("pay") {
         val g = state.value.current ?: return@launchSafe
-        gameyas.payMine(g.gameya.id, pocketId)
         sheet.value = null
+        gameyas.payMine(g.gameya.id, pocketId)
     }
 
     /** Ticks or unticks a member's installment for this month (a record, no money). */
-    fun togglePaid(memberId: Long) = launchSafe("toggle paid") {
+    override fun togglePaid(memberId: Long) = launchSafe("toggle paid") {
         val g = state.value.current ?: return@launchSafe
         val paid = g.unpaidMembers.any { it.id == memberId }
         gameyas.setPaid(g.gameya.id, memberId, g.thisMonth, paid)
     }
 
-    fun swapWith(memberId: Long) = launchSafe("swap") {
+    override fun swapWith(memberId: Long) = launchSafe("swap") {
         val g = state.value.current ?: return@launchSafe
-        gameyas.swapTurn(g.gameya.id, memberId)
         sheet.value = null
+        gameyas.swapTurn(g.gameya.id, memberId)
     }
 
     /** Adds a plan row, or saves the edit of [editing]. */
-    fun savePlan(editing: GameyaPlanEntity?, label: String, amount: Long) = launchSafe("save plan") {
+    override fun savePlan(editing: GameyaPlanEntity?, label: String, amount: Long) = launchSafe("save plan") {
         val g = state.value.current ?: return@launchSafe
+        sheet.value = null
         if (editing == null) gameyas.addPlanRow(g.gameya.id, label, amount)
         else gameyas.updatePlanRow(editing.copy(label = label.trim(), amount = amount))
-        sheet.value = null
     }
 
-    fun deletePlan(id: Long) = launchSafe("delete plan") {
-        gameyas.deletePlanRow(id)
+    override fun deletePlan(id: Long) = launchSafe("delete plan") {
         sheet.value = null
+        gameyas.deletePlanRow(id)
     }
 
     private fun launchSafe(what: String, block: suspend () -> Unit) {

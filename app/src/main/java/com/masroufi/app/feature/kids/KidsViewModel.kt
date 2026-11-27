@@ -69,6 +69,25 @@ data class KidsUi(
     val total: Long get() = view?.total ?: 0L
 }
 
+/** What the kids screen and its sheets call on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface KidsActions {
+    fun openHandoverDay() {}
+    fun openAddChore() {}
+    fun openPlus() {}
+    fun dismissSheet() {}
+    fun setHandoverDay(day: DayOfWeek) {}
+    fun addChore(label: String, bonus: Long, childId: Long?) {}
+    fun tapChore(row: ChoreView) {}
+    fun tick(choreId: Long, childId: Long) {}
+    fun answerAdvance(advanceId: Long, approve: Boolean) {}
+    fun handOver() {}
+    fun openChildScreen(childId: Long) {}
+    fun cancelPinSetup() {}
+    fun setupDigit(d: Int) {}
+    fun setupBackspace() {}
+    fun setupNext() {}
+}
+
 private const val TAG = "Kids"
 private const val MIN_SLOTS = 5
 private const val MAX_SLOTS = 10
@@ -80,7 +99,7 @@ class KidsViewModel @Inject constructor(
     private val childMode: ChildMode,
     private val pin: PinStore,
     private val clock: Clock,
-) : ViewModel() {
+) : ViewModel(), KidsActions {
     private val sheet = MutableStateFlow<KidsSheet?>(null)
     private val pinSetup = MutableStateFlow<PinSetup?>(null)
     private val notice = MutableStateFlow<KidsNotice?>(null)
@@ -99,18 +118,18 @@ class KidsViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), KidsUi())
 
-    fun openHandoverDay() { sheet.value = KidsSheet.HandoverDay }
-    fun openAddChore() { sheet.value = KidsSheet.AddChore }
-    fun openPlus() { sheet.value = KidsSheet.Plus }
-    fun dismissSheet() { sheet.value = null }
+    override fun openHandoverDay() { sheet.value = KidsSheet.HandoverDay }
+    override fun openAddChore() { sheet.value = KidsSheet.AddChore }
+    override fun openPlus() { sheet.value = KidsSheet.Plus }
+    override fun dismissSheet() { sheet.value = null }
     fun clearNotice() { notice.value = null }
 
-    fun setHandoverDay(day: DayOfWeek) = launchSafe("handover day") {
+    override fun setHandoverDay(day: DayOfWeek) = launchSafe("handover day") {
         kids.setHandoverDay(day)
         sheet.value = null
     }
 
-    fun addChore(label: String, bonus: Long, childId: Long?) = launchSafe("add chore") {
+    override fun addChore(label: String, bonus: Long, childId: Long?) = launchSafe("add chore") {
         if (label.isBlank() || bonus <= 0) return@launchSafe
         kids.addChore(label, bonus, childId)
         sheet.value = null
@@ -120,7 +139,7 @@ class KidsViewModel @Inject constructor(
      * A tap on a chore row. A chore for one child is theirs; one already ticked is unticked for whoever ticked it; one for
      * any child goes to the only child who can do it, or asks which of them did it.
      */
-    fun tapChore(row: ChoreView) {
+    override fun tapChore(row: ChoreView) {
         val view = state.value.view ?: return
         val doers = view.children.filter { it.editable && (row.chore.childId == null || row.chore.childId == it.child.id) }
         val who = row.tickedBy ?: row.chore.childId ?: doers.singleOrNull()?.child?.id
@@ -132,7 +151,7 @@ class KidsViewModel @Inject constructor(
     }
 
     /** Ticks or unticks a chore for a child; a chore another child already did gives [KidsNotice.CHORE_TAKEN] and changes nothing. */
-    fun tick(choreId: Long, childId: Long) = launchSafe("tick chore") {
+    override fun tick(choreId: Long, childId: Long) = launchSafe("tick chore") {
         when (kids.toggleChore(choreId, childId)) {
             TickResult.TICKED -> haptic.trySend(HapticLevel.Confirm)
             TickResult.TAKEN -> notice.value = KidsNotice.CHORE_TAKEN
@@ -141,13 +160,13 @@ class KidsViewModel @Inject constructor(
         sheet.value = null
     }
 
-    fun answerAdvance(advanceId: Long, approve: Boolean) = launchSafe("answer advance") {
+    override fun answerAdvance(advanceId: Long, approve: Boolean) = launchSafe("answer advance") {
         kids.answerAdvance(advanceId, approve)
         haptic.trySend(HapticLevel.Confirm)
     }
 
     /** "سلّم مصروف السبت": one entry for all the children; the repository resets the week. */
-    fun handOver() = launchSafe("hand over") {
+    override fun handOver() = launchSafe("hand over") {
         if (state.value.total <= 0) return@launchSafe
         kids.handOver()
         haptic.trySend(HapticLevel.Heavy)
@@ -156,7 +175,7 @@ class KidsViewModel @Inject constructor(
     // -- the child screen
 
     /** Opens the child's screen at once when a PIN exists; the first time the parent sets one before handing the phone over. */
-    fun openChildScreen(childId: Long) = launchSafe("open child screen") {
+    override fun openChildScreen(childId: Long) = launchSafe("open child screen") {
         if (pin.isSet()) {
             childMode.enter(childId)
         } else {
@@ -164,17 +183,17 @@ class KidsViewModel @Inject constructor(
         }
     }
 
-    fun cancelPinSetup() { pinSetup.value = null }
+    override fun cancelPinSetup() { pinSetup.value = null }
 
-    fun setupDigit(d: Int) {
+    override fun setupDigit(d: Int) {
         haptic.trySend(HapticLevel.Tick)
         pinSetup.update { if (it != null && it.digits.length < PIN_MAX_DIGITS) it.copy(digits = it.digits + d, mismatch = false) else it }
     }
 
-    fun setupBackspace() = pinSetup.update { it?.copy(digits = it.digits.dropLast(1)) }
+    override fun setupBackspace() = pinSetup.update { it?.copy(digits = it.digits.dropLast(1)) }
 
     /** The check mark: the first typing moves on to the repeat; the repeat must match, then the PIN is kept and the child screen opens. */
-    fun setupNext() {
+    override fun setupNext() {
         val s = pinSetup.value ?: return
         if (s.digits.length < PIN_MIN_DIGITS) return
         when (s.stage) {

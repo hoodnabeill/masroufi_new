@@ -27,6 +27,14 @@ import javax.inject.Inject
 /** Each slide's segment fills linearly over this (05-MOTION "Monthly story slide"). */
 const val SLIDE_MS = 5_000L
 private const val TICK_MS = 50L
+/** What the story screen calls on the view model (a stateless screen takes this, so a test can pass a no-op). */
+interface StoryActions {
+    fun next() {}
+    fun back() {}
+    fun hold(down: Boolean) {}
+    fun setHideAmounts(on: Boolean) {}
+}
+
 private const val TAG = "Story"
 
 data class StoryUi(
@@ -47,7 +55,7 @@ class StoryViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val stories: StoryRepository,
     private val settings: SettingsStore,
-) : ViewModel() {
+) : ViewModel(), StoryActions {
     val id: Long = checkNotNull(savedState.get<Long>("id")) { "story id" }
 
     private val story = MutableStateFlow<MonthStory?>(null)
@@ -115,21 +123,21 @@ class StoryViewModel @Inject constructor(
     }
 
     /** Tap on the "next" half (or the arrow). */
-    fun next() {
+    override fun next() {
         if (index.value < slides.lastIndex) go(index.value + 1)
     }
 
     /** Tap on the "back" half; on the first slide it starts that slide again. */
-    fun back() {
+    override fun back() {
         if (slides.isEmpty()) return
         if (index.value > 0) go(index.value - 1) else { elapsed = 0; _progress.value = 0f }
     }
 
-    fun hold(down: Boolean) {
+    override fun hold(down: Boolean) {
         _held.value = down
     }
 
-    fun setHideAmounts(on: Boolean) {
+    override fun setHideAmounts(on: Boolean) {
         viewModelScope.launch { settings.setStoryHideAmounts(on) }
     }
 

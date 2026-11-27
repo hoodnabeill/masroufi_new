@@ -29,7 +29,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.masroufi.app.R
 import com.masroufi.app.feature.pockets.PushedHeader
 import com.masroufi.app.ui.components.EmptyState
-import com.masroufi.app.ui.components.RowSkeleton
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -44,6 +45,12 @@ import com.masroufi.app.ui.theme.TzType
 @Composable
 fun StoryListScreen(viewModel: StoryListViewModel, onBack: () -> Unit, onOpen: (Long) -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
+    StoryListContent(ui, onBack, onOpen)
+}
+
+/** The list with its state passed in, so a test can render it (no behaviour of its own). */
+@Composable
+fun StoryListContent(ui: StoryListUi, onBack: () -> Unit, onOpen: (Long) -> Unit) {
     val haptics = LocalHaptics.current
     val locale = LocalContext.current.resources.configuration.locales[0]
     LazyColumn(
@@ -53,7 +60,7 @@ fun StoryListScreen(viewModel: StoryListViewModel, onBack: () -> Unit, onOpen: (
     ) {
         item(key = "header") { PushedHeader(stringResource(R.string.story_list_title), onBack) }
         when {
-            ui.loading -> items(3, key = { "skeleton$it" }) { RowSkeleton() }
+            ui.loading -> item(key = "skeleton") { LoadingRows() }
             ui.empty -> item(key = "empty") {
                 EmptyState({ Qersh(QershMood.Sleepy, 96.dp) }, R.string.story_list_empty_title, R.string.story_list_empty_line)
             }
@@ -61,8 +68,7 @@ fun StoryListScreen(viewModel: StoryListViewModel, onBack: () -> Unit, onOpen: (
                 val month = storyMonthName(row.cycleStart, row.cycleEnd, locale)
                 val shape = RoundedCornerShape(TzRadius.card)
                 Row(
-                    Modifier.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)
-                        .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpen(row.id) }.padding(16.dp),
+                    Modifier.pressClickable { haptics.perform(HapticLevel.Tap); onOpen(row.id) }.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {

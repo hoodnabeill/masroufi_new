@@ -119,10 +119,13 @@ fun Stamp(label: String, color: Color?, subLabel: String? = null, tilt: Float = 
                 )
             }
         }
-        Column(Modifier.padding(horizontal = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            val tint = color ?: Tz.text3
-            Text(label, style = TzType.cardHeading.copy(fontSize = 17.sp, lineHeight = 1.1.em, textAlign = TextAlign.Center), color = tint)
-            if (subLabel != null) Text(subLabel, style = TzType.caption.copy(fontSize = 10.sp, textAlign = TextAlign.Center), color = tint)
+        // shortcut: the stamp is a fixed 96 dp ring, so its words keep the normal font size (TalkBack reads the same words).
+        CappedFontScale {
+            Column(Modifier.padding(horizontal = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                val tint = color ?: Tz.text3
+                Text(label, style = TzType.cardHeading.copy(fontSize = 17.sp, lineHeight = 1.1.em, textAlign = TextAlign.Center), color = tint)
+                if (subLabel != null) Text(subLabel, style = TzType.caption.copy(fontSize = 10.sp, textAlign = TextAlign.Center), color = tint)
+            }
         }
     }
 }

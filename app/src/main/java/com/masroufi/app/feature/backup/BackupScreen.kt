@@ -66,6 +66,9 @@ import com.masroufi.app.ui.icons.TzIcons
 import com.masroufi.app.ui.paper.Qersh
 import com.masroufi.app.ui.paper.QershMood
 import com.masroufi.app.ui.theme.Tz
+import androidx.compose.foundation.layout.heightIn
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.theme.TzRadius
 import com.masroufi.app.ui.theme.TzType
 import java.time.LocalDate
@@ -133,15 +136,14 @@ fun BackupContent(ui: BackupUi, actions: BackupActions, onBack: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Qersh(QershMood.Thinking, 52.dp)
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(R.string.backup_warn_title), style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = Tz.yellow)
                 Text(stringResource(R.string.backup_warn_body), style = TzType.caption.copy(lineHeight = 20.sp), color = WarnText)
             }
         }
         Row(
-            Modifier.fillMaxWidth().defaultMinSize(minHeight = 64.dp).clip(RoundedCornerShape(TzRadius.card)).background(Tz.surface)
-                .border(1.dp, Tz.line, RoundedCornerShape(TzRadius.card))
-                .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); actions.exportTapped() }
+            Modifier.pressClickable { haptics.perform(HapticLevel.Tap); actions.exportTapped() }.fillMaxWidth().defaultMinSize(minHeight = 64.dp)
+                .clip(RoundedCornerShape(TzRadius.card)).background(Tz.surface).border(1.dp, Tz.line, RoundedCornerShape(TzRadius.card))
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -160,7 +162,8 @@ fun BackupContent(ui: BackupUi, actions: BackupActions, onBack: () -> Unit) {
             listOf(R.string.backup_phone_1, R.string.backup_phone_2, R.string.backup_phone_3).forEachIndexed { i, text ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Box(Modifier.size(32.dp).clip(CircleShape).background(Tz.yellow), contentAlignment = Alignment.Center) {
-                        Text((i + 1).toString(), style = TzType.cardHeading.copy(fontSize = 18.sp), color = Tz.night)
+                        // shortcut: the step number sits in a fixed 32 dp disc, so it keeps the normal font size.
+                        CappedFontScale { Text((i + 1).toString(), style = TzType.cardHeading.copy(fontSize = 18.sp), color = Tz.night) }
                     }
                     Text(stringResource(text), Modifier.weight(1f), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text)
                 }
@@ -242,7 +245,7 @@ private fun WritingBar(progress: Float) {
 private fun YellowOutlineButton(text: String, onClick: () -> Unit) {
     val shape = RoundedCornerShape(50)
     Box(
-        Modifier.fillMaxWidth().height(52.dp).clip(shape).border(1.5.dp, Tz.yellow, shape).clickable(role = Role.Button, onClick = onClick),
+        Modifier.pressClickable(onClick = onClick).fillMaxWidth().heightIn(min = 52.dp).clip(shape).border(1.5.dp, Tz.yellow, shape).padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center,
     ) { Text(text, style = TzType.button.copy(fontSize = 18.sp), color = Tz.yellow) }
 }
@@ -343,7 +346,7 @@ private fun PasswordField(value: String, onChange: (String) -> Unit, hint: Strin
     BasicTextField(
         value = value,
         onValueChange = { onChange(it.take(64)) },
-        modifier = Modifier.fillMaxWidth().height(48.dp).clip(shape).background(Tz.night).border(1.dp, Tz.line, shape),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(shape).background(Tz.night).border(1.dp, Tz.line, shape),
         textStyle = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Tz.text),
         singleLine = true,
         cursorBrush = SolidColor(Tz.yellow),
