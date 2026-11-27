@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.people
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -65,13 +68,17 @@ class GameyaViewModel @Inject constructor(
     private val gameyas: GameyaRepository,
     pocketRepo: PocketRepository,
     private val entitlements: Entitlements,
+    private val deletes: PendingDeletes,
 ) : ViewModel(), GameyaActions {
     private val selected = MutableStateFlow<Long?>(null)
     private val sheet = MutableStateFlow<GameyaSheet?>(null)
     private val plusSheet = MutableStateFlow(false)
 
     private val content = combine(
-        gameyas.observe(), pocketRepo.observePockets().map { l -> l.map { it.pocket }.filterNot { it.archived } }, entitlements.isPlus,
+        combine(gameyas.observe(), deletes.hidden(DeleteKind.GAMEYA), deletes.hidden(DeleteKind.PLAN_ROW), ::Triple).map { (all, gone, rows) ->
+            all.filter { it.gameya.id !in gone }.map { v -> if (v.plan.any { it.id in rows }) v.copy(plan = v.plan.filter { it.id !in rows }) else v }
+        },
+        pocketRepo.observePockets().map { l -> l.map { it.pocket }.filterNot { it.archived } }, entitlements.isPlus,
     ) { list, pockets, plus -> GameyaUi(loading = false, gameyas = list, pockets = pockets, plus = plus) }
 
     val state: StateFlow<GameyaUi> = combine(content, selected, sheet, plusSheet) { c, id, s, p ->
@@ -118,8 +125,8 @@ class GameyaViewModel @Inject constructor(
         sheet.value = null
     }
 
-    override fun deletePlan(id: Long) = launchSafe("delete plan") {
-        gameyas.deletePlanRow(id)
+    override fun deletePlan(id: Long) {
+        deletes.schedule(PendingDelete(id, kind = DeleteKind.PLAN_ROW)) { gameyas.deletePlanRow(id) }
         sheet.value = null
     }
 

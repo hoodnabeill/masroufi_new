@@ -1,5 +1,9 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.roll.withoutDeleted
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -37,10 +41,11 @@ class EnvelopeDetailViewModel @Inject constructor(
     recurring: RecurringRepository,
     categoryDao: CategoryDao,
     savedState: SavedStateHandle,
+    private val deletes: PendingDeletes,
 ) : ViewModel() {
     val id: Long = checkNotNull(savedState.get<Long>("id")) { "envelope id" }
 
-    val state: StateFlow<EnvelopeDetailUi> = combine(envelopes.observe(), recurring.observe(), categoryDao.all(), ::Triple)
+    val state: StateFlow<EnvelopeDetailUi> = combine(envelopes.observe().withoutDeleted(deletes, DeleteKind.ENVELOPE) { it.id }, recurring.observe(), categoryDao.all(), ::Triple)
         .flatMapLatest { (views, bills, categories) ->
             val v = views.firstOrNull { it.id == id }
             if (v == null) {
@@ -53,6 +58,7 @@ class EnvelopeDetailViewModel @Inject constructor(
 
     /** "اقفل الظرف": archived, so it leaves the plan; its entries stay in the roll. */
     fun close() {
-        viewModelScope.launch { envelopes.archive(id) }
+        val id = id
+        deletes.schedule(PendingDelete(id, kind = DeleteKind.ENVELOPE)) { envelopes.archive(id) }
     }
 }

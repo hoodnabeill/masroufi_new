@@ -15,7 +15,7 @@ class ChildFormViewModelTest : KidsVmTestBase() {
     private val form get() = vm.form.value
 
     private fun open(id: Long) {
-        vm = make(ChildFormViewModel::class, { it.form }) { ChildFormViewModel(f.kids, clock, SavedStateHandle(mapOf("id" to id))) }
+        vm = make(ChildFormViewModel::class, { it.form }) { ChildFormViewModel(f.kids, clock, SavedStateHandle(mapOf("id" to id)), deletes) }
         settle("loaded") { form.loaded }
     }
 
@@ -61,6 +61,8 @@ class ChildFormViewModelTest : KidsVmTestBase() {
         open(id)
         vm.delete()
         settle("gone") { vm.gone.value }
-        assertEquals(0, call { f.kids.view().children.size })
+        assertEquals("hidden now, written after the undo window", 1, call { f.kids.view().children.size })
+        passFiveSeconds()
+        settle("deleted") { call { f.kids.view().children.size } == 0 }
     }
 }

@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.kids
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -99,6 +102,7 @@ class KidsViewModel @Inject constructor(
     private val childMode: ChildMode,
     private val pin: PinStore,
     private val clock: Clock,
+    deletes: PendingDeletes,
 ) : ViewModel(), KidsActions {
     private val sheet = MutableStateFlow<KidsSheet?>(null)
     private val pinSetup = MutableStateFlow<PinSetup?>(null)
@@ -108,7 +112,8 @@ class KidsViewModel @Inject constructor(
     /** Outcomes that feel like something (handover Heavy; advance and chore Confirm); taps are the screen's own. */
     val haptics: Flow<HapticLevel> = haptic.receiveAsFlow()
 
-    val state: StateFlow<KidsUi> = combine(kids.observe(), sheet, pinSetup, notice) { v, s, p, n ->
+    val state: StateFlow<KidsUi> = combine(kids.observe(), sheet, pinSetup, notice, deletes.hidden(DeleteKind.CHILD)) { all, s, p, n, gone ->
+        val v = if (gone.isEmpty()) all else all.copy(children = all.children.filter { it.child.id !in gone })
         KidsUi(
             loading = false, view = v, sheet = s, pinSetup = p, notice = n,
             tickets = v.children.map { c ->

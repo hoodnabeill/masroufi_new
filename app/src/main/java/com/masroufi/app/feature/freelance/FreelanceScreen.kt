@@ -201,7 +201,7 @@ internal fun FreelanceContent(s: FreelanceUi, onBack: () -> Unit, vm: FreelanceA
                 j, onDismiss = { sheet = null },
                 onPaid = { haptics.perform(HapticLevel.Confirm); vm.markPaid(j.job.id); sheet = null },
                 onEdit = { sheet = Sheet.Job(j.job.id) },
-                onDelete = { haptics.perform(HapticLevel.Heavy); vm.deleteJob(j.job.id); sheet = null },
+                onDelete = { haptics.perform(HapticLevel.Tap); vm.deleteJob(j.job.id); sheet = null },
             )
         }
         null -> Unit

@@ -88,6 +88,7 @@ import com.masroufi.app.feature.kids.KidsScreen
 import com.masroufi.app.feature.story.StoryListScreen
 import com.masroufi.app.feature.story.StoryScreen
 import com.masroufi.app.feature.roll.RollScreen
+import com.masroufi.app.feature.roll.UndoHost
 import com.masroufi.app.ui.components.LocalEndOfMonthMode
 import com.masroufi.app.ui.components.LocalHideAmounts
 import com.masroufi.app.feature.lock.LockGateViewModel
@@ -538,6 +539,7 @@ private fun MainApp(root: AppRootViewModel, entitlements: Entitlements, sampleDa
                     composable<NewPocket> { NewPocketScreen(viewModel = hiltViewModel(), onBack = { nav.popBackStack() }) }
                     composable<Gallery> { GalleryScreen(entitlements, onSampleData = sampleData?.let { it::load }, billing = billing) }
                 }
+                UndoHost()
             }
             if (addSheetOpen) AddSheet(addPrefill, onDismiss = { addSheetOpen = false })
         }

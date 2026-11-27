@@ -1,5 +1,9 @@
 package com.masroufi.app.feature.people
 
+import com.masroufi.app.feature.roll.withoutDeleted
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -152,6 +156,7 @@ class PeopleViewModel @Inject constructor(
     kidsRepo: KidsRepository,
     entitlements: Entitlements,
     private val clock: Clock,
+    deletes: PendingDeletes,
 ) : ViewModel(), PeopleActions {
     private val filter = MutableStateFlow(PeopleFilter.ALL)
     private val sheet = MutableStateFlow<PeopleSheet?>(null)
@@ -163,11 +168,13 @@ class PeopleViewModel @Inject constructor(
         people.observeTotals(),
         people.observePersons(),
         pocketRepo.observePockets(),
-    ) { (f, list), totals, persons, pockets ->
+        deletes.hidden(DeleteKind.PERSON),
+    ) { (f, list), totals, allPersons, pockets, gone ->
+        val persons = allPersons.filter { it.id !in gone }
         val today = LocalDate.now(clock)
         PeopleUi(
             loading = false, filter = f, totals = totals, persons = persons, pockets = pockets.map { it.pocket },
-            rows = list.map { r ->
+            rows = list.filter { it.person.id !in gone }.map { r ->
                 PersonRowUi(r, rowAction(r), r.since?.let { ChronoUnit.DAYS.between(it, today) }, r.nextDue?.isBefore(today) == true)
             },
         )
@@ -179,12 +186,12 @@ class PeopleViewModel @Inject constructor(
             val own = views.firstOrNull { it.occasion.whose == OccasionOwner.MINE && it.givers > 0 }
             DutyCardUi(duty.upcoming(), own?.receivedTotal ?: 0, own?.givers ?: 0)
         },
-        gameyas.observe().map { it.firstOrNull() },
+        gameyas.observe().withoutDeleted(deletes, DeleteKind.GAMEYA) { it.gameya.id }.map { it.firstOrNull() },
     ) { plus, dutyCard, gameya -> Triple(plus, dutyCard, gameya) }
 
     private val overlay = combine(sheet, split, notice) { s, d, n -> Triple(s, d, n) }
 
-    private val kidsCard = kidsRepo.observe().map { KidsCardUi(it.children.size, it.monthEstimate) }
+    private val kidsCard = combine(kidsRepo.observe(), deletes.hidden(DeleteKind.CHILD)) { v, gone -> KidsCardUi(v.children.count { it.child.id !in gone }, v.monthEstimate) }
 
     val state: StateFlow<PeopleUi> = combine(content, cards, overlay, kidsCard) { c, (plus, dutyCard, gameya), (s, d, n), k ->
         c.copy(plus = plus, duty = dutyCard, gameya = gameya, kids = k, sheet = s, split = d, notice = n)

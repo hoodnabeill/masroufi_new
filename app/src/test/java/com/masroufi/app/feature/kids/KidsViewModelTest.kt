@@ -22,7 +22,7 @@ class KidsViewModelTest : KidsVmTestBase() {
     private lateinit var haptics: MutableList<HapticLevel>
 
     private fun screen() {
-        vm = make(KidsViewModel::class, { it.state }) { KidsViewModel(f.kids, f.childMode, f.pin, clock) }
+        vm = make(KidsViewModel::class, { it.state }) { KidsViewModel(f.kids, f.childMode, f.pin, clock, deletes) }
         haptics = vm.record(vm.haptics)
         settle("loaded") { !vm.state.value.loading }
     }

@@ -1,5 +1,9 @@
 package com.masroufi.app.feature.freelance
 
+import kotlinx.coroutines.flow.combine
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -70,11 +74,12 @@ const val DEFAULT_DUE_DAYS = 30
 class FreelanceViewModel @Inject constructor(
     private val repo: FreelanceRepository,
     private val clock: Clock,
+    private val deletes: PendingDeletes,
 ) : ViewModel() {
-    val state: StateFlow<FreelanceUi> = repo.observe().map(::build)
+    val state: StateFlow<FreelanceUi> = combine(repo.observe(), deletes.hidden(DeleteKind.JOB)) { v, hidden -> build(v, hidden) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FreelanceUi())
 
-    private fun build(v: FreelanceView): FreelanceUi {
+    private fun build(v: FreelanceView, hidden: Set<Long>): FreelanceUi {
         val today = LocalDate.now(clock)
         val top = maxOf(v.income.maxOfOrNull { it.amount } ?: 0L, v.salary ?: 0L) * CHART_HEADROOM
         val bars = v.income.map {
@@ -102,7 +107,7 @@ class FreelanceViewModel @Inject constructor(
             average = v.average,
             emptyMonth = bars.lastOrNull { it.tone == BarTone.EMPTY }?.month,
             suggestion = v.suggestion,
-            jobs = v.jobs.filter { !it.paid },
+            jobs = v.jobs.filter { !it.paid && it.job.id !in hidden },
             owed = v.owed,
         )
     }
@@ -132,7 +137,7 @@ class FreelanceViewModel @Inject constructor(
     /** The client paid: an income into the vault. */
     fun markPaid(jobId: Long) = launch { repo.markPaid(jobId) }
 
-    fun deleteJob(jobId: Long) = launch { repo.deleteJob(jobId) }
+    fun deleteJob(jobId: Long) = deletes.schedule(PendingDelete(jobId, kind = DeleteKind.JOB)) { repo.deleteJob(jobId) }
 
     private fun note(client: String, label: String): String? =
         listOf(client.trim(), label.trim()).filter { it.isNotEmpty() }.joinToString(" · ").take(NOTE_MAX_CHARS).ifEmpty { null }

@@ -156,9 +156,6 @@ class PlanAuditTest {
     @Test fun envelopeDetailLoading() {
         rule.audit { EnvelopeDetailContent(EnvelopeDetailUi(), {}, {}, {}, {}) }.assertNone()
     }
-    @Test fun envelopeCloseSheet() {
-        rule.audit { EnvelopeDetailContent(detail, {}, {}, {}, {}, confirmOpen = true) }.assertNone()
-    }
 
     private val categories = listOf("أكل", "مواصلات", "خروجات", "قهوة", "اشتراكات", "ملابس", "هدايا").mapIndexed { i, n -> CategoryEntity(i + 1L, n, "grid", 0) }
     private val bills = listOf(

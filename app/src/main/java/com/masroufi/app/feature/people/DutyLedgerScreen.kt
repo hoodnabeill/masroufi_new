@@ -178,7 +178,7 @@ internal fun DutySheets(ui: DutyUi, vm: DutyActions) {
             Column(SheetPad, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.duty_delete_title, s.name), style = TzType.cardHeading, color = Tz.text)
                 Text(stringResource(R.string.duty_delete_body, s.gifts.toString()), style = TzType.body, color = Tz.text2)
-                PrimaryButton(stringResource(R.string.duty_delete_confirm), { haptics.perform(HapticLevel.Heavy); vm.confirmDeleteOccasion(s.occasionId) }, Modifier.fillMaxWidth(), height = 52.dp)
+                PrimaryButton(stringResource(R.string.duty_delete_confirm), { haptics.perform(HapticLevel.Tap); vm.confirmDeleteOccasion(s.occasionId) }, Modifier.fillMaxWidth(), height = 52.dp)
                 SecondaryButton(stringResource(R.string.duty_delete_cancel), vm::dismissSheet, Modifier.fillMaxWidth(), height = 52.dp)
             }
         }
@@ -228,7 +228,7 @@ private fun OccasionSheet(ui: DutyUi, s: DutySheet.Occasion, vm: DutyActions) {
                 },
                 Modifier.fillMaxWidth(), enabled = name.isNotBlank(), height = 52.dp,
             )
-            if (e != null) SecondaryButton(stringResource(R.string.duty_delete), { haptics.perform(HapticLevel.Heavy); vm.requestDeleteOccasion(e) }, Modifier.fillMaxWidth(), height = 52.dp)
+            if (e != null) SecondaryButton(stringResource(R.string.duty_delete), { haptics.perform(HapticLevel.Tap); vm.requestDeleteOccasion(e) }, Modifier.fillMaxWidth(), height = 52.dp)
         }
     }
 }
@@ -275,7 +275,7 @@ private fun GiftSheet(ui: DutyUi, s: DutySheet.Gift, vm: DutyActions) {
                 { haptics.perform(HapticLevel.Confirm); vm.saveGift(s.occasionId, e?.gift, if (creating) null else personId, newName.takeIf { creating }, amount, direction) },
                 Modifier.fillMaxWidth(), enabled = amount > 0 && named, height = 52.dp,
             )
-            if (e != null) SecondaryButton(stringResource(R.string.duty_delete), { haptics.perform(HapticLevel.Heavy); vm.deleteGift(e.gift.id) }, Modifier.fillMaxWidth(), height = 52.dp)
+            if (e != null) SecondaryButton(stringResource(R.string.duty_delete), { haptics.perform(HapticLevel.Tap); vm.deleteGift(e.gift.id) }, Modifier.fillMaxWidth(), height = 52.dp)
         }
     }
 }

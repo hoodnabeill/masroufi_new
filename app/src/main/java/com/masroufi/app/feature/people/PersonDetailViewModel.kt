@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.people
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -115,6 +118,7 @@ class PersonDetailViewModel @Inject constructor(
     pocketRepo: PocketRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
+    private val deletes: PendingDeletes,
 ) : ViewModel(), PersonDetailActions {
     /** The nav argument (PersonDetail.id). */
     val id: Long = checkNotNull(savedState.get<Long>("id")) { "PersonDetail needs an id" }
@@ -122,10 +126,12 @@ class PersonDetailViewModel @Inject constructor(
     private val sheet = MutableStateFlow<DetailSheet?>(null)
     private val notice = MutableStateFlow<PeopleNotice?>(null)
 
+    private val overlay = combine(sheet, notice, deletes.hidden(DeleteKind.PERSON)) { s, n, gone -> Triple(s, n, id in gone) }
+
     val state: StateFlow<PersonDetailUi> = combine(
-        people.observeDetail(id), people.observeDebtEntries(id), pocketRepo.observePockets(), sheet, notice,
-    ) { detail, entries, pockets, s, n ->
-        if (detail == null) {
+        people.observeDetail(id), people.observeDebtEntries(id), pocketRepo.observePockets(), overlay,
+    ) { detail, entries, pockets, (s, n, deleted) ->
+        if (detail == null || deleted) {
             PersonDetailUi(loading = false, missing = true)
         } else {
             PersonDetailUi(
@@ -164,8 +170,8 @@ class PersonDetailViewModel @Inject constructor(
     }
 
     /** Deletes the person with their debts, tab items and gifts (the screen asked first); the state turns "missing". */
-    override fun delete() = launchSafe("delete") {
-        people.deletePerson(id)
+    override fun delete() {
+        deletes.schedule(PendingDelete(id, kind = DeleteKind.PERSON)) { people.deletePerson(id) }
         sheet.value = null
     }
 

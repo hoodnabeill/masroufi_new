@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.people
 
+import org.junit.Assert.assertNotNull
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.data.db.PersonKind
@@ -24,7 +25,7 @@ class PersonDetailViewModelTest : PlanVmTestBase() {
     }
 
     private fun detail(id: Long): PersonDetailViewModel {
-        val vm = make(PersonDetailViewModel::class, { it.state }) { PersonDetailViewModel(f.people, f.pockets, clock, SavedStateHandle(mapOf("id" to id))) }
+        val vm = make(PersonDetailViewModel::class, { it.state }) { PersonDetailViewModel(f.people, f.pockets, clock, SavedStateHandle(mapOf("id" to id)), deletes) }
         settle("loaded") { !vm.state.value.loading }
         return vm
     }
@@ -89,7 +90,9 @@ class PersonDetailViewModelTest : PlanVmTestBase() {
         settle("sheet") { vm.state.value.sheet == DetailSheet.Delete }
         vm.delete()
         settle("gone") { vm.state.value.missing }
-        assertNull(runBlocking { db.peopleDao().personById(ahmed) })
-        assertTrue(runBlocking { db.peopleDao().openDebts() }.isEmpty())
+        assertNotNull("hidden now, written after the undo window", readOnIo { db.peopleDao().personById(ahmed) })
+        passFiveSeconds()
+        settle("deleted") { readOnIo { db.peopleDao().personById(ahmed) } == null }
+        assertTrue(readOnIo { db.peopleDao().openDebts() }.isEmpty())
     }
 }

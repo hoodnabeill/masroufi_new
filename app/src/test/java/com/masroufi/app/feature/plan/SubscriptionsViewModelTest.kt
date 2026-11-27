@@ -30,7 +30,7 @@ class SubscriptionsViewModelTest : PlanVmTestBase() {
 
     @Before fun open() {
         cash = runBlocking { db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, color = 0)) }
-        vm = make(SubscriptionsViewModel::class, { it.state }) { SubscriptionsViewModel(f.subscriptions, f.recurring, f.people, f.settings, clock) }
+        vm = make(SubscriptionsViewModel::class, { it.state }) { SubscriptionsViewModel(f.subscriptions, f.recurring, f.people, f.settings, clock, deletes) }
     }
 
     private fun sub(

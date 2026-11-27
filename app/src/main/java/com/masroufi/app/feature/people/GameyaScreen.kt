@@ -437,7 +437,7 @@ private fun PlanSheet(editing: GameyaPlanEntity?, vm: GameyaActions) {
                 stringResource(R.string.gameya_save), { haptics.perform(HapticLevel.Confirm); vm.savePlan(editing, label, amount) },
                 Modifier.fillMaxWidth(), enabled = amount > 0 && label.isNotBlank(), height = 52.dp,
             )
-            if (editing != null) SecondaryButton(stringResource(R.string.gameya_plan_delete), { haptics.perform(HapticLevel.Heavy); vm.deletePlan(editing.id) }, Modifier.fillMaxWidth(), height = 52.dp)
+            if (editing != null) SecondaryButton(stringResource(R.string.gameya_plan_delete), { haptics.perform(HapticLevel.Tap); vm.deletePlan(editing.id) }, Modifier.fillMaxWidth(), height = 52.dp)
         }
     }
 }

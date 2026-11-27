@@ -57,7 +57,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -168,7 +170,16 @@ fun StoryContent(ui: StoryUi, progress: androidx.compose.runtime.State<Float>, v
                 },
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Segments(ui.slides.size, ui.index, progress, stringResource(R.string.story_slide_cd, (ui.index + 1).toString(), ui.slides.size.toString()))
+            // The tap halves cannot be reached with TalkBack: the slide counter offers previous / next as accessibility actions.
+            val prevLabel = stringResource(R.string.story_prev_cd)
+            val nextLabel = stringResource(R.string.story_next_cd)
+            val a11y = remember(viewModel, prevLabel, nextLabel) {
+                listOf(
+                    CustomAccessibilityAction(prevLabel) { viewModel.back(); true },
+                    CustomAccessibilityAction(nextLabel) { viewModel.next(); true },
+                )
+            }
+            Segments(ui.slides.size, ui.index, progress, stringResource(R.string.story_slide_cd, (ui.index + 1).toString(), ui.slides.size.toString()), a11y)
             val header = remember(story) { slideText(context, story, StorySlide.OPENING, hide = false).header }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(header, style = alexandria(14, FontWeight.Bold), color = Tz.night, modifier = Modifier.weight(1f))
@@ -194,11 +205,11 @@ private fun alexandria(size: Int, weight: FontWeight) =
     androidx.compose.ui.text.TextStyle(fontFamily = Alexandria, fontSize = size.sp, fontWeight = weight)
 
 @Composable
-private fun Segments(count: Int, index: Int, progress: androidx.compose.runtime.State<Float>, description: String) {
+private fun Segments(count: Int, index: Int, progress: androidx.compose.runtime.State<Float>, description: String, actions: List<CustomAccessibilityAction>) {
     // A new slide starts from empty at once; the same slide fills in small linear steps.
     val target = progress.value
     val shown by animateFloatAsState(target, if (target == 0f) snap() else tween(60, easing = LinearEasing), label = "storyProgress")
-    Row(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description }, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+    Row(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description; customActions = actions }, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         repeat(count) { i ->
             val fraction = when {
                 i < index -> 1f

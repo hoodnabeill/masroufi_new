@@ -1,5 +1,9 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.roll.withoutDeleted
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.db.RecurringKind
@@ -42,8 +46,9 @@ class FixedCostsViewModel @Inject constructor(
     recurring: RecurringRepository,
     private val envelopes: EnvelopeRepository,
     private val clock: Clock,
+    deletes: PendingDeletes,
 ) : ViewModel() {
-    val state: StateFlow<FixedCostsUi> = recurring.observe().mapLatest { rows ->
+    val state: StateFlow<FixedCostsUi> = recurring.observe().withoutDeleted(deletes, DeleteKind.FIXED_COST) { it.id }.mapLatest { rows ->
         val today = LocalDate.now(clock)
         val payday = envelopes.cycle().nextPayday
         FixedCostsUi(

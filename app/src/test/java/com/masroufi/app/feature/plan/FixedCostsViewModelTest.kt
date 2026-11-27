@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.roll.PendingDeletes
 import android.os.Looper
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -54,6 +55,7 @@ class FixedCostsViewModelTest {
     private lateinit var db: TazkaraDatabase
     private lateinit var f: RepoFixture
     private lateinit var vm: FixedCostsViewModel
+    private val deletes by lazy { PendingDeletes(f.entries, CoroutineScope(main)) }
     private var cash = 0L
 
     @Before fun open() {
@@ -62,7 +64,7 @@ class FixedCostsViewModelTest {
             .allowMainThreadQueries().build()
         f = RepoFixture(db, io, tmp.root, clock, DebugEntitlements())
         runBlocking { cash = db.pocketDao().insert(PocketEntity(name = "الكاش", kind = PocketKind.CASH, openingBalance = 500_000, color = 0)) }
-        vm = ViewModelProvider.create(store, viewModelFactory { initializer { FixedCostsViewModel(f.recurring, f.envelopes, clock) } })[FixedCostsViewModel::class]
+        vm = ViewModelProvider.create(store, viewModelFactory { initializer { FixedCostsViewModel(f.recurring, f.envelopes, clock, deletes) } })[FixedCostsViewModel::class]
         vm.viewModelScope.launch { vm.state.collect {} } // a screen collecting it
     }
 

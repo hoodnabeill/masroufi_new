@@ -1,5 +1,9 @@
 package com.masroufi.app.feature.plan
 
+import kotlinx.coroutines.flow.combine
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -57,6 +61,7 @@ class SeasonDetailViewModel @Inject constructor(
     private val profile: ProfileRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
+    private val deletes: PendingDeletes,
 ) : ViewModel() {
     private val id: Long = savedState.get<Long>("id") ?: 0L
     val isNew: Boolean get() = id == 0L
@@ -81,8 +86,8 @@ class SeasonDetailViewModel @Inject constructor(
             jar.observe().collect { _free.value = it.free }
         }
         if (id != 0L) viewModelScope.launch {
-            seasons.observe().collect { all ->
-                val v = all.firstOrNull { it.season.id == id }
+            combine(seasons.observe(), deletes.hidden(DeleteKind.SEASON_ITEM), ::Pair).collect { (all, hidden) ->
+                val v = all.firstOrNull { it.season.id == id }?.let { s -> s.copy(items = s.items.filter { it.id !in hidden }) }
                 _view.value = v
                 if (v != null && !_form.value.loaded) {
                     val d = v.season.gregorianDate ?: v.date
@@ -133,7 +138,7 @@ class SeasonDetailViewModel @Inject constructor(
     }
 
     fun addItem(label: String, amount: Long) = act { if (id != 0L && label.isNotBlank()) seasons.addItem(id, label.trim(), amount) }
-    fun removeItem(itemId: Long) = act { seasons.deleteItem(itemId) }
+    fun removeItem(itemId: Long) = deletes.schedule(PendingDelete(itemId, kind = DeleteKind.SEASON_ITEM)) { seasons.deleteItem(itemId) }
 
     /** Above the free jar nothing moves (the sheet already caps it). */
     fun earmark(amount: Long) = act { _sheet.value = null; jar.earmark(amount, seasonId = id) }

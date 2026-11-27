@@ -23,7 +23,7 @@ class DutyLedgerViewModelTest : PlanVmTestBase() {
 
     @Before fun open() {
         plus.setDebugOverride(true)
-        vm = make(DutyLedgerViewModel::class, { it.state }) { DutyLedgerViewModel(f.duty, f.people, plus, clock) }
+        vm = make(DutyLedgerViewModel::class, { it.state }) { DutyLedgerViewModel(f.duty, f.people, plus, clock, deletes) }
         settle("loaded") { !state.loading && state.plus }
     }
 

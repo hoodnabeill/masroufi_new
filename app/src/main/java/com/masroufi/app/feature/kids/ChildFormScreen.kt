@@ -118,6 +118,6 @@ fun ChildFormContent(f: ChildForm, viewModel: ChildFormActions, onBack: () -> Un
             Modifier.fillMaxWidth(),
             enabled = f.canSave,
         )
-        if (viewModel.isEdit) TextLink(stringResource(R.string.kids_form_delete), { haptics.perform(HapticLevel.Heavy); viewModel.delete() }, Modifier.align(Alignment.CenterHorizontally))
+        if (viewModel.isEdit) TextLink(stringResource(R.string.kids_form_delete), { haptics.perform(HapticLevel.Tap); viewModel.delete() }, Modifier.align(Alignment.CenterHorizontally))
     }
 }

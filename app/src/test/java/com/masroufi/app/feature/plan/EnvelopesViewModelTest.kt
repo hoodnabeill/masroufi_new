@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.roll.PendingDeletes
 import android.os.Looper
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelProvider
@@ -83,7 +84,7 @@ class EnvelopesViewModelTest {
             clock.instant = at(d(11, 12))
             cash = db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, openingBalance = 390_000, color = 0))
         }
-        vm = ViewModelProvider.create(store, viewModelFactory { initializer { EnvelopesViewModel(f.envelopes, f.recurring, plus) } })[EnvelopesViewModel::class]
+        vm = ViewModelProvider.create(store, viewModelFactory { initializer { EnvelopesViewModel(f.envelopes, f.recurring, plus, PendingDeletes(f.entries, CoroutineScope(main))) } })[EnvelopesViewModel::class]
         vm.viewModelScope.launch { vm.state.collect {} } // a screen collecting it
     }
 

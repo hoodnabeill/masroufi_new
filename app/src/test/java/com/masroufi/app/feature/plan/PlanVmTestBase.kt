@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.roll.PendingDeletes
 import android.os.Looper
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -45,6 +46,26 @@ abstract class PlanVmTestBase {
     private val store = ViewModelStore()
     protected lateinit var db: TazkaraDatabase
     protected lateinit var f: RepoFixture
+
+    /** The app-wide waiting deletes; their 5 s runs on the test clock ([passFiveSeconds]). */
+    protected val deletes by lazy { PendingDeletes(f.entries, CoroutineScope(main)) }
+
+    /** The undo window of every waiting delete closes (virtual time); the real writes then run when [settle] pumps. */
+    protected fun passFiveSeconds() {
+        main.scheduler.advanceTimeBy(5_001)
+        main.scheduler.runCurrent()
+    }
+
+    /** A repository read on the io scope while Main is pumped (never `runBlocking` on the test thread with a delete in flight). */
+    protected fun <T> readOnIo(block: suspend () -> T): T {
+        var result: Result<T>? = null
+        val job = io.launch { result = runCatching { block() } }
+        settle("a repository read") { job.isCompleted }
+        return result!!.getOrThrow()
+    }
+
+    /** The user leaves every screen: their ViewModels are cleared. */
+    protected fun leaveScreens() = store.clear()
 
     protected fun at(date: LocalDate): Instant = ZonedDateTime.of(date, LocalTime.of(9, 0), zone).toInstant()
 

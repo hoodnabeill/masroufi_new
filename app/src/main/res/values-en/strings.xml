@@ -363,10 +363,6 @@
     <string name="env_detail_empty">Nothing spent from this envelope yet.</string>
     <string name="env_edit">Edit</string>
     <string name="env_close">Close the envelope</string>
-    <string name="env_close_title">Close the “%1$s” envelope?</string>
-    <string name="env_close_line">It disappears from the plan. Its old spending stays in the roll.</string>
-    <string name="env_close_confirm">Close it</string>
-    <string name="env_close_cancel">No, keep it</string>
     <string name="env_new_title">New envelope</string>
     <string name="env_edit_title">Edit the envelope</string>
     <string name="env_name_q">What is the envelope called?</string>
@@ -1211,6 +1207,7 @@
     <string name="story_share_hide">Share it without any amounts</string>
     <string name="story_share_hide_cd">Without amounts</string>
     <string name="story_share">Share this slide</string>
+    <string name="story_prev_cd">Previous slide</string>
     <string name="story_next_cd">Next slide</string>
     <string name="story_share_failed">Could not prepare the picture. Try again.</string>
     <string name="story_missing">This story is not here.</string>

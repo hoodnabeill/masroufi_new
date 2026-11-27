@@ -254,7 +254,7 @@ internal fun DeleteSheet(row: PersonRow, history: List<HistoryItem>, vm: PersonD
                 stringResource(R.string.people_delete_body, loans.toString(), items.toString()),
                 style = TzType.body.copy(textAlign = TextAlign.Start), color = Tz.text2,
             )
-            PrimaryButton(stringResource(R.string.people_delete_confirm), { haptics.perform(HapticLevel.Heavy); vm.delete() }, Modifier.fillMaxWidth(), height = 52.dp)
+            PrimaryButton(stringResource(R.string.people_delete_confirm), { haptics.perform(HapticLevel.Tap); vm.delete() }, Modifier.fillMaxWidth(), height = 52.dp)
             SecondaryButton(stringResource(R.string.people_delete_cancel), vm::dismissSheet, Modifier.fillMaxWidth(), height = 52.dp)
         }
     }

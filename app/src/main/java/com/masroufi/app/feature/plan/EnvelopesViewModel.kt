@@ -1,5 +1,9 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.roll.withoutDeleted
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -98,6 +102,7 @@ class EnvelopesViewModel @Inject constructor(
     private val envelopes: EnvelopeRepository,
     recurring: RecurringRepository,
     private val entitlements: Entitlements,
+    deletes: PendingDeletes,
 ) : ViewModel() {
     private val sheet = MutableStateFlow<EnvelopeSheet?>(null)
 
@@ -105,7 +110,7 @@ class EnvelopesViewModel @Inject constructor(
     private val _openEdit = MutableSharedFlow<Long>(extraBufferCapacity = 1)
     val openEdit: SharedFlow<Long> = _openEdit
 
-    val state: StateFlow<EnvelopesUi> = combine(envelopes.observe(), recurring.observe(), envelopes.observeSplit(), sheet) { v, b, s, sh ->
+    val state: StateFlow<EnvelopesUi> = combine(envelopes.observe().withoutDeleted(deletes, DeleteKind.ENVELOPE) { it.id }, recurring.observe(), envelopes.observeSplit(), sheet) { v, b, s, sh ->
         Inputs(v, b, s, sh)
     }
         .mapLatest { (views, bills, split, sheet) ->

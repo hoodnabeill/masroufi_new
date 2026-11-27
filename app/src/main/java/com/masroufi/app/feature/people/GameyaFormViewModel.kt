@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.people
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -85,6 +88,7 @@ class GameyaFormViewModel @Inject constructor(
     private val entitlements: Entitlements,
     private val clock: Clock,
     savedState: SavedStateHandle,
+    private val deletes: PendingDeletes,
 ) : ViewModel(), GameyaFormActions {
     private val id: Long = savedState.get<Long>("id") ?: 0L
     override val isEdit: Boolean get() = id != 0L
@@ -168,16 +172,8 @@ class GameyaFormViewModel @Inject constructor(
     /** After the question: the gameya leaves the list and so does its installment. */
     override fun archive() {
         if (!isEdit) return
-        viewModelScope.launch {
-            try {
-                gameyas.archive(id)
-                _form.update { it.copy(askArchive = false, saved = true) }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "archive failed", e)
-                _form.update { it.copy(askArchive = false, failed = true) }
-            }
-        }
+        val id = id
+        deletes.schedule(PendingDelete(id, kind = DeleteKind.GAMEYA)) { gameyas.archive(id) }
+        _form.update { it.copy(askArchive = false, saved = true) }
     }
 }

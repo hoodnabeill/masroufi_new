@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.installments
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -113,10 +116,13 @@ class InstallmentsViewModel @Inject constructor(
     private val repo: InstallmentRepository,
     private val settings: SettingsStore,
     private val clock: Clock,
+    deletes: PendingDeletes,
 ) : ViewModel() {
     private val payOffFailed = MutableStateFlow(false)
 
-    val state: StateFlow<InstallmentsUi> = combine(repo.observe(), settings.settings, payOffFailed) { v, s, failed -> build(v, s, repo.earlyPayoff(), failed) }
+    val state: StateFlow<InstallmentsUi> = combine(repo.observe(), settings.settings, payOffFailed, deletes.hidden(DeleteKind.INSTALLMENT)) { all, s, failed, hidden ->
+        build(if (hidden.isEmpty()) all else all.copy(plans = all.plans.filter { it.item.id !in hidden }), s, repo.earlyPayoff(), failed)
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InstallmentsUi())
 
     private fun build(v: InstallmentsView, s: Settings, early: EarlyPayoff?, failed: Boolean): InstallmentsUi {

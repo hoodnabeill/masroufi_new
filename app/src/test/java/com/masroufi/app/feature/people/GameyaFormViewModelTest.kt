@@ -28,12 +28,12 @@ class GameyaFormViewModelTest : PlanVmTestBase() {
     }
 
     private fun form(id: Long = 0L): GameyaFormViewModel {
-        val vm = make(GameyaFormViewModel::class, { it.form }) { GameyaFormViewModel(f.gameyas, f.pockets, plus, clock, SavedStateHandle(mapOf("id" to id))) }
+        val vm = make(GameyaFormViewModel::class, { it.form }) { GameyaFormViewModel(f.gameyas, f.pockets, plus, clock, SavedStateHandle(mapOf("id" to id)), deletes) }
         settle("loaded") { vm.form.value.loaded }
         return vm
     }
 
-    private fun active() = runBlocking { f.gameyas.observe().first() }
+    private fun active() = readOnIo { f.gameyas.observe().first() }
 
     private fun GameyaFormViewModel.fill(name: String = "جمعية", digits: List<Int> = listOf(5, 0, 0), others: List<String> = listOf("أ", "ب")) {
         setName(name)
@@ -134,6 +134,9 @@ class GameyaFormViewModelTest : PlanVmTestBase() {
         assertTrue(vm.form.value.askArchive)
         assertEquals("asked, nothing archived yet", 1, active().size)
         vm.archive()
+        settle("saved, the screen goes back") { vm.form.value.saved }
+        assertEquals("archived after the undo window, not before", 1, active().size)
+        passFiveSeconds()
         settle("archived") { active().isEmpty() }
     }
 }

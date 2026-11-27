@@ -363,10 +363,6 @@
     <string name="env_detail_empty">لسه مصرفتش حاجة من الظرف ده.</string>
     <string name="env_edit">عدّل</string>
     <string name="env_close">اقفل الظرف</string>
-    <string name="env_close_title">تقفل ظرف «%1$s»؟</string>
-    <string name="env_close_line">هيختفي من الخطة. مصروفاته القديمة هتفضل في الدفتر.</string>
-    <string name="env_close_confirm">اقفله</string>
-    <string name="env_close_cancel">لأ، سيبه</string>
     <string name="env_new_title">ظرف جديد</string>
     <string name="env_edit_title">عدّل الظرف</string>
     <string name="env_name_q">اسم الظرف إيه؟</string>
@@ -1258,6 +1254,7 @@
     <string name="story_share_hide">شاركها من غير أي مبالغ</string>
     <string name="story_share_hide_cd">من غير مبالغ</string>
     <string name="story_share">شارك الشريحة دي</string>
+    <string name="story_prev_cd">الشريحة اللي قبلها</string>
     <string name="story_next_cd">الشريحة اللي بعدها</string>
     <string name="story_share_failed">ماقدرتش أجهّز الصورة. جرّب تاني.</string>
     <string name="story_missing">الحكاية دي مش موجودة.</string>

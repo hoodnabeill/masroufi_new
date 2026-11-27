@@ -113,7 +113,7 @@ fun GameyaFormContent(f: GameyaFormState, viewModel: GameyaFormActions, onBack: 
                 Modifier.fillMaxWidth(), enabled = f.canSave,
             )
             if (viewModel.isEdit) {
-                TextLink(stringResource(R.string.gameya_archive), { haptics.perform(HapticLevel.Heavy); viewModel.askArchive() }, Modifier.align(Alignment.CenterHorizontally))
+                TextLink(stringResource(R.string.gameya_archive), { haptics.perform(HapticLevel.Tap); viewModel.askArchive() }, Modifier.align(Alignment.CenterHorizontally))
             }
         }
     }
@@ -123,7 +123,7 @@ fun GameyaFormContent(f: GameyaFormState, viewModel: GameyaFormActions, onBack: 
             Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.gameya_archive_title, f.name), style = TzType.cardHeading, color = Tz.text)
                 Text(stringResource(R.string.gameya_archive_body), style = TzType.body, color = Tz.text2)
-                PrimaryButton(stringResource(R.string.gameya_archive_confirm), { haptics.perform(HapticLevel.Heavy); viewModel.archive() }, Modifier.fillMaxWidth(), height = 52.dp)
+                PrimaryButton(stringResource(R.string.gameya_archive_confirm), { haptics.perform(HapticLevel.Tap); viewModel.archive() }, Modifier.fillMaxWidth(), height = 52.dp)
                 SecondaryButton(stringResource(R.string.gameya_archive_cancel), viewModel::dismissArchive, Modifier.fillMaxWidth(), height = 52.dp)
             }
         }

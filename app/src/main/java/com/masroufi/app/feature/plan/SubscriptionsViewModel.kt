@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.masroufi.app.data.prefs.SettingsStore
@@ -51,8 +54,10 @@ class SubscriptionsViewModel @Inject constructor(
     private val people: PeopleRepository,
     private val settings: SettingsStore,
     private val clock: Clock,
+    deletes: PendingDeletes,
 ) : ViewModel() {
-    val state: StateFlow<SubscriptionsUi> = combine(repo.observe(), settings.settings) { v, s ->
+    val state: StateFlow<SubscriptionsUi> = combine(repo.observe(), settings.settings, deletes.hidden(DeleteKind.SUBSCRIPTION)) { all, s, hidden ->
+        val v = if (hidden.isEmpty()) all else all.copy(items = all.items.filter { it.item.id !in hidden })
         val today = LocalDate.now(clock)
         val trial = v.items.filter { (it.trialDaysLeft ?: Long.MAX_VALUE) <= TRIAL_WARNING_DAYS }
             .minWithOrNull(compareBy<SubscriptionView>({ it.trialDaysLeft }, { it.item.id }))

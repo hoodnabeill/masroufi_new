@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.people
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -67,10 +70,15 @@ class DutyLedgerViewModel @Inject constructor(
     private val people: PeopleRepository,
     entitlements: Entitlements,
     private val clock: Clock,
+    private val deletes: PendingDeletes,
 ) : ViewModel(), DutyActions {
     private val sheet = MutableStateFlow<DutySheet?>(null)
 
-    private val content = combine(duty.observe(), people.observePersons(), entitlements.isPlus) { views, persons, plus ->
+    private val gone = combine(deletes.hidden(DeleteKind.OCCASION), deletes.hidden(DeleteKind.GIFT), ::Pair)
+
+    private val content = combine(duty.observe(), people.observePersons(), entitlements.isPlus, gone) { all, persons, plus, (occasions, gifts) ->
+        val views = all.filter { it.occasion.id !in occasions }
+            .map { v -> if (v.gifts.any { it.gift.id in gifts }) v.copy(gifts = v.gifts.filter { it.gift.id !in gifts }) else v }
         DutyUi(
             loading = false, plus = plus, today = LocalDate.now(clock),
             mine = views.filter { it.occasion.whose == OccasionOwner.MINE },
@@ -95,12 +103,12 @@ class DutyLedgerViewModel @Inject constructor(
 
     /** Asks first only when the occasion has gifts (they go with it); an empty one just goes. */
     override fun requestDeleteOccasion(v: OccasionView) {
-        if (v.gifts.isEmpty()) launchSafe("delete occasion") { duty.deleteOccasion(v.occasion.id); sheet.value = null }
+        if (v.gifts.isEmpty()) confirmDeleteOccasion(v.occasion.id)
         else sheet.value = DutySheet.ConfirmDelete(v.occasion.id, v.occasion.name, v.gifts.size)
     }
 
-    override fun confirmDeleteOccasion(id: Long) = launchSafe("delete occasion") {
-        duty.deleteOccasion(id)
+    override fun confirmDeleteOccasion(id: Long) {
+        deletes.schedule(PendingDelete(id, kind = DeleteKind.OCCASION)) { duty.deleteOccasion(id) }
         sheet.value = null
     }
 
@@ -112,8 +120,8 @@ class DutyLedgerViewModel @Inject constructor(
         sheet.value = null
     }
 
-    override fun deleteGift(id: Long) = launchSafe("delete gift") {
-        duty.deleteGift(id)
+    override fun deleteGift(id: Long) {
+        deletes.schedule(PendingDelete(id, kind = DeleteKind.GIFT)) { duty.deleteGift(id) }
         sheet.value = null
     }
 

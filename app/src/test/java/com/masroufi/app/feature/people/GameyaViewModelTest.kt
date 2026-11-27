@@ -27,7 +27,7 @@ class GameyaViewModelTest : PlanVmTestBase() {
     @Before fun open() {
         plus.setDebugOverride(true)
         cash = runBlocking { db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, openingBalance = 1_000_000, color = 0)) }
-        vm = make(GameyaViewModel::class, { it.state }) { GameyaViewModel(f.gameyas, f.pockets, plus) }
+        vm = make(GameyaViewModel::class, { it.state }) { GameyaViewModel(f.gameyas, f.pockets, plus, deletes) }
         settle("loaded") { !state.loading && state.pockets.isNotEmpty() }
     }
 

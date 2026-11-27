@@ -16,7 +16,7 @@ import com.masroufi.app.domain.EntryKind
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -81,7 +81,7 @@ class RollViewModel @Inject constructor(
     private val query = MutableStateFlow<String?>(null)
 
     /** A delete has really been written: the screen plays the Heavy haptic. */
-    val committed: SharedFlow<Unit> get() = pendingDeletes.committed
+    val committed: Flow<Unit> get() = pendingDeletes.committed.filter { it == DeleteKind.ENTRY }.map { }
 
     private val params = combine(month, filter, query, ::Triple).distinctUntilChanged()
 
@@ -166,13 +166,11 @@ class RollViewModel @Inject constructor(
 
     /** "رجّعها": the newest waiting delete is cancelled; no write ever happened. */
     fun undo() {
-        pendingDeletes.pending.value.values.lastOrNull { !it.committing }?.let { pendingDeletes.undo(it.id) }
+        pendingDeletes.undoNewest(entries = true)
     }
 
     /** The screen leaves: waiting deletes are written now. True if there were any. */
     fun flush(): Boolean {
-        val any = pendingDeletes.pending.value.values.any { !it.committing }
-        pendingDeletes.flush()
-        return any
+        return pendingDeletes.flush(DeleteKind.ENTRY)
     }
 }

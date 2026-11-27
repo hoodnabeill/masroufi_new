@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class SeasonDetailViewModelTest : PlanVmTestBase() {
     private fun open(id: Long) = make(SeasonDetailViewModel::class, { it.view }) {
-        SeasonDetailViewModel(f.seasons, f.jar, f.profile, clock, SavedStateHandle(mapOf("id" to id)))
+        SeasonDetailViewModel(f.seasons, f.jar, f.profile, clock, SavedStateHandle(mapOf("id" to id)), deletes)
     }
 
     @Test fun earmarkIsCappedAtTheFreeJar() {

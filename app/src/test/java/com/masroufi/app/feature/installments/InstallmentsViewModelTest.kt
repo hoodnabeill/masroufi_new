@@ -24,7 +24,7 @@ class InstallmentsViewModelTest : PlanVmTestBase() {
 
     @Before fun open() {
         cash = runBlocking { db.pocketDao().insert(PocketEntity(name = "cash", kind = PocketKind.CASH, openingBalance = 5_000_000, color = 0)) }
-        vm = make(InstallmentsViewModel::class, { it.state }) { InstallmentsViewModel(f.installments, f.settings, clock) }
+        vm = make(InstallmentsViewModel::class, { it.state }) { InstallmentsViewModel(f.installments, f.settings, clock, deletes) }
     }
 
     private fun plan(name: String, monthly: Long, day: Int, total: Int?, paid: Int) =
@@ -153,7 +153,7 @@ class InstallmentsViewModelTest : PlanVmTestBase() {
 
     private fun form(id: Long = 0): InstallmentFormViewModel {
         val form = make(InstallmentFormViewModel::class, { it.form }) {
-            InstallmentFormViewModel(f.installments, f.recurring, f.pockets, clock, SavedStateHandle(mapOf("id" to id)))
+            InstallmentFormViewModel(f.installments, f.recurring, f.pockets, clock, SavedStateHandle(mapOf("id" to id)), deletes)
         }
         settle("form loaded") { form.form.value.loaded }
         return form
@@ -221,8 +221,11 @@ class InstallmentsViewModelTest : PlanVmTestBase() {
     @Test fun deletingGoesBack() {
         val id = plan("نضارة", 18_500, 8, 6, 4)
         val form = form(id)
+        settle("listed") { state.rows.size == 1 }
         form.delete()
-        settle("gone") { form.gone.value }
-        assertTrue(runBlocking { f.installments.view() }.plans.isEmpty())
+        settle("gone") { form.gone.value && state.rows.isEmpty() }
+        assertEquals("hidden at once, written after the undo window", 1, readOnIo { f.installments.view() }.plans.size)
+        passFiveSeconds()
+        settle("deleted") { readOnIo { f.installments.view() }.plans.isEmpty() }
     }
 }

@@ -64,10 +64,8 @@ internal fun EnvelopeDetailContent(
     onEdit: () -> Unit,
     onClose: () -> Unit,
     onOpenAddSheet: (AddPrefill?) -> Unit,
-    confirmOpen: Boolean = false,
 ) {
     val haptics = LocalHaptics.current
-    var confirm by remember { mutableStateOf(confirmOpen) }
     val card = s.card
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
@@ -109,18 +107,6 @@ internal fun EnvelopeDetailContent(
             }
         }
         SecondaryButton(stringResource(R.string.env_edit), { haptics.perform(HapticLevel.Tap); onEdit() }, Modifier.fillMaxWidth())
-        TextLink(stringResource(R.string.env_close), { confirm = true }, Modifier.align(Alignment.CenterHorizontally))
-    }
-    if (confirm) TzSheet(onDismiss = { confirm = false }) {
-        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.env_close_title, card?.view?.name.orEmpty()), style = TzType.cardHeading, color = Tz.text)
-            Text(stringResource(R.string.env_close_line), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
-            PrimaryButton(
-                stringResource(R.string.env_close_confirm),
-                { haptics.perform(HapticLevel.Heavy); confirm = false; onClose() },
-                Modifier.fillMaxWidth(), height = 52.dp,
-            )
-            SecondaryButton(stringResource(R.string.env_close_cancel), { confirm = false }, Modifier.fillMaxWidth(), height = 52.dp)
-        }
+        TextLink(stringResource(R.string.env_close), { haptics.perform(HapticLevel.Tap); onClose() }, Modifier.align(Alignment.CenterHorizontally))
     }
 }

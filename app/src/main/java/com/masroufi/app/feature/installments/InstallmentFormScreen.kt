@@ -115,6 +115,6 @@ internal fun InstallmentFormContent(f: InstallmentForm, isEdit: Boolean, onBack:
             Modifier.fillMaxWidth(),
             enabled = f.canSave,
         )
-        if (isEdit) TextLink(stringResource(R.string.inst_delete), { haptics.perform(HapticLevel.Heavy); vm.delete() }, Modifier.align(Alignment.CenterHorizontally))
+        if (isEdit) TextLink(stringResource(R.string.inst_delete), { haptics.perform(HapticLevel.Tap); vm.delete() }, Modifier.align(Alignment.CenterHorizontally))
     }
 }

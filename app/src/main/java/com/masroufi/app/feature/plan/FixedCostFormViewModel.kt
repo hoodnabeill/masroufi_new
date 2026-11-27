@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -59,6 +62,7 @@ class FixedCostFormViewModel @Inject constructor(
     pocketRepo: PocketRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
+    private val deletes: PendingDeletes,
 ) : ViewModel() {
     private val id: Long = savedState.get<Long>("id") ?: 0L
     private var stored: RecurringEntity? = null
@@ -132,9 +136,8 @@ class FixedCostFormViewModel @Inject constructor(
 
     fun delete() {
         if (stored == null) return
-        viewModelScope.launch {
-            recurring.delete(id)
-            _gone.value = true
-        }
+        val id = id
+        deletes.schedule(PendingDelete(id, kind = DeleteKind.FIXED_COST)) { recurring.delete(id) }
+        _gone.value = true
     }
 }

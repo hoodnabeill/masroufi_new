@@ -100,6 +100,7 @@ import com.masroufi.app.ui.components.ChipStyle
 import com.masroufi.app.ui.components.EmptyState
 import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.TextLink
+import com.masroufi.app.ui.components.UndoBar
 import com.masroufi.app.ui.components.TzChip
 import com.masroufi.app.ui.components.TzRow
 import com.masroufi.app.ui.components.TzSheet
@@ -401,28 +402,6 @@ private fun MonthSheet(state: RollUi, onDismiss: () -> Unit, onPick: (YearMonth)
                     onClick = { onPick(m) },
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun UndoBar(visible: Boolean, onUndo: () -> Unit, modifier: Modifier) {
-    val reduce = LocalReduceMotion.current
-    val haptics = LocalHaptics.current
-    val shape = RoundedCornerShape(20.dp)
-    AnimatedVisibility(
-        visible,
-        modifier,
-        enter = fadeIn(tween(160)) + if (reduce) EnterTransition.None else slideInVertically(TzSpring.Move.spec()) { it },
-        exit = fadeOut(tween(160)) + if (reduce) ExitTransition.None else slideOutVertically(TzSpring.Move.spec()) { it },
-    ) {
-        Row(
-            Modifier.fillMaxWidth().clip(shape).background(Tz.raised).border(1.dp, Tz.line, shape).padding(start = 18.dp, end = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(stringResource(R.string.roll_undo), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
-            TextLink(stringResource(R.string.roll_undo_action), { haptics.perform(HapticLevel.Tap); onUndo() })
         }
     }
 }

@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.kids
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -70,6 +73,7 @@ class ChildFormViewModel @Inject constructor(
     private val kids: KidsRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
+    private val deletes: PendingDeletes,
 ) : ViewModel(), ChildFormActions {
     private val id: Long = savedState.get<Long>("id") ?: 0L
     private val _form = MutableStateFlow(ChildForm())
@@ -149,15 +153,8 @@ class ChildFormViewModel @Inject constructor(
 
     override fun delete() {
         if (!isEdit) return
-        viewModelScope.launch {
-            try {
-                kids.deleteChild(id)
-                _gone.value = true
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "delete failed", e)
-            }
-        }
+        val id = id
+        deletes.schedule(PendingDelete(id, kind = DeleteKind.CHILD)) { kids.deleteChild(id) }
+        _gone.value = true
     }
 }

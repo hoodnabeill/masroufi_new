@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.freelance
 
+import kotlinx.coroutines.flow.first
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.masroufi.app.data.db.PocketEntity
 import com.masroufi.app.data.db.PocketKind
@@ -37,7 +38,7 @@ class FreelanceViewModelTest : PlanVmTestBase() {
     }
 
     private fun start() {
-        vm = make(FreelanceViewModel::class, { it.state }) { FreelanceViewModel(f.freelance, clock) }
+        vm = make(FreelanceViewModel::class, { it.state }) { FreelanceViewModel(f.freelance, clock, deletes) }
     }
 
     private fun vault() = runBlocking { checkNotNull(db.pocketDao().vault()).id }
@@ -186,7 +187,10 @@ class FreelanceViewModelTest : PlanVmTestBase() {
         vm.editJob(edited, "عميل تاني", "شغل جديد", 250_000, 30)
         settle("new date") { state.jobs.single().job.dueDate == LocalDate.of(2026, 12, 1) }
         vm.deleteJob(job.id)
-        settle("deleted") { state.jobs.isEmpty() }
+        settle("hidden") { state.jobs.isEmpty() }
+        assertEquals("still stored inside the undo window", 1, readOnIo { f.freelance.observe().first() }.jobs.size)
+        passFiveSeconds()
+        settle("deleted") { readOnIo { f.freelance.observe().first() }.jobs.isEmpty() }
     }
 
     @Test fun workCameLandsInTheVaultWithAnOptionalNote() {

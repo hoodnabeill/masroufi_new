@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.installments
 
+import com.masroufi.app.feature.roll.PendingDeletes
+import com.masroufi.app.feature.roll.PendingDelete
+import com.masroufi.app.feature.roll.DeleteKind
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -54,6 +57,7 @@ class InstallmentFormViewModel @Inject constructor(
     pocketRepo: PocketRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
+    private val deletes: PendingDeletes,
 ) : ViewModel() {
     private val id: Long = savedState.get<Long>("id") ?: 0L
     private val _form = MutableStateFlow(InstallmentForm())
@@ -116,15 +120,8 @@ class InstallmentFormViewModel @Inject constructor(
 
     fun delete() {
         if (!isEdit) return
-        viewModelScope.launch {
-            try {
-                installments.delete(id)
-                _gone.value = true
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "delete failed", e)
-            }
-        }
+        val id = id
+        deletes.schedule(PendingDelete(id, kind = DeleteKind.INSTALLMENT)) { installments.delete(id) }
+        _gone.value = true
     }
 }
