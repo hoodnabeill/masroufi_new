@@ -121,7 +121,8 @@ class InstallmentsViewModel @Inject constructor(
     private val payOffFailed = MutableStateFlow(false)
 
     val state: StateFlow<InstallmentsUi> = combine(repo.observe(), settings.settings, payOffFailed, deletes.hidden(DeleteKind.INSTALLMENT)) { all, s, failed, hidden ->
-        build(if (hidden.isEmpty()) all else all.copy(plans = all.plans.filter { it.item.id !in hidden }), s, repo.earlyPayoff(), failed)
+        // Only the rows leave; the totals and the chart come from storage until the delete is written.
+        build(all, s, repo.earlyPayoff(), failed).let { ui -> if (hidden.isEmpty()) ui else ui.copy(rows = ui.rows.filter { it.plan.item.id !in hidden }) }
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InstallmentsUi())
 

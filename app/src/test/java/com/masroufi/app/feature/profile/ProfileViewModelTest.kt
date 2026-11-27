@@ -122,6 +122,14 @@ class ProfileViewModelTest {
         return s!!
     }
 
+    /** Any repository read through io while Main is pumped (never block Main on one). */
+    private fun <T> onIo(block: suspend () -> T): T {
+        var r: Result<T>? = null
+        val job = io.launch { r = runCatching { block() } }
+        settle("a read") { job.isCompleted }
+        return r!!.getOrThrow()
+    }
+
     @Test fun anEmptyProfileShowsTheMocksDefaultsAndSavesNothing() {
         val ui = visit().state.value
         assertEquals(listOf("", "ق", 4, 0), listOf(ui.name, ui.initial, ui.householdSize, ui.inSchool))
@@ -248,7 +256,7 @@ class ProfileViewModelTest {
             assertEquals(1, db.pocketDao().all().first().size)
             assertTrue(cash > 0)
         }
-        val before = runBlocking { f.home.observeHome().first() }
+        val before = onIo { f.home.observeHome().first() }
         assertEquals(24_000L, before.today?.amount)
 
         val vm = visit()
@@ -263,13 +271,13 @@ class ProfileViewModelTest {
         root.viewModelScope.launch { root.onboarded.collect {} }
         settle("onboarding") { root.onboarded.value == false }
 
-        val home = runBlocking { f.home.observeHome().first() }
+        val home = onIo { f.home.observeHome().first() }
         assertNull("no ticket", home.today)
         // Separate asserts: listOf(0, 0L, 0) infers every literal as Long, so it never equals the Int fields.
         assertEquals(0, home.entryCount)
         assertEquals(0L, home.spendable)
         assertEquals(0, home.collected)
-        assertTrue(runBlocking { db.pocketDao().all().first() }.isEmpty())
+        assertTrue(onIo { db.pocketDao().all().first() }.isEmpty())
         val s = saved()
         assertNull(s.profileName)
         assertNull("a raise does not outlive the wipe", s.ticketRaise)
