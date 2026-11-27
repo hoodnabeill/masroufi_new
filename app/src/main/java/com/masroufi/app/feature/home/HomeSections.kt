@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
@@ -363,11 +364,13 @@ private fun WeekStubBox(stub: WeekStub) {
             Text("-${poundsText(stub.amount)}", style = number, color = Tz.carnelianText, maxLines = 1)
         }
         StubKind.Today -> Box(box.border(2.dp, Tz.yellow, shape), contentAlignment = Alignment.Center) {
+            // The word is a little wider than its cell (about 31 dp): it sits centred and spills over the border, never wraps mid-word.
             Text(
                 stringResource(R.string.home_week_today),
-                style = TzType.caption.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
+                Modifier.wrapContentWidth(unbounded = true),
+                style = TzType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.SemiBold),
                 color = Tz.yellow,
-                maxLines = 1,
+                softWrap = false,
             )
         }
         StubKind.Empty -> Box(box.dashedBorder(1.5.dp, Tz.dashed, 10.dp))

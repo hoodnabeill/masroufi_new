@@ -1,6 +1,7 @@
 package com.masroufi.app.feature.kids
 
 import com.masroufi.app.ui.components.CappedFontScale
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -104,12 +105,12 @@ internal fun KidsTicket(
     val left = t.view.left
     Column(modifier.fillMaxWidth().clip(shape).background(c.paper)) {
         Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(
+            FlowRow(
                 Modifier.fillMaxWidth().then(if (onHeader != null) Modifier.clickable(role = Role.Button, onClick = onHeader) else Modifier),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                itemVerticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(40.dp).clip(CircleShape).background(c.ink), contentAlignment = Alignment.Center) {
                         CappedFontScale { Text(name.trim().take(1), style = TzType.titlePushed.copy(fontSize = 20.sp), color = c.paper) }
                     }

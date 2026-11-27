@@ -251,20 +251,24 @@ private fun Entries(
     val results = state.results
     val listPadding = PaddingValues(bottom = 24.dp)
     when {
-        searchActive && results != null && results.isEmpty() -> EmptyState(
-            { Qersh(QershMood.Thinking, 96.dp) }, R.string.empty_search_title, R.string.empty_search_line,
-            R.string.empty_search_action, { onQuery("") },
-        )
+        searchActive && results != null && results.isEmpty() -> Column(Modifier.verticalScroll(rememberScrollState())) {
+            EmptyState(
+                { Qersh(QershMood.Thinking, 96.dp) }, R.string.empty_search_title, R.string.empty_search_line,
+                R.string.empty_search_action, { onQuery("") },
+            )
+        }
         searchActive && results != null -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = listPadding) {
             items(results, key = { it.id }) { e -> ResultCard(e, state.categories, state.query, onEntry) }
         }
         searchActive -> Unit
         !state.loading && state.days.isEmpty() ->
             if (state.filter == RollFilter.ALL) {
-                EmptyState(
-                    { BlankSheet(width = 150.dp) }, R.string.empty_roll_title, R.string.empty_roll_line,
-                    R.string.empty_roll_action, onAdd, primaryAction = true,
-                )
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    EmptyState(
+                        { BlankSheet(width = 150.dp) }, R.string.empty_roll_title, R.string.empty_roll_line,
+                        R.string.empty_roll_action, onAdd, primaryAction = true,
+                    )
+                }
             } else {
                 Text(stringResource(R.string.roll_filter_empty), style = TzType.body, color = Tz.text2, modifier = Modifier.padding(horizontal = 4.dp))
             }

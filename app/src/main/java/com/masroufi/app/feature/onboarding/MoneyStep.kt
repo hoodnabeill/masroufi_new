@@ -1,6 +1,7 @@
 package com.masroufi.app.feature.onboarding
 
 import com.masroufi.app.ui.components.CappedFontScale
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -60,7 +61,7 @@ fun MoneyStep(state: OnboardingUi, actions: OnboardingActions) {
         QershBubble(stringResource(R.string.ob_money_bubble))
         StepTitle(stringResource(R.string.ob_money_title))
         Column(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            CappedFontScale { Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+            CappedFontScale { FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.Bottom) {
                 Odometer(state.money.toPiastres(), TzType.hero.copy(fontSize = 76.sp, lineHeight = 1.em, color = Tz.yellow), showPiastres = state.money.hasPoint, maskable = false)
                 Text(stringResource(R.string.paper_currency), Modifier.padding(bottom = 10.dp), style = TzType.button.copy(fontSize = 22.sp, color = Tz.text2))
             } }
