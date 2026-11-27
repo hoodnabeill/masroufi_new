@@ -228,15 +228,15 @@ class PeopleViewModel @Inject constructor(
 
     /** One SPENT entry from [pocketId] for the open tab items; the notice names the shop. */
     override fun settleTab(personId: Long, name: String, pocketId: Long) = launchSafe("settle tab") {
-        sheet.value = null
         people.settleTab(personId, pocketId)
+        sheet.value = null
         notice.value = PeopleNotice(NoticeKind.TAB_SETTLED, name)
     }
 
     /** Pays back every open loan the user owes [personId], each in full; [pocketId] null records only. */
     override fun repayAll(personId: Long, pocketId: Long?) = launchSafe("repay") {
-        sheet.value = null
         people.debtsIOwe().filter { it.person.id == personId }.forEach { people.repay(it.debt.id, it.debt.amount, pocketId) }
+        sheet.value = null
         notice.value = PeopleNotice(NoticeKind.REPAID)
     }
 
@@ -247,7 +247,6 @@ class PeopleViewModel @Inject constructor(
      * tab). [text] is the reason, or the tab item's label.
      */
     override fun add(mode: AddMode, personId: Long?, newName: String?, amount: Long, text: String?, pocketId: Long?, dueInDays: Int?) = launchSafe("add") {
-        sheet.value = null
         val due = dueInDays?.let { LocalDate.now(clock).plusDays(it.toLong()) }
         val id = personId ?: people.addPerson(requireNotNull(newName), kind = if (mode == AddMode.TAB) PersonKind.SHOP else PersonKind.PERSON)
         val reason = text?.trim()?.ifEmpty { null }
@@ -256,6 +255,7 @@ class PeopleViewModel @Inject constructor(
             AddMode.I_OWE -> people.borrow(id, amount, pocketId, reason, due)
             AddMode.TAB -> people.addTabItem(id, requireNotNull(reason), amount)
         }
+        sheet.value = null
     }
 
     // -- quick split
@@ -285,8 +285,8 @@ class PeopleViewModel @Inject constructor(
         val d = split.value
         val shares = d.shares ?: return@launchSafe
         if (!d.canSave) return@launchSafe
-        sheet.value = null
         people.split(d.total, checkNotNull(d.pocketId), shares.filter { (id, v) -> id != ME && v > 0 })
+        sheet.value = null
         notice.value = PeopleNotice(NoticeKind.SPLIT)
     }
 

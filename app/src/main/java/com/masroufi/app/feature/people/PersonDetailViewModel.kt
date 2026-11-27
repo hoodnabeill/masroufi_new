@@ -146,21 +146,21 @@ class PersonDetailViewModel @Inject constructor(
     /** One SPENT entry from [pocketId] for the open tab items. */
     override fun settleTab(pocketId: Long) = launchSafe("settle tab") {
         val name = state.value.person?.name.orEmpty()
-        sheet.value = null
         people.settleTab(id, pocketId)
+        sheet.value = null
         notice.value = PeopleNotice(NoticeKind.TAB_SETTLED, name)
     }
 
     /** [amount] of [debt] paid either way; [pocketId] null records only. */
     override fun settleDebt(debt: DebtEntity, amount: Long, pocketId: Long?) = launchSafe("repay") {
-        sheet.value = null
         people.repay(debt.id, amount, pocketId)
+        sheet.value = null
         notice.value = PeopleNotice(if (debt.direction == DebtDirection.THEY_OWE) NoticeKind.RECEIVED else NoticeKind.REPAID)
     }
 
     override fun saveEdit(name: String, phone: String, kind: PersonKind) = launchSafe("edit") {
-        sheet.value = null
         people.updatePerson(id, name, phone, kind)
+        sheet.value = null
     }
 
     /** Deletes the person with their debts, tab items and gifts (the screen asked first); the state turns "missing". */

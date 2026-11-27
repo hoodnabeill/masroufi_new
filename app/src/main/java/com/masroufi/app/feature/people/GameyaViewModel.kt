@@ -93,8 +93,8 @@ class GameyaViewModel @Inject constructor(
     /** Records the user's installment from [pocketId]; the card then reads "إنت دفعت". */
     override fun payMine(pocketId: Long) = launchSafe("pay") {
         val g = state.value.current ?: return@launchSafe
-        sheet.value = null
         gameyas.payMine(g.gameya.id, pocketId)
+        sheet.value = null
     }
 
     /** Ticks or unticks a member's installment for this month (a record, no money). */
@@ -106,21 +106,21 @@ class GameyaViewModel @Inject constructor(
 
     override fun swapWith(memberId: Long) = launchSafe("swap") {
         val g = state.value.current ?: return@launchSafe
-        sheet.value = null
         gameyas.swapTurn(g.gameya.id, memberId)
+        sheet.value = null
     }
 
     /** Adds a plan row, or saves the edit of [editing]. */
     override fun savePlan(editing: GameyaPlanEntity?, label: String, amount: Long) = launchSafe("save plan") {
         val g = state.value.current ?: return@launchSafe
-        sheet.value = null
         if (editing == null) gameyas.addPlanRow(g.gameya.id, label, amount)
         else gameyas.updatePlanRow(editing.copy(label = label.trim(), amount = amount))
+        sheet.value = null
     }
 
     override fun deletePlan(id: Long) = launchSafe("delete plan") {
-        sheet.value = null
         gameyas.deletePlanRow(id)
+        sheet.value = null
     }
 
     private fun launchSafe(what: String, block: suspend () -> Unit) {

@@ -88,9 +88,9 @@ class DutyLedgerViewModel @Inject constructor(
 
     /** Saves a new occasion, or the edit of [editing]. */
     override fun saveOccasion(editing: OccasionEntity?, name: String, date: LocalDate, whose: OccasionOwner, personId: Long?) = launchSafe("save occasion") {
-        sheet.value = null
         if (editing == null) duty.addOccasion(name, date, whose, personId)
         else duty.updateOccasion(editing.copy(name = name.trim(), date = date, whose = whose, personId = personId))
+        sheet.value = null
     }
 
     /** Asks first only when the occasion has gifts (they go with it); an empty one just goes. */
@@ -106,15 +106,15 @@ class DutyLedgerViewModel @Inject constructor(
 
     /** [personId] null makes a new person named [newName]. [editing] replaces that gift instead of adding one. */
     override fun saveGift(occasionId: Long, editing: GiftEntity?, personId: Long?, newName: String?, amount: Long, direction: GiftDirection) = launchSafe("save gift") {
-        sheet.value = null
         val who = personId ?: people.addPerson(requireNotNull(newName).trim())
         if (editing == null) duty.addGift(occasionId, who, amount, direction)
         else duty.updateGift(editing.copy(personId = who, amount = amount, direction = direction))
+        sheet.value = null
     }
 
     override fun deleteGift(id: Long) = launchSafe("delete gift") {
-        sheet.value = null
         duty.deleteGift(id)
+        sheet.value = null
     }
 
     private fun launchSafe(what: String, block: suspend () -> Unit) {
