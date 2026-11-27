@@ -1,5 +1,14 @@
 package com.masroufi.app.feature.buy
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.isLargeFont
+import com.masroufi.app.ui.motion.pressClickable
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.feature.plan.TwoUp
+import com.masroufi.app.data.db.WishEntity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.MutableTransitionState
@@ -112,10 +121,37 @@ internal fun typedText(input: AmountInput): String {
 fun BeforeBuyScreen(viewModel: BeforeBuyViewModel, onBack: () -> Unit, onOpenAddSheet: (AddPrefill?) -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val ask by viewModel.ask.collectAsStateWithLifecycle()
-    val haptics = LocalHaptics.current
-    val reduce = LocalReduceMotion.current
     val openSheet by rememberUpdatedState(onOpenAddSheet)
     LaunchedEffect(viewModel) { viewModel.prefill.collect { openSheet(it) } }
+    BeforeBuyContent(
+        ui, ask, onBack,
+        BuyActions(
+            viewModel::setName, viewModel::focus, viewModel::park, viewModel::changedMind, viewModel::bought,
+            viewModel::digit, viewModel::point, viewModel::backspace, viewModel::jarAnswer, viewModel::askDismissed,
+        ),
+    )
+}
+
+/** What the screen can do; the view model's functions in the app, no-ops in the audit. */
+internal class BuyActions(
+    val setName: (String) -> Unit,
+    val focus: (BuyField?) -> Unit,
+    val park: () -> Boolean,
+    val changedMind: (WishEntity) -> Unit,
+    val bought: (Long) -> Unit,
+    val digit: (Int) -> Unit,
+    val point: () -> Unit,
+    val backspace: () -> Unit,
+    val jarAnswer: (Boolean) -> Unit,
+    val askDismissed: () -> Unit,
+) {
+    companion object { val None = BuyActions({}, {}, { true }, {}, {}, {}, {}, {}, {}, {}) }
+}
+
+@Composable
+internal fun BeforeBuyContent(ui: BeforeBuyUi, ask: WishAsk?, onBack: () -> Unit, vm: BuyActions) {
+    val haptics = LocalHaptics.current
+    val reduce = LocalReduceMotion.current
 
     val focus = LocalFocusManager.current
     val nameFocus = remember { FocusRequester() }
@@ -143,21 +179,21 @@ fun BeforeBuyScreen(viewModel: BeforeBuyViewModel, onBack: () -> Unit, onOpenAdd
             ) {
                 WantCard(
                     ui, nameFocus,
-                    onName = viewModel::setName,
-                    onNameFocused = { viewModel.focus(null) },
-                    onPriceTap = { focus.clearFocus(); viewModel.focus(BuyField.PRICE) },
-                    onDone = { focus.clearFocus(); viewModel.focus(BuyField.PRICE) },
+                    onName = vm.setName,
+                    onNameFocused = { vm.focus(null) },
+                    onPriceTap = { focus.clearFocus(); vm.focus(BuyField.PRICE) },
+                    onDone = { focus.clearFocus(); vm.focus(BuyField.PRICE) },
                 )
                 ui.result?.let { r -> if (ui.tiles.isNotEmpty()) Tiles(r, ui.tiles) }
                 if (ui.priceValue > 0) {
-                    InstallmentCard(ui, viewModel::focus)
+                    InstallmentCard(ui, vm.focus)
                 }
-                ParkCard(enabled = ui.canPark, onPark = { if (viewModel.park()) haptics.perform(HapticLevel.Confirm) })
+                ParkCard(enabled = ui.canPark, onPark = { if (vm.park()) haptics.perform(HapticLevel.Confirm) })
             }
             WishList(
                 ui, reduce,
-                onChangedMind = { viewModel.changedMind(it.wish) },
-                onBought = { viewModel.bought(it.wish.id) },
+                onChangedMind = { vm.changedMind(it.wish) },
+                onBought = { vm.bought(it.wish.id) },
                 onWrite = {
                     scope.launch { scroll.animateScrollTo(0) }
                     nameFocus.requestFocus()
@@ -166,13 +202,14 @@ fun BeforeBuyScreen(viewModel: BeforeBuyViewModel, onBack: () -> Unit, onOpenAdd
         }
         if (ui.field != null) {
             Box(Modifier.fillMaxWidth().background(Tz.surface).navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
-                Keypad(viewModel::digit, viewModel::point, viewModel::backspace)
+                Keypad(vm.digit, vm.point, vm.backspace)
             }
         }
     }
-    ask?.let { JarAskSheet(it, onAnswer = viewModel::jarAnswer, onDismiss = viewModel::askDismissed) }
+    ask?.let { JarAskSheet(it, onAnswer = vm.jarAnswer, onDismiss = vm.askDismissed) }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WantCard(
     ui: BeforeBuyUi,
@@ -193,7 +230,7 @@ private fun WantCard(
         BasicTextField(
             value = ui.name,
             onValueChange = onName,
-            modifier = Modifier.fillMaxWidth().height(48.dp).clip(fieldShape).background(Tz.night).border(1.dp, Tz.line, fieldShape)
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(fieldShape).background(Tz.night).border(1.dp, Tz.line, fieldShape)
                 .focusRequester(nameFocus).onFocusChanged { if (it.isFocused) onNameFocused() }.semantics { contentDescription = label },
             textStyle = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Tz.text),
             singleLine = true,
@@ -209,18 +246,20 @@ private fun WantCard(
         )
         val focused = ui.field == BuyField.PRICE
         val ring = RoundedCornerShape(16.dp)
-        Row(
-            Modifier.clip(ring).border(1.5.dp, if (focused) Tz.yellow else Color.Transparent, ring)
-                .clickable(role = Role.Button, onClick = onPriceTap).padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Text(
-                typedText(ui.price),
-                style = TzType.hero.copy(fontSize = 68.sp, lineHeight = 68.sp),
-                color = if (ui.price.text.isEmpty()) Tz.text3 else Tz.yellow,
-            )
-            Text(stringResource(R.string.paper_currency), style = TzType.titlePushed, color = Tz.text2, modifier = Modifier.padding(bottom = 10.dp))
+        // shortcut: the typed price keeps its normal size at a large font (it would be wider than the screen); TalkBack reads it in full.
+        CappedFontScale {
+            FlowRow(
+                Modifier.pressClickable(onClick = onPriceTap).clip(ring).border(1.5.dp, if (focused) Tz.yellow else Color.Transparent, ring).padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.Bottom,
+            ) {
+                Text(
+                    typedText(ui.price),
+                    style = TzType.hero.copy(fontSize = 68.sp, lineHeight = 68.sp),
+                    color = if (ui.price.text.isEmpty()) Tz.text3 else Tz.yellow,
+                )
+                Text(stringResource(R.string.paper_currency), style = TzType.titlePushed, color = Tz.text2, modifier = Modifier.padding(bottom = 10.dp))
+            }
         }
     }
 }
@@ -230,7 +269,8 @@ private fun Tiles(r: BeforeBuy, tiles: List<BuyTile>) {
     val arabic = LocalConfiguration.current.locales[0].language == "ar"
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.buy_equals), style = TzType.cardHeading, color = Tz.text, modifier = Modifier.padding(horizontal = 4.dp))
-        tiles.chunked(2).forEachIndexed { row, pair ->
+        val perRow = if (isLargeFont()) 1 else 2
+        tiles.chunked(perRow).forEachIndexed { row, pair ->
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 pair.forEachIndexed { i, tile ->
                     val first = row == 0 && i == 0
@@ -249,7 +289,7 @@ private fun Tiles(r: BeforeBuy, tiles: List<BuyTile>) {
                     }
                     TileBox(big, caption, color, first, Modifier.weight(1f))
                 }
-                if (pair.size == 1) Spacer(Modifier.weight(1f))
+                if (pair.size == 1 && perRow == 2) Spacer(Modifier.weight(1f))
             }
         }
     }
@@ -297,19 +337,23 @@ private fun InstallmentCard(ui: BeforeBuyUi, onFocus: (BuyField?) -> Unit) {
 private fun InstallmentBody(ui: BeforeBuyUi, onFocus: (BuyField?) -> Unit) {
     val focus = LocalFocusManager.current
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            NumberField(R.string.buy_inst_monthly, typedText(ui.monthly), ui.monthly.text.isEmpty(), ui.field == BuyField.MONTHLY, Modifier.weight(1f)) {
-                focus.clearFocus(); onFocus(BuyField.MONTHLY)
-            }
-            NumberField(R.string.buy_inst_months, typedText(ui.months), ui.months.text.isEmpty(), ui.field == BuyField.MONTHS, Modifier.weight(1f)) {
-                focus.clearFocus(); onFocus(BuyField.MONTHS)
-            }
-        }
+        TwoUp(
+            { m ->
+                NumberField(R.string.buy_inst_monthly, typedText(ui.monthly), ui.monthly.text.isEmpty(), ui.field == BuyField.MONTHLY, m) {
+                    focus.clearFocus(); onFocus(BuyField.MONTHLY)
+                }
+            },
+            { m ->
+                NumberField(R.string.buy_inst_months, typedText(ui.months), ui.months.text.isEmpty(), ui.field == BuyField.MONTHS, m) {
+                    focus.clearFocus(); onFocus(BuyField.MONTHS)
+                }
+            },
+        )
         val inst = ui.installment
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CashBox(ui.priceValue, ui.result?.cashDays, Modifier.weight(1f))
-            if (inst != null) InstallmentBox(ui.monthly.toPiastres(), inst, Modifier.weight(1f))
-        }
+        if (inst != null) TwoUp(
+            { m -> CashBox(ui.priceValue, ui.result?.cashDays, m) },
+            { m -> InstallmentBox(ui.monthly.toPiastres(), inst, m) },
+        ) else CashBox(ui.priceValue, ui.result?.cashDays, Modifier.fillMaxWidth(0.5f))
         Text(stringResource(R.string.buy_inst_note), style = TzType.caption.copy(fontSize = 12.sp, lineHeight = 1.7.em), color = Tz.text2)
     }
 }
@@ -318,8 +362,8 @@ private fun InstallmentBody(ui: BeforeBuyUi, onFocus: (BuyField?) -> Unit) {
 private fun NumberField(label: Int, value: String, empty: Boolean, focused: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val shape = RoundedCornerShape(16.dp)
     Column(
-        modifier.clip(shape).background(Tz.night).border(if (focused) 1.5.dp else 1.dp, if (focused) Tz.yellow else Tz.line, shape)
-            .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp),
+        modifier.pressClickable(onClick = onClick).clip(shape).background(Tz.night).border(if (focused) 1.5.dp else 1.dp, if (focused) Tz.yellow else Tz.line, shape)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(stringResource(label), style = TzType.caption.copy(fontSize = 11.sp), color = Tz.text2)
@@ -389,6 +433,7 @@ private fun ParkCard(enabled: Boolean, onPark: () -> Unit) {
 /** What the list's rows looked like when it first showed: only rows added later play the "gains a row" motion. */
 private class Baseline { var ids: Set<Long>? = null }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WishList(
     ui: BeforeBuyUi,
@@ -397,7 +442,10 @@ private fun WishList(
     onBought: (WishView) -> Unit,
     onWrite: () -> Unit,
 ) {
-    if (ui.loading) return
+    if (ui.loading) {
+        LoadingRows()
+        return
+    }
     val baseline = remember { Baseline() }
     if (baseline.ids == null) baseline.ids = ui.wishes.map { it.wish.id }.toSet()
     if (ui.wishes.isEmpty()) {
@@ -409,7 +457,7 @@ private fun WishList(
         Modifier.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.Bottom) {
             Text(stringResource(R.string.buy_list_title), style = TzType.cardHeading, color = Tz.text)
             if (ui.changedMindTotal > 0) {
                 Text(
@@ -443,7 +491,6 @@ private fun WishRow(v: WishView, onChangedMind: () -> Unit, onBought: () -> Unit
                 Text(
                     stringResource(R.string.buy_row_name, w.name, poundsText(w.price)),
                     style = TzType.body.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, lineHeight = 1.4.em), color = Tz.text,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis,
                 )
                 when {
                     v.due -> Text(stringResource(R.string.buy_due), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.yellow)

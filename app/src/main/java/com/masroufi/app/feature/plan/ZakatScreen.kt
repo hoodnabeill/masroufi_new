@@ -1,5 +1,7 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.ui.motion.pressClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,26 +47,46 @@ import com.masroufi.app.ui.theme.TzType
 @Composable
 fun ZakatScreen(viewModel: ZakatViewModel, onBack: () -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
-    if (ui.loading) return
-    val body: @Composable () -> Unit = { ZakatBody(ui, viewModel) }
+    ZakatContent(
+        ui, onBack,
+        ZakatActions(viewModel::open, viewModel::dismiss, viewModel::setZakatable, viewModel::setNisab, viewModel::setPerPerson, viewModel::stepPeople),
+    )
+}
+
+/** What the zakat page can do; the view model's functions in the app, no-ops in the audit. */
+internal class ZakatActions(
+    val open: (ZakatSheet) -> Unit,
+    val dismiss: () -> Unit,
+    val setZakatable: (Long) -> Unit,
+    val setNisab: (Long) -> Unit,
+    val setPerPerson: (Long) -> Unit,
+    val stepPeople: (Int) -> Unit,
+) {
+    companion object { val None = ZakatActions({}, {}, {}, {}, {}, {}) }
+}
+
+@Composable
+internal fun ZakatContent(ui: ZakatUi, onBack: () -> Unit, vm: ZakatActions) {
+    val body: @Composable () -> Unit = { ZakatBody(ui, vm) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         PushedHeader(stringResource(R.string.zakat_title), onBack)
-        if (ui.isPlus) body() else PlusLocked(R.string.zakat_lock, PlusFeature.ZAKAT, body)
+        if (ui.loading) LoadingRows()
+        else if (ui.isPlus) body() else PlusLocked(R.string.zakat_lock, PlusFeature.ZAKAT, body)
     }
     when (ui.sheet) {
-        ZakatSheet.Money -> ValueSheet(R.string.zakat_held, ui.zakatable, viewModel::dismiss, viewModel::setZakatable)
-        ZakatSheet.Nisab -> ValueSheet(R.string.zakat_nisab, ui.nisab ?: 0, viewModel::dismiss, viewModel::setNisab)
-        ZakatSheet.PerPerson -> ValueSheet(R.string.zakat_per_person, ui.perPerson, viewModel::dismiss, viewModel::setPerPerson)
+        ZakatSheet.Money -> ValueSheet(R.string.zakat_held, ui.zakatable, vm.dismiss, vm.setZakatable)
+        ZakatSheet.Nisab -> ValueSheet(R.string.zakat_nisab, ui.nisab ?: 0, vm.dismiss, vm.setNisab)
+        ZakatSheet.PerPerson -> ValueSheet(R.string.zakat_per_person, ui.perPerson, vm.dismiss, vm.setPerPerson)
         null -> Unit
     }
 }
 
 @Composable
-private fun ZakatBody(ui: ZakatUi, vm: ZakatViewModel) {
+private fun ZakatBody(ui: ZakatUi, vm: ZakatActions) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         TzCard {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -101,7 +123,7 @@ private fun ZakatBody(ui: ZakatUi, vm: ZakatViewModel) {
 private fun ValueRow(label: String, value: String, onClick: () -> Unit) {
     val haptics = LocalHaptics.current
     Row(
-        Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() },
+        Modifier.fillMaxWidth().pressClickable { haptics.perform(HapticLevel.Tap); onClick() }.defaultMinSize(minHeight = 56.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = TzType.body.copy(fontSize = 15.sp), color = Tz.text, modifier = Modifier.weight(1f))

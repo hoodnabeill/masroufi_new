@@ -1,5 +1,12 @@
 package com.masroufi.app.feature.plan
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.LARGE_FONT_SCALE
+import com.masroufi.app.ui.components.isLargeFont
+import com.masroufi.app.ui.motion.pressClickable
+import com.masroufi.app.feature.pockets.LoadingRows
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -84,38 +91,76 @@ private val Coins = listOf(
 @Composable
 fun JarSection(viewModel: JarViewModel, onNewGoal: () -> Unit, onToday: () -> Unit, onSeasons: () -> Unit) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
-    val jar = ui.jar ?: return
+    JarContent(
+        ui, onNewGoal, onToday, onSeasons,
+        JarActions(viewModel::open, viewModel::dismiss, viewModel::deposit, viewModel::withdraw, viewModel::setGoldPrice, viewModel::earmark, viewModel::release, viewModel::setRoundUpStep),
+    )
+}
+
+/** What the jar's cards and sheets can do; the view model's functions in the app, no-ops in the audit. */
+internal class JarActions(
+    val open: (JarSheet) -> Unit,
+    val dismiss: () -> Unit,
+    val deposit: (Long) -> Unit,
+    val withdraw: (Long) -> Unit,
+    val setGoldPrice: (Long) -> Unit,
+    val earmark: (Long, Long) -> Unit,
+    val release: (Long, Long) -> Unit,
+    val setRoundUpStep: (Int) -> Unit,
+) {
+    companion object { val None = JarActions({}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}) }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun JarContent(ui: JarUi, onNewGoal: () -> Unit, onToday: () -> Unit, onSeasons: () -> Unit, actions: JarActions) {
+    val jar = ui.jar
+    if (ui.loading || jar == null) {
+        LoadingRows()
+        return
+    }
     if (ui.empty) {
         EmptyState({ EmptyJar() }, R.string.empty_jar_title, R.string.empty_jar_line, R.string.empty_jar_action, onToday, primaryAction = true)
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             JarHero(jar.total, jar.monthGrowth, ui.goals.maxOfOrNull { it.view.goal.target } ?: 0L)
-            val gold: @Composable () -> Unit = { GoldCard(jar.gold) { viewModel.open(JarSheet.Gold) } }
+            val gold: @Composable () -> Unit = { GoldCard(jar.gold) { actions.open(JarSheet.Gold) } }
             if (ui.isPlus) gold() else PlusLocked(R.string.jar_lock_gold, PlusFeature.GOLD, gold)
-            val round: @Composable () -> Unit = { RoundUpCard(ui.roundUpStep, viewModel::setRoundUpStep) }
+            val round: @Composable () -> Unit = { RoundUpCard(ui.roundUpStep, actions.setRoundUpStep) }
             if (ui.isPlus) round() else PlusLocked(R.string.jar_lock_round, PlusFeature.ROUND_UPS, round)
             SourcesCard(jar.sources.leftoverCount, jar.sources.leftoverSum, jar.sources.roundUpSum, jar.sources.manualSum)
-            GoalsCard(ui, onNewGoal, { viewModel.open(JarSheet.Goal(it)) }, onSeasons)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                SecondaryButton(stringResource(R.string.jar_withdraw), { viewModel.open(JarSheet.Withdraw) }, Modifier.weight(1f), height = 56.dp)
-                PrimaryButton(stringResource(R.string.jar_deposit), { viewModel.open(JarSheet.Deposit) }, Modifier.weight(1f), height = 56.dp)
+            GoalsCard(ui, onNewGoal, { actions.open(JarSheet.Goal(it)) }, onSeasons)
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SecondaryButton(stringResource(R.string.jar_withdraw), { actions.open(JarSheet.Withdraw) }, Modifier.weight(1f), height = 56.dp)
+                PrimaryButton(stringResource(R.string.jar_deposit), { actions.open(JarSheet.Deposit) }, Modifier.weight(1f), height = 56.dp)
             }
         }
     }
-    JarSheets(ui, viewModel)
+    JarSheets(ui, actions)
 }
 
 @Composable
 private fun JarHero(total: Long, growth: Long, biggestGoal: Long) {
     val level = (total.toFloat() / maxOf(biggestGoal, total, 1L).toFloat()).coerceIn(0f, 1f)
+    val texts: @Composable (Modifier) -> Unit = { m ->
+        Column(m, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.jar_total_label), style = TzType.label, color = Tz.text2)
+            Odometer(total, TzType.hero)
+            if (growth > 0) Text(stringResource(R.string.jar_growth, poundsText(growth)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.turquoise)
+            Text(stringResource(R.string.jar_honesty), style = TzType.caption.copy(lineHeight = 19.sp), color = Tz.text2, modifier = Modifier.padding(top = 6.dp))
+        }
+    }
     TzCard(padding = 20.dp) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            JarDrawing(level)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(stringResource(R.string.jar_total_label), style = TzType.label, color = Tz.text2)
-                Odometer(total, TzType.hero)
-                if (growth > 0) Text(stringResource(R.string.jar_growth, poundsText(growth)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.turquoise)
-                Text(stringResource(R.string.jar_honesty), style = TzType.caption.copy(lineHeight = 19.sp), color = Tz.text2, modifier = Modifier.padding(top = 6.dp))
+        // At a large font the jar sits above the words instead of squeezing them.
+        if (isLargeFont()) {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                JarDrawing(level)
+                texts(Modifier.fillMaxWidth())
+            }
+        } else {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                JarDrawing(level)
+                texts(Modifier.weight(1f))
             }
         }
     }
@@ -143,32 +188,31 @@ private fun JarDrawing(level: Float) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun GoldCard(gold: GoldView?, onEdit: () -> Unit) {
     val shape = RoundedCornerShape(24.dp)
     if (gold == null) {
-        Row(
-            Modifier.fillMaxWidth().clip(shape).background(Tz.yellow).clickable(role = Role.Button, onClick = onEdit).padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        FlowRow(
+            Modifier.fillMaxWidth().pressClickable(onClick = onEdit).clip(shape).background(Tz.yellow).padding(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp), itemVerticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(R.string.jar_gold_title), style = TzType.body.copy(fontWeight = FontWeight.Bold), color = Tz.night)
-            Text(stringResource(R.string.jar_gold_prompt), style = TzType.label, color = Tz.yellowInk, modifier = Modifier.weight(1f).padding(start = 10.dp))
+            Text(stringResource(R.string.jar_gold_prompt), style = TzType.label, color = Tz.yellowInk, modifier = Modifier.weight(1f))
         }
         return
     }
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.yellow).padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.jar_gold_title), style = TzType.body.copy(fontWeight = FontWeight.Bold), color = Tz.night)
-            Box(
-                Modifier.height(36.dp).clip(RoundedCornerShape(18.dp)).border(2.dp, Tz.night, RoundedCornerShape(18.dp))
-                    .clickable(role = Role.Button, onClick = onEdit).padding(horizontal = 14.dp),
-                contentAlignment = Alignment.Center,
-            ) { Text(stringResource(R.string.jar_gold_edit), style = TzType.caption.copy(fontWeight = FontWeight.Bold), color = Tz.night) }
+            SmallPill(stringResource(R.string.jar_gold_edit), Tz.night, 2.dp, TzType.caption.copy(fontWeight = FontWeight.Bold), onEdit)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-            val g = gold.gramsHundredths
-            Text("${g / 100}.${(g % 100).toString().padStart(2, '0')}", style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.night)
-            Text(stringResource(R.string.jar_gold_unit), style = TzType.titlePushed, color = Tz.night, modifier = Modifier.padding(bottom = 6.dp))
+        CappedFontScale {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.Bottom) {
+                val g = gold.gramsHundredths
+                Text("${g / 100}.${(g % 100).toString().padStart(2, '0')}", style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.night)
+                Text(stringResource(R.string.jar_gold_unit), style = TzType.titlePushed, color = Tz.night, modifier = Modifier.padding(bottom = 6.dp))
+            }
         }
         val bar = RoundedCornerShape(5.dp)
         Box(Modifier.fillMaxWidth().height(10.dp).clip(bar).background(Tz.yellowRule2)) {
@@ -188,6 +232,7 @@ private fun GoldCard(gold: GoldView?, onEdit: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RoundUpCard(step: Int, onStep: (Int) -> Unit) {
     val title = stringResource(R.string.jar_round_title)
@@ -200,7 +245,7 @@ private fun RoundUpCard(step: Int, onStep: (Int) -> Unit) {
                 }
                 TzToggle(step > 0, { onStep(if (it) RoundSteps.first() else 0) }, title)
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 RoundSteps.forEach { n ->
                     TzChip(stringResource(R.string.jar_round_to, n), step == n, { onStep(n) }, Modifier.weight(1f), style = ChipStyle.Choice)
                 }
@@ -233,20 +278,21 @@ private fun SourcesCard(leftoverCount: Int, leftovers: Long, roundUps: Long, man
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun GoalsCard(ui: JarUi, onNew: () -> Unit, onGoal: (Long) -> Unit, onSeasons: () -> Unit) {
     val locale = LocalConfiguration.current.locales[0]
     val month = remember(locale) { DateTimeFormatter.ofPattern("MMMM", locale) }
     TzCard {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.jar_goals_title), style = TzType.cardHeading, color = Tz.text)
                 TextLink(stringResource(R.string.jar_goal_new), onNew)
             }
             ui.goals.forEach { g ->
                 val goal = g.view.goal
-                Column(Modifier.fillMaxWidth().clickable(role = Role.Button) { onGoal(goal.id) }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column(Modifier.fillMaxWidth().pressClickable { onGoal(goal.id) }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(goal.name, style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
                         Text(stringResource(R.string.jar_goal_amounts, poundsText(g.view.earmarked), poundsText(goal.target)), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
                     }
@@ -256,8 +302,8 @@ private fun GoalsCard(ui: JarUi, onNew: () -> Unit, onGoal: (Long) -> Unit, onSe
             }
             ui.season?.let { s ->
                 if (ui.goals.isNotEmpty()) Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
-                Column(Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onSeasons), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column(Modifier.fillMaxWidth().pressClickable(onClick = onSeasons), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(s.season.name, style = TzType.body.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
                         Text(stringResource(R.string.jar_season_link, poundsText(s.saved), poundsText(s.season.target)), style = TzType.label, color = Tz.yellow)
                     }
@@ -269,23 +315,23 @@ private fun GoalsCard(ui: JarUi, onNew: () -> Unit, onGoal: (Long) -> Unit, onSe
 }
 
 @Composable
-private fun JarSheets(ui: JarUi, vm: JarViewModel) {
+private fun JarSheets(ui: JarUi, vm: JarActions) {
     val haptics = LocalHaptics.current
     val jar = ui.jar ?: return
     when (val sheet = ui.sheet) {
-        JarSheet.Deposit -> AmountSheet(stringResource(R.string.jar_deposit_title), vm::dismiss) { amount ->
+        JarSheet.Deposit -> AmountSheet(stringResource(R.string.jar_deposit_title), vm.dismiss) { amount ->
             PrimaryButton(stringResource(R.string.jar_deposit), { haptics.perform(HapticLevel.Confirm); vm.deposit(amount) }, Modifier.fillMaxWidth(), enabled = amount > 0, height = 52.dp)
         }
-        JarSheet.Withdraw -> AmountSheet(stringResource(R.string.jar_withdraw_title), vm::dismiss) { amount ->
+        JarSheet.Withdraw -> AmountSheet(stringResource(R.string.jar_withdraw_title), vm.dismiss) { amount ->
             if (amount > jar.free) Text(stringResource(R.string.jar_free_only, poundsText(jar.free)), style = TzType.label, color = Tz.carnelianText)
             PrimaryButton(stringResource(R.string.jar_withdraw), { haptics.perform(HapticLevel.Confirm); vm.withdraw(amount) }, Modifier.fillMaxWidth(), enabled = amount in 1..jar.free, height = 52.dp)
         }
-        JarSheet.Gold -> AmountSheet(stringResource(R.string.jar_gold_prompt), vm::dismiss, AmountInput.of(jar.gold?.pricePerGram ?: 0)) { amount ->
+        JarSheet.Gold -> AmountSheet(stringResource(R.string.jar_gold_prompt), vm.dismiss, AmountInput.of(jar.gold?.pricePerGram ?: 0)) { amount ->
             PrimaryButton(stringResource(R.string.jar_save), { haptics.perform(HapticLevel.Confirm); vm.setGoldPrice(amount) }, Modifier.fillMaxWidth(), enabled = amount > 0, height = 52.dp)
         }
         is JarSheet.Goal -> {
             val g = ui.goals.firstOrNull { it.view.goal.id == sheet.id }?.view
-            if (g != null) AmountSheet(g.goal.name, vm::dismiss) { amount ->
+            if (g != null) AmountSheet(g.goal.name, vm.dismiss) { amount ->
                 if (amount > jar.free) Text(stringResource(R.string.jar_free_only, poundsText(jar.free)), style = TzType.label, color = Tz.carnelianText)
                 PrimaryButton(stringResource(R.string.jar_goal_put), { haptics.perform(HapticLevel.Confirm); vm.earmark(g.goal.id, amount) }, Modifier.fillMaxWidth(), enabled = amount in 1..jar.free, height = 52.dp)
                 if (g.earmarked > 0) SecondaryButton(

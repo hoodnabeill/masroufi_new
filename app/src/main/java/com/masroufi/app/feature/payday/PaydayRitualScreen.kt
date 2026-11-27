@@ -1,5 +1,18 @@
 package com.masroufi.app.feature.payday
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import com.masroufi.app.ui.motion.pressScale
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.LARGE_FONT_SCALE
+import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.pressClickable
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.feature.plan.TwoUp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -74,44 +87,66 @@ fun PaydayRitualScreen(viewModel: PaydayRitualViewModel, onHome: () -> Unit, onF
             onHome()
         }
     }
+    PaydayRitualContent(
+        ui, remember { LocalDate.now() }, onFixedCosts,
+        PaydayActions(viewModel::skip, viewModel::setPercent, viewModel::openAmount, viewModel::toggleDebt, viewModel::print, viewModel::setAmount, viewModel::dismissAmount),
+    )
+}
+
+/** What the ritual can do; the view model's functions in the app, no-ops in the audit. */
+internal class PaydayActions(
+    val skip: () -> Unit,
+    val setPercent: (Int) -> Unit,
+    val openAmount: () -> Unit,
+    val toggleDebt: (Long) -> Unit,
+    val print: () -> Unit,
+    val setAmount: (Long) -> Unit,
+    val dismissAmount: () -> Unit,
+) {
+    companion object { val None = PaydayActions({}, {}, {}, {}, {}, {}, {}) }
+}
+
+@Composable
+internal fun PaydayRitualContent(ui: RitualUi, today: LocalDate, onFixedCosts: () -> Unit, vm: PaydayActions) {
+    val haptics = LocalHaptics.current
     val view = ui.view
     if (ui.loading || view == null) {
-        Box(Modifier.fillMaxSize())
+        Column(Modifier.fillMaxSize().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 24.dp)) { LoadingRows() }
         return
     }
     val locale = LocalConfiguration.current.locales[0]
-    val today = remember { LocalDate.now() }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            CircleButton(TzIcons.close, stringResource(R.string.payday_close)) { haptics.perform(HapticLevel.Tap); viewModel.skip() }
+            CircleButton(TzIcons.close, stringResource(R.string.payday_close)) { haptics.perform(HapticLevel.Tap); vm.skip() }
             Text(formatDayDate(today, locale), style = TzType.label.copy(fontWeight = FontWeight.Normal), color = Tz.text2)
-            Spacer(Modifier.size(44.dp))
+            Spacer(Modifier.size(48.dp))
         }
         Hero(ui.salary, ui.pocketName)
-        JarStep(ui, viewModel, view)
+        JarStep(ui, vm, view)
         // Step 2 "سدّد اللي عليك" only when the user owes someone; the fixed costs are then step 3.
-        if (ui.debts.isNotEmpty()) DebtsStep(ui, viewModel)
+        if (ui.debts.isNotEmpty()) DebtsStep(ui, vm)
         FixedStep(if (ui.debts.isNotEmpty()) 3 else 2, view, ui.salary, onFixedCosts)
         TicketCard(view)
         PrimaryButton(
-            stringResource(R.string.payday_print), viewModel::print, Modifier.fillMaxWidth(), height = 60.dp,
+            stringResource(R.string.payday_print), vm.print, Modifier.fillMaxWidth(), height = 60.dp,
             textStyle = TzType.button.copy(fontSize = 22.sp),
         )
     }
     if (ui.amountSheet) {
-        AmountSheet(stringResource(R.string.payday_amount_title), viewModel::dismissAmount, AmountInput.of((ui.share as? JarShare.Amount)?.amount ?: 0)) { amount ->
+        AmountSheet(stringResource(R.string.payday_amount_title), vm.dismissAmount, AmountInput.of((ui.share as? JarShare.Amount)?.amount ?: 0)) { amount ->
             PrimaryButton(
-                stringResource(R.string.jar_save), { haptics.perform(HapticLevel.Confirm); viewModel.setAmount(amount) },
+                stringResource(R.string.jar_save), { haptics.perform(HapticLevel.Confirm); vm.setAmount(amount) },
                 Modifier.fillMaxWidth(), enabled = amount in 0..ui.salary, height = 52.dp,
             )
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Hero(salary: Long, pocket: String) {
     Row(
@@ -124,9 +159,11 @@ private fun Hero(salary: Long, pocket: String) {
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.payday_title), style = TzType.titleTab, color = Tz.turquoiseInk)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                Text(poundsText(salary), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.turquoiseInk)
-                Text(stringResource(R.string.payday_currency), style = TzType.cardHeading, color = Tz.turquoiseInk, modifier = Modifier.padding(bottom = 8.dp))
+            CappedFontScale {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.Bottom) {
+                    Text(poundsText(salary), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.turquoiseInk)
+                    Text(stringResource(R.string.payday_currency), style = TzType.cardHeading, color = Tz.turquoiseInk, modifier = Modifier.padding(bottom = 8.dp))
+                }
             }
             Text(
                 stringResource(R.string.payday_hero_sub, pocket),
@@ -144,7 +181,7 @@ private fun StepCard(number: Int, title: String, trailing: @Composable () -> Uni
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(Modifier.size(28.dp).clip(CircleShape).background(Tz.yellow), contentAlignment = Alignment.Center) {
-                Text(number.toString(), style = TzType.button.copy(fontSize = 16.sp), color = Tz.night)
+                CappedFontScale { Text(number.toString(), style = TzType.button.copy(fontSize = 16.sp), color = Tz.night) }
             }
             Text(title, style = TzType.cardHeading, color = Tz.text, modifier = Modifier.weight(1f))
             trailing()
@@ -153,8 +190,9 @@ private fun StepCard(number: Int, title: String, trailing: @Composable () -> Uni
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun JarStep(ui: RitualUi, vm: PaydayRitualViewModel, view: RitualView) {
+private fun JarStep(ui: RitualUi, vm: PaydayActions, view: RitualView) {
     StepCard(1, stringResource(R.string.payday_step_jar)) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -170,11 +208,11 @@ private fun JarStep(ui: RitualUi, vm: PaydayRitualViewModel, view: RitualView) {
                     style = TzType.caption, color = Tz.text2,
                 )
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(5, 10, 15).forEach { p ->
                     ShareChip("$p%", (ui.share as? JarShare.Percent)?.percent == p, true, Modifier.weight(1f)) { vm.setPercent(p) }
                 }
-                ShareChip(stringResource(R.string.payday_chip_amount), ui.share is JarShare.Amount, false, Modifier.weight(1f), vm::openAmount)
+                ShareChip(stringResource(R.string.payday_chip_amount), ui.share is JarShare.Amount, false, Modifier.weight(1f), vm.openAmount)
             }
         }
     }
@@ -184,15 +222,17 @@ private fun JarStep(ui: RitualUi, vm: PaydayRitualViewModel, view: RitualView) {
 @Composable
 private fun ShareChip(label: String, selected: Boolean, display: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val haptics = LocalHaptics.current
+    val source = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(22.dp)
     Box(
-        modifier.height(44.dp).clip(shape)
+        modifier.pressScale(source, PressScale.Chip).heightIn(min = 48.dp).clip(shape)
             .background(if (selected) Tz.turquoiseDim else Color.Transparent)
             .border(if (selected) 2.dp else 1.dp, if (selected) Tz.turquoise else Tz.line, shape)
-            .clickable(role = Role.RadioButton) {
+            .selectable(selected = selected, interactionSource = source, indication = null, role = Role.RadioButton) {
                 if (!selected) haptics.perform(HapticLevel.Tick)
                 onClick()
-            },
+            }
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -205,14 +245,16 @@ private fun ShareChip(label: String, selected: Boolean, display: Boolean, modifi
 
 /** Step 2 (Payday.dc.html): a tick row per person the user owes; ticked ones are repaid in full when the tickets print. */
 @Composable
-private fun DebtsStep(ui: RitualUi, vm: PaydayRitualViewModel) {
+private fun DebtsStep(ui: RitualUi, vm: PaydayActions) {
     val haptics = LocalHaptics.current
     StepCard(2, stringResource(R.string.payday_step_debts)) {
         Column {
             ui.debts.forEach { d ->
                 val on = d.debt.id in ui.repay
+                val source = remember { MutableInteractionSource() }
                 Row(
-                    Modifier.fillMaxWidth().height(44.dp).clickable(role = Role.Checkbox) { haptics.perform(HapticLevel.Tick); vm.toggleDebt(d.debt.id) },
+                    Modifier.fillMaxWidth().pressScale(source, PressScale.Card).heightIn(min = 48.dp)
+                        .toggleable(value = on, interactionSource = source, indication = null, role = Role.Checkbox) { haptics.perform(HapticLevel.Tick); vm.toggleDebt(d.debt.id) },
                     horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val box = RoundedCornerShape(6.dp)
@@ -222,7 +264,7 @@ private fun DebtsStep(ui: RitualUi, vm: PaydayRitualViewModel) {
                     ) {
                         if (on) TzIcon(TzIcons.check, 14.dp, null, tint = Tz.night)
                     }
-                    Text(d.person.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, modifier = Modifier.weight(1f), maxLines = 1)
+                    Text(d.person.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, modifier = Modifier.weight(1f))
                     Text(poundsText(d.debt.amount), style = TzType.rowNumber.copy(fontSize = 18.sp), color = Tz.text)
                 }
             }
@@ -267,19 +309,19 @@ private fun FixedStep(number: Int, view: RitualView, salary: Long, onEdit: () ->
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (view.debts > 0) {
                     // The mock's two-column grid: jar and repayments, then fixed costs and tickets.
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Legend(Tz.turquoise, stringResource(R.string.payday_leg_jar), view.jarShare, Tz.text2, Modifier.weight(1f))
-                        Legend(Tz.lilac, stringResource(R.string.payday_leg_debts), view.debts, Tz.text2, Modifier.weight(1f))
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Legend(Tz.sky, stringResource(R.string.payday_leg_fixed), view.fixed, Tz.text2, Modifier.weight(1f))
-                        Legend(Tz.yellow, stringResource(R.string.payday_leg_tickets), view.forTickets, Tz.yellow, Modifier.weight(1f), bold = true)
-                    }
+                    TwoUp(
+                        { m -> Legend(Tz.turquoise, stringResource(R.string.payday_leg_jar), view.jarShare, Tz.text2, m) },
+                        { m -> Legend(Tz.lilac, stringResource(R.string.payday_leg_debts), view.debts, Tz.text2, m) },
+                    )
+                    TwoUp(
+                        { m -> Legend(Tz.sky, stringResource(R.string.payday_leg_fixed), view.fixed, Tz.text2, m) },
+                        { m -> Legend(Tz.yellow, stringResource(R.string.payday_leg_tickets), view.forTickets, Tz.yellow, m, bold = true) },
+                    )
                 } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Legend(Tz.turquoise, stringResource(R.string.payday_leg_jar), view.jarShare, Tz.text2, Modifier.weight(1f))
-                        Legend(Tz.sky, stringResource(R.string.payday_leg_fixed), view.fixed, Tz.text2, Modifier.weight(1f))
-                    }
+                    TwoUp(
+                        { m -> Legend(Tz.turquoise, stringResource(R.string.payday_leg_jar), view.jarShare, Tz.text2, m) },
+                        { m -> Legend(Tz.sky, stringResource(R.string.payday_leg_fixed), view.fixed, Tz.text2, m) },
+                    )
                     Legend(Tz.yellow, stringResource(R.string.payday_leg_tickets), view.forTickets, Tz.yellow, Modifier.fillMaxWidth(), bold = true)
                 }
             }
@@ -300,11 +342,12 @@ private fun Legend(dot: Color, label: String, amount: Long, labelColor: Color, m
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TicketCard(view: RitualView) {
     val locale = LocalConfiguration.current.locales[0]
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Tz.yellow).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.Bottom) {
             Text(stringResource(R.string.payday_ticket_title), style = TzType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = Tz.night)
             val last = view.lastCycleTicket
             val diff = if (last == null) 0L else view.ticket - last
@@ -315,9 +358,11 @@ private fun TicketCard(view: RitualView) {
                 )
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-            Text(poundsText(view.ticket), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.night)
-            Text(stringResource(R.string.payday_per_day), style = TzType.cardHeading, color = Tz.night, modifier = Modifier.padding(bottom = 8.dp))
+        CappedFontScale {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.Bottom) {
+                Text(poundsText(view.ticket), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.night)
+                Text(stringResource(R.string.payday_per_day), style = TzType.cardHeading, color = Tz.night, modifier = Modifier.padding(bottom = 8.dp))
+            }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             repeat(view.days.coerceIn(0, 10)) { Box(Modifier.weight(1f).height(26.dp).clip(RoundedCornerShape(4.dp)).background(Tz.night)) }

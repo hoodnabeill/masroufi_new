@@ -1,5 +1,9 @@
 package com.masroufi.app.feature.endofmonth
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.motion.pressClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -122,6 +126,7 @@ fun EndOfMonthContent(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Hero(ui: EndOfMonthUi, s: EndOfMonthState) {
     val ink = Tz.carnelianInk
@@ -131,9 +136,12 @@ private fun Hero(ui: EndOfMonthUi, s: EndOfMonthState) {
     ) {
         val label = pluralText(if (ui.shortfall) R.plurals.eom_days_left_short else R.plurals.eom_days_left, s.daysLeft)
         Text(label, style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = ink)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-            Odometer(ui.heroAmount, TzType.hero.copy(fontSize = 84.sp, lineHeight = 0.95.em, color = ink))
-            Text(stringResource(R.string.eom_unit), style = TzType.card.copy(fontSize = 24.sp), color = ink, modifier = Modifier.padding(bottom = 6.dp))
+        // shortcut: the 84 sp number keeps its normal size at a large font (it would be wider than the screen); TalkBack reads it in full.
+        CappedFontScale {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.Bottom) {
+                Odometer(ui.heroAmount, TzType.hero.copy(fontSize = 84.sp, lineHeight = 0.95.em, color = ink))
+                Text(stringResource(R.string.eom_unit), style = TzType.card.copy(fontSize = 24.sp), color = ink, modifier = Modifier.padding(bottom = 6.dp))
+            }
         }
         Text(
             if (ui.shortfall) stringResource(R.string.eom_short_line) else stringResource(R.string.eom_hero_line, poundsText(s.ticket)),
@@ -143,19 +151,23 @@ private fun Hero(ui: EndOfMonthUi, s: EndOfMonthState) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Strip(ui: EndOfMonthUi, s: EndOfMonthState) {
     if (s.strip.isEmpty()) return
     TzPanel {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.Bottom) {
             Text(pluralText(R.plurals.eom_tickets, s.strip.size), style = TzType.cardHeading, color = Tz.text)
             Text(stringResource(R.string.eom_each, poundsText(s.ticket)), style = TzType.caption, color = Tz.text2)
         }
-        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            s.strip.chunked(STRIP_COLUMNS).forEachIndexed { rowIndex, days ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                    days.forEachIndexed { i, d -> DayCell(d, today = rowIndex == 0 && i == 0, Modifier.weight(1f)) }
-                    repeat(STRIP_COLUMNS - days.size) { Spacer(Modifier.weight(1f)) }
+        // shortcut: the strip of small tickets is fixed-size art, its day numbers stay at normal size (nine columns a few dp wide).
+        CappedFontScale {
+            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                s.strip.chunked(STRIP_COLUMNS).forEachIndexed { rowIndex, days ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        days.forEachIndexed { i, d -> DayCell(d, today = rowIndex == 0 && i == 0, Modifier.weight(1f)) }
+                        repeat(STRIP_COLUMNS - days.size) { Spacer(Modifier.weight(1f)) }
+                    }
                 }
             }
         }
@@ -214,14 +226,15 @@ private fun Habits(habits: List<Habit>, onPause: (Long, Boolean) -> Unit) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Challenge(ui: EndOfMonthUi, s: EndOfMonthState) {
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(TzRadius.card)).background(Tz.turquoiseDim).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.eom_challenge_title), style = TzType.cardHeading, color = Tz.text, modifier = Modifier.weight(1f))
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(6.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.eom_challenge_title), style = TzType.cardHeading, color = Tz.text)
             Text(
                 stringResource(R.string.eom_challenge_count, ui.challengeDone, NO_SPEND_GOAL),
                 style = TzType.label.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
@@ -264,7 +277,7 @@ private fun Rescue(ui: EndOfMonthUi, onOpenJar: () -> Unit, onRemind: (OwedToMe)
 /** A label and its value; with [onClick] the value reads as a link and the row is a 48 dp target. */
 @Composable
 private fun RescueRow(label: String, value: String, onClick: (() -> Unit)?) {
-    val row = if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier
+    val row = if (onClick != null) Modifier.pressClickable(onClick = onClick) else Modifier
     Row(
         row.fillMaxWidth().heightIn(min = 48.dp),
         horizontalArrangement = Arrangement.SpaceBetween,

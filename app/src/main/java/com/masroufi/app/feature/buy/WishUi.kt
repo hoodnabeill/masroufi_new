@@ -1,5 +1,7 @@
 package com.masroufi.app.feature.buy
 
+import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.pressClickable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.background
@@ -53,10 +55,9 @@ fun WishButtons(onChangedMind: () -> Unit, onBought: () -> Unit, modifier: Modif
 private fun Pill(text: String, modifier: Modifier, filled: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(22.dp)
     Row(
-        modifier.heightIn(min = 48.dp).clip(shape)
+        modifier.pressClickable(PressScale.Chip, onClick = onClick).heightIn(min = 48.dp).clip(shape)
             .then(if (filled) Modifier.background(Tz.turquoise) else Modifier.border(1.dp, Tz.line, shape))
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -1,5 +1,12 @@
 package com.masroufi.app.feature.plan
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.selection.selectable
+import com.masroufi.app.ui.motion.pressScale
+import com.masroufi.app.ui.components.isLargeFont
+import androidx.compose.foundation.layout.heightIn
+import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.pressClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,6 +24,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.LARGE_FONT_SCALE
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -97,11 +109,15 @@ fun NameField(value: String, onValue: (String) -> Unit, hint: Int) {
 }
 
 /** The typed amount as a hero number with the keypad under it. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AmountKeypad(input: AmountInput, onDigit: (Int) -> Unit, onPoint: () -> Unit, onBackspace: () -> Unit) {
-    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(input.text.ifEmpty { "0" }, style = TzType.hero, color = Tz.text)
-        Text(stringResource(R.string.paper_currency), style = TzType.titlePushed, color = Tz.text2, modifier = Modifier.padding(bottom = 8.dp))
+    // shortcut: the typed number stops growing past 130% font size so it stays on one line.
+    CappedFontScale(LARGE_FONT_SCALE) {
+        FlowRow(itemVerticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(input.text.ifEmpty { "0" }, style = TzType.hero, color = Tz.text)
+            Text(stringResource(R.string.paper_currency), style = TzType.titlePushed, color = Tz.text2, modifier = Modifier.padding(bottom = 8.dp))
+        }
     }
     Keypad(onDigit, onPoint, onBackspace)
 }
@@ -157,9 +173,49 @@ fun ChipRow(content: @Composable () -> Unit) {
 /** A round colour swatch; the selected one carries a Text ring. */
 @Composable
 fun Swatch(color: androidx.compose.ui.graphics.Color, selected: Boolean, description: String, onClick: () -> Unit) {
+    val source = remember { MutableInteractionSource() }
     Box(
-        Modifier.size(44.dp).clip(CircleShape).background(color).then(if (selected) Modifier.border(3.dp, Tz.text, CircleShape) else Modifier)
-            .semantics { contentDescription = description }
-            .clickable(role = Role.RadioButton, onClick = onClick),
-    )
+        Modifier.pressScale(source, PressScale.Chip).minimumInteractiveComponentSize().semantics { contentDescription = description }
+            .selectable(selected = selected, interactionSource = source, indication = null, role = Role.RadioButton, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(Modifier.size(44.dp).clip(CircleShape).background(color).then(if (selected) Modifier.border(3.dp, Tz.text, CircleShape) else Modifier))
+    }
+}
+
+/** A small outlined pill: drawn 36 dp tall, a 48 dp touch target, scales on touch-down. */
+@Composable
+internal fun SmallPill(text: String, color: androidx.compose.ui.graphics.Color, borderWidth: androidx.compose.ui.unit.Dp, style: androidx.compose.ui.text.TextStyle, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val haptics = LocalHaptics.current
+    val pill = RoundedCornerShape(18.dp)
+    Box(modifier.minimumInteractiveComponentSize().pressClickable(PressScale.Chip) { haptics.perform(HapticLevel.Tap); onClick() }, contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.heightIn(min = 36.dp).clip(pill).border(borderWidth, color, pill).padding(horizontal = 14.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center,
+        ) { Text(text, style = style, color = color) }
+    }
+}
+
+/** A list row: [info] takes what is left beside [trailing]; at a large font they stack, the info first. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun SplitRow(modifier: Modifier, info: @Composable (Modifier) -> Unit, trailing: @Composable () -> Unit) {
+    if (isLargeFont()) {
+        Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            info(Modifier.fillMaxWidth())
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) { trailing() }
+        }
+    } else {
+        Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) { info(Modifier.weight(1f)); trailing() }
+    }
+}
+
+/** Two things side by side, equal width; at a large font they stack. */
+@Composable
+internal fun TwoUp(a: @Composable (Modifier) -> Unit, b: @Composable (Modifier) -> Unit) {
+    if (isLargeFont()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { a(Modifier.fillMaxWidth()); b(Modifier.fillMaxWidth()) }
+    } else {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) { a(Modifier.weight(1f)); b(Modifier.weight(1f)) }
+    }
 }

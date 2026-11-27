@@ -1,5 +1,13 @@
 package com.masroufi.app.feature.plan
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.defaultMinSize
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.LARGE_FONT_SCALE
+import com.masroufi.app.ui.motion.PressScale
+import com.masroufi.app.ui.motion.pressClickable
+import com.masroufi.app.feature.pockets.LoadingRows
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -71,8 +79,30 @@ import androidx.compose.ui.unit.IntSize
 fun SubscriptionsScreen(viewModel: SubscriptionsViewModel, onBack: () -> Unit, onOpen: (Long) -> Unit, onNew: (String) -> Unit, onOpenPerson: (Long) -> Unit) {
     val scope = rememberCoroutineScope()
     val s by viewModel.state.collectAsStateWithLifecycle()
-    val haptics = LocalHaptics.current
     val context = LocalContext.current
+    SubscriptionsContent(
+        s, onBack, onOpen, onNew,
+        onRemindTrial = { viewModel.remindAboutTrial(it) },
+        onKeepTrial = { viewModel.keepAfterTrial(it) },
+        onAnswer = { id, a -> viewModel.answer(id, a) },
+        // The group's People entry when it exists (what they owe, the reminder there); else the plain share text.
+        onRemindFriends = { v -> scope.launch { viewModel.sharedPersonId(v)?.let(onOpenPerson) ?: shareReminder(context, v) } },
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun SubscriptionsContent(
+    s: SubscriptionsUi,
+    onBack: () -> Unit,
+    onOpen: (Long) -> Unit,
+    onNew: (String) -> Unit,
+    onRemindTrial: (SubscriptionView) -> Unit,
+    onKeepTrial: (SubscriptionView) -> Unit,
+    onAnswer: (Long, SubscriptionAnswer) -> Unit,
+    onRemindFriends: (SubscriptionView) -> Unit,
+) {
+    val haptics = LocalHaptics.current
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -82,7 +112,7 @@ fun SubscriptionsScreen(viewModel: SubscriptionsViewModel, onBack: () -> Unit, o
             CircleButton(TzIcons.add, stringResource(R.string.subs_add_cd)) { onNew("") }
         })
         when {
-            s.loading -> repeat(3) { RowSkeleton() }
+            s.loading -> LoadingRows()
             s.rows.isEmpty() -> EmptyState(
                 { BlankSheet() }, R.string.subs_empty_title, R.string.subs_empty_line, R.string.subs_empty_action, { onNew("") },
                 primaryAction = true,
@@ -90,14 +120,10 @@ fun SubscriptionsScreen(viewModel: SubscriptionsViewModel, onBack: () -> Unit, o
             else -> {
                 Hero(s)
                 s.trial?.let { t ->
-                    TrialCard(t, onRemind = { viewModel.remindAboutTrial(t.view) }, onKeep = { viewModel.keepAfterTrial(t.view) })
+                    TrialCard(t, onRemind = { onRemindTrial(t.view) }, onKeep = { onKeepTrial(t.view) })
                 }
-                QuestionCard(s.question) { id, a -> viewModel.answer(id, a) }
-                ListCard(
-                    s.rows, onOpen,
-                    // The group's People entry when it exists (what they owe, the reminder there); else the plain share text.
-                    onRemindFriends = { v -> scope.launch { viewModel.sharedPersonId(v)?.let(onOpenPerson) ?: shareReminder(context, v) } },
-                )
+                QuestionCard(s.question, onAnswer)
+                ListCard(s.rows, onOpen, onRemindFriends)
             }
         }
         if (!s.loading && s.chips.isNotEmpty()) {
@@ -124,18 +150,19 @@ private val OTHER_CHIP = com.masroufi.app.data.repo.COMMON_SUBSCRIPTIONS.last()
 private fun DashedChip(label: String, onClick: () -> Unit) {
     val shape = RoundedCornerShape(22.dp)
     Box(
-        Modifier.height(44.dp).clip(shape).clickable(role = Role.Button, onClick = onClick).drawBehind {
+        Modifier.pressClickable(PressScale.Chip, onClick = onClick).heightIn(min = 48.dp).clip(shape).drawBehind {
             drawRoundRect(
                 Tz.dashed, cornerRadius = CornerRadius(22.dp.toPx()),
                 style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))),
             )
-        }.padding(horizontal = 16.dp),
+        }.padding(horizontal = 16.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(label, style = TzType.label.copy(fontSize = 13.sp), color = Tz.text)
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Hero(s: SubscriptionsUi) {
     val shape = RoundedCornerShape(28.dp)
@@ -144,11 +171,13 @@ private fun Hero(s: SubscriptionsUi) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(stringResource(R.string.subs_hero_label), style = TzType.label.copy(fontSize = 13.sp), color = Tz.text2)
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(poundsText(s.monthlyTotal), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.text)
-            Text(stringResource(R.string.paper_currency), style = TzType.titlePushed.copy(fontSize = 20.sp), color = Tz.text2, modifier = Modifier.padding(bottom = 8.dp))
+        CappedFontScale {
+            FlowRow(itemVerticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(poundsText(s.monthlyTotal), style = TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp), color = Tz.text)
+                Text(stringResource(R.string.paper_currency), style = TzType.titlePushed.copy(fontSize = 20.sp), color = Tz.text2, modifier = Modifier.padding(bottom = 8.dp))
+            }
         }
-        Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (s.tickets > 0) {
                 StatTile(stringResource(R.string.subs_tickets, s.tickets.toString()), stringResource(R.string.subs_tickets_line), Tz.yellow, Tz.night, Tz.night, Modifier.weight(1f))
             }
@@ -170,15 +199,16 @@ internal fun PillButton(text: String, filled: Boolean, fill: Color, ink: Color, 
     val haptics = LocalHaptics.current
     val shape = RoundedCornerShape(22.dp)
     Box(
-        modifier.height(44.dp).clip(shape)
+        modifier.pressClickable(PressScale.Chip) { haptics.perform(HapticLevel.Tap); onClick() }.heightIn(min = 48.dp).clip(shape)
             .then(if (filled) Modifier.background(fill) else Modifier.border(1.5.dp, fill, shape))
-            .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }.padding(horizontal = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, style = TzType.label.copy(fontSize = 13.sp, fontWeight = if (filled) FontWeight.Bold else FontWeight.SemiBold), color = if (filled) ink else fill, maxLines = 1)
+        Text(text, style = TzType.label.copy(fontSize = 13.sp, fontWeight = if (filled) FontWeight.Bold else FontWeight.SemiBold), color = if (filled) ink else fill)
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TrialCard(t: TrialCardUi, onRemind: () -> Unit, onKeep: () -> Unit) {
     val v = t.view
@@ -186,7 +216,7 @@ private fun TrialCard(t: TrialCardUi, onRemind: () -> Unit, onKeep: () -> Unit) 
     val days = checkNotNull(v.trialDaysLeft)
     val shape = RoundedCornerShape(24.dp)
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.carnelianDim).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     if (days == 0L) stringResource(R.string.subs_trial_today) else stringResource(R.string.subs_trial_title, days.toString()),
@@ -200,7 +230,7 @@ private fun TrialCard(t: TrialCardUi, onRemind: () -> Unit, onKeep: () -> Unit) 
             stringResource(R.string.subs_trial_body, end.dayOfMonth.toString()),
             style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Color(0xFFF4C9BF),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val remindDay = end.minusDays(1).dayOfMonth.toString()
             PillButton(
                 stringResource(if (t.reminded) R.string.subs_trial_reminded else R.string.subs_trial_remind, remindDay),
@@ -212,6 +242,7 @@ private fun TrialCard(t: TrialCardUi, onRemind: () -> Unit, onKeep: () -> Unit) 
 }
 
 /** The yellow question card; answering collapses it away with the Snappy spring. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun QuestionCard(question: QuestionCardUi?, onAnswer: (Long, SubscriptionAnswer) -> Unit) {
     var last by remember { mutableStateOf(question) }
@@ -235,7 +266,7 @@ private fun QuestionCard(question: QuestionCardUi?, onAnswer: (Long, Subscriptio
                     style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Color(0xFFF0E3B5),
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 PillButton(stringResource(R.string.subs_a_yes), false, Tz.yellow, Tz.night, { onAnswer(v.item.id, SubscriptionAnswer.YES) }, Modifier.weight(1f))
                 PillButton(stringResource(R.string.subs_a_meh), false, Tz.yellow, Tz.night, { onAnswer(v.item.id, SubscriptionAnswer.NOT_REALLY) }, Modifier.weight(1f))
                 PillButton(stringResource(R.string.subs_a_stop), true, Tz.yellow, Tz.night, { onAnswer(v.item.id, SubscriptionAnswer.STOPPED) }, Modifier.weight(1f))
@@ -244,11 +275,12 @@ private fun QuestionCard(question: QuestionCardUi?, onAnswer: (Long, Subscriptio
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ListCard(rows: List<SubRowUi>, onOpen: (Long) -> Unit, onRemindFriends: (SubscriptionView) -> Unit) {
     val shape = RoundedCornerShape(24.dp)
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.surface).border(1.dp, Tz.line, shape)) {
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+        FlowRow(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.Bottom) {
             Text(stringResource(R.string.subs_next), style = TzType.cardHeading, color = Tz.text)
             Text(stringResource(R.string.subs_count, rows.size.toString()), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
         }
@@ -265,6 +297,7 @@ private val TileColors = listOf(
 )
 
 /** One list row: tile, name, when it renews (+ the yearly hint), amount; shared ones add the "owed" band with "remind them". */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SubscriptionRow(row: SubRowUi, onOpen: () -> Unit, onRemindFriends: () -> Unit) {
     val v = row.view
@@ -281,21 +314,21 @@ internal fun SubscriptionRow(row: SubRowUi, onOpen: () -> Unit, onRemindFriends:
     v.yearlySaving?.let { sub = stringResource(R.string.subs_yearly_cheaper, sub, poundsText(it)) }
     val (bg, ink) = TileColors[(item.id % TileColors.size).toInt()]
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onOpen), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().pressClickable(onClick = onOpen).defaultMinSize(minHeight = 48.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(bg), contentAlignment = Alignment.Center) {
                 Text(item.name.trim().take(2), style = TzType.button.copy(fontSize = 16.sp), color = ink)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(item.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
-                Text(sub, style = TzType.caption.copy(fontSize = 12.sp), color = if (soon && !shared) Tz.yellow else Tz.text2, maxLines = 2)
+                Text(item.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
+                Text(sub, style = TzType.caption.copy(fontSize = 12.sp), color = if (soon && !shared) Tz.yellow else Tz.text2)
             }
             Text(poundsText(item.amount), style = TzType.rowNumber, color = Tz.text)
         }
         if (shared) {
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Tz.turquoiseDim).clickable(role = Role.Button, onClick = onRemindFriends)
+            FlowRow(
+                Modifier.fillMaxWidth().pressClickable(onClick = onRemindFriends).heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).background(Tz.turquoiseDim)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     stringResource(R.string.subs_share_note, poundsText(v.userShare), poundsText(v.othersOwe), (item.sharedWith - 1).toString()),

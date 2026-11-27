@@ -2,6 +2,8 @@ package com.masroufi.app.feature.plan
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -59,25 +61,11 @@ fun PlanScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     var segment by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(viewModel) { viewModel.openEdit.collect { onEditEnvelope(it) } }
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding()
-            .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+    PlanContent(
+        segment, { segment = it },
+        onNewEnvelope = { if (viewModel.requestNew()) onNewEnvelope() },
+        onOpenSubscriptions, onOpenFixedCosts, onOpenInstallments, onOpenBeforeBuy, onGallery,
     ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.tab_plan), style = TzType.titleTab, color = Tz.text)
-            if (segment == 0) CircleButton(TzIcons.add, stringResource(R.string.plan_new_envelope)) { if (viewModel.requestNew()) onNewEnvelope() }
-        }
-        Segmented(
-            listOf(R.string.plan_seg_envelopes, R.string.plan_seg_seasons, R.string.plan_seg_jar).map { stringResource(it) },
-            segment, { segment = it },
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            TextLink(stringResource(R.string.plan_link_subscriptions), onOpenSubscriptions)
-            TextLink(stringResource(R.string.plan_link_fixed), onOpenFixedCosts)
-            TextLink(stringResource(R.string.plan_link_installments), onOpenInstallments)
-            TextLink(stringResource(R.string.plan_link_before_buy), onOpenBeforeBuy)
-        }
         when (segment) {
             0 -> EnvelopesSection(
                 state,
@@ -91,11 +79,48 @@ fun PlanScreen(
             1 -> SeasonsSection(seasonsViewModel, onOpenSeason, onNewOccasion = { onOpenSeason(0) }, onZakat = onZakat)
             else -> JarSection(jarViewModel, onNewGoal, onToday, onSeasons = { segment = 1 })
         }
-        if (BuildConfig.DEBUG) TextLink("Gallery", onGallery, Modifier.align(Alignment.CenterHorizontally))
     }
     when (val sheet = state.sheet) {
         EnvelopeSheet.Plus -> PlusSheet(R.string.env_plus_line, PlusFeature.ENVELOPES, viewModel::dismissSheet)
         is EnvelopeSheet.Move -> MoveSheet(sheet, state.cards, viewModel::confirmMove, viewModel::dismissSheet)
         null -> Unit
+    }
+}
+
+/** The Plan tab's frame: title, the three-way switch, the four links and the section under them. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun PlanContent(
+    segment: Int,
+    onSegment: (Int) -> Unit,
+    onNewEnvelope: () -> Unit,
+    onOpenSubscriptions: () -> Unit,
+    onOpenFixedCosts: () -> Unit,
+    onOpenInstallments: () -> Unit,
+    onOpenBeforeBuy: () -> Unit,
+    onGallery: () -> Unit,
+    section: @Composable () -> Unit,
+) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding()
+            .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.tab_plan), style = TzType.titleTab, color = Tz.text, modifier = Modifier.weight(1f, fill = false))
+            if (segment == 0) CircleButton(TzIcons.add, stringResource(R.string.plan_new_envelope), onNewEnvelope)
+        }
+        Segmented(
+            listOf(R.string.plan_seg_envelopes, R.string.plan_seg_seasons, R.string.plan_seg_jar).map { stringResource(it) },
+            segment, onSegment,
+        )
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, itemVerticalAlignment = Alignment.CenterVertically) {
+            TextLink(stringResource(R.string.plan_link_subscriptions), onOpenSubscriptions)
+            TextLink(stringResource(R.string.plan_link_fixed), onOpenFixedCosts)
+            TextLink(stringResource(R.string.plan_link_installments), onOpenInstallments)
+            TextLink(stringResource(R.string.plan_link_before_buy), onOpenBeforeBuy)
+        }
+        section()
+        if (BuildConfig.DEBUG) TextLink("Gallery", onGallery, Modifier.align(Alignment.CenterHorizontally))
     }
 }

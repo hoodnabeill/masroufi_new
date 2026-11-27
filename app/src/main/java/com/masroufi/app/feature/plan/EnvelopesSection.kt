@@ -1,8 +1,8 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.pockets.LoadingRows
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -57,6 +59,8 @@ import com.masroufi.app.ui.components.EmptyState
 import com.masroufi.app.ui.components.RowSkeleton
 import com.masroufi.app.ui.components.TzCard
 import com.masroufi.app.ui.components.TzProgressBar
+import com.masroufi.app.ui.components.isLargeFont
+import com.masroufi.app.ui.motion.pressClickable
 import com.masroufi.app.ui.haptics.HapticLevel
 import com.masroufi.app.ui.haptics.LocalHaptics
 import com.masroufi.app.ui.icons.TzIcon
@@ -90,7 +94,7 @@ fun EnvelopesSection(
     onMoveFrom: (Long) -> Unit,
 ) {
     when {
-        state.loading -> Column(verticalArrangement = Arrangement.spacedBy(14.dp)) { repeat(3) { RowSkeleton() } }
+        state.loading -> LoadingRows()
         state.cards.isEmpty() -> EmptyState(
             { Qersh(QershMood.Thinking, 120.dp) }, R.string.env_empty_title, R.string.env_empty_line,
             R.string.env_empty_action, onSuggest, primaryAction = true,
@@ -119,7 +123,8 @@ private fun Loaded(
     Box(Modifier.onGloballyPositioned { origin = it.positionInRoot() }) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             state.split?.let { SplitCard(it, state.cards) }
-            state.cards.chunked(2).forEach { pair ->
+            val perRow = if (isLargeFont()) 1 else 2
+            state.cards.chunked(perRow).forEach { pair ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     pair.forEach { ui -> key(ui.view.id) {
                         val id = ui.view.id
@@ -130,13 +135,13 @@ private fun Loaded(
                         PlanEnvelopeCard(
                             ui,
                             Modifier.weight(1f)
+                                .pressClickable { haptics.perform(HapticLevel.Tap); onOpen(id) }
                                 .onGloballyPositioned { cardCoords[id] = it }
                                 .alpha(if (drag.id == id) 0.5f else 1f)
                                 .then(if (drag.over == id) Modifier.border(2.dp, Tz.yellow, shape) else Modifier)
                                 .semantics {
                                     if (canDrag) customActions = listOf(CustomAccessibilityAction(moveAction) { onMoveFrom(id); true })
-                                }
-                                .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpen(id) },
+                                },
                             amountModifier = if (!canDrag) Modifier else Modifier
                                 .onGloballyPositioned { coords[0] = it }
                                 .pointerInput(id) {
@@ -163,7 +168,7 @@ private fun Loaded(
                                 },
                         )
                     } }
-                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                    if (pair.size == 1 && perRow == 2) Spacer(Modifier.weight(1f))
                 }
             }
             NewEnvelopeRow(onNew)
@@ -186,13 +191,14 @@ private fun Loaded(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SplitCard(split: SplitSummary, cards: List<EnvelopeCardUi>) {
     val locale = LocalConfiguration.current.locales[0]
     val month = split.cycleStart.month.getDisplayName(TextStyle.FULL_STANDALONE, locale)
     TzCard {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.Bottom) {
                 Text(stringResource(R.string.env_split_title, month), style = TzType.caption.copy(fontSize = 13.sp), color = Tz.text2)
                 Text(poundsText(split.income), style = TzType.cardHeading.copy(fontSize = 22.sp), color = Tz.text)
             }
@@ -224,8 +230,7 @@ private fun NewEnvelopeRow(onClick: () -> Unit) {
     val haptics = LocalHaptics.current
     val shape = RoundedCornerShape(22.dp)
     Row(
-        Modifier.fillMaxWidth().height(56.dp).clip(shape)
-            .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }
+        Modifier.fillMaxWidth().pressClickable { haptics.perform(HapticLevel.Tap); onClick() }.heightIn(min = 56.dp).clip(shape)
             .drawBehind {
                 drawRoundRect(
                     Tz.dashed, cornerRadius = CornerRadius(22.dp.toPx()),
@@ -246,7 +251,7 @@ private fun NewEnvelopeRow(onClick: () -> Unit) {
 private fun TipCard(tip: MoveTip, onClick: () -> Unit) {
     val shape = RoundedCornerShape(22.dp)
     Column(
-        Modifier.fillMaxWidth().clip(shape).background(Tz.yellowDim).clickable(role = Role.Button, onClick = onClick)
+        Modifier.fillMaxWidth().pressClickable(onClick = onClick).clip(shape).background(Tz.yellowDim)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {

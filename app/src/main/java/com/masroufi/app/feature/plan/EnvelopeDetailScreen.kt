@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.feature.pockets.LoadingRows
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,9 +53,21 @@ fun EnvelopeDetailScreen(
     onOpenAddSheet: (AddPrefill?) -> Unit,
 ) {
     val s by viewModel.state.collectAsStateWithLifecycle()
-    val haptics = LocalHaptics.current
-    var confirm by remember { mutableStateOf(false) }
     LaunchedEffect(s.missing) { if (s.missing) onBack() }
+    EnvelopeDetailContent(s, onBack, onEdit = { onEdit(viewModel.id) }, onClose = viewModel::close, onOpenAddSheet = onOpenAddSheet)
+}
+
+@Composable
+internal fun EnvelopeDetailContent(
+    s: EnvelopeDetailUi,
+    onBack: () -> Unit,
+    onEdit: () -> Unit,
+    onClose: () -> Unit,
+    onOpenAddSheet: (AddPrefill?) -> Unit,
+    confirmOpen: Boolean = false,
+) {
+    val haptics = LocalHaptics.current
+    var confirm by remember { mutableStateOf(confirmOpen) }
     val card = s.card
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
@@ -62,9 +75,12 @@ fun EnvelopeDetailScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         PushedHeader(card?.view?.name.orEmpty(), onBack) {
-            if (card != null) CircleButton(TzIcons.edit, stringResource(R.string.env_edit)) { onEdit(viewModel.id) }
+            if (card != null) CircleButton(TzIcons.edit, stringResource(R.string.env_edit), onEdit)
         }
-        if (card == null) return@Column
+        if (card == null) {
+            if (s.loading) LoadingRows()
+            return@Column
+        }
         val v = card.view
         val color = pocketColor(v.color)
         TzCard {
@@ -92,7 +108,7 @@ fun EnvelopeDetailScreen(
                 }
             }
         }
-        SecondaryButton(stringResource(R.string.env_edit), { haptics.perform(HapticLevel.Tap); onEdit(viewModel.id) }, Modifier.fillMaxWidth())
+        SecondaryButton(stringResource(R.string.env_edit), { haptics.perform(HapticLevel.Tap); onEdit() }, Modifier.fillMaxWidth())
         TextLink(stringResource(R.string.env_close), { confirm = true }, Modifier.align(Alignment.CenterHorizontally))
     }
     if (confirm) TzSheet(onDismiss = { confirm = false }) {
@@ -101,7 +117,7 @@ fun EnvelopeDetailScreen(
             Text(stringResource(R.string.env_close_line), style = TzType.body.copy(fontSize = 14.sp), color = Tz.text2)
             PrimaryButton(
                 stringResource(R.string.env_close_confirm),
-                { haptics.perform(HapticLevel.Heavy); confirm = false; viewModel.close() },
+                { haptics.perform(HapticLevel.Heavy); confirm = false; onClose() },
                 Modifier.fillMaxWidth(), height = 52.dp,
             )
             SecondaryButton(stringResource(R.string.env_close_cancel), { confirm = false }, Modifier.fillMaxWidth(), height = 52.dp)

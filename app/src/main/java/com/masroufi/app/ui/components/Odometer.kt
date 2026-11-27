@@ -50,6 +50,12 @@ fun Odometer(
     /** False for the amount the user is typing: hide amounts must never mask an input. */
     maskable: Boolean = true,
 ) {
+    // shortcut: a hero number stops growing past 130% font size (it would be wider than the screen); TalkBack reads it in full.
+    CappedFontScale(LARGE_FONT_SCALE) { OdometerCore(valuePiastres, style, modifier, showPiastres, maskable) }
+}
+
+@Composable
+private fun OdometerCore(valuePiastres: Long, style: TextStyle, modifier: Modifier, showPiastres: Boolean, maskable: Boolean) {
     if (maskable && LocalHideAmounts.current) {
         Text(HIDDEN_AMOUNT, modifier.clearAndSetSemantics { text = AnnotatedString(HIDDEN_AMOUNT) }, style = if (style.color.isSpecified) style else style.copy(color = Tz.text))
         return

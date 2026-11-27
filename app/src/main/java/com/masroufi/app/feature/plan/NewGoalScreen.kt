@@ -29,27 +29,41 @@ import com.masroufi.app.ui.haptics.LocalHaptics
 @Composable
 fun NewGoalScreen(viewModel: NewGoalViewModel, onBack: () -> Unit) {
     val f by viewModel.form.collectAsStateWithLifecycle()
-    val haptics = LocalHaptics.current
     LaunchedEffect(f.saved) { if (f.saved) onBack() }
+    NewGoalContent(f, onBack, viewModel::setName, viewModel::digit, viewModel::point, viewModel::backspace, viewModel::setMonths, viewModel::save)
+}
+
+@Composable
+internal fun NewGoalContent(
+    f: GoalForm,
+    onBack: () -> Unit,
+    setName: (String) -> Unit,
+    digit: (Int) -> Unit,
+    point: () -> Unit,
+    backspace: () -> Unit,
+    setMonths: (Int?) -> Unit,
+    save: () -> Unit,
+) {
+    val haptics = LocalHaptics.current
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().imePadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         PushedHeader(stringResource(R.string.jar_goal_new), onBack)
-        FormBlock(R.string.goal_name_q) { NameField(f.name, viewModel::setName, R.string.goal_name_hint) }
-        FormBlock(R.string.goal_target_q) { AmountKeypad(f.target, viewModel::digit, viewModel::point, viewModel::backspace) }
+        FormBlock(R.string.goal_name_q) { NameField(f.name, setName, R.string.goal_name_hint) }
+        FormBlock(R.string.goal_target_q) { AmountKeypad(f.target, digit, point, backspace) }
         FormBlock(R.string.goal_date_q) {
             ChipRow {
-                TzChip(stringResource(R.string.goal_date_none), f.months == null, { viewModel.setMonths(null) }, style = ChipStyle.Choice)
+                TzChip(stringResource(R.string.goal_date_none), f.months == null, { setMonths(null) }, style = ChipStyle.Choice)
                 GOAL_MONTHS.forEach { m ->
-                    TzChip(stringResource(R.string.goal_date_months, m), f.months == m, { viewModel.setMonths(m) }, style = ChipStyle.Choice)
+                    TzChip(stringResource(R.string.goal_date_months, m), f.months == m, { setMonths(m) }, style = ChipStyle.Choice)
                 }
             }
         }
         PrimaryButton(
             stringResource(R.string.jar_save),
-            { haptics.perform(HapticLevel.Confirm); viewModel.save() },
+            { haptics.perform(HapticLevel.Confirm); save() },
             Modifier.fillMaxWidth(),
             enabled = f.canSave,
         )

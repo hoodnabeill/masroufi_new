@@ -1,5 +1,7 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.LARGE_FONT_SCALE
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,30 +41,53 @@ import com.masroufi.app.ui.theme.TzType
 fun FixedCostFormScreen(viewModel: FixedCostFormViewModel, onBack: () -> Unit) {
     val f by viewModel.form.collectAsStateWithLifecycle()
     val gone by viewModel.gone.collectAsStateWithLifecycle()
-    val haptics = LocalHaptics.current
     LaunchedEffect(f.saved, gone) { if (f.saved || gone) onBack() }
+    FixedCostFormContent(
+        f, viewModel.isEdit, onBack,
+        FixedCostFormActions(viewModel::setName, viewModel::digit, viewModel::point, viewModel::backspace, viewModel::setDay, viewModel::setPocket, viewModel::setKind, viewModel::save, viewModel::delete),
+    )
+}
+
+/** What the fixed-cost form can do; the view model's functions in the app, no-ops in the audit. */
+internal class FixedCostFormActions(
+    val setName: (String) -> Unit,
+    val digit: (Int) -> Unit,
+    val point: () -> Unit,
+    val backspace: () -> Unit,
+    val setDay: (Int) -> Unit,
+    val setPocket: (Long) -> Unit,
+    val setKind: (RecurringKind) -> Unit,
+    val save: () -> Unit,
+    val delete: () -> Unit,
+) {
+    companion object { val None = FixedCostFormActions({}, {}, {}, {}, {}, {}, {}, {}, {}) }
+}
+
+@Composable
+internal fun FixedCostFormContent(f: FixedCostForm, isEdit: Boolean, onBack: () -> Unit, vm: FixedCostFormActions) {
+    val haptics = LocalHaptics.current
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().imePadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        PushedHeader(stringResource(if (viewModel.isEdit) R.string.fixed_edit_title else R.string.fixed_new_title), onBack)
+        PushedHeader(stringResource(if (isEdit) R.string.fixed_edit_title else R.string.fixed_new_title), onBack)
 
-        FormBlock(R.string.fixed_name_q) { NameField(f.name, viewModel::setName, R.string.fixed_name_hint) }
+        FormBlock(R.string.fixed_name_q) { NameField(f.name, vm.setName, R.string.fixed_name_hint) }
 
-        FormBlock(R.string.fixed_amount_q) { AmountKeypad(f.amount, viewModel::digit, viewModel::point, viewModel::backspace) }
+        FormBlock(R.string.fixed_amount_q) { AmountKeypad(f.amount, vm.digit, vm.point, vm.backspace) }
 
         FormBlock(R.string.fixed_day_q) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-                CircleButton(TzIcons.minus, stringResource(R.string.fixed_day_minus)) { haptics.perform(HapticLevel.Tick); viewModel.setDay(f.day - 1) }
-                Text(f.day.toString(), style = TzType.hero, color = Tz.text)
-                CircleButton(TzIcons.add, stringResource(R.string.fixed_day_plus)) { haptics.perform(HapticLevel.Tick); viewModel.setDay(f.day + 1) }
+                CircleButton(TzIcons.minus, stringResource(R.string.fixed_day_minus)) { haptics.perform(HapticLevel.Tick); vm.setDay(f.day - 1) }
+                CappedFontScale(LARGE_FONT_SCALE) { Text(f.day.toString(), style = TzType.hero, color = Tz.text) }
+                CircleButton(TzIcons.add, stringResource(R.string.fixed_day_plus)) { haptics.perform(HapticLevel.Tick); vm.setDay(f.day + 1) }
             }
         }
 
         FormBlock(R.string.fixed_pocket_q) {
             f.pockets.chunked(2).forEach { row ->
-                ChipRow { row.forEach { p -> TzChip(p.name, f.pocketId == p.id, { viewModel.setPocket(p.id) }, style = ChipStyle.Choice) } }
+                ChipRow { row.forEach { p -> TzChip(p.name, f.pocketId == p.id, { vm.setPocket(p.id) }, style = ChipStyle.Choice) } }
             }
         }
 
@@ -74,7 +99,7 @@ fun FixedCostFormScreen(viewModel: FixedCostFormViewModel, onBack: () -> Unit) {
                         RecurringKind.SUBSCRIPTION -> R.string.fixed_kind_subscription
                         else -> R.string.fixed_kind_bill
                     }
-                    TzChip(stringResource(label), f.kind == kind, { viewModel.setKind(kind) }, style = ChipStyle.Choice)
+                    TzChip(stringResource(label), f.kind == kind, { vm.setKind(kind) }, style = ChipStyle.Choice)
                 }
             }
         }
@@ -82,10 +107,10 @@ fun FixedCostFormScreen(viewModel: FixedCostFormViewModel, onBack: () -> Unit) {
         if (f.failed) Text(stringResource(R.string.fixed_failed), style = TzType.label, color = Tz.carnelianText)
         PrimaryButton(
             stringResource(R.string.fixed_save),
-            { haptics.perform(HapticLevel.Confirm); viewModel.save() },
+            { haptics.perform(HapticLevel.Confirm); vm.save() },
             Modifier.fillMaxWidth(),
             enabled = f.canSave,
         )
-        if (viewModel.isEdit) TextLink(stringResource(R.string.fixed_delete), { haptics.perform(HapticLevel.Heavy); viewModel.delete() }, Modifier.align(Alignment.CenterHorizontally))
+        if (isEdit) TextLink(stringResource(R.string.fixed_delete), { haptics.perform(HapticLevel.Heavy); vm.delete() }, Modifier.align(Alignment.CenterHorizontally))
     }
 }

@@ -119,7 +119,7 @@ internal fun CircleButton(icon: TzIconDef, description: String, onClick: () -> U
 internal fun PushedHeader(title: String, onBack: () -> Unit, trailing: @Composable () -> Unit = { Spacer(Modifier.size(48.dp)) }) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         CircleButton(TzIcons.back, stringResource(R.string.close_back), onBack)
-        Text(title, style = TzType.titlePushed, color = Tz.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).padding(horizontal = 8.dp))
+        Text(title, style = TzType.titlePushed, color = Tz.text, modifier = Modifier.weight(1f, fill = false).padding(horizontal = 8.dp))
         trailing()
     }
 }

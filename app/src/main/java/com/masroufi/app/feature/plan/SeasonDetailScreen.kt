@@ -1,5 +1,10 @@
 package com.masroufi.app.feature.plan
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.minimumInteractiveComponentSize
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.components.LARGE_FONT_SCALE
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -60,11 +65,53 @@ fun SeasonDetailScreen(viewModel: SeasonDetailViewModel, onBack: () -> Unit) {
     val view by viewModel.view.collectAsStateWithLifecycle()
     val free by viewModel.free.collectAsStateWithLifecycle()
     val sheet by viewModel.sheet.collectAsStateWithLifecycle()
+    LaunchedEffect(f.saved) { if (f.saved) onBack() }
+    SeasonDetailContent(
+        f, view, free, sheet, viewModel.isNew, viewModel.canSave(f), onBack,
+        SeasonDetailActions(
+            viewModel::setName, viewModel::setMonth, viewModel::stepDay, viewModel::digit, viewModel::point, viewModel::backspace,
+            viewModel::removeItem, vm.targetFromChecklist, viewModel::open, viewModel::dismiss, viewModel::addItem,
+            viewModel::earmark, viewModel::release, viewModel::save,
+        ),
+    )
+}
+
+/** What the season page can do; the view model's functions in the app, no-ops in the audit. */
+internal class SeasonDetailActions(
+    val setName: (String) -> Unit,
+    val setMonth: (Int) -> Unit,
+    val stepDay: (Int) -> Unit,
+    val digit: (Int) -> Unit,
+    val point: () -> Unit,
+    val backspace: () -> Unit,
+    val removeItem: (Long) -> Unit,
+    val targetFromChecklist: () -> Unit,
+    val open: (SeasonSheet) -> Unit,
+    val dismiss: () -> Unit,
+    val addItem: (String, Long) -> Unit,
+    val earmark: (Long) -> Unit,
+    val release: (Long) -> Unit,
+    val save: () -> Unit,
+) {
+    companion object { val None = SeasonDetailActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, {}, {}, {}) }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun SeasonDetailContent(
+    f: SeasonForm,
+    view: SeasonView?,
+    free: Long,
+    sheet: SeasonSheet?,
+    isNew: Boolean,
+    canSave: Boolean,
+    onBack: () -> Unit,
+    vm: SeasonDetailActions,
+) {
     val haptics = LocalHaptics.current
     val locale = LocalConfiguration.current.locales[0]
-    LaunchedEffect(f.saved) { if (f.saved) onBack() }
     val season = view?.season
-    val personal = viewModel.isNew || season?.kind == SeasonKind.PERSONAL
+    val personal = isNew || season?.kind == SeasonKind.PERSONAL
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().imePadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -72,7 +119,7 @@ fun SeasonDetailScreen(viewModel: SeasonDetailViewModel, onBack: () -> Unit) {
     ) {
         PushedHeader(season?.name ?: stringResource(R.string.season_new_title), onBack)
         if (!f.loaded) return@Column
-        if (personal) FormBlock(R.string.season_q_name) { NameField(f.name, viewModel::setName, R.string.season_name_hint) }
+        if (personal) FormBlock(R.string.season_q_name) { NameField(f.name, vm.setName, R.string.season_name_hint) }
         FormBlock(R.string.season_q_date) {
             if (season?.hijriMonth != null) {
                 Text(
@@ -82,17 +129,17 @@ fun SeasonDetailScreen(viewModel: SeasonDetailViewModel, onBack: () -> Unit) {
             } else {
                 ChipRow {
                     (1..12).forEach { m ->
-                        TzChip(Month.of(m).getDisplayName(TextStyle.FULL, locale), f.month == m, { viewModel.setMonth(m) }, style = ChipStyle.Choice)
+                        TzChip(Month.of(m).getDisplayName(TextStyle.FULL, locale), f.month == m, { vm.setMonth(m) }, style = ChipStyle.Choice)
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    CircleButton(TzIcons.minus, stringResource(R.string.season_day_less)) { viewModel.stepDay(-1) }
+                    CircleButton(TzIcons.minus, stringResource(R.string.season_day_less)) { vm.stepDay(-1) }
                     Text(f.day.toString(), style = TzType.hero.copy(fontSize = 36.sp), color = Tz.text, modifier = Modifier.defaultMinSize(minWidth = 48.dp))
-                    CircleButton(TzIcons.add, stringResource(R.string.season_day_more)) { viewModel.stepDay(1) }
+                    CircleButton(TzIcons.add, stringResource(R.string.season_day_more)) { vm.stepDay(1) }
                 }
             }
         }
-        FormBlock(R.string.season_q_target) { AmountKeypad(f.target, viewModel::digit, viewModel::point, viewModel::backspace) }
+        FormBlock(R.string.season_q_target) { AmountKeypad(f.target, vm.digit, vm.point, vm.backspace) }
         val live = view
         if (live != null) {
             FormBlock(R.string.season_q_items) {
@@ -101,45 +148,47 @@ fun SeasonDetailScreen(viewModel: SeasonDetailViewModel, onBack: () -> Unit) {
                         Text(item.label, style = TzType.body.copy(fontSize = 15.sp), color = Tz.text, modifier = Modifier.weight(1f))
                         Text(poundsText(item.amount), style = TzType.rowNumber, color = Tz.text)
                         Box(
-                            Modifier.size(44.dp).clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); viewModel.removeItem(item.id) },
+                            Modifier.minimumInteractiveComponentSize().clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); vm.removeItem(item.id) },
                             contentAlignment = Alignment.Center,
                         ) { TzIcon(TzIcons.close, 18.dp, stringResource(R.string.season_item_remove, item.label)) }
                     }
                 }
                 val sum = live.items.sumOf { it.amount }
                 if (sum > 0) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.season_items_total, poundsText(sum)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text2)
                         if (sum != f.target.toPiastres()) TextLink(stringResource(R.string.season_items_as_target), viewModel::targetFromChecklist)
                     }
                 }
-                TextLink(stringResource(R.string.season_item_add), { viewModel.open(SeasonSheet.Item) })
+                TextLink(stringResource(R.string.season_item_add), { vm.open(SeasonSheet.Item) })
             }
             FormBlock(R.string.season_q_saved) {
-                Text(
-                    stringResource(R.string.jar_goal_amounts, poundsText(live.saved), poundsText(live.season.target)),
-                    style = TzType.hero.copy(fontSize = 32.sp), color = Tz.text,
-                )
-                SecondaryButton(stringResource(R.string.season_put), { viewModel.open(SeasonSheet.Money) }, Modifier.fillMaxWidth(), height = 52.dp)
+                CappedFontScale(LARGE_FONT_SCALE) {
+                    Text(
+                        stringResource(R.string.jar_goal_amounts, poundsText(live.saved), poundsText(live.season.target)),
+                        style = TzType.hero.copy(fontSize = 32.sp), color = Tz.text,
+                    )
+                }
+                SecondaryButton(stringResource(R.string.season_put), { vm.open(SeasonSheet.Money) }, Modifier.fillMaxWidth(), height = 52.dp)
             }
         }
         PrimaryButton(
             stringResource(R.string.jar_save),
-            { haptics.perform(HapticLevel.Confirm); viewModel.save() },
+            { haptics.perform(HapticLevel.Confirm); vm.save() },
             Modifier.fillMaxWidth(),
-            enabled = viewModel.canSave(f),
+            enabled = canSave,
         )
     }
     when (sheet) {
-        SeasonSheet.Item -> ItemSheet(viewModel::dismiss) { label, amount -> viewModel.addItem(label, amount); viewModel.dismiss() }
+        SeasonSheet.Item -> ItemSheet(vm.dismiss) { label, amount -> vm.addItem(label, amount); vm.dismiss() }
         SeasonSheet.Money -> {
             val live = view
-            if (live != null) AmountSheet(live.season.name, viewModel::dismiss) { amount ->
+            if (live != null) AmountSheet(live.season.name, vm.dismiss) { amount ->
                 if (amount > free) Text(stringResource(R.string.jar_free_only, poundsText(free)), style = TzType.label, color = Tz.carnelianText)
-                PrimaryButton(stringResource(R.string.season_put), { haptics.perform(HapticLevel.Confirm); viewModel.earmark(amount) }, Modifier.fillMaxWidth(), enabled = amount in 1..free, height = 52.dp)
+                PrimaryButton(stringResource(R.string.season_put), { haptics.perform(HapticLevel.Confirm); vm.earmark(amount) }, Modifier.fillMaxWidth(), enabled = amount in 1..free, height = 52.dp)
                 if (live.saved > 0) SecondaryButton(
                     stringResource(R.string.season_release),
-                    { if (amount in 1..live.saved) { haptics.perform(HapticLevel.Confirm); viewModel.release(amount) } else haptics.perform(HapticLevel.Reject) },
+                    { if (amount in 1..live.saved) { haptics.perform(HapticLevel.Confirm); vm.release(amount) } else haptics.perform(HapticLevel.Reject) },
                     Modifier.fillMaxWidth(), height = 52.dp,
                 )
             }

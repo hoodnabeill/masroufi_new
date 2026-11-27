@@ -1,5 +1,8 @@
 package com.masroufi.app.feature.plan
 
+import androidx.compose.foundation.layout.defaultMinSize
+import com.masroufi.app.ui.motion.pressClickable
+import com.masroufi.app.feature.pockets.LoadingRows
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +56,18 @@ fun FixedCostsScreen(
     onOpenKids: () -> Unit = {},
 ) {
     val s by viewModel.state.collectAsStateWithLifecycle()
+    FixedCostsContent(s, onBack, onOpen, onNew, onPay = { onOpenAddSheet(viewModel.payPrefill(it)) }, onOpenKids)
+}
+
+@Composable
+internal fun FixedCostsContent(
+    s: FixedCostsUi,
+    onBack: () -> Unit,
+    onOpen: (Long) -> Unit,
+    onNew: () -> Unit,
+    onPay: (RecurringRow) -> Unit,
+    onOpenKids: () -> Unit,
+) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -60,12 +75,12 @@ fun FixedCostsScreen(
     ) {
         PushedHeader(stringResource(R.string.fixed_title), onBack)
         when {
-            s.loading -> repeat(3) { RowSkeleton() }
+            s.loading -> LoadingRows()
             s.items.isEmpty() && s.kids == null -> AllCaughtUpRow()
             else -> TzCard(padding = 0.dp) {
                 s.items.forEachIndexed { i, item ->
                     if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
-                    FixedCostRow(item, onOpen = { onOpen(item.row.id) }, onPay = { onOpenAddSheet(viewModel.payPrefill(item.row)) })
+                    FixedCostRow(item, onOpen = { onOpen(item.row.id) }, onPay = { onPay(item.row) })
                 }
                 s.kids?.let { KidsRow(it, first = s.items.isEmpty(), onOpenKids) }
             }
@@ -84,18 +99,18 @@ private fun FixedCostRow(item: FixedCostUi, onOpen: () -> Unit, onPay: () -> Uni
         is DueState.Due -> stringResource(R.string.fixed_due, formatDayDate(d.date, locale)) to Tz.text2
         DueState.Overdue -> stringResource(R.string.fixed_overdue) to Tz.carnelianText
     }
-    Row(
-        Modifier.fillMaxWidth().clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpen() }.padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    SplitRow(
+        Modifier.fillMaxWidth().pressClickable { haptics.perform(HapticLevel.Tap); onOpen() }.defaultMinSize(minHeight = 48.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+        info = { m ->
+            Column(m, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(row.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
+                Text(
+                    row.pocketName + " · " + stringResource(R.string.fixed_day, row.nextDue.dayOfMonth.toString()),
+                    style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2,
+                )
+            }
+        },
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(row.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
-            Text(
-                row.pocketName + " · " + stringResource(R.string.fixed_day, row.nextDue.dayOfMonth.toString()),
-                style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2, maxLines = 1,
-            )
-        }
         Column(horizontalAlignment = Alignment.End) {
             Text(poundsText(row.amount), style = TzType.titleTab.copy(fontSize = 18.sp), color = Tz.text)
             Text(label, style = TzType.caption.copy(fontSize = 12.sp), color = color)
@@ -109,15 +124,15 @@ private fun FixedCostRow(item: FixedCostUi, onOpen: () -> Unit, onPay: () -> Uni
 private fun KidsRow(row: RecurringRow, first: Boolean, onOpen: () -> Unit) {
     val haptics = LocalHaptics.current
     if (!first) Box(Modifier.fillMaxWidth().height(1.dp).background(Tz.line))
-    Row(
-        Modifier.fillMaxWidth().clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onOpen() }.padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    SplitRow(
+        Modifier.fillMaxWidth().pressClickable { haptics.perform(HapticLevel.Tap); onOpen() }.defaultMinSize(minHeight = 48.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+        info = { m ->
+            Column(m, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(row.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
+                Text(stringResource(R.string.fixed_kids_sub), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2)
+            }
+        },
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(row.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
-            Text(stringResource(R.string.fixed_kids_sub), style = TzType.caption.copy(fontSize = 12.sp), color = Tz.text2, maxLines = 1)
-        }
         Text(poundsText(row.amount), style = TzType.titleTab.copy(fontSize = 18.sp), color = Tz.text)
         TextLink(stringResource(R.string.fixed_kids_open), onOpen)
     }

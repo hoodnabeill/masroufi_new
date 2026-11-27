@@ -1,5 +1,12 @@
 package com.masroufi.app.feature.installments
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import com.masroufi.app.ui.components.CappedFontScale
+import com.masroufi.app.ui.motion.pressClickable
+import com.masroufi.app.feature.pockets.LoadingRows
+import com.masroufi.app.feature.plan.SplitRow
+import com.masroufi.app.feature.plan.TwoUp
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -100,7 +107,22 @@ private const val END_SEEN_DELAY_MS = 400L
 @Composable
 fun InstallmentsScreen(viewModel: InstallmentsViewModel, onBack: () -> Unit, onNew: () -> Unit, onEdit: (Long) -> Unit, onOpenBeforeBuy: () -> Unit) {
     val s by viewModel.state.collectAsStateWithLifecycle()
-    var paying by remember { mutableStateOf(false) }
+    InstallmentsContent(s, onBack, onNew, onEdit, onOpenBeforeBuy, viewModel::finishedSeen, viewModel::payOff, viewModel::keepGoing)
+}
+
+@Composable
+internal fun InstallmentsContent(
+    s: InstallmentsUi,
+    onBack: () -> Unit,
+    onNew: () -> Unit,
+    onEdit: (Long) -> Unit,
+    onOpenBeforeBuy: () -> Unit,
+    onSeen: (Long) -> Unit,
+    onPayOff: (Long, Long) -> Unit,
+    onKeepGoing: (Long) -> Unit,
+    payingOpen: Boolean = false,
+) {
+    var paying by remember { mutableStateOf(payingOpen) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 28.dp),
@@ -110,13 +132,13 @@ fun InstallmentsScreen(viewModel: InstallmentsViewModel, onBack: () -> Unit, onN
             CircleButton(TzIcons.add, stringResource(R.string.inst_add_cd), onNew)
         })
         when {
-            s.loading -> repeat(3) { RowSkeleton() }
+            s.loading -> LoadingRows()
             s.empty -> EmptyState({ BlankSheet() }, R.string.inst_empty_title, R.string.inst_empty_line, R.string.inst_empty_action, onOpenBeforeBuy)
             else -> {
                 Hero(s)
                 if (s.freedom != null && s.bars.isNotEmpty()) FreedomCard(s)
-                PlansCard(s, onEdit, onSeen = viewModel::finishedSeen)
-                s.early?.let { EarlyCard(it, s.payOffFailed, onPay = { paying = true }, onKeep = { viewModel.keepGoing(it.planId) }) }
+                PlansCard(s, onEdit, onSeen = onSeen)
+                s.early?.let { EarlyCard(it, s.payOffFailed, onPay = { paying = true }, onKeep = { onKeepGoing(it.planId) }) }
                 BeforeBuyLink(onOpenBeforeBuy)
             }
         }
@@ -126,13 +148,14 @@ fun InstallmentsScreen(viewModel: InstallmentsViewModel, onBack: () -> Unit, onN
         AmountSheet(stringResource(R.string.inst_pay_title, early.name), { paying = false }, AmountInput.of(early.amount)) { amount ->
             PrimaryButton(
                 stringResource(R.string.inst_pay_confirm, poundsText(amount)),
-                { viewModel.payOff(early.planId, amount); paying = false }, // the end motion fires the Milestone once the plan is really finished
+                { onPayOff(early.planId, amount); paying = false }, // the end motion fires the Milestone once the plan is really finished
                 Modifier.fillMaxWidth(), enabled = amount > 0, height = 52.dp,
             )
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Hero(s: InstallmentsUi) {
     val shape = RoundedCornerShape(28.dp)
@@ -141,22 +164,27 @@ private fun Hero(s: InstallmentsUi) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(stringResource(R.string.inst_hero_label), style = TzType.label.copy(fontSize = 13.sp), color = Tz.text2)
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Odometer(s.monthly, TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp))
-            Text(stringResource(R.string.paper_currency), style = TzType.titlePushed.copy(fontSize = 20.sp), color = Tz.text2, modifier = Modifier.padding(bottom = 8.dp))
+        CappedFontScale {
+            FlowRow(verticalArrangement = Arrangement.spacedBy(4.dp), itemVerticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Odometer(s.monthly, TzType.hero.copy(fontSize = 64.sp, lineHeight = 64.sp))
+                Text(stringResource(R.string.paper_currency), style = TzType.titlePushed.copy(fontSize = 20.sp), color = Tz.text2, modifier = Modifier.padding(bottom = 8.dp))
+            }
         }
-        Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Tile(s.perDay, R.string.inst_per_day, R.string.inst_per_day_line, Tz.yellow, Tz.night, Tz.night, Modifier.weight(1f))
-            Tile(s.remaining, null, R.string.inst_remaining_line, Tz.night, Tz.text, Tz.text2, Modifier.weight(1f))
+        Box(Modifier.padding(top = 6.dp)) {
+            TwoUp(
+                { m -> Tile(s.perDay, R.string.inst_per_day, R.string.inst_per_day_line, Tz.yellow, Tz.night, Tz.night, m) },
+                { m -> Tile(s.remaining, null, R.string.inst_remaining_line, Tz.night, Tz.text, Tz.text2, m) },
+            )
         }
     }
 }
 
 /** A hero tile: a rolling number, [suffix] after it, and a small line. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Tile(value: Long, suffix: Int?, line: Int, bg: Color, ink: Color, inkSmall: Color, modifier: Modifier) {
     Column(modifier.clip(RoundedCornerShape(16.dp)).background(bg).padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        FlowRow(itemVerticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Odometer(value, TzType.rowNumber.copy(fontSize = 24.sp, color = ink))
             if (suffix != null) Text(stringResource(suffix), style = TzType.rowNumber.copy(fontSize = 24.sp), color = ink)
         }
@@ -167,16 +195,18 @@ private fun Tile(value: Long, suffix: Int?, line: Int, bg: Color, ink: Color, in
 private val BarShades = listOf(Color(0xFF0F5560), Color(0xFF19808A), Color(0xFF22A0A6), Color(0xFF2BBAB8))
 
 /** يوم الحرية: the timeline runs left to right as drawn, then the growth line. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FreedomCard(s: InstallmentsUi) {
     val freedom = checkNotNull(s.freedom)
     val shape = RoundedCornerShape(24.dp)
     Column(Modifier.fillMaxWidth().clip(shape).background(Tz.turquoise).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.Bottom) {
             Text(stringResource(R.string.inst_freedom), style = TzType.cardHeading.copy(fontSize = 24.sp), color = Tz.turquoiseInk)
             Text(monthLabel(freedom, withYear = true), style = TzType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold), color = Tz.turquoiseInk)
         }
-        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        // shortcut: the month chart is fixed-size art, its labels stay at normal size (they sit under bars a few dp wide).
+        CappedFontScale { CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(Modifier.fillMaxWidth().height(64.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
                     s.bars.forEachIndexed { i, bar ->
@@ -204,7 +234,7 @@ private fun FreedomCard(s: InstallmentsUi) {
                     }
                 }
             }
-        }
+        } }
         val steps = s.growth.map { stringResource(R.string.inst_growth_step, poundsText(it.growth), monthLabel(it.month, it.withYear)) }
         Text(
             stringResource(R.string.inst_growth_line, steps.joinToString(stringResource(R.string.inst_growth_sep))),
@@ -263,18 +293,24 @@ private fun PlanRow(row: PlanRowUi, today: YearMonth, filled: Boolean, first: Bo
     val ink = TileInks[(plan.item.id % TileInks.size).toInt()]
     val soon = row.line is PlanLine.OneLeft || row.line is PlanLine.TwoLeft || row.line is PlanLine.Done
     Column(
-        Modifier.fillMaxWidth().drawBehind { if (!first) drawLine(Tz.line, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }
-            .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().pressClickable(onClick = onClick).drawBehind { if (!first) drawLine(Tz.line, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(Tz.raised), contentAlignment = Alignment.Center) {
-                TzIcon(planIcon(plan.item.name), 22.dp, null, tint = ink)
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(plan.item.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text, maxLines = 1)
-                Text(lineText(row.line, today), style = TzType.caption.copy(fontSize = 12.sp), color = if (soon) Tz.turquoise else Tz.text2, maxLines = 2)
-            }
+        SplitRow(
+            Modifier.fillMaxWidth(),
+            info = { m ->
+                Row(m, horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(Tz.raised), contentAlignment = Alignment.Center) {
+                        TzIcon(planIcon(plan.item.name), 22.dp, null, tint = ink)
+                    }
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(plan.item.name, style = TzType.label.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = Tz.text)
+                        Text(lineText(row.line, today), style = TzType.caption.copy(fontSize = 12.sp), color = if (soon) Tz.turquoise else Tz.text2)
+                    }
+                }
+            },
+        ) {
             Text(poundsText(plan.monthly), style = TzType.rowNumber, color = Tz.text)
         }
         val total = plan.total
@@ -318,6 +354,7 @@ private fun PlanBar(paid: Int, total: Int, color: Color) {
 }
 
 /** "خلّص {name} بدري": the amount is the repository's; "سدّد" opens the keypad sheet to confirm what the seller said. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun EarlyCard(e: EarlyUi, failed: Boolean, onPay: () -> Unit, onKeep: () -> Unit) {
     val shape = RoundedCornerShape(24.dp)
@@ -328,7 +365,7 @@ private fun EarlyCard(e: EarlyUi, failed: Boolean, onPay: () -> Unit, onKeep: ()
             style = TzType.body.copy(fontSize = 13.sp, lineHeight = 22.sp), color = Color(0xFFF0E3B5),
         )
         if (failed) Text(stringResource(R.string.inst_early_failed), style = TzType.label.copy(fontSize = 13.sp), color = Tz.carnelianText)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             PillButton(stringResource(R.string.inst_early_pay, poundsText(e.amount)), true, Tz.yellow, Tz.night, onPay, Modifier.weight(1f))
             PillButton(stringResource(R.string.inst_early_keep), false, Tz.yellow, Tz.night, onKeep, Modifier.weight(1f))
         }
@@ -339,8 +376,7 @@ private fun EarlyCard(e: EarlyUi, failed: Boolean, onPay: () -> Unit, onKeep: ()
 private fun BeforeBuyLink(onClick: () -> Unit) {
     val haptics = LocalHaptics.current
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp))
-            .clickable(role = Role.Button) { haptics.perform(HapticLevel.Tap); onClick() }
+        Modifier.fillMaxWidth().pressClickable { haptics.perform(HapticLevel.Tap); onClick() }.clip(RoundedCornerShape(22.dp))
             .drawBehind {
                 drawRoundRect(
                     Tz.dashed, cornerRadius = CornerRadius(22.dp.toPx()),
