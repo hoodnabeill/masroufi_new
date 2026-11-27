@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -178,6 +179,24 @@ abstract class StoreShots(private val ar: Boolean) {
         assertEquals("$path height", h, back.height)
     }
 
+    /**
+     * captureToImage first; if the test environment cannot deliver it (it waits on a PixelCopy callback), draw the
+     * compose view itself into a bitmap and cut the node's bounds out of it.
+     */
+    private fun grab(node: SemanticsNodeInteraction): Bitmap {
+        try {
+            return node.captureToImage().asAndroidBitmap()
+        } catch (e: Throwable) {
+            println("store-assets: captureToImage failed (${e.message}), drawing the view instead")
+        }
+        val sn = node.fetchSemanticsNode()
+        val view = sn.root as android.view.View
+        val full = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        view.draw(Canvas(full))
+        val b = sn.boundsInRoot
+        return Bitmap.createBitmap(full, b.left.toInt(), b.top.toInt(), b.width.toInt().coerceAtMost(full.width - b.left.toInt()), b.height.toInt().coerceAtMost(full.height - b.top.toInt()))
+    }
+
     /** One phone screenshot: the screen on the night colour, animations off, the sample-data tag on top. */
     protected fun shoot(name: String, content: @Composable () -> Unit) {
         rule.mainClock.autoAdvance = false
@@ -199,7 +218,7 @@ abstract class StoreShots(private val ar: Boolean) {
         rule.mainClock.advanceTimeBy(2_000)
         // The capture waits for the app to be idle, which a stopped clock never is.
         rule.mainClock.autoAdvance = true
-        write(rule.onRoot().captureToImage().asAndroidBitmap(), "screenshots/$lang/$name.png", 1080, 2340)
+        write(grab(rule.onRoot()), "screenshots/$lang/$name.png", 1080, 2340)
     }
 
     protected fun featureGraphic() {
@@ -229,7 +248,7 @@ abstract class StoreShots(private val ar: Boolean) {
         rule.mainClock.advanceTimeBy(1_000)
         // The capture waits for the app to be idle, which a stopped clock never is.
         rule.mainClock.autoAdvance = true
-        write(rule.onNodeWithTag("feature").captureToImage().asAndroidBitmap(), "feature-graphic-1024x500.png", 1024, 500)
+        write(grab(rule.onNodeWithTag("feature")), "feature-graphic-1024x500.png", 1024, 500)
     }
 
     /** The adaptive icon's two layers on one 512 square (the launcher's mask is not applied). */
