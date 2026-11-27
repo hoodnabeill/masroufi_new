@@ -52,6 +52,16 @@ jobs:
           MASROUFI_KEY_PASSWORD: ${{ secrets.MASROUFI_KEY_PASSWORD }}
         run: gradle --no-daemon --stacktrace assembleDebug assembleRelease 2>&1 | tee -a build-output.log; exit ${PIPESTATUS[0]}
 
+      # What the release APK declares after every library's manifest is merged (read into docs/legal/PLAY_CONSOLE.md).
+      - name: Merged permissions
+        continue-on-error: true
+        run: |
+          apk=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          aapt=$(ls "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -1)
+          perms=$("$aapt" dump permissions "$apk" | grep -E "uses-permission" | sed "s/.*name=//" | tr -d "'" | sort | paste -sd' ' -)
+          echo "$perms"
+          echo "::notice title=Merged permissions::$perms"
+
       # Surfaces compiler and test failures as one annotation so they are readable without opening the raw log.
       - name: Summarize failures
         if: failure()
@@ -73,6 +83,15 @@ jobs:
           name: test-reports
           path: app/build/reports/tests/
           if-no-files-found: ignore
+
+      # Store listing images rendered by StoreAssetsTest (icon, feature graphic, phone screenshots in Arabic and English).
+      - name: Upload store assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-assets
+          path: app/build/store-assets/
+          if-no-files-found: warn
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
