@@ -35,3 +35,8 @@ As Phases 3–11 (strings ar + en with `%s`; Long piastres; injected Clock; the 
 ## Task 62: People, rewards and settings screens
 
 - People, person detail, duty ledger, gameya and its form, kids and child form, album, match, basket, profile, story, paywall, settings, legal, lock settings, backup, notifications settings, the widgets' content mapper: same as Task 60.
+
+## Task 63: Soft delete with undo everywhere (added after Task 61)
+
+- `11-DATA-AND-RULES.md` "Safety rules": deleting is soft for 5 seconds (undo), then real. Today only entries (the roll, Home) do this through `PendingDeletes`. Extend the same pattern to every other delete the user can make: fixed costs, subscriptions, installment plans, client jobs, goals, seasons and season items, envelopes (keep their confirm only where data would move), people, debts, tab items, occasions and gifts, gameya plan rows, chores, children, tracked basket items, wishes. One shared undo bar ("اتمسحت. رجّعها؟"), Heavy haptic on the real delete, the item hidden at once and restored on undo. Saves that still wait for storage before the screen updates (Task 61's checklist item 4) get the optimistic pattern where it is a one-line change; list the rest.
+- Tests: each delete hides at once, undo restores, the real delete happens after 5 s on virtual time.
