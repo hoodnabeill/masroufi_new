@@ -2,6 +2,7 @@ package com.masroufi.app.store
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -129,7 +130,6 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
-import javax.imageio.ImageIO
 
 private object NoAddActions : AddSheetActions {
     override fun setType(type: EntryKind) = Unit
@@ -169,15 +169,11 @@ abstract class StoreShots(private val ar: Boolean) {
             println("store-assets: $path rendered at ${soft.width} x ${soft.height}, scaled to $w x $h")
             Bitmap.createScaledBitmap(soft, w, h, true)
         }
-        val pixels = IntArray(w * h)
-        out.getPixels(pixels, 0, w, 0, 0, w, h)
-        val image = java.awt.image.BufferedImage(w, h, java.awt.image.BufferedImage.TYPE_INT_ARGB)
-        image.setRGB(0, 0, w, h, pixels, 0, w)
         val file = File("build/store-assets/$path")
         file.parentFile!!.mkdirs()
-        ImageIO.write(image, "png", file)
+        file.outputStream().use { out.compress(Bitmap.CompressFormat.PNG, 100, it) }
         assertTrue("$path was not written", file.exists() && file.length() > 0)
-        val back = ImageIO.read(file)
+        val back = BitmapFactory.decodeFile(file.path)
         assertEquals("$path width", w, back.width)
         assertEquals("$path height", h, back.height)
     }
