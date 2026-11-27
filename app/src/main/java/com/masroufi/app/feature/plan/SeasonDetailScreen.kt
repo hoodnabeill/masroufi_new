@@ -1,5 +1,6 @@
 package com.masroufi.app.feature.plan
 
+import com.masroufi.app.data.repo.SeasonView
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -70,7 +71,7 @@ fun SeasonDetailScreen(viewModel: SeasonDetailViewModel, onBack: () -> Unit) {
         f, view, free, sheet, viewModel.isNew, viewModel.canSave(f), onBack,
         SeasonDetailActions(
             viewModel::setName, viewModel::setMonth, viewModel::stepDay, viewModel::digit, viewModel::point, viewModel::backspace,
-            viewModel::removeItem, vm.targetFromChecklist, viewModel::open, viewModel::dismiss, viewModel::addItem,
+            viewModel::removeItem, viewModel::targetFromChecklist, viewModel::open, viewModel::dismiss, viewModel::addItem,
             viewModel::earmark, viewModel::release, viewModel::save,
         ),
     )
