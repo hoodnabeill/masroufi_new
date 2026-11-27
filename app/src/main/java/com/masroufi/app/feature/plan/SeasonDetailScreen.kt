@@ -158,7 +158,7 @@ internal fun SeasonDetailContent(
                 if (sum > 0) {
                     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.season_items_total, poundsText(sum)), style = TzType.label.copy(fontWeight = FontWeight.SemiBold), color = Tz.text2)
-                        if (sum != f.target.toPiastres()) TextLink(stringResource(R.string.season_items_as_target), viewModel::targetFromChecklist)
+                        if (sum != f.target.toPiastres()) TextLink(stringResource(R.string.season_items_as_target), vm.targetFromChecklist)
                     }
                 }
                 TextLink(stringResource(R.string.season_item_add), { vm.open(SeasonSheet.Item) })
