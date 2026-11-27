@@ -197,6 +197,8 @@ abstract class StoreShots(private val ar: Boolean) {
             }
         }
         rule.mainClock.advanceTimeBy(2_000)
+        // The capture waits for the app to be idle, which a stopped clock never is.
+        rule.mainClock.autoAdvance = true
         write(rule.onRoot().captureToImage().asAndroidBitmap(), "screenshots/$lang/$name.png", 1080, 2340)
     }
 
@@ -225,6 +227,8 @@ abstract class StoreShots(private val ar: Boolean) {
             }
         }
         rule.mainClock.advanceTimeBy(1_000)
+        // The capture waits for the app to be idle, which a stopped clock never is.
+        rule.mainClock.autoAdvance = true
         write(rule.onNodeWithTag("feature").captureToImage().asAndroidBitmap(), "feature-graphic-1024x500.png", 1024, 500)
     }
 
