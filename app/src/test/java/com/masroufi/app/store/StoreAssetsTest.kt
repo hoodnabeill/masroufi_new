@@ -231,13 +231,13 @@ abstract class StoreShots(private val ar: Boolean) {
                     val h = with(d) { 500.toDp() }
                     Box(Modifier.fillMaxSize().background(Tz.night)) {
                         Box(Modifier.size(w, h).testTag("feature").background(Tz.night), contentAlignment = Alignment.Center) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Box(Modifier.size(170.dp), contentAlignment = Alignment.Center) {
-                                    Image(painterResource(R.drawable.ic_launcher_foreground), null, Modifier.requiredSize(300.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(with(d) { 20.toDp() }), verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(with(d) { 400.toDp() }), contentAlignment = Alignment.Center) {
+                                    Image(painterResource(R.drawable.ic_launcher_foreground), null, Modifier.requiredSize(with(d) { 720.toDp() }))
                                 }
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("مصروفي", color = Tz.yellow, fontSize = 64.sp, fontFamily = Lalezar)
-                                    Text("كل يوم ليك تذكرة", color = Tz.text2, fontSize = 18.sp, fontFamily = Alexandria)
+                                    Text("مصروفي", color = Tz.yellow, fontSize = with(d) { 150.toSp() }, fontFamily = Lalezar)
+                                    Text("كل يوم ليك تذكرة", color = Tz.text2, fontSize = with(d) { 42.toSp() }, fontFamily = Alexandria)
                                 }
                             }
                         }
